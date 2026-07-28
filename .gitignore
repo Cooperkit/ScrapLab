@@ -1,0 +1,10 @@
+dist/
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.db
+*.db-*
+*.raidrescue-backup-*.db
+
