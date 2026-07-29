@@ -26,6 +26,8 @@ button{font:inherit}
  box-shadow:inset 0 1px #55595a,0 2px 8px rgba(0,0,0,.7);cursor:default}
 .window-grip{height:100%;flex:1;display:flex;align-items:center;min-width:0;padding-left:12px}
 .window-emblem{width:30px;height:30px;flex:0 0 30px;margin-right:8px;position:relative;overflow:visible}
+.window-emblem.secret-trigger,.window-emblem.secret-trigger *{cursor:default!important;-ms-user-select:none;user-select:none}
+.window-emblem.secret-trigger.armed .window-emblem-mark{animation:secretEmblemUnlock .48s cubic-bezier(.16,.84,.3,1) both}
 .window-emblem-mark{position:absolute;left:4px;top:4px;width:22px;height:22px;transform:rotate(45deg);
  background:linear-gradient(145deg,#ffd74f,#efa916);border:2px solid #191b1c;border-radius:4px;
  box-shadow:0 0 0 1px #ffd13b,0 2px 0 #070808}
@@ -40,6 +42,14 @@ button{font:inherit}
  color:#c7cbcb;background:transparent;cursor:pointer;outline:none}
 .window-button:hover{color:#fff;background:#414647}.window-button:active{background:#191b1c}
 .window-button.close:hover{background:#c83a22}.window-button.close:active{background:#8f2518}
+.window-help-icon{position:absolute;left:50%;top:50%;width:20px;height:20px;display:block;overflow:visible;
+ transform:translate(-50%,-50%);color:#ffd046;pointer-events:none}
+.window-help-shadow{fill:none;stroke:#111;stroke-width:4}
+.window-help-ring{fill:#202324;stroke:#8f6919;stroke-width:2}
+.window-help-stem{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.window-help-dot{fill:currentColor}
+.window-button.help:hover .window-help-ring{fill:#ffd046;stroke:#fff0a1}
+.window-button.help:hover .window-help-icon{color:#272719}
 .window-button.minimize:before{content:'';position:absolute;left:17px;top:22px;width:12px;height:2px;background:currentColor}
 .window-button.close:before,.window-button.close:after{content:'';position:absolute;left:16px;top:17px;width:14px;height:2px;background:currentColor}
 .window-button.close:before{transform:rotate(45deg)}.window-button.close:after{transform:rotate(-45deg)}
@@ -52,9 +62,15 @@ button{font:inherit}
  cursor:pointer}
 .scroll-thumb:hover,.scroll-thumb.dragging{border-color:#ffe98d;background:linear-gradient(90deg,#e7a51d,#ffe269 48%,#cf8b12);
  box-shadow:inset 1px 0 #fff8c4,0 0 8px rgba(255,194,34,.48)}
-.hazard{height:7px;background:repeating-linear-gradient(135deg,#f7be22 0,#f7be22 18px,#292b2c 18px,#292b2c 36px);
- border-bottom:1px solid #070808;box-shadow:0 2px 8px rgba(0,0,0,.65);background-size:51px 51px;
- animation:hazardMove 3.8s linear infinite}
+.hazard{position:relative;height:7px;overflow:hidden;background:#292b2c;border-bottom:1px solid #070808;
+ box-shadow:0 2px 8px rgba(0,0,0,.65)}
+.hazard:before{content:'';position:absolute;left:-102px;top:0;width:calc(100% + 204px);height:7px;
+ background:repeating-linear-gradient(135deg,#f7be22 0,#f7be22 18px,#292b2c 18px,#292b2c 36px);
+ background-size:51px 51px;transform:translate3d(-51px,0,0);backface-visibility:hidden;
+ animation:mainHazardFlow 3.8s linear infinite}
+.hazard.paused:before,.scroll-active .hazard:before,.scroll-active .panel-title strong:before,
+.scroll-active .state,.scroll-active .note:before,.scroll-active .tutorial-rail:before,
+.scroll-active .tutorial-focus:before{animation-play-state:paused}
 .shell{max-width:1040px;margin:0 auto;padding:14px 22px 36px}
 .topbar{height:56px;display:flex;align-items:center;justify-content:space-between}
 .identity{display:flex;align-items:center}
@@ -252,6 +268,243 @@ button{font:inherit}
  background:linear-gradient(90deg,transparent,rgba(255,222,130,.45),transparent);transform:skewX(-18deg);animation:dangerSweep 2.1s ease-in-out infinite}
 .hotfix-confirm span{display:inline-block;margin-right:7px;width:17px;height:17px;border-radius:50%;color:#65130c;background:#ffd046;
  font:bold 12px/17px Arial;text-shadow:none;vertical-align:middle;animation:buttonDanger 1.25s ease-in-out infinite}
+.dependency-modal{z-index:170}
+.dependency-modal .hotfix-dialog{width:720px;border-color:#e5ad22;box-shadow:inset 0 0 0 2px #58440f,0 22px 70px #000}
+.dependency-modal .hotfix-head{background:linear-gradient(90deg,#403515,#292b2c 58%,#18333c)}
+.dependency-modal .hotfix-title strong{color:#ffd046}
+.dependency-modal .hotfix-foot-note{max-width:210px}.dependency-modal .hotfix-confirm{min-width:330px;font-size:9px}
+.developer-command-modal{z-index:175}
+.developer-command-modal .hotfix-dialog{width:650px;border-color:#d9a31d;box-shadow:inset 0 0 0 2px #58440f,0 22px 70px #000}
+.developer-command-modal .hotfix-head{background:linear-gradient(90deg,#403515,#292b2c 58%,#17313a)}
+.developer-command-modal .hotfix-title strong{color:#ffd046}
+.developer-command-modal .hotfix-confirm{min-width:225px}
+.command-access-grid{display:flex;margin:0 -5px 11px}
+.command-access-option{position:relative;flex:1;min-height:102px;margin:0 5px;padding:12px 13px 11px 47px;text-align:left;cursor:pointer;outline:0;
+ color:#b7bdbc;background:#1b1e1f;border:2px solid #4b5355;border-radius:4px 13px 4px 13px;box-shadow:inset 0 1px #303536}
+.command-access-option:hover{border-color:#7c979e;background:#20282b}.command-access-option.selected{color:#e8e9e5;border-color:#e0aa20;
+ background:linear-gradient(110deg,#322b1b,#202729 76%);box-shadow:inset 0 1px #5b4b21,0 0 13px rgba(255,208,70,.12)}
+.command-access-bolt{position:absolute;left:13px;top:14px;width:23px;height:23px;transform:rotate(45deg);background:#25292a;border:2px solid #697174;border-radius:4px}
+.command-access-bolt:after{content:'';position:absolute;left:7px;top:7px;width:5px;height:5px;background:#92999a;border-radius:50%}
+.command-access-option.selected .command-access-bolt{background:#ffd046;border-color:#17191a;box-shadow:0 0 0 2px #9d7415,0 0 9px rgba(255,208,70,.35)}
+.command-access-option.selected .command-access-bolt:after{background:#33270b}
+.command-access-option strong{display:block;color:#f5f5ef;font:12px Shentox,""Arial Black"",sans-serif;letter-spacing:.55px}
+.command-access-option small{display:block;margin-top:3px;color:#75cde4;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
+.command-access-option span:last-child{display:block;margin-top:7px;font-size:10px;line-height:1.42}
+.command-everyone-warning{display:none;margin-top:10px}.command-everyone-warning.show{display:block;animation:helpCardIn .22s ease-out both}
+.command-access-ack{margin-top:9px;padding:9px 11px;background:#1a1c1d;border:1px solid #8d3928;border-radius:3px}
+.command-access-ack label{display:flex;align-items:center;color:#ffd2c5;font-size:10px;line-height:1.4;cursor:pointer}
+.command-access-ack input{position:absolute;left:-9999px}
+.command-access-box{position:relative;width:20px;height:20px;flex:0 0 20px;margin-right:9px;background:#0e1011;border:2px solid #77625d;border-radius:3px}
+.command-access-ack input:checked+.command-access-box{border-color:#ff6a3b;background:#8f2415;box-shadow:0 0 8px rgba(255,82,43,.4)}
+.command-access-ack input:checked+.command-access-box:after{content:'\2713';position:absolute;left:3px;top:-1px;color:#fff4d8;font:bold 15px/20px Arial}
+.developer-command-modal .hotfix-confirm:disabled{cursor:not-allowed;color:#8d8581;border-color:#5d5552;background:#353535;box-shadow:inset 0 1px #555,0 3px 0 #171717;text-shadow:none;opacity:.65}
+.developer-command-modal .hotfix-confirm:disabled:before,.developer-command-modal .hotfix-confirm:disabled span{display:none}
+.cannon-danger-modal{z-index:180}
+.cannon-danger-modal .hotfix-dialog{width:690px;border-color:#ff4f2c;box-shadow:inset 0 0 0 2px #681d12,0 22px 75px #000,0 0 30px rgba(255,64,30,.18)}
+.cannon-danger-modal .hotfix-title strong{color:#ff7654}
+.cannon-danger-modal .hotfix-checks{counter-reset:safety-step}
+.cannon-danger-modal .hotfix-checks li{counter-increment:safety-step}
+.cannon-danger-modal .hotfix-checks li:before{content:counter(safety-step);color:#ffb055;font:10px Shentox,""Arial Black"",sans-serif}
+.cannon-danger-ack{margin-top:11px;padding:10px 12px;background:#1b1d1e;border:1px solid #626768;border-radius:3px}
+.cannon-danger-ack label{display:flex;align-items:center;color:#e4e6e2;font-size:10px;line-height:1.45;cursor:pointer}
+.cannon-danger-ack input{position:absolute;left:-9999px}
+.cannon-danger-box{position:relative;width:21px;height:21px;flex:0 0 21px;margin-right:10px;background:#0f1112;border:2px solid #6f7576;border-radius:3px;
+ box-shadow:inset 0 2px 5px #000}
+.cannon-danger-ack input:checked+.cannon-danger-box{border-color:#ff6a3b;background:#8f2415;box-shadow:inset 0 1px #db5f44,0 0 9px rgba(255,82,43,.42)}
+.cannon-danger-ack input:checked+.cannon-danger-box:after{content:'\2713';position:absolute;left:3px;top:-1px;color:#fff4d8;font:bold 16px/21px Arial}
+.cannon-danger-modal .hotfix-confirm:disabled{cursor:not-allowed;color:#8d8581;border-color:#5d5552;background:#353535;box-shadow:inset 0 1px #555,0 3px 0 #171717;text-shadow:none;opacity:.65}
+.cannon-danger-modal .hotfix-confirm:disabled:before,.cannon-danger-modal .hotfix-confirm:disabled span{display:none}
+
+.onboard-modal,.help-modal{display:none;position:fixed;z-index:130;left:0;right:0;top:0;bottom:0;padding:22px;
+ align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(44,109,130,.25),rgba(5,6,7,.94) 68%)}
+.onboard-modal.show,.help-modal.show{display:flex;animation:hotfixBackdrop .22s ease-out both}
+.onboard-dialog{position:relative;width:590px;max-width:100%;overflow:hidden;background:#24282a;border:2px solid #ffd046;
+ border-radius:9px 24px 9px 24px;box-shadow:inset 0 0 0 2px #574613,0 24px 75px #000;
+ animation:helpDeploy .38s cubic-bezier(.14,.83,.25,1) both}
+.onboard-hazard,.help-hazard{height:12px;border-bottom:2px solid #080909;background-size:51px 51px;
+ background-image:repeating-linear-gradient(135deg,#ffd046 0,#ffd046 18px,#1a1c1d 18px,#1a1c1d 36px);animation:hazardMove 1.4s linear infinite}
+.onboard-main{display:flex;align-items:center;padding:24px 27px 20px;background:linear-gradient(115deg,#20333a,#252829 52%,#342d1e)}
+.onboard-mark{position:relative;width:82px;height:82px;flex:0 0 82px;margin-right:24px}
+.onboard-mark:before{content:'';position:absolute;left:17px;top:17px;width:48px;height:48px;box-sizing:border-box;
+ transform:rotate(45deg);border:4px solid #ffd046;border-radius:8px;background:#26291f;
+ box-shadow:0 0 0 3px #101112,0 0 25px rgba(255,208,70,.35);animation:onboardMark 2s ease-in-out infinite}
+.onboard-mark span{position:absolute;left:17px;top:17px;width:48px;height:48px;color:#ffd046;text-align:center;
+ font:bold 29px/48px Arial;text-shadow:0 2px #000;animation:onboardQuestion 2s ease-in-out infinite}
+.onboard-copy{min-width:0}.onboard-kicker{color:#7cd7ee;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.4px}
+.onboard-copy h2{margin:5px 0 8px;color:#fff;font:21px/1.1 Shentox,""Arial Black"",sans-serif;letter-spacing:.8px}
+.onboard-copy p{margin:0;color:#c3c8c7;font-size:12px;line-height:1.58}
+.onboard-preview{display:flex;padding:14px 19px;background:#191b1c;border-top:1px solid #45494a;border-bottom:1px solid #090a0a}
+.onboard-preview div{flex:1;position:relative;padding:6px 9px 6px 29px;color:#aeb4b3;font-size:10px;line-height:1.35}
+.onboard-preview div:before{content:'✓';position:absolute;left:7px;top:5px;color:#ffd046;font:bold 13px Arial}
+.onboard-actions{display:flex;align-items:center;justify-content:space-between;padding:14px 19px 17px;background:#222526}
+.onboard-actions p{max-width:265px;margin:0;color:#858b8b;font-size:10px;line-height:1.45}.onboard-actions .btn+.btn{margin-left:8px}
+
+.help-modal{z-index:135}.help-dialog{position:relative;width:790px;height:680px;max-width:100%;max-height:calc(100% - 6px);display:flex;flex-direction:column;
+ overflow:hidden;background:#222628;border:2px solid #5e9aae;border-radius:8px 23px 8px 23px;
+ box-shadow:inset 0 0 0 2px #183c48,0 25px 80px #000;animation:helpDeploy .34s cubic-bezier(.14,.83,.25,1) both}
+.help-hazard{flex:0 0 12px;background-image:repeating-linear-gradient(135deg,#58b9d5 0,#58b9d5 18px,#17282e 18px,#17282e 36px)}
+.help-head{display:flex;align-items:center;padding:15px 19px;background:linear-gradient(90deg,#173642,#25292a 58%);border-bottom:1px solid #080909}
+.help-emblem{width:39px;height:39px;flex:0 0 39px;margin-right:14px;color:#17282e;background:#73d2ec;border:3px solid #172024;
+ border-radius:50%;font:bold 23px/33px Arial;text-align:center;box-shadow:0 0 0 2px #4b91a5,0 0 16px rgba(82,190,222,.3)}
+.help-heading{min-width:0;flex:1}.help-heading strong{display:block;color:#fff;font:16px Shentox,""Arial Black"",sans-serif;letter-spacing:.75px}
+.help-heading span{display:block;margin-top:4px;color:#8fc6d5;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
+.help-close{width:35px;height:35px;padding:0;color:#abb2b2;background:#242829;border:1px solid #596061;border-radius:8px;cursor:pointer;font:bold 18px Arial}
+.help-close:hover{color:#fff;background:#a93624;border-color:#ff7654}
+.help-body{flex:1;min-height:0;overflow-y:auto;padding:15px 17px 18px;background:#191c1d;
+ scrollbar-face-color:#437789;scrollbar-track-color:#111415;scrollbar-arrow-color:#9de8fb;
+ scrollbar-highlight-color:#6fabbc;scrollbar-shadow-color:#15282e;scrollbar-3dlight-color:#20282a;scrollbar-darkshadow-color:#090b0c}
+.help-quick{display:flex;margin:0 -4px 11px}.help-step{flex:1;margin:4px;padding:10px 9px;background:#203039;border:1px solid #386a79;
+ border-radius:3px 11px 3px 11px;animation:helpCardIn .35s ease-out both}
+.help-step:nth-child(2){animation-delay:.04s}.help-step:nth-child(3){animation-delay:.08s}.help-step:nth-child(4){animation-delay:.12s}
+.help-step b{display:block;color:#7cd7ee;font:15px Shentox,""Arial Black"",sans-serif}.help-step span{display:block;margin-top:4px;color:#c2c7c6;font-size:10px;line-height:1.4}
+.help-section{margin-top:11px;border:1px solid #414849;background:#222526;border-radius:4px 13px 4px 13px;overflow:hidden;
+ animation:helpCardIn .35s ease-out both}
+.help-section-title{padding:8px 11px;color:#ffd046;background:#292d2e;border-left:4px solid #ffd046;
+ font:11px Shentox,""Arial Black"",sans-serif;letter-spacing:.7px}
+.help-grid{display:flex;flex-wrap:wrap;padding:5px}.help-item{width:50%;padding:6px 8px 7px}
+.help-item b{display:block;margin-bottom:3px;color:#f3f4ef;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.35px}
+.help-item p{margin:0;color:#aeb4b3;font-size:10px;line-height:1.5}.help-item p strong{color:#ffd046}
+.help-danger{margin:10px 8px 8px;padding:9px 11px;color:#ffd0c2;background:#391813;border:1px solid #9f3725;border-radius:4px;
+ font-size:10px;line-height:1.5}.help-danger b{color:#ff7654;font-family:Shentox,""Arial Black"",sans-serif}
+.help-foot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 17px 15px;background:#25292a;border-top:1px solid #4a4e4f}
+.help-status{max-width:255px;color:#8da4aa;font-size:10px;line-height:1.4}.help-status.good{color:#8bd8c6}.help-buttons{display:flex}.help-buttons .btn+.btn{margin-left:8px}
+
+.secret-mods-layer{display:none;position:fixed;z-index:99;left:0;right:0;top:38px;bottom:0;
+ background:radial-gradient(circle at 126px 0,rgba(255,208,70,.17),transparent 310px),rgba(4,6,7,.72)}
+.secret-mods-layer.show{display:block;animation:secretBackdropWake .22s ease-out both}
+.secret-mods-panel{position:absolute;left:12px;top:9px;width:650px;height:calc(100% - 18px);max-width:calc(100% - 24px);max-height:690px;overflow:hidden;
+ display:flex;flex-direction:column;
+ color:#f4f4ef;background:#222628;border:2px solid #e5ad22;border-radius:5px 18px 5px 18px;
+ box-shadow:inset 0 0 0 2px #58440f,0 18px 55px rgba(0,0,0,.82),0 0 24px rgba(255,193,35,.18);
+ transform-origin:26px -19px;animation:secretPanelDeploy .44s cubic-bezier(.13,.86,.27,1) both}
+.secret-mods-panel:before,.secret-mods-panel:after{content:'';position:absolute;z-index:4;width:7px;height:7px;border-radius:50%;
+ background:#777b7c;border:2px solid #101112;box-shadow:inset 0 1px #c5c7c7}
+.secret-mods-panel:before{left:7px;top:19px}.secret-mods-panel:after{right:7px;bottom:7px}
+.secret-mods-hazard{position:relative;height:11px;flex:0 0 11px;overflow:hidden;border-bottom:2px solid #080909;background:#1a1c1d}
+.secret-mods-hazard:before{content:'';position:absolute;left:-72px;top:0;width:calc(100% + 144px);height:11px;
+ background-size:42px 42px;background-image:repeating-linear-gradient(135deg,#ffd046 0,#ffd046 15px,#1a1c1d 15px,#1a1c1d 30px);
+ animation:secretHazardFlow 1.2s steps(24,end) infinite}
+.secret-mods-head{display:flex;flex:0 0 auto;align-items:center;padding:13px 18px 12px;background:linear-gradient(100deg,#2d2a1d,#242829 58%,#18333c);
+ border-bottom:1px solid #080909}
+.secret-mods-mark{position:relative;width:46px;height:46px;flex:0 0 46px;margin-right:14px}
+.secret-mods-mark svg{display:block;width:46px;height:46px;overflow:visible;transform-origin:50% 50%;
+ animation:secretMarkSignal 2.2s ease-in-out infinite}
+.secret-mods-mark-shadow{fill:#090a0a;stroke:#090a0a;stroke-width:6;stroke-linejoin:round}
+.secret-mods-mark-rim{fill:#d99f17;stroke:#121415;stroke-width:3;stroke-linejoin:round}
+.secret-mods-mark-face{fill:#ffd046;stroke:#fff09a;stroke-width:1.5;stroke-linejoin:round}
+.secret-mods-letter-highlight{fill:#fff3a2;opacity:.65}
+.secret-mods-letter-face{fill:#252719}
+.secret-mods-heading{flex:1;min-width:0}.secret-mods-heading strong{display:block;color:#fff;
+ font:17px Shentox,""Arial Black"",sans-serif;letter-spacing:.8px}
+.secret-mods-heading span{display:block;margin-top:3px;color:#79cfe6;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.25px}
+.secret-mods-close{width:34px;height:34px;padding:0;color:#9fa5a5;background:#202324;border:1px solid #575c5d;
+ border-radius:4px 10px 4px 10px;cursor:pointer;font:bold 17px Arial}
+.secret-mods-close:hover{color:#fff;background:#a93624;border-color:#ff7654}
+.secret-mods-body{display:flex;flex:1;min-height:0;flex-direction:column;padding:11px 14px 13px;background:linear-gradient(180deg,#1b1e1f,#17191a)}
+.secret-mods-warning{position:relative;flex:0 0 auto;margin-bottom:8px;padding:7px 10px 7px 34px;color:#d5bf77;background:#302b1e;
+ border:1px solid #75601e;border-radius:3px;font-size:10px;line-height:1.45}
+.secret-mods-warning:before{content:'!';position:absolute;left:10px;top:7px;width:15px;height:15px;color:#28220e;
+ background:#ffd046;border-radius:50%;font:bold 11px/15px Arial;text-align:center}
+.secret-mod-row{display:flex;align-items:center;min-height:66px;padding:10px 11px;background:#22282a;border:1px solid #4a5558;
+ border-radius:4px 13px 4px 13px;box-shadow:inset 0 1px #333a3c;transition:border-color .2s,background .2s}
+.secret-mod-row+.secret-mod-row{margin-top:7px}
+.secret-mod-row.enabled{border-color:#b88a1c;background:linear-gradient(90deg,#302b1d,#22282a 70%)}
+.secret-mod-row.locked{opacity:.48}
+.secret-mod-copy{flex:1;min-width:0;padding-right:13px}.secret-mod-copy strong{display:block;color:#f4f4ef;
+ font:12px Shentox,""Arial Black"",sans-serif;letter-spacing:.55px}
+.secret-mod-copy span{display:block;margin-top:5px;color:#9fa6a6;font-size:10px;line-height:1.42}
+.secret-mod-copy em{display:inline-block;margin-top:7px;padding:3px 6px;color:#8f999b;background:#171a1b;border:1px solid #43494a;
+ border-radius:3px;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.75px;font-style:normal}
+.secret-mod-row.enabled .secret-mod-copy em{color:#ffe17a;border-color:#96701a;background:#292417}
+.secret-compat-reason{display:none!important;margin-top:5px!important;color:#e4a28f!important;font-size:9px!important;line-height:1.38!important}
+.secret-compat-reason.show{display:block!important}
+.secret-mod-actions{display:flex;flex:0 0 68px;flex-direction:column;align-items:stretch}
+.secret-mod-actions .secret-switch{flex:0 0 34px;align-self:center}
+.secret-mod-options{height:23px;margin-bottom:6px;padding:0;color:#84cfe2;background:#182125;border:1px solid #47636a;border-radius:3px 8px 3px 8px;
+ cursor:pointer;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
+.secret-mod-options:hover{color:#e8f9fd;background:#24404a;border-color:#73cde5}.secret-mod-options:disabled{cursor:not-allowed;opacity:.45}
+.secret-master-row{flex:0 0 auto;min-height:58px}
+.secret-mods-catalog-head{display:flex;flex:0 0 auto;align-items:flex-end;justify-content:space-between;margin-top:9px;padding:0 2px 7px;border-bottom:1px solid #3b4446}
+.secret-mods-catalog-label b{display:block;color:#73cee6;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.9px}
+.secret-mods-catalog-label span{display:block;margin-top:3px;color:#858f91;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.65px}
+.secret-mod-search{position:relative;width:245px;height:31px;background:#111415;border:1px solid #4c5b5f;border-radius:3px 9px 3px 9px;box-shadow:inset 0 2px 5px #050606}
+.secret-mod-search:before{content:'';position:absolute;left:10px;top:8px;width:9px;height:9px;border:2px solid #76cde4;border-radius:50%}
+.secret-mod-search:after{content:'';position:absolute;left:20px;top:18px;width:6px;height:2px;background:#76cde4;transform:rotate(45deg)}
+.secret-mod-search input{position:absolute;left:32px;right:8px;top:1px;width:calc(100% - 40px);height:27px;padding:0;color:#eef3f2;background:transparent;border:0;outline:0;
+ font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
+.secret-mod-search input::placeholder{color:#657174}
+.secret-mods-list{position:relative;flex:1;min-height:125px;margin-top:7px;padding:1px 8px 3px 1px;overflow-x:hidden;overflow-y:auto;
+ scrollbar-face-color:#45575b;scrollbar-track-color:#101314;scrollbar-arrow-color:#8fddf0;scrollbar-shadow-color:#0b0d0e;scrollbar-highlight-color:#657b80}
+.secret-mods-list::-webkit-scrollbar{width:11px}.secret-mods-list::-webkit-scrollbar-track{background:#101314;border:1px solid #050606}
+.secret-mods-list::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#33454a,#587078);border:2px solid #101314;border-radius:5px}
+.secret-mods-list::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#45616a,#70a5b4)}
+.secret-mod-card{animation:secretCardDock .26s ease-out both}.secret-mod-card:nth-child(2){animation-delay:.035s}.secret-mod-card:nth-child(3){animation-delay:.07s}.secret-mod-card:nth-child(4){animation-delay:.105s}
+.secret-mod-tag{display:inline-block;margin:0 0 5px!important;color:#6fcbe3!important;font:8px Shentox,""Arial Narrow"",sans-serif!important;letter-spacing:.8px!important}
+.secret-mods-empty{display:none;margin:18px 5px;padding:18px;text-align:center;color:#758184;background:#15191a;border:1px dashed #415054;border-radius:4px;
+ font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.secret-switch{position:relative;width:68px;height:34px;flex:0 0 68px;padding:0;cursor:pointer;outline:none;
+ background:#151718;border:2px solid #565b5c;border-radius:7px;box-shadow:inset 0 3px 7px #060707,0 2px #080909}
+.secret-switch:disabled{cursor:not-allowed;filter:alpha(opacity=55);opacity:.55}
+.secret-switch-track{position:absolute;left:7px;right:7px;top:13px;height:5px;background:#4b5051;border-radius:4px;
+ box-shadow:inset 0 1px #191b1c}
+.secret-switch-knob{position:absolute;left:4px;top:4px;width:22px;height:22px;background:linear-gradient(#8a8f8f,#555a5b);
+ border:2px solid #1a1c1d;border-radius:5px;box-shadow:inset 0 1px #bfc2c2,0 1px 3px #000;
+ transition:left .24s cubic-bezier(.18,.82,.28,1),background .2s,box-shadow .2s}
+.secret-switch.on{border-color:#c08e18}.secret-switch.on .secret-switch-track{background:#d69c15;box-shadow:0 0 8px rgba(255,208,70,.45)}
+.secret-switch.on .secret-switch-knob{left:38px;background:linear-gradient(#fff29a,#ffd046 55%,#d68c0d);
+ box-shadow:inset 0 1px #fff9cb,0 0 10px rgba(255,208,70,.6)}
+.secret-mods-slots{flex:0 0 auto;margin-top:8px;padding:7px 10px;border:1px dashed #45575d;background:#192124;border-radius:3px;
+ color:#78919a;font-size:9px;line-height:1.45;letter-spacing:.35px;white-space:nowrap}
+.secret-mods-slots b{display:inline;margin-right:7px;color:#72cce5;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
+.secret-mods-feedback{display:none;flex:0 0 auto;margin-top:8px;padding:7px 10px;border:1px solid #566062;background:#202426;border-radius:3px;
+ color:#aeb5b5;font-size:9px;line-height:1.45}
+.secret-mods-feedback.show{display:block}.secret-mods-feedback.good{display:block;color:#a9dfd3;border-color:#3f8273;background:#1b302c}
+.secret-mods-feedback.bad{display:block;color:#ffad96;border-color:#9e3e29;background:#361a15}
+.secret-mods-feedback.working{display:block;color:#ffe17b;border-color:#96701a;background:#302817;animation:warningBlink 1.2s ease-in-out infinite}
+.secret-mods-status{display:flex;flex:0 0 auto;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #383d3e;
+ color:#838a8a;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.75px}
+.secret-mods-status i{width:7px;height:7px;margin-right:7px;background:#656b6b;border-radius:50%;box-shadow:0 0 0 2px #151718}
+.secret-mods-status.on{color:#e2c15f}.secret-mods-status.on i{background:#ffd046;box-shadow:0 0 8px #ffd046}
+
+.tutorial{display:none;position:fixed;z-index:160;left:0;right:0;top:0;bottom:0;overflow:hidden}
+.tutorial.show{display:block}.tutorial-shade{position:fixed;z-index:0;background:rgba(4,6,7,.82);pointer-events:none;
+ transition:left .38s cubic-bezier(.2,.8,.2,1),top .38s cubic-bezier(.2,.8,.2,1),width .38s cubic-bezier(.2,.8,.2,1),height .38s cubic-bezier(.2,.8,.2,1)}
+.tutorial-focus{position:fixed;z-index:1;border:3px solid #ffd046;border-radius:9px;
+ box-sizing:border-box;box-shadow:0 0 0 2px #161819,0 0 27px rgba(255,208,70,.75);
+ transition:left .38s cubic-bezier(.2,.8,.2,1),top .38s cubic-bezier(.2,.8,.2,1),width .38s cubic-bezier(.2,.8,.2,1),height .38s cubic-bezier(.2,.8,.2,1);
+ pointer-events:none}
+.tutorial-focus:before{content:'';position:absolute;left:5px;right:5px;top:-7px;height:4px;background:#ffd046;box-shadow:0 0 9px #ffd046;
+ transform-origin:50% 50%;animation:tutorialFocusSignal 1.7s ease-in-out infinite}
+.tutorial-card{position:fixed;z-index:3;width:430px;max-width:calc(100% - 28px);overflow:hidden;background:#25292a;border:2px solid #65bfd8;
+ border-radius:6px 18px 6px 18px;box-shadow:inset 0 0 0 2px #193c47,0 18px 55px #000;pointer-events:auto}
+.tutorial-card.enter{animation:tutorialCardIn .4s cubic-bezier(.16,.84,.28,1) both}
+.tutorial-rail{position:relative;height:10px;overflow:hidden;background:#17282e;border-bottom:1px solid #080909;
+ box-shadow:inset 0 1px rgba(186,241,255,.35),inset 0 -1px #0d171a}
+.tutorial-rail:before{content:'';position:absolute;left:-84px;top:0;width:calc(100% + 168px);height:10px;
+ background-size:42px 42px;background-image:repeating-linear-gradient(135deg,#63c6e2 0,#63c6e2 15px,#17282e 15px,#17282e 30px);
+ transform:translate3d(-42px,0,0);backface-visibility:hidden;animation:tutorialRailFlow 1.25s steps(24,end) infinite;pointer-events:none}
+.tutorial-rail:after{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:rgba(194,243,255,.42);pointer-events:none}
+.tutorial-content{padding:15px 17px 12px}.tutorial-meta{display:flex;align-items:center;margin-bottom:8px}
+.tutorial-number{position:relative;width:50px;height:50px;min-width:50px;max-width:50px;flex:0 0 50px;margin-right:12px}
+.tutorial-number svg{position:absolute;left:0;top:0;width:50px;height:50px;display:block;overflow:visible}
+.tutorial-number-shadow{fill:#070808;stroke:#070808;stroke-width:6;stroke-linejoin:round}
+.tutorial-number-mount{fill:#202324;stroke:#090a0a;stroke-width:3;stroke-linejoin:round}
+.tutorial-number-rim{fill:#d49312;stroke:#ffd046;stroke-width:2.4;stroke-linejoin:round}
+.tutorial-number-face{fill:url(#tutorialBadgeFaceGradient);stroke:#8b5b0c;stroke-width:1.5;stroke-linejoin:round}
+.tutorial-number-inset{fill:none;stroke:#f5ba24;stroke-width:1;stroke-linejoin:round;opacity:.8}
+.tutorial-number-highlight{fill:none;stroke:#fff2a0;stroke-width:1.6;stroke-linecap:square;stroke-linejoin:miter;opacity:.82}
+.tutorial-number-shade{fill:none;stroke:#a86909;stroke-width:2;stroke-linecap:square;stroke-linejoin:miter;opacity:.85}
+.tutorial-number-text{fill:#202318;stroke:#fff0a0;stroke-width:.35;font:bold 16px Arial;text-anchor:middle}
+.tutorial-label{color:#75cde5;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.2px}.tutorial-title{margin-top:3px;color:#fff;
+ font:16px Shentox,""Arial Black"",sans-serif;letter-spacing:.4px}
+.tutorial-text{margin:0;color:#c5cac9;font-size:11px;line-height:1.58}.tutorial-tip{position:relative;margin-top:10px;padding:8px 9px 8px 31px;
+ color:#ecd07c;background:#332d1e;border:1px solid #72571d;border-radius:3px;font-size:10px;line-height:1.45}
+.tutorial-tip:before{content:'i';position:absolute;left:10px;top:8px;width:14px;height:14px;color:#302716;background:#ffd046;border-radius:50%;
+ font:bold 10px/14px Arial;text-align:center}
+.tutorial-progress{display:flex;margin:0 17px 12px}.tutorial-progress i{height:5px;flex:1;margin-right:4px;background:#414748;border-radius:3px}
+.tutorial-progress i:last-child{margin-right:0}.tutorial-progress i.done{background:#4f9bb0}.tutorial-progress i.current{background:#ffd046;box-shadow:0 0 7px rgba(255,208,70,.55)}
+.tutorial-actions{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 14px;border-top:1px solid #454a4b;background:#202324}
+.tutorial-actions-left{display:flex}.tutorial-actions .btn+.btn{margin-left:7px}.tutorial-next{min-width:112px}
 
 .busy{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:20;background:rgba(8,9,9,.88);align-items:center;justify-content:center}
 .busy.show{display:flex}.busy-card{position:relative;width:330px;padding:22px 25px 20px;background:#292c2e;border:2px solid #ffd046;
@@ -263,6 +516,7 @@ button{font:inherit}
 .loading-fill{height:4px;width:43%;background:linear-gradient(90deg,#f19d19,#fff17d,#f19d19);animation:scan 1.1s linear infinite}
 @keyframes scan{0%{margin-left:-43%}100%{margin-left:100%}}
 @keyframes hazardMove{0%{background-position:0 0}100%{background-position:51px 0}}
+@keyframes mainHazardFlow{0%{transform:translate3d(-51px,0,0)}100%{transform:translate3d(0,0,0)}}
 @keyframes panelAssemble{0%{opacity:0;transform:translateY(-8px) scaleY(.96)}100%{opacity:1;transform:translateY(0) scaleY(1)}}
 @keyframes indicatorPulse{0%,72%,100%{background:#ffd046;box-shadow:2px 0 #9c6a00}82%{background:#fff3a0;box-shadow:2px 0 #9c6a00,0 0 9px #ffd046}}
 @keyframes shutterOpen{0%{opacity:0;transform:scaleY(.2)}100%{opacity:1;transform:scaleY(1)}}
@@ -279,11 +533,25 @@ button{font:inherit}
 @keyframes stopFlash{0%,68%,100%{background:#d84324;box-shadow:none}82%{background:#ff6b3f;box-shadow:0 0 12px rgba(255,82,42,.75)}}
 @keyframes dangerSweep{0%,52%{left:-55%}78%,100%{left:125%}}
 @keyframes buttonDanger{0%,70%,100%{transform:scale(1)}82%{transform:scale(1.14);box-shadow:0 0 9px #ffd046}}
+@keyframes helpDeploy{0%{opacity:0;transform:translateY(-18px) scale(.96)}68%{transform:translateY(2px) scale(1.004)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes helpCardIn{0%{opacity:0;transform:translateY(7px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes onboardMark{0%,100%{transform:rotate(45deg) scale(1)}50%{transform:rotate(45deg) scale(1.08);box-shadow:0 0 0 3px #101112,0 0 34px rgba(255,208,70,.6)}}
+@keyframes onboardQuestion{0%,70%,100%{color:#ffd046;transform:scale(1)}82%{color:#fff3a0;transform:scale(1.1)}}
+@keyframes tutorialFocusSignal{0%,100%{opacity:.7;transform:scaleX(.68)}50%{opacity:1;transform:scaleX(1)}}
+@keyframes tutorialCardIn{0%{opacity:0;transform:translate3d(-18px,12px,0) scale(.94)}68%{opacity:1;transform:translate3d(3px,-1px,0) scale(1.012)}100%{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+@keyframes tutorialRailFlow{0%{transform:translate3d(-42px,0,0)}100%{transform:translate3d(0,0,0)}}
+@keyframes secretBackdropWake{0%{opacity:0}100%{opacity:1}}
+@keyframes secretPanelDeploy{0%{opacity:0;transform:translate3d(-28px,-24px,0) scale(.78) rotate(-2deg)}58%{opacity:1;transform:translate3d(4px,3px,0) scale(1.015) rotate(.25deg)}78%{transform:translate3d(-2px,0,0) scale(.996)}100%{opacity:1;transform:translate3d(0,0,0) scale(1) rotate(0)}}
+@keyframes secretHazardFlow{0%{transform:translate3d(-42px,0,0)}100%{transform:translate3d(0,0,0)}}
+@keyframes secretMarkSignal{0%,72%,100%{transform:scale(1);opacity:1}82%{transform:scale(1.07);opacity:.88}}
+@keyframes secretEmblemUnlock{0%{transform:rotate(45deg) scale(1)}45%{transform:rotate(135deg) scale(1.12);box-shadow:0 0 0 1px #ffd13b,0 0 15px #ffd046}100%{transform:rotate(45deg) scale(1)}}
+@keyframes secretCardDock{0%{opacity:0;transform:translate3d(-10px,0,0)}100%{opacity:1;transform:translate3d(0,0,0)}}
 
 @media(max-width:900px){
  .shell{padding-left:13px;padding-right:13px}.local{display:none}.picker{flex-wrap:wrap}.save-picker{width:100%;flex-basis:100%;margin-bottom:8px}
  .picker .save-picker+*{margin-left:0}.picker .btn+.btn{margin-left:8px}.stats{flex-wrap:wrap}.stat{flex-basis:30%}
  .mini{width:33.333%}.raid-meter-wrap{display:none}.repair-bar{align-items:flex-end}.repair-bar p{padding-right:15px}.repair-actions{flex-direction:column}.repair-actions .btn+.btn{margin:8px 0 0}
+ .help-grid{display:block}.help-item{width:100%}.help-quick{flex-wrap:wrap}.help-step{flex-basis:44%}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -291,7 +559,7 @@ button{font:inherit}
 <body onload=""boot()"">
 <div class=""window-bar"">
   <div class=""window-grip"" onmousedown=""beginWindowDrag()"">
-    <div class=""window-emblem"" aria-label=""Raid Rescue""><div class=""window-emblem-mark"">
+    <div class=""window-emblem secret-trigger"" id=""secretModsTrigger"" aria-label=""Raid Rescue"" onselectstart=""return false"" onmousedown=""return secretTriggerMouseDown(event)"" onclick=""toggleSecretMods(event)""><div class=""window-emblem-mark"">
       <svg class=""logo-letter"" viewBox=""0 0 22 22"" aria-hidden=""true"">
         <path class=""logo-letter-highlight"" transform=""translate(-.25 1)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
         <path class=""logo-letter-face"" transform=""translate(-.25 0)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
@@ -300,15 +568,23 @@ button{font:inherit}
     <div class=""window-title"">RAID RESCUE <span>SCRAP MECHANIC SAVE RECOVERY</span></div>
   </div>
   <div class=""window-controls"">
+    <button type=""button"" class=""window-button help"" id=""helpBtn"" title=""Help and tutorial"" aria-label=""Help and tutorial"" onclick=""openHelp()"">
+      <svg class=""window-help-icon"" viewBox=""0 0 24 24"" aria-hidden=""true"" focusable=""false"">
+        <circle class=""window-help-shadow"" cx=""12"" cy=""12"" r=""10""></circle>
+        <circle class=""window-help-ring"" cx=""12"" cy=""12"" r=""9""></circle>
+        <path class=""window-help-stem"" d=""M8.8 8.7C9 6.6 10.3 5.5 12.3 5.5C14.4 5.5 15.8 6.7 15.8 8.5C15.8 10 15 10.8 13.7 11.6C12.5 12.3 12 13.1 12 14.3""></path>
+        <circle class=""window-help-dot"" cx=""12"" cy=""17.5"" r=""1.05""></circle>
+      </svg>
+    </button>
     <button type=""button"" class=""window-button minimize"" title=""Minimize"" aria-label=""Minimize"" onclick=""minimizeWindow()""></button>
     <button type=""button"" class=""window-button close"" title=""Close"" aria-label=""Close"" onclick=""closeWindow()""></button>
   </div>
 </div>
 <div class=""app-scroll"" id=""appScroll"">
-<div class=""hazard""></div>
+<div class=""hazard"" id=""mainHazard""></div>
 <div class=""shell"">
   <div class=""topbar"">
-    <div class=""identity"">
+    <div class=""identity"" id=""identityPanel"">
       <div class=""brand-mark"">
         <svg class=""logo-letter"" viewBox=""0 0 22 22"" aria-hidden=""true"">
           <path class=""logo-letter-highlight"" transform=""translate(-.25 1)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
@@ -320,7 +596,7 @@ button{font:inherit}
     <div class=""local""><b></b>OFFLINE / LOCAL SAVE ACCESS</div>
   </div>
 
-  <div class=""panel selector-panel"">
+  <div class=""panel selector-panel"" id=""selectorPanel"">
     <div class=""panel-title""><strong>WORLD SELECTOR</strong><span>SCRAP MECHANIC &middot; CHAPTER 2</span></div>
     <div class=""selector-body"">
       <div id=""gameBanner""></div>
@@ -340,7 +616,7 @@ button{font:inherit}
     </div>
   </div>
 
-  <div class=""panel diagnostics"">
+  <div class=""panel diagnostics"" id=""diagnosticsPanel"">
     <div class=""panel-title""><strong>RAID DIAGNOSTICS</strong><span>READ-ONLY UNTIL REPAIR IS CONFIRMED</span></div>
     <div class=""diagnostic-body"" id=""result"">
       <div class=""empty""><div class=""diamond""><span>?</span></div><h4>NO WORLD ANALYZED</h4><p>Select a survival world and run the raid diagnostic.</p></div>
@@ -350,6 +626,339 @@ button{font:inherit}
 </div>
 </div>
 <div class=""scroll-track"" id=""scrollTrack""><div class=""scroll-thumb"" id=""scrollThumb""></div></div>
+
+<div class=""secret-mods-layer"" id=""secretModsLayer"" onclick=""secretModsBackdropClick(event)"">
+  <div class=""secret-mods-panel"" role=""dialog"" aria-modal=""true"" aria-labelledby=""secretModsTitle"">
+    <div class=""secret-mods-hazard""></div>
+    <div class=""secret-mods-head"">
+      <div class=""secret-mods-mark"">
+        <svg viewBox=""0 0 64 64"" aria-hidden=""true"" focusable=""false"">
+          <polygon class=""secret-mods-mark-shadow"" points=""32,2 62,32 32,62 2,32""></polygon>
+          <polygon class=""secret-mods-mark-rim"" points=""32,5 59,32 32,59 5,32""></polygon>
+          <polygon class=""secret-mods-mark-face"" points=""32,9 55,32 32,55 9,32""></polygon>
+          <path class=""secret-mods-letter-highlight"" transform=""translate(8 8.75) scale(.75)"" d=""M45 17H23L18 22V31L23 36H37L39 38V41L37 43H19V50H41L46 45V36L41 31H27L25 29V26L27 24H45Z""></path>
+          <path class=""secret-mods-letter-face"" transform=""translate(8 8) scale(.75)"" d=""M45 17H23L18 22V31L23 36H37L39 38V41L37 43H19V50H41L46 45V36L41 31H27L25 29V26L27 24H45Z""></path>
+        </svg>
+      </div>
+      <div class=""secret-mods-heading""><strong id=""secretModsTitle"">SUPER SECRET MODS</strong><span>EXPERIMENTAL PATCH BAY · AUTHORIZED MECHANICS ONLY</span></div>
+      <button type=""button"" class=""secret-mods-close"" aria-label=""Close secret mods"" onclick=""closeSecretMods()"">&times;</button>
+    </div>
+    <div class=""secret-mods-body"">
+      <div class=""secret-mods-warning"">Secret patches are optional and separate from normal save repair. Verified backups rotate automatically instead of growing forever.</div>
+      <div class=""secret-mod-row secret-master-row"" id=""secretModsMasterRow"">
+        <div class=""secret-mod-copy""><strong>SUPER SECRET MODS</strong><span>Master switch for experimental patches added to this hidden patch bay.</span></div>
+        <button type=""button"" class=""secret-switch"" id=""secretModsMaster"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Super Secret Mods"" onclick=""toggleSecretModsEnabled()"">
+          <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+        </button>
+      </div>
+      <div class=""secret-mods-catalog-head"">
+        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 4 AVAILABLE</span></div>
+        <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""FILTER MODS..."" onkeyup=""filterSecretMods()"" /></div>
+      </div>
+      <div class=""secret-mods-list"" id=""secretModsList"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">UTILITY &middot; CONNECT TOOL</span><strong>RESOURCE LOCATOR DOTS</strong><span id=""resourceLocatorDescription"">Reveal haybot spines and refineable resource cores with an inactive Connect Tool output.</span><em id=""resourceLocatorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""resourceLocatorReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-search=""developer dev commands cheats unlimited god spawn time raid host chat utility"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock built-in Survival commands such as /unlimited, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
+          <div class=""secret-mod-actions"">
+            <button type=""button"" class=""secret-mod-options"" id=""developerCommandsOptions"" aria-label=""Open Developer Commands options"" onclick=""openDeveloperCommandOptions()"" disabled=""disabled"">OPTIONS</button>
+            <button type=""button"" class=""secret-switch"" id=""developerCommandsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Developer Commands"" onclick=""toggleDeveloperCommandsMod()"" disabled=""disabled"">
+              <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+            </button>
+          </div>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""chemicalFertilizerRow"" data-search=""chemical fertilizer splash farm plot grow bed red farmbot projectile farming dependency"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">FARMING &middot; PROJECTILES</span><strong>CHEMICAL FERTILIZER SPLASH</strong><span>Chemical shots fertilize plots; Red Farmbot pesticide fertilizes a 2.5-block radius.</span><em id=""chemicalFertilizerState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""chemicalFertilizerReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""chemicalFertilizerSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Chemical Fertilizer Splash"" onclick=""toggleChemicalFertilizerMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""dualFluidCannonRow"" data-search=""dual fluid water cannon chemical container logic projectile farming dependency dangerous save"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MACHINERY &middot; SAVE-SENSITIVE</span><strong>DUAL-FLUID WATER CANNON</strong><span>Connect Water and Chemical Containers; each logic pulse fires every available liquid.</span><em id=""dualFluidCannonState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""dualFluidCannonReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""dualFluidCannonSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Dual-Fluid Water Cannon"" onclick=""toggleDualFluidCannonMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
+        </div>
+        <div class=""secret-mods-empty"" id=""secretModsEmpty"">NO PATCHES MATCH THIS FILTER</div>
+      </div>
+      <div class=""secret-mods-feedback"" id=""secretModsFeedback""></div>
+      <div class=""secret-mods-slots""><b>DEPENDENCY-SAFE CATALOG</b>Linked patches install and roll back together; risky removals require confirmation.</div>
+      <div class=""secret-mods-status"" id=""secretModsStatus""><i></i><span>SECRET PATCH SYSTEM OFFLINE</span></div>
+    </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal cannon-danger-modal"" id=""cannonDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""cannonDangerTitle"" onclick=""cannonDangerBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head"">
+      <div class=""hotfix-alert""><span>!</span></div>
+      <div class=""hotfix-title""><strong id=""cannonDangerTitle"">CREATION / SAVE COMPATIBILITY DANGER</strong><span id=""cannonDangerKicker"">DUAL-FLUID WATER CANNON REMOVAL</span></div>
+    </div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"">Worlds saved with a Chemical Container connected to a mounted water cannon can fail to load correctly after the original two-input cannon script is restored.</p>
+      <ul class=""hotfix-checks"">
+        <li>Cancel this warning and launch Scrap Mechanic while the mod is still installed.</li>
+        <li>Disconnect every Chemical Container wire from every mounted water cannon.</li>
+        <li>Save each affected world, exit to Windows, and wait for Raid Rescue to unlock.</li>
+      </ul>
+      <div class=""hotfix-stop"">DO NOT CONTINUE UNTIL EVERY CHEMICAL CANNON CONNECTION IS REMOVED AND THE WORLD IS SAVED.</div>
+      <div class=""cannon-danger-ack"">
+        <label><input type=""checkbox"" id=""cannonDangerAck"" onchange=""updateCannonDangerConfirm()"" /><span class=""cannon-danger-box""></span><span>I disconnected every Chemical Container from mounted water cannons and saved all affected worlds.</span></label>
+      </div>
+    </div>
+    <div class=""hotfix-foot"">
+      <div class=""hotfix-foot-note"">Cancel is the safe choice if you are not completely sure.</div>
+      <div class=""hotfix-buttons"">
+        <button type=""button"" class=""btn"" id=""cannonDangerCancel"" onclick=""closeCannonDangerConfirm()"">CANCEL</button>
+        <button type=""button"" class=""btn hotfix-confirm"" id=""cannonDangerConfirmButton"" onclick=""confirmCannonDangerChange()"" disabled=""disabled""><span>!</span>DISABLE CANNON MOD</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal developer-command-modal"" id=""developerCommandModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""developerCommandTitle"" onclick=""developerCommandBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head"">
+      <div class=""hotfix-alert""><span>!</span></div>
+      <div class=""hotfix-title""><strong id=""developerCommandTitle"">DEVELOPER COMMAND OPTIONS</strong><span>PLAYER ACCESS CONTROL &middot; BUILT-IN SURVIVAL TOOLS</span></div>
+    </div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"" id=""developerCommandIntro"">Choose who receives the built-in developer command list when you host a Survival world.</p>
+      <div class=""command-access-grid"">
+        <button type=""button"" class=""command-access-option selected"" id=""developerModeHost"" onclick=""selectDeveloperCommandMode('host')"">
+          <span class=""command-access-bolt""></span><strong>HOST ONLY</strong><small>RECOMMENDED</small><span>Only the world host can use commands. Joined players receive normal Survival controls.</span>
+        </button>
+        <button type=""button"" class=""command-access-option"" id=""developerModeEveryone"" onclick=""selectDeveloperCommandMode('everyone')"">
+          <span class=""command-access-bolt""></span><strong>EVERY PLAYER</strong><small>HIGH TRUST REQUIRED</small><span>Every joined player can use world-changing developer commands while connected.</span>
+        </button>
+      </div>
+      <ul class=""hotfix-checks"">
+        <li>Includes /unlimited, /god, /spawn, time controls, item commands, and raid utilities.</li>
+        <li>/kick and /ban remain restricted to the host in both access modes.</li>
+        <li>Installing or changing access edits no save data; commands players run can permanently change the world.</li>
+      </ul>
+      <div class=""command-everyone-warning"" id=""developerEveryoneWarning"">
+        <div class=""hotfix-stop"">ANY JOINED PLAYER COULD SPAWN UNITS, CHANGE RAIDS OR TIME, GRANT ITEMS, OR ALTER OTHER WORLD STATE.</div>
+        <div class=""command-access-ack""><label><input type=""checkbox"" id=""developerEveryoneAck"" onchange=""updateDeveloperCommandOptionButton()"" /><span class=""command-access-box""></span><span>I trust every player who may join and understand their commands can permanently change the world.</span></label></div>
+      </div>
+    </div>
+    <div class=""hotfix-foot"">
+      <div class=""hotfix-foot-note"" id=""developerCommandFootNote"">Close Scrap Mechanic before applying this access mode.</div>
+      <div class=""hotfix-buttons"">
+        <button type=""button"" class=""btn"" onclick=""closeDeveloperCommandConfirm()"">CANCEL</button>
+        <button type=""button"" class=""btn hotfix-confirm"" id=""developerCommandConfirmButton"" onclick=""applyDeveloperCommandOptions()""><span>!</span>INSTALL HOST ONLY</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal dependency-modal"" id=""dependencyModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""dependencyTitle"" onclick=""dependencyBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head"">
+      <div class=""hotfix-alert""><span>!</span></div>
+      <div class=""hotfix-title""><strong id=""dependencyTitle"">DEPENDENCY CHANGE REQUIRED</strong><span id=""dependencyKicker"">DUAL-FLUID PATCH COORDINATOR</span></div>
+    </div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"" id=""dependencyIntro"">This action changes two linked secret mods.</p>
+      <ul class=""hotfix-checks"">
+        <li id=""dependencyFirstChange"">The required dependency will be changed first.</li>
+        <li id=""dependencySecondChange"">The requested cannon patch will be changed second.</li>
+        <li>Both operations create checksum-verified backups and roll back together if either one fails.</li>
+      </ul>
+      <div class=""hotfix-stop"">SCRAP MECHANIC MUST BE COMPLETELY CLOSED BEFORE CHANGING THESE PATCHES.</div>
+    </div>
+    <div class=""hotfix-foot"">
+      <div class=""hotfix-foot-note"">One Windows administrator request covers the complete dependency operation.</div>
+      <div class=""hotfix-buttons"">
+        <button type=""button"" class=""btn"" onclick=""closeDependencyConfirm()"">CANCEL</button>
+        <button type=""button"" class=""btn hotfix-confirm"" id=""dependencyConfirmButton"" onclick=""confirmDependencyChange()""><span>!</span>CONFIRM CHANGES</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class=""onboard-modal"" id=""onboardModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""onboardTitle"">
+  <div class=""onboard-dialog"">
+    <div class=""onboard-hazard""></div>
+    <div class=""onboard-main"">
+      <div class=""onboard-mark""><span>?</span></div>
+      <div class=""onboard-copy"">
+        <div class=""onboard-kicker"">FIRST START &middot; RECOVERY ASSISTANT</div>
+        <h2 id=""onboardTitle"">WOULD YOU LIKE A QUICK TUTORIAL?</h2>
+        <p>An interactive two-minute tour will show you how to choose the correct world, read raid information, make a safe backup-first repair, and use the temporary game hotfix.</p>
+      </div>
+    </div>
+    <div class=""onboard-preview"">
+      <div>No technical knowledge required</div>
+      <div>Nothing is changed during the tour</div>
+      <div>Replay it anytime from Help</div>
+    </div>
+    <div class=""onboard-actions"">
+      <p><b>Important:</b> Scrap Mechanic must be closed before Raid Rescue opens a world save.</p>
+      <div><button type=""button"" class=""btn"" onclick=""declineTutorial()"">NOT NOW</button><button type=""button"" class=""btn btn-primary"" id=""onboardStart"" onclick=""acceptTutorial()"">START TUTORIAL</button></div>
+    </div>
+  </div>
+</div>
+
+<div class=""help-modal"" id=""helpModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""helpTitle"" onclick=""helpBackdropClick(event)"">
+  <div class=""help-dialog"">
+    <div class=""help-hazard""></div>
+    <div class=""help-head"">
+      <div class=""help-emblem"">?</div>
+      <div class=""help-heading""><strong id=""helpTitle"">RAID RESCUE FIELD MANUAL</strong><span>QUICK START &middot; DIAGNOSTICS &middot; REPAIRS &middot; TEMPORARY HOTFIX</span></div>
+      <button type=""button"" class=""help-close"" title=""Close help"" aria-label=""Close help"" onclick=""closeHelp()"">&times;</button>
+    </div>
+    <div class=""help-body"" id=""helpBody"">
+      <div class=""help-quick"">
+        <div class=""help-step""><b>01</b><span>Close Scrap Mechanic completely.</span></div>
+        <div class=""help-step""><b>02</b><span>Select the correct Survival world.</span></div>
+        <div class=""help-step""><b>03</b><span>Analyze and review every detected raid.</span></div>
+        <div class=""help-step""><b>04</b><span>Repair only after checking the results.</span></div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">CHOOSING AND ANALYZING A WORLD</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>AUTOMATIC SAVE LIST</b><p>Raid Rescue searches every Scrap Mechanic <strong>User_*</strong> Survival folder and puts the newest saves first. Check the world name, date, size, and user folder before continuing.</p></div>
+          <div class=""help-item""><b>BROWSE</b><p>Use Browse only when the save is not listed automatically. Choose the world’s normal <strong>.db</strong> file, not a backup file.</p></div>
+          <div class=""help-item""><b>ANALYZE WORLD</b><p>This is a read-only scan. It checks SQLite health, reads save information, and decodes the raid-manager record without changing the world.</p></div>
+          <div class=""help-item""><b>LIVE-SAVE SAFETY LOCK</b><p>If Scrap Mechanic is running, world controls lock. A second native check happens immediately before SQLite opens, preventing stale or fast clicks from reaching the live database.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">UNDERSTANDING RAID DIAGNOSTICS</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>DATABASE HEALTH / SAVE VERSION</b><p><strong>Healthy</strong> means SQLite passed its integrity check. Unsupported legacy saves are never edited.</p></div>
+          <div class=""help-item""><b>TIER, THREAT, AND STATE</b><p>Tier shows raid difficulty. Threat shows raid progress. State and timing values help identify a raid that stopped advancing.</p></div>
+          <div class=""help-item""><b>ENEMIES AND CROPS</b><p>Planned enemies show the raid composition. Stored crop references show what originally contributed to the raid calculation.</p></div>
+          <div class=""help-item""><b>PERMANENT RAID WARNING</b><p>A likely stuck raid is flagged when saved crop references no longer match live harvestables while the raid record remains active.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">CLEAR ALL RAIDS — SAVE REPAIR</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>WHAT IT CHANGES</b><p>It removes only the exact base-game raid-manager storage record. This clears persisted raid state so the game can rebuild it normally.</p></div>
+          <div class=""help-item""><b>WHAT IT LEAVES ALONE</b><p>Inventories, builds, quests, players, containers, terrain, and unrelated script data are not edited.</p></div>
+          <div class=""help-item""><b>BACKUP FIRST</b><p>A timestamped copy is created beside the save and verified before repair. The repaired database must also pass a final integrity check.</p></div>
+          <div class=""help-item""><b>AFTER REPAIR</b><p>Start the game, load the world, confirm the stuck raid is gone, then save normally. Keep the backup until everything is confirmed.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">INSTALL / UPDATE HOTFIX — GAME PATCH</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>WHAT IT FIXES</b><p>The cumulative Scrap Mechanic 1.0.2 hotfix repairs stuck raid behavior and synchronizes fertilizer growth timing with the real server-side crop finish time.</p></div>
+          <div class=""help-item""><b>SAFE UPDATES</b><p>It accepts only exact supported original scripts or verified earlier Raid Rescue patches. Running it again safely adds newer fixes without removing older ones.</p></div>
+          <div class=""help-item""><b>ONE ADMINISTRATOR PROMPT</b><p>Windows may ask once because Steam commonly installs games under Program Files. A hidden authenticated patch session then handles later hotfix and secret-mod actions until Raid Rescue closes. Verified backups are stored under <strong>%LOCALAPPDATA%\Raid Rescue\Game Backups</strong>.</p></div>
+          <div class=""help-item""><b>AUTOMATIC CACHE RESET</b><p>After a patch changes Lua files, Raid Rescue deletes only the generated <strong>core_data.cbo</strong> cache. Scrap Mechanic rebuilds it on the next normal launch, which may take a little longer. The <strong>-dev</strong> option is not required.</p></div>
+          <div class=""help-item""><b>TEMPORARY MEANS REVERSIBLE</b><p>A Steam update or <strong>Verify integrity of game files</strong> can restore official scripts. Re-run the latest Raid Rescue hotfix afterward only if the game bug still exists.</p></div>
+        </div>
+        <div class=""help-danger""><b>DO NOT PATCH A RUNNING GAME.</b> Close Scrap Mechanic completely. If installation is interrupted, use the verified game backup or Steam’s Verify integrity option before trying again.</div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; BACKUPS AND REMOVAL</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>ADAPTIVE GAME UPDATES</b><p>On a newer verified Steam build, <strong>Compatible Game Update</strong> means every protected snippet and callback is still exact. Toggle the wanted mod to reapply it manually; Raid Rescue never reinstalls mods automatically.</p></div>
+          <div class=""help-item""><b>PROTECTED CODE</b><p>Formatting or comments inside required code block the patch. Unrelated updated code elsewhere is preserved. The normal cumulative raid/fertilizer hotfix remains strictly version-locked.</p></div>
+          <div class=""help-item""><b>HYBRID RESTORATION</b><p>Unchanged adaptive installs restore their exact pre-install bytes. If unrelated edits were added later, Raid Rescue removes only its intact snippets. Edited, duplicated, or partial patch snippets block removal safely.</p></div>
+          <div class=""help-item""><b>HOTFIX INDEPENDENCE</b><p>Chemical Fertilizer removal restores the exact state from before that mod. If the separate cumulative fertilizer hotfix was installed, that normal hotfix remains installed.</p></div>
+          <div class=""help-item""><b>BLOCKED STATES</b><p><strong>Required Code Changed</strong>, <strong>Other Modification Detected</strong>, and <strong>Partial Patch</strong> identify unsafe files without writing. Steam Verify can restore official files, but changed protected features may require a Raid Rescue update.</p></div>
+          <div class=""help-item""><b>BOUNDED RETENTION</b><p>Raid Rescue keeps the two newest verified backups for each install, remove, or configure action. Superseded copies are removed only after a patch and its checksum verification succeed.</p></div>
+          <div class=""help-item""><b>UNKNOWN FOLDERS ARE SAFE</b><p>Backup cleanup recognizes only Raid Rescue's exact timestamped secret-mod folder names. Other folders and manual backups are never removed.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; DEVELOPER COMMANDS</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>HOW TO USE</b><p>Open <strong>Options</strong>, choose an access mode, and install with Scrap Mechanic closed. In a hosted Survival world, open chat and enter a command such as <strong>/unlimited</strong>. Use <strong>/limited</strong> to return to normal inventory rules.</p></div>
+          <div class=""help-item""><b>HOST ONLY</b><p>The recommended mode registers commands only for the world host. Joined players keep normal Survival controls.</p></div>
+          <div class=""help-item""><b>EVERY PLAYER</b><p>Every joined player receives the command list while connected. Use this only with players you completely trust. <strong>/kick</strong> and <strong>/ban</strong> stay host-only.</p></div>
+          <div class=""help-item""><b>AVAILABLE TOOLS</b><p>Built-in commands cover items and weapons, god mode, inventory mode, unit spawning, time controls, player values, aggro, raids, starter kits, and unstuck tools.</p></div>
+          <div class=""help-item""><b>NOT SERVER DEV MODE</b><p>Raid Rescue does not enable the server-side <strong>g_survivalDev</strong> mode, so normal world spawn points and progression remain active. Every Player mode sends the client permission needed to register commands and may expose other client-only developer behavior during that session.</p></div>
+        </div>
+        <div class=""help-danger""><b>COMMANDS CAN PERMANENTLY CHANGE YOUR WORLD.</b> Back up important saves before experimenting. In Every Player mode, any joined player can make these changes. Raid Rescue verifies and backs up the game script, but it cannot undo effects produced by commands.</div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS — DUAL-FLUID CANNON</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>CONNECTING THE CANNON</b><p>Use the Connect Tool to attach one logic source, one Water Container, and one Chemical Container. The three connections may be added in any order.</p></div>
+          <div class=""help-item""><b>HOW IT FIRES</b><p>Each OFF-to-ON logic pulse fires every liquid currently available. Water uses the connected container first, then the cannon’s original water-only internal tank.</p></div>
+          <div class=""help-item""><b>FERTILIZER DEPENDENCY</b><p>Dual-Fluid Water Cannon requires <strong>Chemical Fertilizer Splash</strong>. Raid Rescue can install both together and always removes the cannon before removing that dependency.</p></div>
+          <div class=""help-item""><b>EMPTY CONTAINERS</b><p>An empty liquid does not block the other one. With both supplied, one water and one chemical are consumed and their projectiles leave the same muzzle together.</p></div>
+        </div>
+        <div class=""help-danger""><b>REMOVE CONNECTIONS BEFORE DISABLING.</b> While the cannon mod is still installed, disconnect every Chemical Container from every mounted water cannon, save each affected world, and close the game. Only then disable the cannon mod. Steam Verify or a game update can also restore the original two-input script, so disconnect and save before using either one.</div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">COMMON PROBLEMS</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>THE GAME LOOKS CLOSED BUT CONTROLS STAY LOCKED</b><p>Wait a moment for automatic detection. If needed, open Task Manager and confirm ScrapMechanic.exe and ScrapMechanicServer.exe have exited.</p></div>
+          <div class=""help-item""><b>MY SAVE IS NOT LISTED</b><p>Confirm it is a Chapter 2 Survival save, then use Browse. Steam Cloud or another Windows account may store the world under a different User_* folder.</p></div>
+          <div class=""help-item""><b>ANTIVIRUS WARNING</b><p>Small unsigned portable utilities can trigger reputation or machine-learning warnings. Download only from the official GitHub release and compare its published SHA-256 checksum.</p></div>
+          <div class=""help-item""><b>NEED TO RESTORE</b><p>Close the game, keep the broken file somewhere safe, and copy the timestamped Raid Rescue backup back to the original filename and Survival folder.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class=""help-foot"">
+      <div class=""help-status"" id=""helpStatus"">Tutorial controls are available here whenever you need them.</div>
+      <div class=""help-buttons""><button type=""button"" class=""btn"" onclick=""resetTutorialPrompt()"">RESET FIRST-RUN PROMPT</button><button type=""button"" class=""btn btn-primary"" onclick=""replayTutorial()"">REPLAY TUTORIAL</button></div>
+    </div>
+  </div>
+</div>
+
+<div class=""tutorial"" id=""tutorial"" role=""dialog"" aria-modal=""true"" aria-labelledby=""tutorialTitle"">
+  <div class=""tutorial-shade"" id=""tutorialShadeTop""></div>
+  <div class=""tutorial-shade"" id=""tutorialShadeRight""></div>
+  <div class=""tutorial-shade"" id=""tutorialShadeBottom""></div>
+  <div class=""tutorial-shade"" id=""tutorialShadeLeft""></div>
+  <div class=""tutorial-focus"" id=""tutorialFocus""></div>
+  <div class=""tutorial-card"" id=""tutorialCard"">
+    <div class=""tutorial-rail""></div>
+    <div class=""tutorial-content"">
+      <div class=""tutorial-meta"">
+        <div class=""tutorial-number"">
+          <svg viewBox=""0 0 64 64"" aria-hidden=""true"" focusable=""false"">
+            <defs>
+              <linearGradient id=""tutorialBadgeFaceGradient"" x1=""0%"" y1=""0%"" x2=""0%"" y2=""100%"">
+                <stop offset=""0%"" stop-color=""#fff2a0""></stop>
+                <stop offset=""42%"" stop-color=""#ffd046""></stop>
+                <stop offset=""100%"" stop-color=""#e39a10""></stop>
+              </linearGradient>
+            </defs>
+            <polygon class=""tutorial-number-shadow"" points=""32,2 62,32 32,62 2,32""></polygon>
+            <polygon class=""tutorial-number-mount"" points=""32,3 61,32 32,61 3,32""></polygon>
+            <polygon class=""tutorial-number-rim"" points=""32,6 58,32 32,58 6,32""></polygon>
+            <polygon class=""tutorial-number-face"" points=""32,10 54,32 32,54 10,32""></polygon>
+            <polygon class=""tutorial-number-inset"" points=""32,13 51,32 32,51 13,32""></polygon>
+            <path class=""tutorial-number-highlight"" d=""M12 30 L32 10 L52 30""></path>
+            <path class=""tutorial-number-shade"" d=""M52 34 L32 54 L12 34""></path>
+            <text class=""tutorial-number-text"" id=""tutorialNumber"" x=""32"" y=""38"">01</text>
+          </svg>
+        </div>
+        <div><div class=""tutorial-label"" id=""tutorialLabel"">GUIDED RECOVERY TOUR</div><div class=""tutorial-title"" id=""tutorialTitle"">WELCOME TO RAID RESCUE</div></div>
+      </div>
+      <p class=""tutorial-text"" id=""tutorialText""></p>
+      <div class=""tutorial-tip"" id=""tutorialTip""></div>
+    </div>
+    <div class=""tutorial-progress"" id=""tutorialProgress""></div>
+    <div class=""tutorial-actions"">
+      <div class=""tutorial-actions-left""><button type=""button"" class=""btn"" onclick=""skipTutorial()"">EXIT TOUR</button><button type=""button"" class=""btn"" id=""tutorialBack"" onclick=""previousTutorialStep()"">BACK</button></div>
+      <button type=""button"" class=""btn btn-primary tutorial-next"" id=""tutorialNext"" onclick=""nextTutorialStep()"">NEXT</button>
+    </div>
+  </div>
+</div>
 
 <div class=""hotfix-modal"" id=""hotfixModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""hotfixTitle"" onclick=""hotfixBackdropClick(event)"">
   <div class=""hotfix-dialog"">
@@ -365,11 +974,12 @@ button{font:inherit}
         <li>Previously installed raid fixes are preserved when new fixes are added.</li>
         <li>A checksum-verified backup is created before any script is changed.</li>
         <li>The cumulative hotfix repairs stuck raids and fertilizer growth timing.</li>
+        <li>The generated script cache is reset so changes load without <strong>-dev</strong>.</li>
       </ul>
       <div class=""hotfix-stop"">SCRAP MECHANIC MUST BE COMPLETELY CLOSED BEFORE INSTALLATION.</div>
     </div>
     <div class=""hotfix-foot"">
-      <div class=""hotfix-foot-note"">Windows may request administrator permission for games installed under Program Files.</div>
+      <div class=""hotfix-foot-note"">Windows requests administrator permission once per Raid Rescue session; later patch actions reuse that protected session.</div>
       <div class=""hotfix-buttons"">
         <button type=""button"" class=""btn"" onclick=""closeHotfixConfirm()"">CANCEL</button>
         <button type=""button"" class=""btn hotfix-confirm"" id=""hotfixConfirmButton"" onclick=""confirmHotfixInstall()""><span>!</span>INSTALL HOTFIX</button>
@@ -391,35 +1001,893 @@ var saveItems=[];
 var scrollDrag=false;
 var scrollDragY=0;
 var scrollDragTop=0;
+var scrollUiQueued=false;
+var scrollIdleTimer=0;
+var smoothScrollRunning=false;
+var smoothScrollTarget=0;
+var smoothScrollPane=null;
 var gameRunning=null;
 var operationBusy=false;
+var tutorialActive=false;
+var tutorialIndex=0;
+var tutorialStartScroll=0;
+var tutorialResultHtml='';
+var tutorialOfferChecks=0;
+var secretModsEnabled=false;
+var secretResourceLocatorInstalled=false;
+var secretResourceLocatorNeedsUpdate=false;
+var secretResourceLocatorCompatibility='';
+var secretResourceLocatorCanApply=true;
+var secretResourceLocatorReason='';
+var secretDeveloperCommandsInstalled=false;
+var secretDeveloperCommandsError='';
+var secretDeveloperCommandsCompatibility='';
+var secretDeveloperCommandsCanApply=true;
+var secretDeveloperCommandsReason='';
+var secretDeveloperCommandsMode='host';
+var developerCommandDraftMode='host';
+var secretChemicalFertilizerInstalled=false;
+var secretChemicalFertilizerCompatibility='';
+var secretChemicalFertilizerCanApply=true;
+var secretChemicalFertilizerReason='';
+var secretDualFluidCannonInstalled=false;
+var secretDualFluidCannonError='';
+var secretDualFluidCannonCompatibility='';
+var secretDualFluidCannonCanApply=true;
+var secretDualFluidCannonReason='';
+var secretModBusy=false;
+var secretModBusyTarget='';
+var secretDependencyAction='';
+var secretCannonDangerAction='';
+var tutorialSteps=[
+ {target:'identityPanel',badge:'00',label:'GUIDED RECOVERY TOUR',title:'WELCOME TO RAID RESCUE',
+  text:'Raid Rescue helps fix stuck raids. Close the game, choose a save, analyze it, then repair.',
+  tip:'This tour only points things out. It changes nothing.'},
+ {target:'selectorPanel',badge:'01',label:'STEP 1 — SAFETY FIRST',title:'CLOSE SCRAP MECHANIC',
+  text:'Close Scrap Mechanic before opening a save. Raid Rescue locks world controls while the game is running.',
+  tip:'The controls unlock automatically when the game closes.'},
+ {target:'savePicker',badge:'02',label:'STEP 2 — WORLD SELECTION',title:'CHOOSE THE CORRECT SAVE',
+  text:'Choose your world from the list and check its name and date. Use Browse only if it is missing.',
+  tip:'Pick the normal .db file, not a raidrescue-backup file.'},
+ {target:'analyzeBtn',badge:'03',label:'STEP 3 — READ-ONLY CHECK',title:'ANALYZE BEFORE REPAIRING',
+  text:'Analyze World safely reads the save and shows its stored raids. It does not edit anything.',
+  tip:'If disabled, close the game and wait for the automatic unlock.'},
+ {target:'tutorialRaidExample',fallback:'result',badge:'04',label:'STEP 4 — UNDERSTAND THE REPORT',title:'READ EACH RAID CARD',
+  text:'Each card shows the raid tier, threat, robots, crops, and timing. Read any warning before repairing.',
+  tip:'A high raid tier by itself does not mean the raid is bugged.'},
+ {target:'clearAllBtn',fallback:'diagnosticsPanel',badge:'05',label:'STEP 5 — SAVE REPAIR',title:'CLEAR ALL RAIDS SAFELY',
+  text:'Clear All Raids backs up the save, then removes only its stored raid data.',
+  tip:'Your builds, inventory, quests, and players stay untouched.'},
+ {target:'installHotfixBtn',fallback:'diagnosticsPanel',badge:'06',label:'STEP 6 — OPTIONAL GAME PATCH',title:'INSTALL OR UPDATE THE HOTFIX',
+  text:'The hotfix patches the game’s stuck-raid and fertilizer bugs. Changed game scripts are backed up first.',
+  tip:'Close the game first. Steam Verify can restore the official files.'},
+ {target:'helpBtn',badge:'07',label:'STEP 7 — HELP IS ALWAYS HERE',title:'OPEN THE FIELD MANUAL',
+  text:'Use the ? button anytime for instructions, troubleshooting, and backup help.',
+  tip:'You can also replay this tour from the Help menu.'},
+ {target:'identityPanel',badge:'OK',label:'TOUR COMPLETE',title:'YOU ARE READY',
+  text:'Close the game, choose the world, analyze, review, then repair. Test the world before deleting its backup.',
+  tip:'Unsure about anything? Stop and open Help.'}
+];
 
 function beginWindowDrag(){window.external.BeginDrag();}
 function minimizeWindow(){window.external.Minimize();}
 function closeWindow(){window.external.CloseWindow();}
+function secretTriggerMouseDown(e){
+ e=e||window.event;
+ e.cancelBubble=true;
+ if(e.preventDefault)e.preventDefault();
+ e.returnValue=false;
+ return false;
+}
+function captureSecretCompatibility(kind,data){
+ var state=String(data.CompatibilityState||'');
+ var canApply=data.CanApply!==false;
+ var reason=String(data.CompatibilityReason||'');
+ if(kind==='resource'){
+  secretResourceLocatorCompatibility=state;
+  secretResourceLocatorCanApply=canApply;
+  secretResourceLocatorReason=reason;
+ }else if(kind==='commands'){
+  secretDeveloperCommandsCompatibility=state;
+  secretDeveloperCommandsCanApply=canApply;
+  secretDeveloperCommandsReason=reason;
+ }else if(kind==='chemical'){
+  secretChemicalFertilizerCompatibility=state;
+  secretChemicalFertilizerCanApply=canApply;
+  secretChemicalFertilizerReason=reason;
+ }else if(kind==='cannon'){
+  secretDualFluidCannonCompatibility=state;
+  secretDualFluidCannonCanApply=canApply;
+  secretDualFluidCannonReason=reason;
+ }
+}
+function compatibilityStateLabel(installed,state,fallback){
+ if(installed)return 'INSTALLED';
+ if(state==='COMPATIBLE GAME UPDATE')return 'COMPATIBLE GAME UPDATE';
+ if(state==='GAME UPDATE CHANGED REQUIRED CODE')return 'GAME UPDATE CHANGED REQUIRED CODE';
+ if(state==='OTHER MODIFICATION DETECTED')return 'OTHER MODIFICATION DETECTED';
+ if(state==='PARTIAL PATCH - REPAIR REQUIRED')return 'PARTIAL PATCH \u2014 REPAIR REQUIRED';
+ return fallback||'NOT INSTALLED';
+}
+function renderCompatibilityReason(id,installed,canApply,reason){
+ var node=document.getElementById(id);
+ if(!node)return;
+ var show=!installed&&!canApply&&!!reason;
+ node.className=show?'secret-compat-reason show':'secret-compat-reason';
+ node.innerText=show?reason:'';
+}
+function loadSecretModsState(){
+ try{secretModsEnabled=!!window.external.GetSecretModsEnabled();}catch(e){secretModsEnabled=false;}
+ var installedSecretMod=false;
+ try{
+  var data=parseResult(window.external.GetResourceLocatorModStatus());
+  if(data.Success){
+   secretResourceLocatorInstalled=!!data.Installed;
+   secretResourceLocatorNeedsUpdate=!!data.NeedsUpdate;
+   captureSecretCompatibility('resource',data);
+   installedSecretMod=installedSecretMod||secretResourceLocatorInstalled;
+  }else{
+   showSecretModFeedback(data.Error||'Could not read the installed resource-locator state.','bad');
+  }
+ }catch(e){
+  showSecretModFeedback('Could not read the installed resource-locator state.','bad');
+ }
+ try{
+  var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
+  if(commandData.Success){
+   secretDeveloperCommandsInstalled=!!commandData.Installed;
+   secretDeveloperCommandsMode=commandData.Mode==='everyone'?'everyone':'host';
+   secretDeveloperCommandsError='';
+   captureSecretCompatibility('commands',commandData);
+   installedSecretMod=installedSecretMod||secretDeveloperCommandsInstalled;
+  }else{
+   secretDeveloperCommandsError=commandData.Error||'Unsupported SurvivalGame script state.';
+   showSecretModFeedback(commandData.Error||'Could not read the host developer-command state.','bad');
+  }
+ }catch(e){
+  secretDeveloperCommandsError='Could not read the SurvivalGame script state.';
+  showSecretModFeedback('Could not read the host developer-command state.','bad');
+ }
+ try{
+  var chemicalData=parseResult(window.external.GetChemicalFertilizerModStatus());
+  if(chemicalData.Success){
+   secretChemicalFertilizerInstalled=!!chemicalData.Installed;
+   captureSecretCompatibility('chemical',chemicalData);
+   installedSecretMod=installedSecretMod||secretChemicalFertilizerInstalled;
+  }else{
+   showSecretModFeedback(chemicalData.Error||'Could not read the installed chemical-fertilizer state.','bad');
+  }
+ }catch(e){
+  showSecretModFeedback('Could not read the installed chemical-fertilizer state.','bad');
+ }
+ try{
+  var cannonData=parseResult(window.external.GetDualFluidCannonModStatus());
+  if(cannonData.Success){
+   secretDualFluidCannonInstalled=!!cannonData.Installed;
+   secretDualFluidCannonError='';
+   captureSecretCompatibility('cannon',cannonData);
+   installedSecretMod=installedSecretMod||secretDualFluidCannonInstalled;
+  }else{
+   secretDualFluidCannonError=cannonData.Error||'Unsupported cannon script state.';
+   showSecretModFeedback(cannonData.Error||'Could not read the installed dual-fluid cannon state.','bad');
+  }
+ }catch(e){
+  secretDualFluidCannonError='Could not read the cannon script state.';
+  showSecretModFeedback('Could not read the installed dual-fluid cannon state.','bad');
+ }
+ if(installedSecretMod&&!secretModsEnabled){
+  secretModsEnabled=true;
+  try{window.external.SetSecretModsEnabled(true);}catch(ignore){}
+ }
+ renderSecretModsState();
+}
+function renderSecretModsState(){
+ var control=document.getElementById('secretModsMaster');
+ var row=document.getElementById('secretModsMasterRow');
+ var status=document.getElementById('secretModsStatus');
+ if(!control||!row||!status)return;
+ control.className=secretModsEnabled?'secret-switch on':'secret-switch';
+ control.setAttribute('aria-checked',secretModsEnabled?'true':'false');
+ row.className=secretModsEnabled?'secret-mod-row enabled':'secret-mod-row';
+ status.className=secretModsEnabled?'secret-mods-status on':'secret-mods-status';
+ status.getElementsByTagName('span')[0].innerText=secretModsEnabled?'SECRET PATCH SYSTEM ARMED':'SECRET PATCH SYSTEM OFFLINE';
+ var locator=document.getElementById('resourceLocatorSwitch');
+ var locatorRow=document.getElementById('resourceLocatorRow');
+ var locatorState=document.getElementById('resourceLocatorState');
+ if(locator&&locatorRow&&locatorState){
+  locator.className=secretResourceLocatorInstalled?'secret-switch on':'secret-switch';
+  locator.setAttribute('aria-checked',secretResourceLocatorInstalled?'true':'false');
+  locator.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!secretResourceLocatorCanApply;
+  locatorRow.className='secret-mod-row secret-mod-card'+(secretResourceLocatorInstalled?' enabled':'')+((!secretModsEnabled||!secretResourceLocatorCanApply)?' locked':'');
+  locatorState.innerText=secretModBusy&&secretModBusyTarget==='resource'?'APPLYING...':(gameRunning?'GAME RUNNING · CLOSE IT FIRST':(secretResourceLocatorNeedsUpdate?'UPDATE READY · DOT VISIBILITY FIX':compatibilityStateLabel(secretResourceLocatorInstalled,secretResourceLocatorCompatibility,'NOT INSTALLED')));
+  renderCompatibilityReason('resourceLocatorReason',secretResourceLocatorInstalled,secretResourceLocatorCanApply,secretResourceLocatorReason);
+ }
+ var commands=document.getElementById('developerCommandsSwitch');
+ var commandOptions=document.getElementById('developerCommandsOptions');
+ var commandsRow=document.getElementById('developerCommandsRow');
+ var commandsState=document.getElementById('developerCommandsState');
+ if(commands&&commandsRow&&commandsState){
+  commands.className=secretDeveloperCommandsInstalled?'secret-switch on':'secret-switch';
+  commands.setAttribute('aria-checked',secretDeveloperCommandsInstalled?'true':'false');
+  commands.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
+  if(commandOptions)commandOptions.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
+  commandsRow.className='secret-mod-row secret-mod-card'+(secretDeveloperCommandsInstalled?' enabled':'')+((!secretModsEnabled||secretDeveloperCommandsError||!secretDeveloperCommandsCanApply)?' locked':'');
+  commandsState.innerText=secretModBusy&&secretModBusyTarget==='commands'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDeveloperCommandsError?'UNSUPPORTED FILE - NO CHANGES':compatibilityStateLabel(secretDeveloperCommandsInstalled,secretDeveloperCommandsCompatibility,'NOT INSTALLED')));
+  renderCompatibilityReason('developerCommandsReason',secretDeveloperCommandsInstalled,secretDeveloperCommandsCanApply,secretDeveloperCommandsReason);
+ }
+ var chemical=document.getElementById('chemicalFertilizerSwitch');
+ var chemicalRow=document.getElementById('chemicalFertilizerRow');
+ var chemicalState=document.getElementById('chemicalFertilizerState');
+ if(chemical&&chemicalRow&&chemicalState){
+  chemical.className=secretChemicalFertilizerInstalled?'secret-switch on':'secret-switch';
+  chemical.setAttribute('aria-checked',secretChemicalFertilizerInstalled?'true':'false');
+  chemical.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!secretChemicalFertilizerCanApply;
+  chemicalRow.className='secret-mod-row secret-mod-card'+(secretChemicalFertilizerInstalled?' enabled':'')+((!secretModsEnabled||!secretChemicalFertilizerCanApply)?' locked':'');
+  chemicalState.innerText=secretModBusy&&secretModBusyTarget==='chemical'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretChemicalFertilizerInstalled,secretChemicalFertilizerCompatibility,'NOT INSTALLED'));
+  renderCompatibilityReason('chemicalFertilizerReason',secretChemicalFertilizerInstalled,secretChemicalFertilizerCanApply,secretChemicalFertilizerReason);
+ }
+ var cannon=document.getElementById('dualFluidCannonSwitch');
+ var cannonRow=document.getElementById('dualFluidCannonRow');
+ var cannonState=document.getElementById('dualFluidCannonState');
+ if(cannon&&cannonRow&&cannonState){
+  cannon.className=secretDualFluidCannonInstalled?'secret-switch on':'secret-switch';
+  cannon.setAttribute('aria-checked',secretDualFluidCannonInstalled?'true':'false');
+  cannon.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDualFluidCannonError||!secretDualFluidCannonCanApply;
+  cannonRow.className='secret-mod-row secret-mod-card'+(secretDualFluidCannonInstalled?' enabled':'')+((!secretModsEnabled||secretDualFluidCannonError||!secretDualFluidCannonCanApply)?' locked':'');
+  cannonState.innerText=secretModBusy&&secretModBusyTarget==='cannon'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDualFluidCannonError?'UNSUPPORTED FILE - NO CHANGES':(secretDualFluidCannonInstalled?(secretChemicalFertilizerInstalled?'INSTALLED':'DEPENDENCY MISSING - REPAIR REQUIRED'):compatibilityStateLabel(false,secretDualFluidCannonCompatibility,(secretChemicalFertilizerInstalled?'NOT INSTALLED':'READY - INSTALLS FERTILIZER')))));
+  renderCompatibilityReason('dualFluidCannonReason',secretDualFluidCannonInstalled,secretDualFluidCannonCanApply,secretDualFluidCannonReason);
+ }
+ var count=document.getElementById('secretModCount');
+ if(count){
+  var active=(secretResourceLocatorInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+  count.innerText=active+' ACTIVE \u00b7 4 AVAILABLE';
+ }
+ filterSecretMods();
+}
+function filterSecretMods(){
+ var input=document.getElementById('secretModSearch');
+ var list=document.getElementById('secretModsList');
+ var empty=document.getElementById('secretModsEmpty');
+ if(!list||!empty)return;
+ var query=input?String(input.value||'').toLowerCase().replace(/^\s+|\s+$/g,''):'';
+ var rows=list.getElementsByTagName('div');
+ var shown=0;
+ for(var i=0;i<rows.length;i++){
+  var row=rows[i];
+  if((' '+row.className+' ').indexOf(' secret-mod-card ')<0)continue;
+  var haystack=String(row.getAttribute('data-search')||'').toLowerCase();
+  var visible=!query||haystack.indexOf(query)>=0;
+  row.style.display=visible?'flex':'none';
+  if(visible)shown++;
+ }
+ empty.style.display=shown?'none':'block';
+}
+function showSecretModFeedback(message,type){
+ var feedback=document.getElementById('secretModsFeedback');
+ if(!feedback)return;
+ feedback.className=message?'secret-mods-feedback '+(type||'show'):'secret-mods-feedback';
+ feedback.innerText=message||'';
+}
+function toggleSecretMods(e){
+ e=e||window.event;
+ e.cancelBubble=true;
+ if(operationBusy||tutorialActive)return false;
+ var layer=document.getElementById('secretModsLayer');
+ if(layer.className.indexOf(' show')>=0){closeSecretMods();return false;}
+ closeSaveMenu();closeHotfixConfirm();
+ document.getElementById('secretModsTrigger').className='window-emblem secret-trigger armed';
+ layer.className='secret-mods-layer show';
+ return false;
+}
+function closeSecretMods(){
+ document.getElementById('secretModsLayer').className='secret-mods-layer';
+ document.getElementById('secretModsTrigger').className='window-emblem secret-trigger';
+}
+function secretModsBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('secretModsLayer'))closeSecretMods();
+}
+function toggleSecretModsEnabled(){
+ if(secretModBusy)return;
+ if(secretModsEnabled&&secretDualFluidCannonInstalled){openCannonDangerConfirm('masterOff');return;}
+ if(secretModsEnabled){disableAllSecretModsConfirmed();return;}
+ secretModsEnabled=!secretModsEnabled;
+ try{window.external.SetSecretModsEnabled(secretModsEnabled);}catch(e){}
+ showSecretModFeedback(
+  secretModsEnabled
+   ?(gameRunning?'PATCH BAY ARMED — close Scrap Mechanic before changing secret mods.':'PATCH BAY ARMED — choose an individual secret mod to install it.')
+   :'PATCH BAY OFFLINE — all installed secret mods are disabled.',
+  secretModsEnabled?'good':'show');
+ renderSecretModsState();
+}
+function disableAllSecretModsConfirmed(){
+ if(secretDualFluidCannonInstalled&&secretChemicalFertilizerInstalled){
+  if(!setChemicalFertilizerMod(false))return false;
+ }else{
+  if(secretDualFluidCannonInstalled&&!setDualFluidCannonMod(false))return false;
+  if(secretChemicalFertilizerInstalled&&!setChemicalFertilizerMod(false))return false;
+ }
+ if(secretDeveloperCommandsInstalled&&!setDeveloperCommandsMod(false))return false;
+ if(secretResourceLocatorInstalled&&!setResourceLocatorMod(false))return false;
+ secretModsEnabled=false;
+ try{window.external.SetSecretModsEnabled(false);}catch(e){}
+ showSecretModFeedback('PATCH BAY OFFLINE - all installed secret mods are disabled.','show');
+ renderSecretModsState();
+ return true;
+}
+function toggleResourceLocatorMod(){
+ if(!secretModsEnabled||secretModBusy)return;
+ setResourceLocatorMod(secretResourceLocatorNeedsUpdate||!secretResourceLocatorInstalled);
+}
+function setResourceLocatorMod(enabled){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Resource Locator Dots.','bad');
+  return false;
+ }
+ secretModBusy=true;secretModBusyTarget='resource';operationBusy=true;
+ showSecretModFeedback(
+  enabled?'PREPARING RESOURCE LOCATOR DOTS INSTALLATION...':'PREPARING RESOURCE LOCATOR DOTS REMOVAL...',
+  'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetResourceLocatorMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The secret-mod installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Resource Locator Dots could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretResourceLocatorInstalled=!!data.Installed;
+ secretResourceLocatorNeedsUpdate=!!data.NeedsUpdate;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(
+  secretResourceLocatorInstalled
+   ?'RESOURCE LOCATOR DOTS INSTALLED — equip the Connect Tool to reveal nearby resource cores. The locator output stays inactive.'
+   :'RESOURCE LOCATOR DOTS REMOVED — the verified original HarvestCore script was restored.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();
+ return true;
+}
+function toggleDeveloperCommandsMod(){
+ if(!secretModsEnabled||secretModBusy)return;
+ if(secretDeveloperCommandsInstalled){setDeveloperCommandsMod(false);return;}
+ openDeveloperCommandOptions();
+}
+function setDeveloperCommandsMod(enabled,mode){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Developer Commands.','bad');
+  return false;
+ }
+ var selectedMode=mode==='everyone'?'everyone':'host';
+ secretModBusy=true;secretModBusyTarget='commands';operationBusy=true;
+ showSecretModFeedback(
+  enabled?'PREPARING DEVELOPER COMMAND ACCESS...':'PREPARING DEVELOPER COMMANDS REMOVAL...',
+  'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetDeveloperCommandsMod(enabled,selectedMode));}
+ catch(e){data={Success:false,Error:e.message||'The developer-command installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Developer Commands could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretDeveloperCommandsInstalled=!!data.Installed;
+ secretDeveloperCommandsMode=data.Mode==='everyone'?'everyone':selectedMode;
+ secretDeveloperCommandsError='';
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(
+  secretDeveloperCommandsInstalled
+   ?(secretDeveloperCommandsMode==='everyone'
+     ?'DEVELOPER COMMANDS READY FOR EVERY PLAYER - all joined players receive the built-in command list.'
+     :'DEVELOPER COMMANDS READY FOR HOST ONLY - open chat and enter a built-in command such as /unlimited.')
+   :'DEVELOPER COMMANDS REMOVED - the verified original SurvivalGame script was restored.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();
+ return true;
+}
+function openDeveloperCommandOptions(){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Developer Command options.','bad');
+  return;
+ }
+ developerCommandDraftMode=secretDeveloperCommandsMode||'host';
+ document.getElementById('developerEveryoneAck').checked=false;
+ renderDeveloperCommandOptions();
+ document.getElementById('developerCommandModal').className='hotfix-modal developer-command-modal show';
+ window.setTimeout(function(){document.getElementById(developerCommandDraftMode==='everyone'?'developerModeEveryone':'developerModeHost').focus();},30);
+}
+function closeDeveloperCommandConfirm(){
+ document.getElementById('developerCommandModal').className='hotfix-modal developer-command-modal';
+ document.getElementById('developerEveryoneAck').checked=false;
+}
+function developerCommandBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('developerCommandModal'))closeDeveloperCommandConfirm();
+}
+function selectDeveloperCommandMode(mode){
+ developerCommandDraftMode=mode==='everyone'?'everyone':'host';
+ document.getElementById('developerEveryoneAck').checked=false;
+ renderDeveloperCommandOptions();
+}
+function renderDeveloperCommandOptions(){
+ var everyone=developerCommandDraftMode==='everyone';
+ document.getElementById('developerModeHost').className='command-access-option'+(!everyone?' selected':'');
+ document.getElementById('developerModeEveryone').className='command-access-option'+(everyone?' selected':'');
+ document.getElementById('developerEveryoneWarning').className=everyone?'command-everyone-warning show':'command-everyone-warning';
+ var button=document.getElementById('developerCommandConfirmButton');
+ var unchanged=secretDeveloperCommandsInstalled&&secretDeveloperCommandsMode===developerCommandDraftMode;
+ button.innerHTML='<span>!</span>'+(secretDeveloperCommandsInstalled?'APPLY ACCESS MODE':(everyone?'INSTALL FOR EVERY PLAYER':'INSTALL HOST ONLY'));
+ button.disabled=unchanged||(everyone&&!document.getElementById('developerEveryoneAck').checked);
+ document.getElementById('developerCommandFootNote').innerText=unchanged
+  ?'This access mode is already installed.'
+  :(everyone?'Every joined player will receive command access while connected.':'Only the world host will receive command access.');
+}
+function updateDeveloperCommandOptionButton(){
+ renderDeveloperCommandOptions();
+}
+function applyDeveloperCommandOptions(){
+ if(document.getElementById('developerCommandConfirmButton').disabled)return;
+ var mode=developerCommandDraftMode;
+ closeDeveloperCommandConfirm();
+ setDeveloperCommandsMod(true,mode);
+}
+function toggleChemicalFertilizerMod(){
+ if(!secretModsEnabled||secretModBusy)return;
+ if(secretChemicalFertilizerInstalled&&secretDualFluidCannonInstalled){
+  openCannonDangerConfirm('removeBoth');
+  return;
+ }
+ setChemicalFertilizerMod(!secretChemicalFertilizerInstalled);
+}
+function setChemicalFertilizerMod(enabled){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Chemical Fertilizer Splash.','bad');
+  return false;
+ }
+ secretModBusy=true;secretModBusyTarget='chemical';operationBusy=true;
+ showSecretModFeedback(
+  enabled?'PREPARING CHEMICAL FERTILIZER SPLASH INSTALLATION...':'PREPARING CHEMICAL FERTILIZER SPLASH REMOVAL...',
+  'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetChemicalFertilizerMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The secret-mod installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Chemical Fertilizer Splash could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretChemicalFertilizerInstalled=!!data.Installed;
+ if(!secretChemicalFertilizerInstalled)secretDualFluidCannonInstalled=false;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(
+  secretChemicalFertilizerInstalled
+   ?'CHEMICAL FERTILIZER SPLASH INSTALLED - chemical hits fertilize directly; red Farmbot pesticide fertilizes a 2.5-block radius.'
+   :'CHEMICAL FERTILIZER SPLASH REMOVED - verified prior scripts were restored without removing other Raid Rescue fixes.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();
+ return true;
+}
+function toggleDualFluidCannonMod(){
+ if(!secretModsEnabled||secretModBusy)return;
+ if(!secretDualFluidCannonInstalled&&!secretChemicalFertilizerInstalled){
+  openDependencyConfirm('installBoth');
+  return;
+ }
+ if(secretDualFluidCannonInstalled){openCannonDangerConfirm('cannonOnly');return;}
+ setDualFluidCannonMod(true);
+}
+function setDualFluidCannonMod(enabled){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Dual-Fluid Water Cannon.','bad');
+  return false;
+ }
+ secretModBusy=true;secretModBusyTarget='cannon';operationBusy=true;
+ showSecretModFeedback(
+  enabled?'PREPARING DUAL-FLUID WATER CANNON INSTALLATION...':'PREPARING DUAL-FLUID WATER CANNON REMOVAL...',
+  'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetDualFluidCannonMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The dual-fluid installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Dual-Fluid Water Cannon could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretDualFluidCannonInstalled=!!data.Installed;
+ secretDualFluidCannonError='';
+ if(secretDualFluidCannonInstalled)secretChemicalFertilizerInstalled=true;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(
+  secretDualFluidCannonInstalled
+   ?'DUAL-FLUID WATER CANNON INSTALLED - connect logic, water, and chemical; each pulse fires every available liquid.'
+   :'DUAL-FLUID WATER CANNON REMOVED - Chemical Fertilizer Splash remains installed.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();
+ return true;
+}
+function openDependencyConfirm(action){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing linked secret mods.','bad');
+  return;
+ }
+ secretDependencyAction=action;
+ var install=action==='installBoth';
+ document.getElementById('dependencyTitle').innerText=install?'INSTALL REQUIRED DEPENDENCY':'REMOVE LINKED DEPENDENCY';
+ document.getElementById('dependencyKicker').innerText=install?'DUAL-FLUID WATER CANNON STARTUP':'CHEMICAL FERTILIZER SPLASH SHUTDOWN';
+ document.getElementById('dependencyIntro').innerText=install
+  ?'Dual-Fluid Water Cannon requires Chemical Fertilizer Splash. Raid Rescue will install both in one protected operation.'
+  :'Dual-Fluid Water Cannon depends on Chemical Fertilizer Splash. Raid Rescue must remove the cannon patch first.';
+ document.getElementById('dependencyFirstChange').innerText=install
+  ?'Install Chemical Fertilizer Splash and verify all four game scripts.'
+  :'Remove Dual-Fluid Water Cannon and restore the original cannon script.';
+ document.getElementById('dependencySecondChange').innerText=install
+  ?'Install Dual-Fluid Water Cannon after its dependency is verified.'
+  :'Remove Chemical Fertilizer Splash only after the cannon is safely restored.';
+ var button=document.getElementById('dependencyConfirmButton');
+ button.innerHTML='<span>!</span>'+(install?'INSTALL FERTILIZER + DUAL-FLUID CANNON':'REMOVE CANNON + FERTILIZER');
+ document.getElementById('dependencyModal').className='hotfix-modal dependency-modal show';
+ window.setTimeout(function(){button.focus();},30);
+}
+function closeDependencyConfirm(){
+ document.getElementById('dependencyModal').className='hotfix-modal dependency-modal';
+ secretDependencyAction='';
+}
+function dependencyBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('dependencyModal'))closeDependencyConfirm();
+}
+function confirmDependencyChange(){
+ var action=secretDependencyAction;
+ closeDependencyConfirm();
+ if(action==='installBoth')setDualFluidCannonMod(true);
+ else if(action==='removeBoth')openCannonDangerConfirm('removeBoth');
+}
+function openCannonDangerConfirm(action){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before removing Dual-Fluid Water Cannon.','bad');
+  return;
+ }
+ secretCannonDangerAction=action;
+ var button=document.getElementById('cannonDangerConfirmButton');
+ var ack=document.getElementById('cannonDangerAck');
+ ack.checked=false;
+ button.disabled=true;
+ button.innerHTML='<span>!</span>'+(action==='removeBoth'?'REMOVE CANNON + FERTILIZER':(action==='masterOff'?'DISABLE ALL SECRET MODS':'DISABLE CANNON MOD'));
+ document.getElementById('cannonDangerModal').className='hotfix-modal cannon-danger-modal show';
+ window.setTimeout(function(){document.getElementById('cannonDangerCancel').focus();},30);
+}
+function updateCannonDangerConfirm(){
+ var ack=document.getElementById('cannonDangerAck');
+ document.getElementById('cannonDangerConfirmButton').disabled=!ack.checked;
+}
+function closeCannonDangerConfirm(){
+ document.getElementById('cannonDangerModal').className='hotfix-modal cannon-danger-modal';
+ document.getElementById('cannonDangerAck').checked=false;
+ secretCannonDangerAction='';
+}
+function cannonDangerBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('cannonDangerModal'))closeCannonDangerConfirm();
+}
+function confirmCannonDangerChange(){
+ if(!document.getElementById('cannonDangerAck').checked)return;
+ var action=secretCannonDangerAction;
+ closeCannonDangerConfirm();
+ if(action==='removeBoth')setChemicalFertilizerMod(false);
+ else if(action==='masterOff')disableAllSecretModsConfirmed();
+ else if(action==='cannonOnly')setDualFluidCannonMod(false);
+}
+function completeTutorialPrompt(){
+ try{window.external.CompleteTutorialPrompt();}catch(e){}
+}
+function showTutorialPrompt(){
+ if(operationBusy||tutorialActive)return;
+ closeSaveMenu();closeSecretMods();
+ document.getElementById('onboardModal').className='onboard-modal show';
+ window.setTimeout(function(){var button=document.getElementById('onboardStart');if(button)button.focus();},30);
+}
+function checkFirstRunTutorial(){
+ if(operationBusy){
+  if(tutorialOfferChecks++<20)window.setTimeout(checkFirstRunTutorial,250);
+  return;
+ }
+ try{if(window.external.ShouldOfferTutorial())showTutorialPrompt();}catch(e){}
+}
+function acceptTutorial(){
+ completeTutorialPrompt();
+ document.getElementById('onboardModal').className='onboard-modal';
+ startTutorial();
+}
+function declineTutorial(){
+ completeTutorialPrompt();
+ document.getElementById('onboardModal').className='onboard-modal';
+}
+function openHelp(){
+ if(operationBusy||tutorialActive)return;
+ closeSaveMenu();closeHotfixConfirm();closeSecretMods();
+ document.getElementById('helpStatus').className='help-status';
+ document.getElementById('helpStatus').innerText='Tutorial controls are available here whenever you need them.';
+ document.getElementById('helpModal').className='help-modal show';
+}
+function closeHelp(){
+ stopSmoothScroll(document.getElementById('helpBody'));
+ document.getElementById('helpModal').className='help-modal';
+}
+function helpBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('helpModal'))closeHelp();
+}
+function replayTutorial(){closeHelp();startTutorial();}
+function resetTutorialPrompt(){
+ try{window.external.ResetTutorialPrompt();}catch(e){}
+ var status=document.getElementById('helpStatus');
+ status.className='help-status good';
+ status.innerText='FIRST-RUN PROMPT RESET — it will be offered the next time Raid Rescue starts.';
+}
+function startTutorial(){
+ if(operationBusy)return;
+ closeHelp();closeHotfixConfirm();closeSecretMods();
+ document.getElementById('onboardModal').className='onboard-modal';
+ tutorialActive=true;tutorialIndex=0;
+ var tutorialPane=document.getElementById('appScroll');
+ stopSmoothScroll(tutorialPane);
+ tutorialStartScroll=tutorialPane.scrollTop;
+ tutorialResultHtml=document.getElementById('result').innerHTML;
+ renderTutorialDiagnostics();
+ document.getElementById('tutorial').className='tutorial show';
+ showTutorialStep();
+}
+function renderTutorialDiagnostics(){
+ var example={
+  Success:true,DatabaseStatus:'ok',SaveVersion:28,GameTick:'12,458,920',RaidCount:1,Size:'31.1 MB',CanClear:false,
+  Warnings:['TUTORIAL EXAMPLE — sample raid data only. No save has been opened or changed.'],
+  Raids:[{
+   Number:1,Tier:4,Key:'EXAMPLE RAID RECORD · SAMPLE DATA',ThreatValue:824,MaximumThreatValue:1000,
+   State:'WAVE STORED',PlannedEnemyCount:7,SpawnGroups:2,WorldSlot:11,Center:{X:873,Y:107,Z:47},
+   TrackedCrops:53,StaleCropReferences:53,LiveRaiderReferences:0,TickCounter:4872,TimeoutTick:4890,
+   Enemies:[{Name:'Haybot',Quantity:4},{Name:'Totebot',Quantity:2},{Name:'Tapebot',Quantity:1}],
+   Crops:[{Name:'Tomato',Quantity:31},{Name:'Broccoli',Quantity:22}],
+   SavedTick:12454102,LastSpawnTick:12449230,NeedsSpawnPoints:false,PlantingRecords:53,LooksStuck:true,
+   Notes:['This example shows the kind of raid information Raid Rescue reads from a real world.']
+  }]
+ };
+ renderAnalysis(example);
+ var result=document.getElementById('result');
+ var raids=result.getElementsByClassName('raid');
+ if(raids.length){
+  var heads=raids[0].getElementsByClassName('raid-head');
+  (heads.length?heads[0]:raids[0]).id='tutorialRaidExample';
+ }
+ var patchButton=document.getElementById('installHotfixBtn');
+ if(patchButton){patchButton.disabled=true;patchButton.title='Disabled during the tutorial';}
+}
+function tutorialTarget(step){
+ var target=document.getElementById(step.target);
+ if(!target&&step.fallback)target=document.getElementById(step.fallback);
+ return target||document.getElementById('identityPanel');
+}
+function showTutorialStep(){
+ if(!tutorialActive)return;
+ var step=tutorialSteps[tutorialIndex],target=tutorialTarget(step);
+ var pane=document.getElementById('appScroll'),rect=target.getBoundingClientRect();
+ var viewportHeight=window.innerHeight||document.documentElement.clientHeight;
+ if(target!==document.getElementById('helpBtn')&&(rect.top<52||rect.bottom>viewportHeight-18)){
+  var desired=pane.scrollTop+rect.top-82;
+  pane.scrollTop=Math.max(0,Math.min(pane.scrollHeight-pane.clientHeight,desired));
+  rect=target.getBoundingClientRect();
+ }
+ var numberText=step.badge;
+ var numberNode=document.getElementById('tutorialNumber');
+ if(typeof numberNode.textContent!=='undefined')numberNode.textContent=numberText;else numberNode.innerText=numberText;
+ document.getElementById('tutorialLabel').innerText=step.label;
+ document.getElementById('tutorialTitle').innerText=step.title;
+ document.getElementById('tutorialText').innerText=step.text;
+ document.getElementById('tutorialTip').innerText=step.tip;
+ var progress='';
+ for(var i=0;i<tutorialSteps.length;i++)progress+='<i class=""'+(i<tutorialIndex?'done':(i===tutorialIndex?'current':''))+'""></i>';
+ document.getElementById('tutorialProgress').innerHTML=progress;
+ document.getElementById('tutorialBack').disabled=tutorialIndex===0;
+ document.getElementById('tutorialNext').innerText=tutorialIndex===tutorialSteps.length-1?'FINISH':'NEXT';
+ positionTutorial(target);
+ var card=document.getElementById('tutorialCard');
+ card.className='tutorial-card';
+ card.offsetWidth;
+ card.className='tutorial-card enter';
+ document.getElementById('tutorialNext').focus();
+}
+function positionTutorial(target){
+ if(!tutorialActive)return;
+ var viewportWidth=window.innerWidth||document.documentElement.clientWidth;
+ var viewportHeight=window.innerHeight||document.documentElement.clientHeight;
+ var rect=target.getBoundingClientRect(),pad=8;
+ var titleBarTarget=target===document.getElementById('helpBtn');
+ var minimumTop=titleBarTarget?0:43;
+ var left=Math.max(8,rect.left-pad),top=Math.max(minimumTop,rect.top-pad);
+ var right=Math.min(viewportWidth-8,rect.right+pad),bottom=Math.min(viewportHeight-8,rect.bottom+pad);
+ if(right-left<34){left=Math.max(8,(rect.left+rect.right)/2-17);right=left+34;}
+ if(bottom-top<34){top=Math.max(minimumTop,(rect.top+rect.bottom)/2-17);bottom=Math.min(viewportHeight-8,top+34);}
+ var focus=document.getElementById('tutorialFocus');
+ focus.style.left=Math.round(left)+'px';focus.style.top=Math.round(top)+'px';
+ focus.style.width=Math.round(right-left)+'px';focus.style.height=Math.round(bottom-top)+'px';
+ setTutorialShade('tutorialShadeTop',0,0,viewportWidth,top);
+ setTutorialShade('tutorialShadeRight',right,top,Math.max(0,viewportWidth-right),Math.max(0,bottom-top));
+ setTutorialShade('tutorialShadeBottom',0,bottom,viewportWidth,Math.max(0,viewportHeight-bottom));
+ setTutorialShade('tutorialShadeLeft',0,top,left,Math.max(0,bottom-top));
+ var card=document.getElementById('tutorialCard'),cardWidth=card.offsetWidth,cardHeight=card.offsetHeight;
+ var gap=15,cardLeft,cardTop;
+ if(viewportHeight-bottom>=cardHeight+gap){
+  cardLeft=(left+right-cardWidth)/2;cardTop=bottom+gap;
+ }else if(top>=cardHeight+gap+42){
+  cardLeft=(left+right-cardWidth)/2;cardTop=top-cardHeight-gap;
+ }else if(viewportWidth-right>=cardWidth+gap){
+  cardLeft=right+gap;cardTop=(top+bottom-cardHeight)/2;
+ }else if(left>=cardWidth+gap){
+  cardLeft=left-cardWidth-gap;cardTop=(top+bottom-cardHeight)/2;
+ }else{
+  cardLeft=viewportWidth-cardWidth-18;cardTop=viewportHeight-cardHeight-18;
+ }
+ cardLeft=Math.max(14,Math.min(viewportWidth-cardWidth-14,cardLeft));
+ cardTop=Math.max(48,Math.min(viewportHeight-cardHeight-14,cardTop));
+ card.style.left=Math.round(cardLeft)+'px';card.style.top=Math.round(cardTop)+'px';
+}
+function setTutorialShade(id,left,top,width,height){
+ var shade=document.getElementById(id);
+ shade.style.left=Math.round(left)+'px';shade.style.top=Math.round(top)+'px';
+ shade.style.width=Math.round(width)+'px';shade.style.height=Math.round(height)+'px';
+}
+function nextTutorialStep(){
+ if(tutorialIndex>=tutorialSteps.length-1){finishTutorial();return;}
+ tutorialIndex++;showTutorialStep();
+}
+function previousTutorialStep(){
+ if(tutorialIndex<=0)return;
+ tutorialIndex--;showTutorialStep();
+}
+function skipTutorial(){finishTutorial();}
+function finishTutorial(){
+ completeTutorialPrompt();
+ tutorialActive=false;
+ document.getElementById('tutorial').className='tutorial';
+ document.getElementById('result').innerHTML=tutorialResultHtml;
+ tutorialResultHtml='';
+ document.getElementById('appScroll').scrollTop=tutorialStartScroll;
+ updateScrollBar();
+ pollGameProcess();
+}
+function requestUiFrame(callback){
+ var request=window.requestAnimationFrame||window.msRequestAnimationFrame;
+ if(request)return request.call(window,callback);
+ return window.setTimeout(callback,16);
+}
+function setScrollActive(active){
+ var body=document.body,name=body.className||'',padded=' '+name+' ';
+ if(active&&padded.indexOf(' scroll-active ')<0)body.className=(name+' scroll-active').replace(/^\s+|\s+$/g,'');
+ if(!active&&padded.indexOf(' scroll-active ')>=0)body.className=padded.replace(' scroll-active ',' ').replace(/^\s+|\s+$/g,'');
+}
+function markScrollActive(){
+ setScrollActive(true);
+ if(scrollIdleTimer)window.clearTimeout(scrollIdleTimer);
+ scrollIdleTimer=window.setTimeout(function(){setScrollActive(false);scrollIdleTimer=0;},140);
+}
+function scheduleScrollUi(){
+ if(scrollUiQueued)return;
+ scrollUiQueued=true;
+ requestUiFrame(function(){
+  scrollUiQueued=false;
+  updateScrollBar();
+  if(tutorialActive)positionTutorial(tutorialTarget(tutorialSteps[tutorialIndex]));
+ });
+}
 function updateScrollBar(){
  var pane=document.getElementById('appScroll'),track=document.getElementById('scrollTrack'),thumb=document.getElementById('scrollThumb');
  if(!pane||!track||!thumb)return;
  var viewport=pane.clientHeight,total=pane.scrollHeight;
- if(total<=viewport+1){track.className='scroll-track';return;}
- track.className='scroll-track show';
+ var hazard=document.getElementById('mainHazard'),hazardClass=pane.scrollTop>12?'hazard paused':'hazard';
+ if(hazard&&hazard.className!==hazardClass)hazard.className=hazardClass;
+ if(total<=viewport+1){if(track.className!=='scroll-track')track.className='scroll-track';return;}
+ if(track.className!=='scroll-track show')track.className='scroll-track show';
  var usable=track.clientHeight-4;
  var thumbHeight=Math.max(38,Math.floor(usable*viewport/total));
  var travel=usable-thumbHeight;
  var maxScroll=total-viewport;
  var top=2+(maxScroll>0?Math.round(travel*pane.scrollTop/maxScroll):0);
- thumb.style.height=thumbHeight+'px';
- thumb.style.top=top+'px';
+ var heightValue=thumbHeight+'px',topValue=top+'px';
+ if(thumb.style.height!==heightValue)thumb.style.height=heightValue;
+ if(thumb.style.top!==topValue)thumb.style.top=topValue;
+}
+function stopSmoothScroll(pane){
+ smoothScrollRunning=false;
+ if(pane){smoothScrollPane=pane;smoothScrollTarget=pane.scrollTop;}
+}
+function runSmoothScroll(pane){
+ if(!smoothScrollRunning||smoothScrollPane!==pane)return;
+ var distance=smoothScrollTarget-pane.scrollTop;
+ if(Math.abs(distance)<.7){
+  pane.scrollTop=Math.round(smoothScrollTarget);
+ smoothScrollRunning=false;
+  return;
+ }
+ markScrollActive();
+ var movement=distance*.24;
+ if(Math.abs(movement)<1)movement=distance<0?-1:1;
+ pane.scrollTop=pane.scrollTop+movement;
+ requestUiFrame(function(){runSmoothScroll(pane);});
+}
+function smoothWheelInput(pane,e,cancelBubble){
+ e=e||window.event;
+ var delta=typeof e.wheelDelta!=='undefined'?-e.wheelDelta:(e.detail||0)*40;
+ if(!delta)return true;
+ if(smoothScrollPane!==pane){
+  smoothScrollRunning=false;
+  smoothScrollPane=pane;
+  smoothScrollTarget=pane.scrollTop;
+ }
+ var direction=delta<0?-1:1;
+ var amount=Math.max(32,Math.min(180,Math.abs(delta)*.85))*direction;
+ var maximum=Math.max(0,pane.scrollHeight-pane.clientHeight);
+ if(!smoothScrollRunning)smoothScrollTarget=pane.scrollTop;
+ smoothScrollTarget=Math.max(0,Math.min(maximum,smoothScrollTarget+amount));
+ if(!smoothScrollRunning){
+  smoothScrollRunning=true;
+  requestUiFrame(function(){runSmoothScroll(pane);});
+ }
+ if(cancelBubble)e.cancelBubble=true;
+ e.returnValue=false;if(e.preventDefault)e.preventDefault();return false;
+}
+function nestedScrollTarget(node,pane){
+ while(node&&node!==pane){
+  var className=' '+String(node.className||'')+' ';
+  if(className.indexOf(' save-menu ')>=0)return true;
+  node=node.parentNode;
+ }
+ return false;
 }
 function setupScrollBar(){
  var pane=document.getElementById('appScroll'),track=document.getElementById('scrollTrack'),thumb=document.getElementById('scrollThumb');
- pane.onscroll=updateScrollBar;
+ smoothScrollPane=pane;smoothScrollTarget=pane.scrollTop;
+ pane.onscroll=function(){
+  if(!smoothScrollRunning)smoothScrollTarget=pane.scrollTop;
+  markScrollActive();
+  scheduleScrollUi();
+ };
+ pane.onmousewheel=function(e){
+  e=e||window.event;
+  if(nestedScrollTarget(e.target||e.srcElement,pane))return true;
+  return smoothWheelInput(pane,e,false);
+ };
+ var helpBody=document.getElementById('helpBody'),saveMenu=document.getElementById('saveMenu');
+ if(helpBody)helpBody.onmousewheel=function(e){return smoothWheelInput(helpBody,e,true);};
+ if(saveMenu)saveMenu.onmousewheel=function(e){return smoothWheelInput(saveMenu,e,true);};
  thumb.onmousedown=function(e){
-  e=e||window.event;scrollDrag=true;scrollDragY=e.clientY;scrollDragTop=parseInt(thumb.style.top,10)||2;
+  e=e||window.event;stopSmoothScroll(pane);scrollDrag=true;scrollDragY=e.clientY;scrollDragTop=parseInt(thumb.style.top,10)||2;
   thumb.className='scroll-thumb dragging';if(e.preventDefault)e.preventDefault();return false;
  };
  track.onmousedown=function(e){
   e=e||window.event;if(e.srcElement===thumb||e.target===thumb)return;
+  stopSmoothScroll(pane);
   var rect=track.getBoundingClientRect(),ratio=(e.clientY-rect.top)/track.clientHeight;
   pane.scrollTop=Math.max(0,Math.min(pane.scrollHeight-pane.clientHeight,ratio*(pane.scrollHeight-pane.clientHeight)));
  };
@@ -430,7 +1898,10 @@ function setupScrollBar(){
   pane.scrollTop=usable>0?(top-2)/usable*(pane.scrollHeight-pane.clientHeight):0;
  };
  document.onmouseup=function(){if(scrollDrag){scrollDrag=false;thumb.className='scroll-thumb';}};
- window.onresize=updateScrollBar;
+ window.onresize=function(){
+  stopSmoothScroll(pane);
+  scheduleScrollUi();
+ };
  updateScrollBar();
 }
 
@@ -452,11 +1923,27 @@ function boot(){
  document.onclick=function(){closeSaveMenu();};
  document.onkeydown=function(e){
   e=e||window.event;
-  if((e.keyCode||e.which)===27)closeHotfixConfirm();
+  var key=e.keyCode||e.which;
+  if(tutorialActive){
+   if(key===27)skipTutorial();
+   else if(key===37)previousTutorialStep();
+   else if(key===39||key===13)nextTutorialStep();
+   if(e.preventDefault)e.preventDefault();
+   return false;
+  }
+  if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
+  if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
+   if(key===27&&document.getElementById('cannonDangerModal').className.indexOf('show')>=0){closeCannonDangerConfirm();return false;}
+   if(key===27&&document.getElementById('developerCommandModal').className.indexOf('show')>=0){closeDeveloperCommandConfirm();return false;}
+   if(key===27&&document.getElementById('dependencyModal').className.indexOf('show')>=0){closeDependencyConfirm();return false;}
+  if(key===27&&document.getElementById('secretModsLayer').className.indexOf('show')>=0){closeSecretMods();return false;}
+  if(key===27)closeHotfixConfirm();
  };
  setupScrollBar();
+ loadSecretModsState();
  refreshSaves();
  window.setInterval(pollGameProcess,1000);
+ window.setTimeout(checkFirstRunTutorial,650);
 }
 function loadPath(path){
  if(!path)return;
@@ -497,6 +1984,7 @@ function applyGameLock(running){
  if(browse)browse.disabled=locked;
  if(display)display.disabled=locked;
  if(running)closeSaveMenu();
+ renderSecretModsState();
 }
 function ensureGameClosed(){
  var running=true;
@@ -522,7 +2010,7 @@ function setAnalysisGameState(running){
  renderAnalysis(lastAnalysis);
 }
 function pollGameProcess(){
- if(operationBusy)return;
+ if(operationBusy||tutorialActive)return;
  try{
   var running=!!window.external.IsGameRunning();
   if(gameRunning===null){gameRunning=running;renderGameBanner(running);return;}
@@ -544,6 +2032,7 @@ function toggleSaveMenu(event){
  picker.className=picker.className.indexOf(' open')>=0?'save-picker':'save-picker open';
 }
 function closeSaveMenu(){
+ stopSmoothScroll(document.getElementById('saveMenu'));
  document.getElementById('savePicker').className='save-picker';
 }
 function setSaveDisplay(name,meta){
@@ -633,8 +2122,8 @@ function renderAnalysis(data){
   html+='<div class=""empty""><div class=""diamond""><span>&#10003;</span></div><h4>RAID STORAGE CLEAR</h4><p>No persisted raid-manager entries were found in this world.</p></div>';
  }
   html+='<div class=""repair-bar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Install or update the cumulative 1.0.2 game hotfix for stuck raids and fertilizer timing, or clear the stored raids from this save.</p>'+
-   '<div class=""repair-actions""><button class=""btn btn-patch"" onclick=""installRaidHotfix()"">INSTALL / UPDATE HOTFIX</button>'+
-   '<button class=""btn btn-danger"" '+(data.CanClear?'':'disabled=""disabled""')+' onclick=""clearRaids()"">CLEAR ALL RAIDS</button></div></div>';
+   '<div class=""repair-actions""><button class=""btn btn-patch"" id=""installHotfixBtn"" onclick=""installRaidHotfix()"">INSTALL / UPDATE HOTFIX</button>'+
+   '<button class=""btn btn-danger"" id=""clearAllBtn"" '+(data.CanClear?'':'disabled=""disabled""')+' onclick=""clearRaids()"">CLEAR ALL RAIDS</button></div></div>';
  document.getElementById('result').innerHTML=html;
  updateScrollBar();
 }
@@ -722,7 +2211,7 @@ function confirmHotfixInstall(){
   lastGameBackupPath=data.BackupPath||'';
   renderAnalysis(lastAnalysis);
   var title=data.AlreadyPatched?'GAME HOTFIX ALREADY UP TO DATE.':'GAME HOTFIX UPDATED.';
-  var detail=data.AlreadyPatched?'The latest verified cumulative 1.0.2 patch is already present.':'Updated '+esc(data.FilesPatched)+' verified game scripts for Scrap Mechanic '+esc(data.GameVersion)+'.';
+   var detail=data.AlreadyPatched?'The latest verified cumulative 1.0.2 patch is already present.':'Updated '+esc(data.FilesPatched)+' verified game scripts for Scrap Mechanic '+esc(data.GameVersion)+'. Game cache reset; the next normal launch may take a little longer.';
   var html='<div class=""banner banner-good""><b>'+title+'</b> '+detail+'</div>';
   if(lastGameBackupPath)html+='<div class=""success-box"" style=""margin-bottom:10px""><div class=""backup-label"">VERIFIED GAME-SCRIPT BACKUP</div>'+
    '<div class=""path"">'+esc(lastGameBackupPath)+'</div><div style=""margin-top:12px""><button class=""btn"" onclick=""openGameBackup()"">SHOW GAME BACKUP</button></div></div>';

@@ -101,6 +101,14 @@ namespace RaidRescue
         public bool Success { get; set; }
         public bool Cancelled { get; set; }
         public bool AlreadyPatched { get; set; }
+        public bool Installed { get; set; }
+        public bool NeedsUpdate { get; set; }
+        public string Mode { get; set; }
+        public string CompatibilityState { get; set; }
+        public string SteamBuildId { get; set; }
+        public bool Adaptive { get; set; }
+        public bool CanApply { get; set; }
+        public string CompatibilityReason { get; set; }
         public string Error { get; set; }
         public string GamePath { get; set; }
         public string GameVersion { get; set; }

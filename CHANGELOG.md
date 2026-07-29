@@ -1,5 +1,221 @@
 # Changelog
 
+## 1.11.0
+
+- Added adaptive future-update compatibility for every Super Secret Mod while
+  keeping the normal cumulative raid/fertilizer hotfix strictly locked to
+  verified game versions.
+- Added a known Steam-build catalog for build `24417028`, game version
+  `1.0.2.870`, and the existing verified official and Raid Rescue hashes.
+- Raid Rescue now reads `appmanifest_387990.acf`, checks the Steam update time,
+  and accepts a newer build only when every protected snippet and required Lua
+  callback is still an exact structural match.
+- Formatting, comments, missing targets, duplicate targets, partial Raid Rescue
+  markers, mixed newlines, and changes to protected code are rejected before
+  any file is written. Unrelated changes elsewhere in compatible updated files
+  are preserved.
+- Added preflight generation, dynamic output hashes, byte-preserving UTF-8 BOM
+  and LF/CRLF handling, atomic verified writes, and all-file rollback for
+  adaptive installs.
+- Added bounded active installation receipts recording Steam build, patch
+  definition, source/output hashes, file format, and checksum-verified base
+  backups.
+- Adaptive removal restores the exact pre-install bytes when the installed
+  hashes are unchanged. If unrelated edits were made later, Raid Rescue removes
+  only its intact snippets; edited, duplicated, or partial patch snippets block
+  removal without writing.
+- Steam-overwritten secret mods are shown as uninstalled and are never
+  automatically reapplied. Superseded active receipts are discarded only after
+  Raid Rescue confirms that none of its protected snippets remain.
+- Patch Bay now displays **Compatible Game Update**, **Game Update Changed
+  Required Code**, **Other Modification Detected**, and **Partial Patch -
+  Repair Required** states with a concise affected-file explanation.
+- Added isolated future-build regression tests covering unrelated updates,
+  host/every-player command modes, linked fertilizer/cannon transactions,
+  exact restoration, and rejection of protected changes and same-build manual
+  edits.
+
+## 1.10.2
+
+- Fixed installed Lua patches being ignored by normal Scrap Mechanic 1.0.2
+  launches because the game continued loading its older generated script cache.
+- Raid Rescue now deletes only `Cache\Bundle\core_data.cbo` after a hotfix,
+  secret-mod install, removal, dependency change, or option change actually
+  modifies verified Lua files.
+- Scrap Mechanic rebuilds the cache automatically on the next normal launch, so
+  Raid Rescue patches no longer require the `-dev` Steam launch option.
+- No-op patch actions leave an existing cache untouched.
+- Added clear in-app and README guidance that the first launch after a patch
+  change may take a little longer while the cache is rebuilt.
+
+## 1.10.1
+
+- Added isolated regression coverage proving every Super Secret Mod returns
+  every affected Lua file to its exact verified pre-install bytes.
+- Clarified that Chemical Fertilizer removal preserves the independent normal
+  cumulative fertilizer hotfix when it was present before the secret mod.
+- Added bounded secret-mod backup retention: the two newest backups for each
+  install, remove, or configure action are retained instead of allowing the
+  folder to grow forever.
+- Retention runs only after successful final checksum verification, never
+  removes the current rollback backup, skips reparse points, and ignores every
+  folder that does not match an exact Raid Rescue timestamped name.
+- Updated Patch Bay messaging, Help, and documentation to explain exact
+  restoration and backup rotation.
+
+## 1.10.0
+
+- Added one authenticated elevated patch session shared by the cumulative
+  hotfix and every Super Secret Mod.
+- Windows now requests administrator approval only on the first patch action
+  after Raid Rescue opens. Later toggles reuse the same hidden elevated broker.
+- The broker accepts only fixed Raid Rescue patch actions over a randomized,
+  token-authenticated named pipe; it cannot execute arbitrary commands or
+  accept arbitrary file paths.
+- The broker watches its parent Raid Rescue process and exits automatically
+  when the app closes.
+- Updated in-app progress messages, Help, and documentation for the one-prompt
+  workflow.
+
+## 1.9.2
+
+- Fixed Resource Locator Dots launching a second Raid Rescue window during
+  elevated installation or removal. Its launcher and helper now agree on the
+  three-argument protocol.
+- Hardened every elevated patch helper so a recognized but malformed internal
+  command exits safely instead of falling through into normal app startup.
+- Simplified installed Patch Bay status badges to display only
+  **INSTALLED**, while actionable states such as applying, unsupported files,
+  missing dependencies, and available updates remain descriptive.
+
+## 1.9.1
+
+- Added an animated **Options** panel to Developer Commands with **Host Only**
+  and **Every Player** access modes.
+- Host Only remains the recommended default. Every Player registers the
+  built-in Survival command list for every joined player while connected;
+  `/kick` and `/ban` remain host-only.
+- Added a required high-trust acknowledgement before Every Player can be
+  installed.
+- Added checksum-locked Host Only and Every Player script variants, safe
+  in-place switching between them, timestamped verified backups, automatic
+  rollback, and exact original-file restoration.
+- Updated Patch Bay status, Help, warnings, and documentation to show the
+  installed access mode and explain that commands can permanently change a
+  world.
+
+## 1.9.0
+
+- Added **Host Developer Commands** to the scalable Super Secret Mods catalog.
+- Unlocks Scrap Mechanic's complete existing Survival developer command list
+  for the world host, including `/unlimited`, `/god`, `/spawn`, item grants,
+  time controls, player utilities, aggro controls, and raid commands.
+- Uses `sm.isHost` only for command registration instead of enabling
+  `g_survivalDev`, preserving normal spawn points, intro flow, and recipe
+  progression.
+- Added a Scrap Mechanic-styled installation warning explaining that commands
+  can permanently change the active world.
+- Added exact-version and checksum locking for `SurvivalGame.lua`, timestamped
+  SHA-256-verified backups, atomic replacement, automatic rollback, and exact
+  original-file restoration.
+- Integrated the new mod with Patch Bay filtering, active counts, game-running
+  locks, the master switch, status reporting, Help, and elevated installation.
+
+## 1.8.1
+
+- Redesigned Super Secret Mods as a scalable patch catalog with a fixed master
+  control, compact mod cards, live filtering, an independent custom scrollbar,
+  and fixed feedback/status controls.
+- Added room for future secret mods without allowing the panel to grow beyond
+  the fixed Raid Rescue window.
+- Added a dedicated creation/save compatibility warning before every operation
+  that removes Dual-Fluid Water Cannon: its own switch, removing Chemical
+  Fertilizer Splash, or disabling the master switch.
+- Removal now requires confirming that every Chemical Container connection was
+  removed from mounted water cannons and all affected worlds were saved.
+- Documented the same safe-removal requirement for Steam Verify and game
+  updates, which can also restore the original two-input cannon script.
+
+## 1.8.0
+
+- Added **Dual-Fluid Water Cannon** to the hidden Super Secret Mods patch bay.
+- Mounted water cannons can now accept one logic connection, one Water
+  Container, and one Chemical Container in any connection order.
+- Each OFF-to-ON logic pulse consumes and fires every available liquid once,
+  with both projectiles sharing the same muzzle path and game tick.
+- Preserved external-water priority, the original water-only internal tank,
+  single-shot triggering, one animation, one sound, and one recoil impulse.
+- Added automatic Chemical Fertilizer Splash dependency installation and safe
+  cannon-first removal when the fertilizer mod is disabled.
+- Added a custom dependency confirmation, one-prompt elevated coordinator,
+  timestamped checksum-verified backups, exact uninstallation, and cross-mod
+  rollback.
+
+## 1.7.1
+
+- Fixed Resource Locator Dots not appearing in game by declaring the one output
+  slot Scrap Mechanic requires before the Connect Tool renders a logic point.
+- Kept the locator output inactive and limited it to one child connection.
+- Added neutral normal and highlight colors for a clear locator point.
+- Added checksum-locked, backup-first upgrades from the older invisible
+  Resource Locator Dots patch without requiring Steam Verify.
+- Updated the patch-bay status to clearly identify and install the visibility
+  update.
+
+## 1.7.0
+
+- Added **Chemical Fertilizer Splash** to the hidden Super Secret Mods patch bay.
+- Player chemical projectiles now fertilize the exact normal-soil crop or
+  growbed they hit.
+- Red Farmbot pesticide impacts now fertilize supported soil, crops, and
+  growbeds in a server-authoritative 2.5-block radius.
+- Protected directly hit crops and growbeds from the Farmbot projectile's
+  normal unit-projectile destruction path while this mod is enabled.
+- Added checksum-locked support for official, raid-only, and cumulative
+  Raid Rescue script states.
+- Added four-file atomic installation, timestamped checksum-verified backups,
+  rollback, exact uninstallation, and automatic preservation when the normal
+  cumulative hotfix is installed or updated later.
+
+## 1.6.0
+
+- Corrected tutorial badge numbers so they match the visible step labels, and fixed the Step 7 spotlight to frame the Help button inside the custom title bar.
+- Added clearly labeled tutorial-only raid data, with Steps 4–6 spotlighting the example raid and its real repair controls instead of the entire empty diagnostics panel.
+- Added a hidden animated Super Secret Mods patch bay behind the title-bar emblem, including a persistent master toggle and slots for future experimental patches.
+- Added the first Resource Locator Dots patch for haybot spines and refineable
+  resource cores. Its zero-slot locator design was corrected in 1.7.1 because
+  the game did not render a connection point without an available output slot.
+- Rebuilt the secret patch-bay badge as a single SVG coordinate system so its letter and diamond remain precisely centered at every DPI scale.
+
+- Added an optional first-run tutorial prompt with persistent local state.
+- Added a nine-step animated interactive tour that spotlights the real
+  interface and explains the complete backup-first workflow.
+- Added a custom Help menu covering quick start, raid diagnostics, save repair,
+  the cumulative hotfix, backups, restoration, antivirus warnings, and common
+  problems.
+- Added Replay Tutorial and Reset First-Run Prompt controls.
+- Added a dedicated animated **?** Help button to the custom title bar.
+- Replaced the title-bar question-mark font glyph with a geometrically centered
+  SVG so its alignment remains exact at different Windows DPI scales.
+- Reduced the title-bar Help icon, rebuilt the tutorial step badge as a fixed
+  square SVG, and shortened the tutorial text for faster reading.
+- Reworked the tutorial card entrance and replaced the animated step badge with
+  a static layered industrial SVG using a dark mount, amber rim, beveled face,
+  hard highlight, and lower shadow.
+- Removed every step-badge animation and the orbiting square indicator.
+- Restored the continuously moving cyan tutorial chevrons using a clipped
+  transform layer.
+- Removed the animated full-window spotlight shadow and moved its pulse to a
+  small signal bar, preventing expensive whole-window repaints.
+- Enabled GPU rendering for Raid Rescue's embedded browser through its
+  per-user Windows feature control.
+- Added eased wheel scrolling to the main interface, Help manual, and save
+  list.
+- Throttled custom-scrollbar layout work to one update per rendered frame and
+  stopped redundant style writes.
+- Rebuilt the full-width hazard animation as a composited transform layer and
+  pause decorative animations during active scrolling.
+
 ## 1.5.5
 
 - Added a hard safety lock that prevents world databases from being analyzed while Scrap Mechanic is running.

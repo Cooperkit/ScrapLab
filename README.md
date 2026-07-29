@@ -15,6 +15,11 @@ timing.
 It is designed for regular players: no database editor, command prompt,
 installer, or extra dependencies are required.
 
+On first launch, Raid Rescue offers an optional interactive tutorial. The
+animated tour explains the safe workflow using the real controls without
+changing a save. The **?** button in the title bar opens a detailed Help menu
+where the tutorial can be replayed or its first-run prompt can be reset.
+
 ## Important
 
 - Close Scrap Mechanic completely before repairing a save.
@@ -30,9 +35,15 @@ installer, or extra dependencies are required.
 3. Put it anywhere convenient and double-click it.
 
 The app is portable and does not need to be installed. Clearing a save does not
-need administrator access. Installing the optional game hotfix asks for Windows
-administrator approval because Steam normally stores the game under Program
-Files.
+need administrator access. The first game hotfix or secret-mod change in an app
+session asks for Windows administrator approval because Steam normally stores
+the game under Program Files. Later patch actions reuse that protected session
+without asking again.
+
+Whenever a hotfix or secret-mod action changes game Lua files, Raid Rescue
+deletes Scrap Mechanic's generated `Cache\Bundle\core_data.cbo` script cache.
+The game rebuilds it automatically on the next normal launch, which may take a
+little longer. The `-dev` Steam launch option is not required.
 
 Windows may show a SmartScreen message because independently distributed tools
 are not always code-signed. Verify that the download came from this repository
@@ -43,9 +54,9 @@ downloaded from somewhere else.
 
 ### 1. Close Scrap Mechanic
 
-Exit the game completely. Raid Rescue can inspect a save while the game is
-open, but it deliberately disables repair to prevent two programs from writing
-to the same save.
+Exit the game completely. Raid Rescue locks world selection, Browse, Analyze,
+and repair access while the game is running so it never opens the live world
+database.
 
 ### 2. Choose your world
 
@@ -70,6 +81,7 @@ does not change the save. Raid Rescue safety-locks world selection, Browse, and
 Analyze while the game process is running so the live database is never opened.
 The controls unlock and the selected world refreshes automatically after the
 game closes.
+
 The tool shows the raid level, state, threat, planned enemies, crop triggers,
 coordinates, timing values, and signs that the raid is stuck.
 
@@ -97,11 +109,32 @@ Read the confirmation and choose **Yes**. Raid Rescue then:
 4. clears the exact base-game raid-manager record in a transaction;
 5. checks the repaired save again.
 
-The hotfix has its own animated in-app confirmation explaining exactly what it changes. If you
-accept, Windows displays an administrator prompt. Raid Rescue verifies the
+The hotfix has its own animated in-app confirmation explaining exactly what it
+changes. On the first patch action, Windows displays one administrator prompt.
+Raid Rescue keeps an authenticated elevated patch session alive until the app
+closes, so later supported changes do not prompt again. It verifies the
 installed game version and every target script, creates checksum-verified
 backups, installs all changes atomically, and rolls back automatically if any
 step fails.
+
+## Tutorial and Help
+
+- The first-run prompt offers a guided tour and can be declined safely.
+- The tour spotlights the real interface and explains world selection,
+  read-only analysis, raid cards, backups, Clear All Raids, and the temporary
+  hotfix.
+- Open the **?** button at any time for the full field manual.
+- **Replay Tutorial** starts the tour immediately.
+- **Reset First-Run Prompt** makes the welcome question appear the next time
+  Raid Rescue starts.
+
+The tutorial preference is a tiny local file stored under:
+
+```text
+%LOCALAPPDATA%\Raid Rescue\preferences.ini
+```
+
+It contains only the tutorial version and no save data or personal information.
 
 ### 5. Test the repaired world
 
@@ -171,9 +204,91 @@ stored under:
 %localappdata%\Raid Rescue\Game Backups\Scrap Mechanic
 ```
 
+After changing the verified scripts, Raid Rescue deletes only the generated
+`Cache\Bundle\core_data.cbo` file. Scrap Mechanic rebuilds this cache from the
+current Lua files on the next normal launch.
+
 Steam may restore the original scripts after a game update or **Verify
 integrity of game files**. That is expected. A future game update may include
 an official fix, so Raid Rescue does not apply this hotfix to unknown versions.
+
+## Super Secret Mods
+
+Click the small Raid Rescue emblem at the far left of the title bar to open the
+hidden patch bay. Turn on the master switch, then install any optional mod:
+
+- **Resource Locator Dots** reveals haybot spines and refineable wood, stone,
+  and metal cores while the Connect Tool is equipped. The game requires one
+  output slot before it will draw the dot, so the patch exposes one inactive
+  logic output. It never sends an ON signal.
+- **Developer Commands** unlocks Scrap Mechanic's existing Survival developer
+  chat commands. Its **Host Only** option is recommended and grants them only
+  to the player hosting the world. **Every Player** gives the command list to
+  every joined player while connected; `/kick` and `/ban` remain host-only.
+  Available tools include `/unlimited`, `/limited`, `/god`, `/spawn`, item and
+  weapon grants, time controls, player utilities, aggro controls, and raid
+  commands. Neither option enables the server's full `g_survivalDev` mode.
+- **Chemical Fertilizer Splash** makes a player chemical projectile fertilize
+  the exact normal-soil plot, growing crop, or growbed it hits. A red Farmbot's
+  pesticide projectile fertilizes supported plots in a 2.5-block radius around
+  its impact.
+- **Dual-Fluid Water Cannon** lets a mounted water cannon accept one Water
+  Container and one Chemical Container. Each OFF-to-ON logic pulse consumes
+  one of every available liquid and fires both projectiles along the same
+  muzzle path. Its built-in tank remains water-only.
+
+These mods are independent from save repair and the normal cumulative hotfix.
+Scrap Mechanic must be closed before changing them. On the known game build,
+each operation still accepts only verified whole-file checksums. On a later
+verified Steam build, Raid Rescue can adapt when every protected code snippet
+and required callback is still an exact match. Formatting or comments inside a
+protected snippet count as a change and block the operation; unrelated changes
+elsewhere in the file are preserved.
+
+Before writing, Raid Rescue reads Steam's manifest, verifies file timestamps,
+preflights every target, creates every output in memory, and makes
+checksum-verified backups. Multi-file mods and dependencies remain
+all-or-nothing and roll back together if any final hash fails. Removing
+Chemical Fertilizer Splash restores whichever verified state existed before
+installation, including the normal Raid Rescue fertilizer hotfix. Dual-Fluid
+Water Cannon requires Chemical Fertilizer Splash; Raid Rescue automatically
+installs the dependency and removes the cannon first if the fertilizer mod is
+removed.
+
+Adaptive installations keep one bounded active receipt under
+`%LOCALAPPDATA%\Raid Rescue\Patch State\Active`. If the installed files are
+unchanged, removal restores the exact pre-install bytes. If unrelated edits
+were made afterward but all Raid Rescue snippets remain intact, removal
+surgically reverses only those snippets. A partial, duplicated, or edited Raid
+Rescue snippet blocks removal without writing.
+
+After a Steam update, secret mods are never reinstalled automatically. Patch
+Bay shows **Compatible Game Update** when the new files remain safe, and the
+user deliberately toggles each wanted mod back on. **Game Update Changed
+Required Code**, **Other Modification Detected**, or **Partial Patch - Repair
+Required** means Raid Rescue refused to guess.
+
+Secret-mod backups use bounded retention. Raid Rescue keeps the two newest
+verified folders for each install, remove, or configure action and removes older
+superseded copies only after a change succeeds and its final checksums pass.
+Cleanup matches only exact Raid Rescue timestamped folder names; unknown folders
+and manual backups are left untouched.
+
+> [!WARNING]
+> Developer commands can permanently change the active world. Installing
+> Developer Commands does not edit a save, but Raid Rescue cannot undo items,
+> units, raid state, time changes, or other effects produced by commands.
+> **Every Player** should be used only with people you completely trust because
+> any joined player can run world-changing commands. Back up important worlds
+> before experimenting.
+
+> [!CAUTION]
+> Before disabling Dual-Fluid Water Cannon, disconnect every Chemical Container
+> from every mounted water cannon while the mod is still installed, save every
+> affected world, and close the game. Restoring the original two-input cannon
+> script while those third connections remain can prevent a creation or world
+> from loading correctly. Steam Verify and game updates can also restore the
+> original script, so perform the same cleanup before either one.
 
 ## What the diagnostic shows
 
@@ -209,6 +324,22 @@ Do not force the patch. A game update may already contain an official fix, or a
 mod may have changed one of the same scripts. Use Steam's **Verify integrity of
 game files** if you need to restore the originals.
 
+The normal cumulative raid/fertilizer hotfix is intentionally version-locked.
+Adaptive compatibility applies only to Super Secret Mods.
+
+### Patch Bay says Compatible Game Update
+
+Steam installed a different build, but the exact code protected by that secret
+mod is unchanged. Close the game and toggle the mod normally. Raid Rescue
+preserves unrelated updated code and records a verified removal receipt.
+
+### Patch Bay says required code changed or another modification was detected
+
+Do not force the patch. The game update, another mod, or a manual edit changed
+something Raid Rescue must understand exactly. **Verify integrity of game
+files** can restore official files, but a newly changed protected feature may
+need a Raid Rescue update first.
+
 ### It says there are no raids
 
 The selected save does not currently contain a stored base-game raid-manager
@@ -237,8 +368,12 @@ require a network connection.
 - No installer or external dependency downloads
 - Save repair requires no administrator rights
 - Optional cumulative game hotfix supports verified original and previous Raid
-  Rescue states for version 1.0.2.870 and requires a Windows administrator
-  confirmation
+  Rescue states for version 1.0.2.870. Windows requests administrator
+  confirmation once per Raid Rescue session, and subsequent supported hotfix
+  or secret-mod actions reuse that protected session.
+- Super Secret Mods recognize known build `24417028` / `1.0.2.870` by verified
+  hashes and can adapt to a different valid Steam build only when every
+  protected snippet and structural guard remains exact.
 
 Legacy pre-Chapter-2 saves are detected and left unchanged.
 
@@ -260,6 +395,11 @@ Raid Rescue reads only the local save chosen by the user. When Scrap Mechanic
 is installed, the app privately loads the game's Shentox and Inter fonts at
 runtime to match the game's interface. Those fonts are not copied into or
 redistributed with Raid Rescue.
+
+For smoother rendering, the app creates two per-user Windows feature-control
+values for `RaidRescue.exe`: IE11 standards mode and GPU rendering. These
+settings apply only to Raid Rescue, require no administrator access, and do not
+send any information over the internet.
 
 Raid Rescue is an unofficial community tool and is not affiliated with or
 endorsed by Axolot Games.

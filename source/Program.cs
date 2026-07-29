@@ -15,7 +15,12 @@ namespace RaidRescue
         [STAThread]
         private static void Main(string[] args)
         {
-            if (GamePatchLauncher.TryRunHelper(args))
+            if (ElevatedPatchBroker.TryRunHelper(args) ||
+                GamePatchLauncher.TryRunHelper(args) ||
+                SecretModPatchLauncher.TryRunHelper(args) ||
+                ChemicalFertilizerPatchLauncher.TryRunHelper(args) ||
+                DualFluidCannonPatchLauncher.TryRunHelper(args) ||
+                DeveloperCommandsPatchLauncher.TryRunHelper(args))
                 return;
 
             ConfigureBrowserMode();
@@ -40,16 +45,30 @@ namespace RaidRescue
             try
             {
                 string executable = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
-                    @"Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_BROWSER_EMULATION"))
-                {
-                    if (key != null)
-                        key.SetValue(executable, 11001, RegistryValueKind.DWord);
-                }
+                SetBrowserFeature(
+                    executable,
+                    "FEATURE_BROWSER_EMULATION",
+                    11001);
+                SetBrowserFeature(
+                    executable,
+                    "FEATURE_GPU_RENDERING",
+                    1);
             }
             catch
             {
                 // The interface still works with the default browser mode.
+            }
+        }
+
+        private static void SetBrowserFeature(
+            string executable, string feature, int value)
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
+                @"Software\Microsoft\Internet Explorer\Main\FeatureControl\" +
+                feature))
+            {
+                if (key != null)
+                    key.SetValue(executable, value, RegistryValueKind.DWord);
             }
         }
     }
@@ -141,6 +160,122 @@ namespace RaidRescue
                 }
             }
             catch { }
+        }
+    }
+
+    internal static class TutorialPreferences
+    {
+        private const string CompletedValue = "TutorialVersion=1";
+        private static readonly object Sync = new object();
+
+        public static bool ShouldOfferTutorial()
+        {
+            lock (Sync)
+            {
+                try
+                {
+                    string path = GetSettingsPath();
+                    if (!File.Exists(path))
+                        return true;
+                    return !String.Equals(
+                        File.ReadAllText(path).Trim(),
+                        CompletedValue,
+                        StringComparison.Ordinal);
+                }
+                catch
+                {
+                    // If the preference cannot be read, offering help is safer
+                    // than silently hiding onboarding from a new user.
+                    return true;
+                }
+            }
+        }
+
+        public static void CompleteTutorialPrompt()
+        {
+            WriteValue(CompletedValue);
+        }
+
+        public static void ResetTutorialPrompt()
+        {
+            WriteValue("TutorialVersion=0");
+        }
+
+        private static void WriteValue(string value)
+        {
+            lock (Sync)
+            {
+                try
+                {
+                    string path = GetSettingsPath();
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));
+                    File.WriteAllText(path, value);
+                }
+                catch
+                {
+                    // The UI remains usable even if Windows blocks preferences.
+                }
+            }
+        }
+
+        private static string GetSettingsPath()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Raid Rescue",
+                "preferences.ini");
+        }
+    }
+
+    internal static class SecretModPreferences
+    {
+        private const string EnabledValue = "Enabled=1";
+        private static readonly object Sync = new object();
+
+        public static bool GetEnabled()
+        {
+            lock (Sync)
+            {
+                try
+                {
+                    string path = GetSettingsPath();
+                    return File.Exists(path) &&
+                        String.Equals(
+                            File.ReadAllText(path).Trim(),
+                            EnabledValue,
+                            StringComparison.Ordinal);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
+        public static void SetEnabled(bool enabled)
+        {
+            lock (Sync)
+            {
+                try
+                {
+                    string path = GetSettingsPath();
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));
+                    File.WriteAllText(path, enabled ? EnabledValue : "Enabled=0");
+                }
+                catch
+                {
+                    // Experimental controls safely default to off if preferences
+                    // cannot be written.
+                }
+            }
+        }
+
+        private static string GetSettingsPath()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Raid Rescue",
+                "secret-mods.ini");
         }
     }
 
@@ -268,6 +403,31 @@ namespace RaidRescue
             return RaidService.IsGameRunning();
         }
 
+        public bool ShouldOfferTutorial()
+        {
+            return TutorialPreferences.ShouldOfferTutorial();
+        }
+
+        public void CompleteTutorialPrompt()
+        {
+            TutorialPreferences.CompleteTutorialPrompt();
+        }
+
+        public void ResetTutorialPrompt()
+        {
+            TutorialPreferences.ResetTutorialPrompt();
+        }
+
+        public bool GetSecretModsEnabled()
+        {
+            return SecretModPreferences.GetEnabled();
+        }
+
+        public void SetSecretModsEnabled(bool enabled)
+        {
+            SecretModPreferences.SetEnabled(enabled);
+        }
+
         public string Browse()
         {
             using (OpenFileDialog dialog = new OpenFileDialog())
@@ -317,6 +477,46 @@ namespace RaidRescue
         public string InstallRaidHotfix()
         {
             return Serialize(GamePatchLauncher.Install());
+        }
+
+        public string GetResourceLocatorModStatus()
+        {
+            return Serialize(SecretModPatchService.GetStatus());
+        }
+
+        public string SetResourceLocatorMod(bool enabled)
+        {
+            return Serialize(SecretModPatchLauncher.SetEnabled(enabled));
+        }
+
+        public string GetChemicalFertilizerModStatus()
+        {
+            return Serialize(ChemicalFertilizerPatchService.GetStatus());
+        }
+
+        public string SetChemicalFertilizerMod(bool enabled)
+        {
+            return Serialize(DualFluidCannonPatchLauncher.SetChemicalEnabled(enabled));
+        }
+
+        public string GetDualFluidCannonModStatus()
+        {
+            return Serialize(DualFluidCannonPatchService.GetStatus());
+        }
+
+        public string SetDualFluidCannonMod(bool enabled)
+        {
+            return Serialize(DualFluidCannonPatchLauncher.SetCannonEnabled(enabled));
+        }
+
+        public string GetDeveloperCommandsModStatus()
+        {
+            return Serialize(DeveloperCommandsPatchService.GetStatus());
+        }
+
+        public string SetDeveloperCommandsMod(bool enabled, string mode)
+        {
+            return Serialize(DeveloperCommandsPatchLauncher.SetEnabled(enabled, mode));
         }
 
         public void OpenFolder(string path)
