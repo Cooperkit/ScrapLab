@@ -15,6 +15,9 @@ namespace RaidRescue
         [STAThread]
         private static void Main(string[] args)
         {
+            if (GamePatchLauncher.TryRunHelper(args))
+                return;
+
             ConfigureBrowserMode();
             GameFonts.TryLoad();
             Application.EnableVisualStyles();
@@ -169,6 +172,15 @@ namespace RaidRescue
             MinimizeBox = true;
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Color.FromArgb(9, 14, 28);
+            try
+            {
+                Icon = Icon.ExtractAssociatedIcon(
+                    Assembly.GetExecutingAssembly().Location);
+            }
+            catch
+            {
+                // The embedded executable icon remains available to Windows.
+            }
 
             browser = new WebBrowser
             {
@@ -251,6 +263,11 @@ namespace RaidRescue
             return Serialize(RaidService.Analyze(path));
         }
 
+        public bool IsGameRunning()
+        {
+            return RaidService.IsGameRunning();
+        }
+
         public string Browse()
         {
             using (OpenFileDialog dialog = new OpenFileDialog())
@@ -295,6 +312,11 @@ namespace RaidRescue
                 });
             }
             return Serialize(RaidService.ClearRaids(path));
+        }
+
+        public string InstallRaidHotfix()
+        {
+            return Serialize(GamePatchLauncher.Install());
         }
 
         public void OpenFolder(string path)

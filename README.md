@@ -8,7 +8,9 @@
 Raid Rescue finds Scrap Mechanic Survival saves, reads their stored raid
 manager, and explains every raid it finds. If a broken raid is permanently
 active, the tool can create a verified backup and clear the saved raid-manager
-state.
+state. It also includes an optional, version-locked cumulative game hotfix that
+prevents the known Chapter 2 raid failure paths and corrects fertilizer growth
+timing.
 
 It is designed for regular players: no database editor, command prompt,
 installer, or extra dependencies are required.
@@ -27,12 +29,14 @@ installer, or extra dependencies are required.
 2. Download `RaidRescue.exe`.
 3. Put it anywhere convenient and double-click it.
 
-The app is portable. It does not need to be installed and does not need
-administrator access.
+The app is portable and does not need to be installed. Clearing a save does not
+need administrator access. Installing the optional game hotfix asks for Windows
+administrator approval because Steam normally stores the game under Program
+Files.
 
 Windows may show a SmartScreen message because independently distributed tools
 are not always code-signed. Verify that the download came from this repository
-before choosing **More info → Run anyway**. Do not bypass a warning for a copy
+before choosing **More info -> Run anyway**. Do not bypass a warning for a copy
 downloaded from somewhere else.
 
 ## Quick start
@@ -61,16 +65,27 @@ You can paste that path into File Explorer's address bar.
 
 ### 3. Analyze the world
 
-Click **Analyze World**. This step is read-only: it does not change the save.
+Close Scrap Mechanic, then click **Analyze World**. This step is read-only: it
+does not change the save. Raid Rescue safety-locks world selection, Browse, and
+Analyze while the game process is running so the live database is never opened.
+The controls unlock and the selected world refreshes automatically after the
+game closes.
 The tool shows the raid level, state, threat, planned enemies, crop triggers,
 coordinates, timing values, and signs that the raid is stuck.
 
 ![Raid diagnostic results](docs/images/02-raid-detected.png)
 
-### 4. Review and clear
+### 4. Choose a repair
 
-Scroll to the bottom of the diagnostic. If the correct world and raids are
-shown, click **Clear All Raids**.
+Scroll to the bottom of the diagnostic. Two repair buttons are shown together:
+
+- **Clear All Raids** repairs the selected save and removes its stored raid
+  schedule.
+- **Install / Update Hotfix** patches the supported game scripts so impossible
+  raids safely cancel and fertilized crop timing stays synchronized.
+
+You may clear the affected save, install the preventive hotfix, or do both.
+Close Scrap Mechanic before using either repair.
 
 ![Warnings and Clear All Raids button](docs/images/03-review-and-clear.png)
 
@@ -81,6 +96,12 @@ Read the confirmation and choose **Yes**. Raid Rescue then:
 3. verifies the backup;
 4. clears the exact base-game raid-manager record in a transaction;
 5. checks the repaired save again.
+
+The hotfix has its own animated in-app confirmation explaining exactly what it changes. If you
+accept, Windows displays an administrator prompt. Raid Rescue verifies the
+installed game version and every target script, creates checksum-verified
+backups, installs all changes atomically, and rolls back automatically if any
+step fails.
 
 ### 5. Test the repaired world
 
@@ -123,6 +144,37 @@ MySurvivalWorld.raidrescue-backup-20260728-161319-395.db
 5. Rename the copy to the original world's exact `.db` filename.
 6. Start Scrap Mechanic and load the world.
 
+## Optional game hotfix
+
+The **Install / Update Hotfix** button currently supports verified Scrap
+Mechanic **1.0.2.870** game scripts. It addresses the failure paths found in
+the Chapter 2 raid and fertilizer code:
+
+- missing or empty raid spawn positions;
+- a malformed short spawn-path result;
+- unbounded failed path searches;
+- stale destroyed-crop references;
+- crop survival state being reset after a reload;
+- incomplete cleanup of raid and navigation handles;
+- normal-soil fertilizer animation running at a different rate from the server;
+- growbed fertilizer animation running at a different rate from the server;
+- completed fertilized crops waiting for a later update after surviving a raid.
+
+The installer refuses to guess. It will not touch an unsupported game version,
+or scripts whose SHA-256 checksums do not match a verified original, previous
+Raid Rescue patch, or current cumulative patch. If the raid hotfix is already
+installed, the updater keeps it and applies only the missing fertilizer files.
+Backups preserve the exact state present immediately before the update and are
+stored under:
+
+```text
+%localappdata%\Raid Rescue\Game Backups\Scrap Mechanic
+```
+
+Steam may restore the original scripts after a game update or **Verify
+integrity of game files**. That is expected. A future game update may include
+an official fix, so Raid Rescue does not apply this hotfix to unknown versions.
+
 ## What the diagnostic shows
 
 - SQLite integrity and repair readiness
@@ -145,6 +197,17 @@ world.
 
 Close Scrap Mechanic completely, including any game process still stopping in
 the background. Reopen Raid Rescue and analyze the world again.
+
+### The Install / Update Hotfix button says the game is running
+
+Close Scrap Mechanic completely and try again. Raid Rescue checks before asking
+for administrator approval and checks again inside the elevated helper.
+
+### The hotfix says my files or version are unsupported
+
+Do not force the patch. A game update may already contain an official fix, or a
+mod may have changed one of the same scripts. Use Steam's **Verify integrity of
+game files** if you need to restore the originals.
 
 ### It says there are no raids
 
@@ -172,7 +235,10 @@ require a network connection.
 - Windows 10 or Windows 11
 - Scrap Mechanic Chapter 2 Survival database format
 - No installer or external dependency downloads
-- No administrator rights required
+- Save repair requires no administrator rights
+- Optional cumulative game hotfix supports verified original and previous Raid
+  Rescue states for version 1.0.2.870 and requires a Windows administrator
+  confirmation
 
 Legacy pre-Chapter-2 saves are detected and left unchanged.
 
@@ -197,4 +263,3 @@ redistributed with Raid Rescue.
 
 Raid Rescue is an unofficial community tool and is not affiliated with or
 endorsed by Axolot Games.
-

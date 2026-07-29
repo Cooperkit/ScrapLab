@@ -95,4 +95,17 @@ namespace RaidRescue
         public AnalysisResult Before { get; set; }
         public AnalysisResult After { get; set; }
     }
+
+    public sealed class GamePatchResult
+    {
+        public bool Success { get; set; }
+        public bool Cancelled { get; set; }
+        public bool AlreadyPatched { get; set; }
+        public string Error { get; set; }
+        public string GamePath { get; set; }
+        public string GameVersion { get; set; }
+        public string BackupPath { get; set; }
+        public int FilesPatched { get; set; }
+        public List<string> Changes { get; set; }
+    }
 }

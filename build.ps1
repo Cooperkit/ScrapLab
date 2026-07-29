@@ -25,6 +25,7 @@ $sources = @(
     "LuaStorage.cs",
     "SqliteNative.cs",
     "RaidService.cs",
+    "GamePatchService.cs",
     "UiHtml.cs",
     "AssemblyInfo.cs"
 ) | ForEach-Object { Join-Path $source $_ }
@@ -35,6 +36,7 @@ $sources = @(
     /platform:anycpu `
     /optimize+ `
     "/win32manifest:$source\app.manifest" `
+    "/win32icon:$source\RaidRescue.ico" `
     "/out:$output\RaidRescue.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
@@ -48,4 +50,3 @@ if ($LASTEXITCODE -ne 0) {
 
 $file = Get-Item -LiteralPath (Join-Path $output "RaidRescue.exe")
 Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
-

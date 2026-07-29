@@ -25,12 +25,13 @@ button{font:inherit}
  background:linear-gradient(#303435,#1a1d1e);border:1px solid #070808;border-bottom:2px solid #080909;
  box-shadow:inset 0 1px #55595a,0 2px 8px rgba(0,0,0,.7);cursor:default}
 .window-grip{height:100%;flex:1;display:flex;align-items:center;min-width:0;padding-left:12px}
-.window-emblem{width:28px;height:28px;flex:0 0 28px;margin-right:8px;overflow:visible}
-.window-emblem svg{display:block;width:28px;height:28px;overflow:visible}
-.window-emblem-shape{fill:#e9aa20;stroke:#080909;stroke-width:3}
-.window-emblem-edge{fill:none;stroke:#ffd448;stroke-width:1.5}
-.window-emblem-letter{fill:#25220f;font-family:Shentox,""Arial Black"",sans-serif;font-size:12px;
- font-weight:bold;text-anchor:middle}
+.window-emblem{width:30px;height:30px;flex:0 0 30px;margin-right:8px;position:relative;overflow:visible}
+.window-emblem-mark{position:absolute;left:4px;top:4px;width:22px;height:22px;transform:rotate(45deg);
+ background:linear-gradient(145deg,#ffd74f,#efa916);border:2px solid #191b1c;border-radius:4px;
+ box-shadow:0 0 0 1px #ffd13b,0 2px 0 #070808}
+.logo-letter{position:absolute;left:0;top:0;width:100%;height:100%;display:block;transform:rotate(-45deg);overflow:visible}
+.logo-letter .logo-letter-highlight{fill:#fff3a2;opacity:.72}
+.logo-letter .logo-letter-face{fill:#272719}
 .window-title{min-width:0;color:#f3f3ee;font:11px Shentox,""Arial Black"",sans-serif;letter-spacing:1px;
  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px #000}
 .window-title span{margin-left:9px;color:#8e9495;font:9px ""Inter Medium"",""Segoe UI"",sans-serif;letter-spacing:.5px}
@@ -60,8 +61,6 @@ button{font:inherit}
 .brand-mark{width:39px;height:39px;margin:0 13px 0 5px;position:relative;transform:rotate(45deg);
  background:linear-gradient(145deg,#ffd74f,#efa916);border:3px solid #191b1c;border-radius:7px;
  box-shadow:0 0 0 2px #ffd13b,0 4px 0 #070808}
-.brand-mark span{position:absolute;top:3px;left:0;width:33px;text-align:center;transform:rotate(-45deg);
- color:#272719;font:22px/27px Shentox,""Arial Black"",sans-serif;text-shadow:0 1px #fff3a2}
 .identity h1{margin:0;color:#fff;font:20px/21px Shentox,""Arial Black"",sans-serif;letter-spacing:1.2px;
  text-shadow:0 2px 0 #000}
 .identity p{margin:2px 0 0;color:#ffd046;font:10px/13px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.7px}
@@ -90,6 +89,8 @@ button{font:inherit}
  transition:border-color .16s,box-shadow .16s,transform .16s}
 .save-display:hover,.save-picker.open .save-display{border-color:#ffd046;box-shadow:inset 0 2px 5px #080909,0 0 0 2px rgba(255,208,70,.16),0 2px #8d650e}
 .save-display:active{transform:translateY(1px)}
+.save-display:disabled{cursor:not-allowed;opacity:.42;border-color:#74402f;transform:none;
+ box-shadow:inset 0 2px 5px #080909,0 2px #311611}
 .save-name{display:block;color:#fff;font:12px/16px Shentox,""Arial Black"",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .save-meta{display:block;color:#8f9595;font:10px/13px ""Inter Medium"",""Segoe UI"",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .save-cog{position:absolute;right:0;top:0;width:39px;height:39px;border-left:1px solid #55595a;background:linear-gradient(#393d3e,#202324)}
@@ -121,12 +122,15 @@ button{font:inherit}
 .btn-primary{min-width:124px;color:#292616;border-color:#ffd046;background:linear-gradient(#fff9b5,#ffd046 55%,#e6a91c);
  text-shadow:0 1px rgba(255,255,255,.6);box-shadow:inset 0 2px #fffbc8,0 3px 0 #9a6800;overflow:hidden}
 .btn-primary:hover{border-color:#fff3a0;background:linear-gradient(#fffbd2,#ffe675 55%,#f4bd2e)}
-.btn-primary:after,.btn-danger:after{content:'';position:absolute;top:-12px;left:-45%;width:28%;height:65px;
+.btn-primary:after,.btn-danger:after,.btn-patch:after{content:'';position:absolute;top:-12px;left:-45%;width:28%;height:65px;
  background:linear-gradient(90deg,transparent,rgba(255,255,255,.62),transparent);transform:skewX(-20deg)}
-.btn-primary:hover:after,.btn-danger:hover:after{animation:buttonSweep .52s ease-out}
+.btn-primary:hover:after,.btn-danger:hover:after,.btn-patch:hover:after{animation:buttonSweep .52s ease-out}
 .btn-danger{height:43px;min-width:185px;color:#fff8e3;border-color:#ff6a30;background:linear-gradient(#ef5b27,#bc2e18 62%,#7e1b13);
  box-shadow:inset 0 2px #ff8754,0 3px 0 #55120c;text-shadow:0 2px #5b130d}
 .btn-danger:hover{border-color:#ffbd66;background:linear-gradient(#ff7740,#d63c20 62%,#8e2115)}
+.btn-patch{height:43px;min-width:185px;color:#252719;border-color:#ffe16b;background:linear-gradient(#fff7a5,#f3c637 58%,#bd8415);
+ box-shadow:inset 0 2px #fffbd0,0 3px 0 #74500d;text-shadow:0 1px rgba(255,255,255,.7);overflow:hidden}
+.btn-patch:hover{border-color:#fff7bd;background:linear-gradient(#fffbd0,#ffdc58 58%,#d79b20)}
 .path-row{display:flex;align-items:center;margin-top:8px;color:#919696;font-size:10px}
 .path-label{font:10px Shentox,""Arial Narrow"",sans-serif;color:#ffd046;letter-spacing:.65px;margin-right:9px}
 .path{min-width:0;flex:1;font:10px Consolas,monospace;color:#a5aaaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -197,8 +201,9 @@ button{font:inherit}
  border-radius:3px;font-size:10px;line-height:1.5}.note:before{content:'!';position:absolute;left:10px;top:8px;color:#ffd046;font:bold 13px Arial;
  animation:warningBlink 1.8s ease-in-out infinite}
 .repair-bar{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:10px 0 1px;border-top:1px solid #4a4d4e}
-.repair-bar p{max-width:620px;margin:0;color:#a0a5a5;font-size:10px;line-height:1.55}
+.repair-bar p{max-width:455px;margin:0;color:#a0a5a5;font-size:10px;line-height:1.55}
 .repair-bar p b{color:#ffd046;font-family:Shentox,""Arial Narrow"",sans-serif;letter-spacing:.5px}
+.repair-actions{display:flex;align-items:center;white-space:nowrap}.repair-actions .btn+.btn{margin-left:9px}
 .empty{text-align:center;padding:36px 15px 40px;color:#8b9090}
 .empty .diamond{width:34px;height:34px;margin:0 auto 19px;transform:rotate(45deg);border:3px solid #ffd046;border-radius:5px;background:#272a2b}
 .empty .diamond span{display:block;transform:rotate(-45deg);font:bold 18px/28px Arial;color:#ffd046}
@@ -207,6 +212,46 @@ button{font:inherit}
 .success-box{padding:16px;background:#202b2f;border:1px solid #3c7581;border-radius:4px 13px 4px 13px}
 .success-box .backup-label{font:10px Shentox,""Arial Narrow"",sans-serif;color:#ffd046;letter-spacing:.8px;margin-bottom:7px}
 .footer{text-align:center;margin-top:10px;color:#777c7c;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
+
+.hotfix-modal{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:24;padding:22px;
+ background:radial-gradient(circle at 50% 40%,rgba(118,27,13,.27),rgba(4,5,5,.94) 64%);align-items:center;justify-content:center}
+.hotfix-modal.show{display:flex;animation:hotfixBackdrop .2s ease-out both}
+.hotfix-dialog{position:relative;width:560px;max-width:100%;overflow:hidden;background:#242729;border:2px solid #e34825;
+ border-radius:8px 22px 8px 22px;box-shadow:inset 0 0 0 2px #511b13,0 22px 70px #000;
+ animation:hotfixDeploy .3s cubic-bezier(.16,.82,.28,1) both}
+.hotfix-hazard{height:13px;border-bottom:2px solid #0c0d0d;
+ background:repeating-linear-gradient(135deg,#ffd046 0,#ffd046 18px,#1a1c1d 18px,#1a1c1d 36px);
+ background-size:51px 51px;animation:hazardMove 1.1s linear infinite}
+.hotfix-head{display:flex;align-items:center;padding:16px 19px 14px;background:linear-gradient(90deg,#461a13,#292b2c 58%);border-bottom:1px solid #090a0a}
+.hotfix-alert{width:47px;height:47px;flex:0 0 47px;margin-right:16px;position:relative}
+.hotfix-alert:before{content:'';position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;transform:rotate(45deg);
+ box-sizing:border-box;background:#38100b;border:3px solid #ff5c35;border-radius:4px;box-shadow:0 0 0 2px #170907,0 0 15px rgba(255,73,39,.35);
+ animation:dangerPulse 1.45s ease-in-out infinite}
+.hotfix-alert span{position:absolute;z-index:2;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;font-size:0}
+.hotfix-alert span:before,.hotfix-alert span:after{content:'';position:absolute;left:13px;width:4px;background:#fff1d8;
+ box-shadow:0 2px #61160d}
+.hotfix-alert span:before{top:5px;height:13px;border-radius:2px 2px 1px 1px}
+.hotfix-alert span:after{top:21px;height:4px;border-radius:50%}
+.hotfix-title{min-width:0}.hotfix-title strong{display:block;color:#ff7654;font:15px Shentox,""Arial Black"",sans-serif;letter-spacing:.75px}
+.hotfix-title span{display:block;margin-top:5px;color:#d7d8d4;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
+.hotfix-body{padding:15px 19px 16px}.hotfix-intro{margin:0 0 11px;color:#d4d6d4;font-size:12px;line-height:1.5}
+.hotfix-checks{margin:0;padding:0;list-style:none;border:1px solid #464a4b;background:#1a1c1d}
+.hotfix-checks li{position:relative;padding:8px 10px 8px 34px;border-bottom:1px solid #343738;color:#bfc3c2;font-size:11px;line-height:1.35}
+.hotfix-checks li:last-child{border-bottom:0}.hotfix-checks li:before{content:'✓';position:absolute;left:11px;top:7px;color:#ffd046;
+ font:bold 13px Arial;text-shadow:0 0 7px rgba(255,208,70,.35)}
+.hotfix-stop{position:relative;margin-top:11px;padding:10px 12px 10px 38px;color:#ffd1c4;background:#3a1712;border:1px solid #a93823;
+ border-radius:3px;font:11px/1.4 Shentox,""Arial Narrow"",sans-serif;letter-spacing:.35px}
+.hotfix-stop:before{content:'!';position:absolute;left:13px;top:8px;width:17px;height:17px;color:#fff2d5;text-align:center;
+ font:bold 13px/17px Arial;background:#d84324;border:1px solid #ff8a63;border-radius:50%;animation:stopFlash 1.3s ease-in-out infinite}
+.hotfix-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 19px 16px;border-top:1px solid #454849;background:#202223}
+.hotfix-foot-note{max-width:235px;color:#929797;font-size:10px;line-height:1.4}.hotfix-buttons{display:flex;align-items:center}
+.hotfix-buttons .btn+.btn{margin-left:9px}.hotfix-confirm{min-width:174px;overflow:hidden;color:#fff5dc;border-color:#ff6a3b;
+ background:linear-gradient(#f05a31,#b82717 62%,#74160e);box-shadow:inset 0 2px #ff8967,0 3px 0 #4d0e09;text-shadow:0 2px #5a100a}
+.hotfix-confirm:hover{border-color:#ffc06b;background:linear-gradient(#ff754d,#d53620 62%,#881b10)}
+.hotfix-confirm:before{content:'';position:absolute;top:0;bottom:0;left:-55%;width:42%;
+ background:linear-gradient(90deg,transparent,rgba(255,222,130,.45),transparent);transform:skewX(-18deg);animation:dangerSweep 2.1s ease-in-out infinite}
+.hotfix-confirm span{display:inline-block;margin-right:7px;width:17px;height:17px;border-radius:50%;color:#65130c;background:#ffd046;
+ font:bold 12px/17px Arial;text-shadow:none;vertical-align:middle;animation:buttonDanger 1.25s ease-in-out infinite}
 
 .busy{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:20;background:rgba(8,9,9,.88);align-items:center;justify-content:center}
 .busy.show{display:flex}.busy-card{position:relative;width:330px;padding:22px 25px 20px;background:#292c2e;border:2px solid #ffd046;
@@ -228,11 +273,17 @@ button{font:inherit}
 @keyframes meterCharge{0%{opacity:.1;transform:scaleX(.15)}100%{opacity:1;transform:scaleX(1)}}
 @keyframes stateBlink{0%,78%,100%{border-color:#5c6061;color:#d6d7d4}88%{border-color:#ffd046;color:#fff5bd}}
 @keyframes warningBlink{0%,70%,100%{opacity:1;text-shadow:none}82%{opacity:.45;text-shadow:0 0 7px #ffd046}}
+@keyframes hotfixBackdrop{0%{opacity:0}100%{opacity:1}}
+@keyframes hotfixDeploy{0%{opacity:0;transform:translateY(-17px) scale(.96)}65%{transform:translateY(2px) scale(1.005)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes dangerPulse{0%,100%{transform:rotate(45deg) scale(1);border-color:#ff5c35}50%{transform:rotate(45deg) scale(1.08);border-color:#ffd046;box-shadow:0 0 0 2px #170907,0 0 22px rgba(255,73,39,.65)}}
+@keyframes stopFlash{0%,68%,100%{background:#d84324;box-shadow:none}82%{background:#ff6b3f;box-shadow:0 0 12px rgba(255,82,42,.75)}}
+@keyframes dangerSweep{0%,52%{left:-55%}78%,100%{left:125%}}
+@keyframes buttonDanger{0%,70%,100%{transform:scale(1)}82%{transform:scale(1.14);box-shadow:0 0 9px #ffd046}}
 
 @media(max-width:900px){
  .shell{padding-left:13px;padding-right:13px}.local{display:none}.picker{flex-wrap:wrap}.save-picker{width:100%;flex-basis:100%;margin-bottom:8px}
  .picker .save-picker+*{margin-left:0}.picker .btn+.btn{margin-left:8px}.stats{flex-wrap:wrap}.stat{flex-basis:30%}
- .mini{width:33.333%}.raid-meter-wrap{display:none}.repair-bar p{padding-right:15px}
+ .mini{width:33.333%}.raid-meter-wrap{display:none}.repair-bar{align-items:flex-end}.repair-bar p{padding-right:15px}.repair-actions{flex-direction:column}.repair-actions .btn+.btn{margin:8px 0 0}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -240,11 +291,12 @@ button{font:inherit}
 <body onload=""boot()"">
 <div class=""window-bar"">
   <div class=""window-grip"" onmousedown=""beginWindowDrag()"">
-    <div class=""window-emblem""><svg viewBox=""0 0 32 32"" width=""28"" height=""28"" aria-label=""Raid Rescue"">
-      <polygon class=""window-emblem-shape"" points=""16,2 30,16 16,30 2,16""></polygon>
-      <polygon class=""window-emblem-edge"" points=""16,4.5 27.5,16 16,27.5 4.5,16""></polygon>
-      <text class=""window-emblem-letter"" x=""16"" y=""20"">R</text>
-    </svg></div>
+    <div class=""window-emblem"" aria-label=""Raid Rescue""><div class=""window-emblem-mark"">
+      <svg class=""logo-letter"" viewBox=""0 0 22 22"" aria-hidden=""true"">
+        <path class=""logo-letter-highlight"" transform=""translate(-.25 1)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
+        <path class=""logo-letter-face"" transform=""translate(-.25 0)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
+      </svg>
+    </div></div>
     <div class=""window-title"">RAID RESCUE <span>SCRAP MECHANIC SAVE RECOVERY</span></div>
   </div>
   <div class=""window-controls"">
@@ -257,14 +309,19 @@ button{font:inherit}
 <div class=""shell"">
   <div class=""topbar"">
     <div class=""identity"">
-      <div class=""brand-mark""><span>R</span></div>
+      <div class=""brand-mark"">
+        <svg class=""logo-letter"" viewBox=""0 0 22 22"" aria-hidden=""true"">
+          <path class=""logo-letter-highlight"" transform=""translate(-.25 1)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
+          <path class=""logo-letter-face"" transform=""translate(-.25 0)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
+        </svg>
+      </div>
       <div><h1>RAID RESCUE</h1><p>SURVIVAL SAVE RECOVERY UNIT</p></div>
     </div>
     <div class=""local""><b></b>OFFLINE / LOCAL SAVE ACCESS</div>
   </div>
 
   <div class=""panel selector-panel"">
-    <div class=""panel-title""><strong>WORLD SELECTOR</strong><span>SCRAP MECHANIC · CHAPTER 2</span></div>
+    <div class=""panel-title""><strong>WORLD SELECTOR</strong><span>SCRAP MECHANIC &middot; CHAPTER 2</span></div>
     <div class=""selector-body"">
       <div id=""gameBanner""></div>
       <div class=""picker"">
@@ -276,7 +333,7 @@ button{font:inherit}
           </button>
           <div class=""save-menu"" id=""saveMenu""></div>
         </div>
-        <button class=""btn"" onclick=""browseSave()"">BROWSE</button>
+        <button class=""btn"" id=""browseBtn"" onclick=""browseSave()"">BROWSE</button>
         <button class=""btn btn-primary"" id=""analyzeBtn"" onclick=""analyzeSelected()"">ANALYZE WORLD</button>
       </div>
       <div class=""path-row""><span class=""path-label"">SAVE PATH</span><span class=""path"" id=""pathText"">Searching the Scrap Mechanic user directory...</span></div>
@@ -289,10 +346,37 @@ button{font:inherit}
       <div class=""empty""><div class=""diamond""><span>?</span></div><h4>NO WORLD ANALYZED</h4><p>Select a survival world and run the raid diagnostic.</p></div>
     </div>
   </div>
-  <div class=""footer"">BACKUP-FIRST UTILITY · INVENTORY / BUILDS / QUESTS / PLAYERS ARE NEVER EDITED</div>
+  <div class=""footer"">BACKUP-FIRST UTILITY &middot; INVENTORY / BUILDS / QUESTS / PLAYERS ARE NEVER EDITED</div>
 </div>
 </div>
 <div class=""scroll-track"" id=""scrollTrack""><div class=""scroll-thumb"" id=""scrollThumb""></div></div>
+
+<div class=""hotfix-modal"" id=""hotfixModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""hotfixTitle"" onclick=""hotfixBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head"">
+      <div class=""hotfix-alert""><span>!</span></div>
+      <div class=""hotfix-title""><strong id=""hotfixTitle"">SYSTEM MODIFICATION WARNING</strong><span>CUMULATIVE SCRAP MECHANIC 1.0.2 HOTFIX</span></div>
+    </div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"">Raid Rescue is ready to install or update the temporary game hotfix.</p>
+      <ul class=""hotfix-checks"">
+        <li>Only supported original files or verified Raid Rescue versions are accepted.</li>
+        <li>Previously installed raid fixes are preserved when new fixes are added.</li>
+        <li>A checksum-verified backup is created before any script is changed.</li>
+        <li>The cumulative hotfix repairs stuck raids and fertilizer growth timing.</li>
+      </ul>
+      <div class=""hotfix-stop"">SCRAP MECHANIC MUST BE COMPLETELY CLOSED BEFORE INSTALLATION.</div>
+    </div>
+    <div class=""hotfix-foot"">
+      <div class=""hotfix-foot-note"">Windows may request administrator permission for games installed under Program Files.</div>
+      <div class=""hotfix-buttons"">
+        <button type=""button"" class=""btn"" onclick=""closeHotfixConfirm()"">CANCEL</button>
+        <button type=""button"" class=""btn hotfix-confirm"" id=""hotfixConfirmButton"" onclick=""confirmHotfixInstall()""><span>!</span>INSTALL HOTFIX</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class=""busy"" id=""busy""><div class=""busy-card""><div class=""busy-icon""><span>!</span></div>
   <strong id=""busyTitle"">READING WORLD DATABASE</strong><p id=""busyText"">Local operation in progress.</p>
@@ -307,6 +391,8 @@ var saveItems=[];
 var scrollDrag=false;
 var scrollDragY=0;
 var scrollDragTop=0;
+var gameRunning=null;
+var operationBusy=false;
 
 function beginWindowDrag(){window.external.BeginDrag();}
 function minimizeWindow(){window.external.Minimize();}
@@ -356,14 +442,21 @@ function parseResult(text){
  try{return JSON.parse(String(text));}catch(e){return {Success:false,Error:'The utility returned unreadable data: '+e.message};}
 }
 function busy(show,title,text){
+ operationBusy=show;
  document.getElementById('busyTitle').innerText=title||'WORKING';
  document.getElementById('busyText').innerText=text||'Local operation in progress.';
  document.getElementById('busy').className=show?'busy show':'busy';
+ applyGameLock(gameRunning);
 }
 function boot(){
  document.onclick=function(){closeSaveMenu();};
+ document.onkeydown=function(e){
+  e=e||window.event;
+  if((e.keyCode||e.which)===27)closeHotfixConfirm();
+ };
  setupScrollBar();
  refreshSaves();
+ window.setInterval(pollGameProcess,1000);
 }
 function loadPath(path){
  if(!path)return;
@@ -376,6 +469,7 @@ function fileName(path){
 }
 function refreshSaves(){
  var state=parseResult(window.external.Discover());
+ gameRunning=!!state.GameRunning;
  saveItems=[];
  if(state.Success&&state.Saves&&state.Saves.length){
   for(var i=0;i<state.Saves.length;i++)saveItems.push(state.Saves[i]);
@@ -385,12 +479,67 @@ function refreshSaves(){
   setSaveDisplay('NO SURVIVAL SAVES FOUND','Use Browse to locate a Chapter 2 .db file');
   document.getElementById('pathText').innerText=state.Error||'Use Browse to locate a .db survival save.';
  }
- document.getElementById('gameBanner').innerHTML=state.GameRunning
-  ?'<div class=""banner banner-warn""><b>GAME PROCESS DETECTED.</b> Close Scrap Mechanic to unlock repair controls. Inspection remains available.</div>':'';
+ renderGameBanner(gameRunning);
  updateScrollBar();
+}
+function renderGameBanner(running){
+ document.getElementById('gameBanner').innerHTML=running
+  ?'<div class=""banner banner-error""><b>WORLD ACCESS SAFETY LOCKED.</b> Scrap Mechanic is running, so Raid Rescue will not open any save database. Close the game to unlock the controls automatically.</div>':'';
+ applyGameLock(running);
+ updateScrollBar();
+}
+function applyGameLock(running){
+ var locked=!!running||!!operationBusy;
+ var analyze=document.getElementById('analyzeBtn');
+ var browse=document.getElementById('browseBtn');
+ var display=document.getElementById('saveDisplay');
+ if(analyze)analyze.disabled=locked||!currentPath;
+ if(browse)browse.disabled=locked;
+ if(display)display.disabled=locked;
+ if(running)closeSaveMenu();
+}
+function ensureGameClosed(){
+ var running=true;
+ try{running=!!window.external.IsGameRunning();}catch(e){running=true;}
+ gameRunning=running;
+ renderGameBanner(running);
+ if(running){
+  setAnalysisGameState(true);
+  return false;
+ }
+ return true;
+}
+function setAnalysisGameState(running){
+ if(!lastAnalysis||!lastAnalysis.Success)return;
+ var gameWarning='Scrap Mechanic is running. World analysis and repair controls are safety locked.';
+ var warnings=[],existing=lastAnalysis.Warnings||[];
+ for(var i=0;i<existing.length;i++)if(existing[i]!==gameWarning)warnings.push(existing[i]);
+ if(running)warnings.push(gameWarning);
+ lastAnalysis.Warnings=warnings;
+ lastAnalysis.GameRunning=running;
+ lastAnalysis.CanClear=!!(lastAnalysis.RaidManagerPresent&&lastAnalysis.RaidCount>0&&
+  String(lastAnalysis.DatabaseStatus).toLowerCase()==='ok'&&!running);
+ renderAnalysis(lastAnalysis);
+}
+function pollGameProcess(){
+ if(operationBusy)return;
+ try{
+  var running=!!window.external.IsGameRunning();
+  if(gameRunning===null){gameRunning=running;renderGameBanner(running);return;}
+  if(running===gameRunning)return;
+  var wasRunning=gameRunning;
+  gameRunning=running;
+  renderGameBanner(running);
+  if(wasRunning&&!running&&currentPath){
+   analyzeSelected(true);
+  }else{
+   setAnalysisGameState(running);
+  }
+ }catch(e){}
 }
 function toggleSaveMenu(event){
  if(event)event.cancelBubble=true;
+ if(gameRunning||operationBusy)return;
  var picker=document.getElementById('savePicker');
  picker.className=picker.className.indexOf(' open')>=0?'save-picker':'save-picker open';
 }
@@ -410,13 +559,17 @@ function saveMeta(item){
 }
 function renderSaveMenu(){
  var menu=document.getElementById('saveMenu');menu.innerHTML='';
- if(!saveItems.length){menu.innerHTML='<div class=""save-empty"">NO AUTOMATIC SAVES FOUND — USE BROWSE</div>';return;}
+ if(!saveItems.length){menu.innerHTML='<div class=""save-empty"">NO AUTOMATIC SAVES FOUND &mdash; USE BROWSE</div>';return;}
  for(var i=0;i<saveItems.length;i++){
   var item=saveItems[i],row=document.createElement('div');
   row.className='save-option'+(samePath(item.Path,currentPath)?' active':'');
   row._saveData=item;
   row.innerHTML='<span class=""option-name"">'+esc(item.Name)+'</span><span class=""option-meta"">'+esc(saveMeta(item))+'</span>';
-  row.onclick=function(event){if(event)event.cancelBubble=true;selectSave(this._saveData);};
+  row.onclick=function(event){
+   if(event)event.cancelBubble=true;
+   if(gameRunning||operationBusy)return;
+   selectSave(this._saveData);
+  };
   menu.appendChild(row);
  }
 }
@@ -431,18 +584,28 @@ function selectSave(item){
  setSaveDisplay(item.Name,saveMeta(item));
  document.getElementById('pathText').innerText=currentPath||'No file selected';
  closeSaveMenu();renderSaveMenu();
+ applyGameLock(gameRunning);
 }
 function browseSave(){
+ if(!ensureGameClosed()||operationBusy)return;
  var path=String(window.external.Browse());if(!path)return;
  var browsed=upsertSave({Path:path,Name:fileName(path),Modified:'BROWSED FILE',Size:'',UserFolder:''});
  selectSave(browsed);analyzeSelected();
 }
-function analyzeSelected(){
+function analyzeSelected(autoRefresh){
  if(!currentPath){showError('Choose a survival world first.');return;}
- busy(true,'DECODING RAID STORAGE','Running database integrity checks and reading channel 45.');
+ if(!ensureGameClosed()||operationBusy)return;
+ busy(true,autoRefresh?'GAME CLOSED — REFRESHING':'DECODING RAID STORAGE',
+  autoRefresh?'Updating the save status and unlocking safe repair controls.':'Running database integrity checks and reading channel 45.');
  window.setTimeout(function(){
+  if(!ensureGameClosed()){busy(false);return;}
   var data=parseResult(window.external.Analyze(currentPath));
-  lastAnalysis=data;renderAnalysis(data);busy(false);
+  lastAnalysis=data;
+  if(data.Success||data.GameRunning){
+   gameRunning=!!data.GameRunning;
+   renderGameBanner(gameRunning);
+  }
+  renderAnalysis(data);busy(false);
  },25);
 }
 function showError(message){
@@ -469,8 +632,9 @@ function renderAnalysis(data){
  }else{
   html+='<div class=""empty""><div class=""diamond""><span>&#10003;</span></div><h4>RAID STORAGE CLEAR</h4><p>No persisted raid-manager entries were found in this world.</p></div>';
  }
- html+='<div class=""repair-bar""><p><b>BACKUP-FIRST REPAIR</b><br/>Creates and verifies a complete database backup, then removes one exact base-game raid-manager record.</p>'+
-  '<button class=""btn btn-danger"" '+(data.CanClear?'':'disabled=""disabled""')+' onclick=""clearRaids()"">CLEAR ALL RAIDS</button></div>';
+  html+='<div class=""repair-bar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Install or update the cumulative 1.0.2 game hotfix for stuck raids and fertilizer timing, or clear the stored raids from this save.</p>'+
+   '<div class=""repair-actions""><button class=""btn btn-patch"" onclick=""installRaidHotfix()"">INSTALL / UPDATE HOTFIX</button>'+
+   '<button class=""btn btn-danger"" '+(data.CanClear?'':'disabled=""disabled""')+' onclick=""clearRaids()"">CLEAR ALL RAIDS</button></div></div>';
  document.getElementById('result').innerHTML=html;
  updateScrollBar();
 }
@@ -488,7 +652,7 @@ function raidMeter(tier){
 function raidCard(r){
  var html='<div class=""raid""><div class=""raid-head""><div class=""tier-badge""><svg viewBox=""0 0 64 64"" width=""58"" height=""58"" aria-label=""Raid tier '+esc(r.Tier)+'"">'+
   '<polygon class=""tier-shape"" points=""32,3 61,32 32,61 3,32""></polygon><text class=""tier-number"" x=""32"" y=""39"">'+esc(r.Tier)+'</text></svg></div>'+
-  '<div class=""raid-name""><h4>RAID '+esc(r.Number)+' · TIER '+esc(r.Tier)+'</h4><p>'+esc(r.Key)+'</p></div>'+
+  '<div class=""raid-name""><h4>RAID '+esc(r.Number)+' &middot; TIER '+esc(r.Tier)+'</h4><p>'+esc(r.Key)+'</p></div>'+
   '<div class=""raid-meter-wrap""><div class=""meter-label""><span>RAID THREAT</span><span>'+esc(r.ThreatValue)+' / '+esc(r.MaximumThreatValue)+'</span></div>'+raidMeter(r.Tier)+'</div>'+
   '<div class=""state"">'+esc(r.State).toUpperCase()+'</div></div><div class=""raid-body"">';
  html+='<div class=""mini-grid"">'+
@@ -510,7 +674,7 @@ function rawChip(label,value){return '<span class=""chip raw"">'+esc(label)+' <b
 function chips(items,isCrop,empty){
  if(!items||!items.length)return '<span class=""chip"">'+esc(empty)+'</span>';
  var html='';
- for(var i=0;i<items.length;i++)html+='<span class=""chip '+(isCrop?'crop':'')+'"" title=""'+esc(items[i].Uuid)+'"">'+
+ for(var i=0;i<items.length;i++)html+='<span class=""chip '+(isCrop?'crop':'')+'"">'+
   esc(items[i].Name).toUpperCase()+' <b>&times;'+esc(items[i].Quantity)+'</b></span>';
  return html;
 }
@@ -530,7 +694,44 @@ function clearRaids(){
    lastAnalysis=data.After;
  },25);
 }
+var lastGameBackupPath='';
+function installRaidHotfix(){
+ if(operationBusy)return;
+ var modal=document.getElementById('hotfixModal');
+ modal.className='hotfix-modal show';
+ window.setTimeout(function(){document.getElementById('hotfixConfirmButton').focus();},30);
+}
+function hotfixBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('hotfixModal'))closeHotfixConfirm();
+}
+function closeHotfixConfirm(){
+ document.getElementById('hotfixModal').className='hotfix-modal';
+}
+function confirmHotfixInstall(){
+ closeHotfixConfirm();
+ busy(true,'VERIFYING GAME FILES','Checking original and previous Raid Rescue states before a cumulative update.');
+ window.setTimeout(function(){
+  var data=parseResult(window.external.InstallRaidHotfix());busy(false);
+  if(data.Cancelled)return;
+  if(!data.Success){
+   renderAnalysis(lastAnalysis);
+   document.getElementById('result').insertAdjacentHTML('afterbegin','<div class=""banner banner-error"">'+esc(data.Error||'The game hotfix was not installed.')+'</div>');
+   updateScrollBar();return;
+  }
+  lastGameBackupPath=data.BackupPath||'';
+  renderAnalysis(lastAnalysis);
+  var title=data.AlreadyPatched?'GAME HOTFIX ALREADY UP TO DATE.':'GAME HOTFIX UPDATED.';
+  var detail=data.AlreadyPatched?'The latest verified cumulative 1.0.2 patch is already present.':'Updated '+esc(data.FilesPatched)+' verified game scripts for Scrap Mechanic '+esc(data.GameVersion)+'.';
+  var html='<div class=""banner banner-good""><b>'+title+'</b> '+detail+'</div>';
+  if(lastGameBackupPath)html+='<div class=""success-box"" style=""margin-bottom:10px""><div class=""backup-label"">VERIFIED GAME-SCRIPT BACKUP</div>'+
+   '<div class=""path"">'+esc(lastGameBackupPath)+'</div><div style=""margin-top:12px""><button class=""btn"" onclick=""openGameBackup()"">SHOW GAME BACKUP</button></div></div>';
+  document.getElementById('result').insertAdjacentHTML('afterbegin',html);
+  updateScrollBar();
+ },25);
+}
 function openBackup(){if(lastBackupPath)window.external.OpenFolder(lastBackupPath);}
+function openGameBackup(){if(lastGameBackupPath)window.external.OpenFolder(lastGameBackupPath);}
 </script>
 </body>
 </html>";

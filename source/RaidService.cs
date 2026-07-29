@@ -106,13 +106,39 @@ namespace RaidRescue
             AnalysisResult result = NewAnalysis(path);
             try
             {
+                result.GameRunning = IsGameRunning();
+                if (result.GameRunning)
+                {
+                    result.Success = false;
+                    result.CanClear = false;
+                    result.Error =
+                        "Safety lock: Scrap Mechanic is running. Raid Rescue did not open the save database. " +
+                        "Close the game completely and try again.";
+                    result.Warnings.Add(
+                        "World analysis is locked while Scrap Mechanic is running.");
+                    return result;
+                }
+
                 ValidatePath(path);
                 FileInfo file = new FileInfo(path);
                 result.Name = file.Name;
                 result.Modified = file.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
                 result.SizeBytes = file.Length;
                 result.Size = FormatBytes(file.Length);
+
+                // Close the UI-to-I/O race if the game starts after the first check.
                 result.GameRunning = IsGameRunning();
+                if (result.GameRunning)
+                {
+                    result.Success = false;
+                    result.CanClear = false;
+                    result.Error =
+                        "Safety lock: Scrap Mechanic started before analysis. " +
+                        "Raid Rescue did not open the save database.";
+                    result.Warnings.Add(
+                        "Close Scrap Mechanic completely before analyzing a world.");
+                    return result;
+                }
 
                 using (SqliteDatabase database = SqliteDatabase.OpenReadOnly(path))
                 {
@@ -149,11 +175,6 @@ namespace RaidRescue
                     }
                 }
 
-                if (result.GameRunning)
-                {
-                    result.Warnings.Add(
-                        "Scrap Mechanic is running. Close the game before clearing raids.");
-                }
                 if (!result.RaidManagerPresent)
                 {
                     result.Warnings.Add(

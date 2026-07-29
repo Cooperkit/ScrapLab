@@ -1,7 +1,11 @@
 dist/
+release/
+assets/
 bin/
 obj/
 .vs/
+PUBLISHING-CHECKLIST.md
+STEAM-*
 *.user
 *.suo
 *.db
