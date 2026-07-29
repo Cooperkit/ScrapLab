@@ -644,7 +644,7 @@ button{font:inherit}
       <button type=""button"" class=""secret-mods-close"" aria-label=""Close secret mods"" onclick=""closeSecretMods()"">&times;</button>
     </div>
     <div class=""secret-mods-body"">
-      <div class=""secret-mods-warning"">Secret patches are optional and separate from normal save repair. Verified backups rotate automatically instead of growing forever.</div>
+      <div class=""secret-mods-warning"">Optional game patches. Save repair stays separate; verified backups rotate automatically.</div>
       <div class=""secret-mod-row secret-master-row"" id=""secretModsMasterRow"">
         <div class=""secret-mod-copy""><strong>SUPER SECRET MODS</strong><span>Master switch for experimental patches added to this hidden patch bay.</span></div>
         <button type=""button"" class=""secret-switch"" id=""secretModsMaster"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Super Secret Mods"" onclick=""toggleSecretModsEnabled()"">
@@ -656,12 +656,6 @@ button{font:inherit}
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""FILTER MODS..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
-        <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
-          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">UTILITY &middot; CONNECT TOOL</span><strong>RESOURCE LOCATOR DOTS</strong><span id=""resourceLocatorDescription"">Reveal haybot spines and refineable resource cores with an inactive Connect Tool output.</span><em id=""resourceLocatorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""resourceLocatorReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
-        </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-search=""developer dev commands cheats unlimited god spawn time raid host chat utility"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock built-in Survival commands such as /unlimited, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
           <div class=""secret-mod-actions"">
@@ -670,6 +664,12 @@ button{font:inherit}
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
           </div>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">UTILITY &middot; CONNECT TOOL</span><strong>RESOURCE LOCATOR DOTS</strong><span id=""resourceLocatorDescription"">Reveal haybot spines and refineable resource cores with an inactive Connect Tool output.</span><em id=""resourceLocatorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""resourceLocatorReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""chemicalFertilizerRow"" data-search=""chemical fertilizer splash farm plot grow bed red farmbot projectile farming dependency"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">FARMING &middot; PROJECTILES</span><strong>CHEMICAL FERTILIZER SPLASH</strong><span>Chemical shots fertilize plots; Red Farmbot pesticide fertilizes a 2.5-block radius.</span><em id=""chemicalFertilizerState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""chemicalFertilizerReason""></span></div>

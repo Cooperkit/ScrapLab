@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.11.1
+
+- Moved **Developer Commands** above **Resource Locator Dots** in the Super
+  Secret Mods catalog.
+- Shortened the Patch Bay safety notice while retaining the save-repair and
+  rotating-backup guidance.
+
 ## 1.11.0
 
 - Added adaptive future-update compatibility for every Super Secret Mod while
