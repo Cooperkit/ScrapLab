@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using Microsoft.Win32;
@@ -15,7 +16,8 @@ namespace RaidRescue
         [STAThread]
         private static void Main(string[] args)
         {
-            if (ElevatedPatchBroker.TryRunHelper(args) ||
+            if (AppUpdateService.TryRunHelper(args) ||
+                ElevatedPatchBroker.TryRunHelper(args) ||
                 GamePatchLauncher.TryRunHelper(args) ||
                 SecretModPatchLauncher.TryRunHelper(args) ||
                 ChemicalFertilizerPatchLauncher.TryRunHelper(args) ||
@@ -23,6 +25,7 @@ namespace RaidRescue
                 DeveloperCommandsPatchLauncher.TryRunHelper(args))
                 return;
 
+            AppUpdateService.ScheduleCleanup();
             ConfigureBrowserMode();
             GameFonts.TryLoad();
             Application.EnableVisualStyles();
@@ -284,6 +287,8 @@ namespace RaidRescue
         private const int WsMaximizeBox = 0x00010000;
         private const int WsThickFrame = 0x00040000;
         private readonly WebBrowser browser;
+        private int updateCheckActive;
+        private int updateInstallActive;
 
         protected override CreateParams CreateParams
         {
@@ -339,6 +344,116 @@ namespace RaidRescue
                 };
             }
             browser.DocumentText = UiHtml.Content;
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing &&
+                Interlocked.CompareExchange(
+                    ref updateInstallActive, 0, 0) != 0)
+            {
+                e.Cancel = true;
+                return;
+            }
+            base.OnFormClosing(e);
+        }
+
+        internal bool BeginUpdateCheck(bool manual)
+        {
+            if (Interlocked.CompareExchange(
+                ref updateCheckActive, 1, 0) != 0)
+                return false;
+
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                AppUpdateResult result = AppUpdateService.CheckForUpdates();
+                NotifyUpdateScript(
+                    "receiveUpdateCheck", result, manual,
+                    delegate
+                    {
+                        Interlocked.Exchange(ref updateCheckActive, 0);
+                    });
+            });
+            return true;
+        }
+
+        internal bool BeginUpdateInstall(
+            string assetUrl, string digest, string latestVersion)
+        {
+            if (Interlocked.CompareExchange(
+                ref updateInstallActive, 1, 0) != 0)
+                return false;
+
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                AppUpdateResult result =
+                    AppUpdateService.PrepareAndLaunchUpdate(
+                        assetUrl, digest, latestVersion);
+                NotifyUpdateScript(
+                    "receiveUpdateInstall", result, false,
+                    delegate
+                    {
+                        Interlocked.Exchange(ref updateInstallActive, 0);
+                    });
+            });
+            return true;
+        }
+
+        private void NotifyUpdateScript(
+            string functionName, object result, bool manual,
+            MethodInvoker completed)
+        {
+            string json;
+            try
+            {
+                json = new JavaScriptSerializer
+                {
+                    MaxJsonLength = Int32.MaxValue
+                }.Serialize(result);
+            }
+            catch (Exception exception)
+            {
+                json = "{\"Success\":false,\"Error\":\"" +
+                    EscapeJson(exception.Message) + "\"}";
+            }
+
+            try
+            {
+                if (IsDisposed || !IsHandleCreated)
+                    return;
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    try
+                    {
+                        if (browser.Document != null)
+                            browser.Document.InvokeScript(
+                                functionName,
+                                new object[] { json, manual });
+                    }
+                    catch { }
+                    finally
+                    {
+                        if (completed != null)
+                            completed();
+                    }
+                });
+            }
+            catch
+            {
+                if (completed != null)
+                    completed();
+            }
+        }
+
+        private static string EscapeJson(string value)
+        {
+            if (value == null)
+                return String.Empty;
+            return value
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n");
         }
     }
 
@@ -426,6 +541,33 @@ namespace RaidRescue
         public void SetSecretModsEnabled(bool enabled)
         {
             SecretModPreferences.SetEnabled(enabled);
+        }
+
+        public string GetAppVersion()
+        {
+            return AppUpdateService.CurrentVersion;
+        }
+
+        public bool CheckForUpdates(bool manual)
+        {
+            return owner.BeginUpdateCheck(manual);
+        }
+
+        public bool InstallAppUpdate(
+            string assetUrl, string digest, string latestVersion)
+        {
+            return owner.BeginUpdateInstall(
+                assetUrl, digest, latestVersion);
+        }
+
+        public string ConsumeUpdateStartupStatus()
+        {
+            return Serialize(AppUpdateService.ConsumeStartupStatus());
+        }
+
+        public bool OpenUpdateRelease(string url)
+        {
+            return AppUpdateService.OpenOfficialRelease(url);
         }
 
         public string Browse()

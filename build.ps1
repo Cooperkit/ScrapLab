@@ -27,6 +27,7 @@ $sources = @(
     "RaidService.cs",
     "GamePatchService.cs",
     "AdaptivePatchSupport.cs",
+    "AppUpdateService.cs",
     "UiHtml.cs",
     "AssemblyInfo.cs"
 ) | ForEach-Object { Join-Path $source $_ }

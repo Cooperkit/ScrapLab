@@ -50,6 +50,36 @@ are not always code-signed. Verify that the download came from this repository
 before choosing **More info -> Run anyway**. Do not bypass a warning for a copy
 downloaded from somewhere else.
 
+## Automatic app updates
+
+Raid Rescue checks this repository's latest stable GitHub release shortly after
+startup and every 30 minutes while the app remains open. Checks run in the
+background and network failures stay quiet, so save analysis and repair remain
+responsive and usable offline. Open the **?** Field Manual and choose
+**Check Updates** to run an immediate check.
+
+When a newer `RaidRescue.exe` is available, the in-app update console offers:
+
+- **Later**, which dismisses that version for the current app session;
+- **View Release**, which opens the official GitHub release;
+- **Update + Restart**, which downloads, verifies, installs, and reopens the
+  app automatically.
+
+One-click installation accepts only an HTTPS asset from
+`Cooperkit/Raid-Rescue`, requires GitHub's published SHA-256 asset digest, and
+checks that the downloaded Windows executable has the expected newer Raid
+Rescue version. A temporary helper waits for the running app to close, replaces
+the EXE, verifies it again, and reopens it. One bounded previous-executable
+backup is retained under:
+
+```text
+%LOCALAPPDATA%\Raid Rescue\Updates\previous.exe
+```
+
+If replacement or relaunch fails, the helper restores that verified previous
+copy. Updating Raid Rescue does not open or alter a save and does not reinstall
+game hotfixes or secret mods.
+
 ## Quick start
 
 ### 1. Close Scrap Mechanic
@@ -358,14 +388,26 @@ world units. Remove remaining robots normally in-game.
 
 ### Does it upload my save?
 
-No. Raid Rescue works locally and offline. It does not upload the save or
-require a network connection.
+No. Raid Rescue never uploads a save. Save analysis and repair work locally and
+offline. The only normal internet request is the background version check
+against the official GitHub Releases API; selecting **Update + Restart** also
+downloads the official release executable.
+
+### Automatic update could not replace the EXE
+
+Keep the app in a folder where your Windows account can write files, close any
+antivirus window that is holding the EXE, and try again. A failed preparation
+does not close or change the running copy. A failure after restart triggers the
+verified previous-executable rollback.
 
 ## Compatibility
 
 - Windows 10 or Windows 11
 - Scrap Mechanic Chapter 2 Survival database format
 - No installer or external dependency downloads
+- Background app-update checks use the official GitHub Releases API; the
+  one-click updater verifies GitHub's SHA-256 digest and the downloaded
+  executable version before replacement.
 - Save repair requires no administrator rights
 - Optional cumulative game hotfix supports verified original and previous Raid
   Rescue states for version 1.0.2.870. Windows requests administrator

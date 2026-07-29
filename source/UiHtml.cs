@@ -268,6 +268,51 @@ button{font:inherit}
  background:linear-gradient(90deg,transparent,rgba(255,222,130,.45),transparent);transform:skewX(-18deg);animation:dangerSweep 2.1s ease-in-out infinite}
 .hotfix-confirm span{display:inline-block;margin-right:7px;width:17px;height:17px;border-radius:50%;color:#65130c;background:#ffd046;
  font:bold 12px/17px Arial;text-shadow:none;vertical-align:middle;animation:buttonDanger 1.25s ease-in-out infinite}
+.update-modal{display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:210;padding:22px;align-items:center;justify-content:center;
+ background:radial-gradient(circle at 50% 36%,rgba(29,115,139,.34),rgba(4,6,7,.95) 67%)}
+.update-modal.show{display:flex;animation:hotfixBackdrop .22s ease-out both}
+.update-dialog{position:relative;width:680px;max-width:100%;overflow:hidden;background:#222729;border:2px solid #72d3e9;
+ border-radius:8px 23px 8px 23px;box-shadow:inset 0 0 0 2px #234d58,0 24px 76px #000;animation:updateDeploy .34s cubic-bezier(.15,.84,.26,1) both}
+.update-hazard{position:relative;height:13px;overflow:hidden;border-bottom:2px solid #090a0a;background:#192022}
+.update-hazard:before{content:'';position:absolute;left:-72px;top:0;width:calc(100% + 144px);height:13px;
+ background:repeating-linear-gradient(135deg,#72d3e9 0,#72d3e9 17px,#1a1d1e 17px,#1a1d1e 34px);
+ animation:updateHazard 1.25s steps(24,end) infinite}
+.update-head{display:flex;align-items:center;padding:17px 21px 15px;background:linear-gradient(100deg,#18343d,#262a2b 56%,#37301e);border-bottom:1px solid #090a0a}
+.update-emblem{width:58px;height:58px;flex:0 0 58px;margin-right:16px}.update-emblem svg{display:block;width:58px;height:58px;overflow:visible}
+.update-emblem-shadow{fill:#090a0a;stroke:#090a0a;stroke-width:6;stroke-linejoin:round}.update-emblem-rim{fill:#ffd046;stroke:#151718;stroke-width:3;stroke-linejoin:round}
+.update-emblem-face{fill:#20353b;stroke:#83def2;stroke-width:2;stroke-linejoin:round}.update-emblem-arrow{fill:none;stroke:#fff4a5;stroke-width:5;stroke-linecap:square;stroke-linejoin:miter}
+.update-heading{min-width:0}.update-heading strong{display:block;color:#f7f8f3;font:16px Shentox,""Arial Black"",sans-serif;letter-spacing:.8px}
+.update-heading span{display:block;margin-top:4px;color:#79d4ea;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.1px}
+.update-body{padding:16px 21px 17px}.update-intro{margin:0 0 13px;color:#d5d8d6;font-size:12px;line-height:1.5}
+.update-version-rail{display:flex;align-items:center;padding:13px;background:#171a1b;border:1px solid #4a5558;border-radius:4px 13px 4px 13px;box-shadow:inset 0 2px 5px #090a0a}
+.update-version-node{width:176px;flex:0 0 176px}.update-version-node b{display:block;color:#778184;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.9px}
+.update-version-node strong{display:block;margin-top:4px;color:#e8e9e5;font:19px Shentox,""Arial Black"",sans-serif;letter-spacing:.5px}
+.update-version-node.latest{text-align:right}.update-version-node.latest b{color:#ffd046}.update-version-node.latest strong{color:#fff1a2}
+.update-flow{position:relative;flex:1;height:24px;margin:0 15px;overflow:hidden}.update-flow:before{content:'';position:absolute;left:0;right:0;top:11px;height:3px;background:#35484d;border-top:1px solid #6d8c94}
+.update-flow:after{content:'';position:absolute;left:4px;top:6px;width:11px;height:11px;border-top:4px solid #70d4ea;border-right:4px solid #70d4ea;
+ transform:rotate(45deg);animation:updatePacket 1.35s ease-in-out infinite}
+.update-proof{display:flex;margin:11px -4px 0}.update-proof div{flex:1;margin:0 4px;padding:8px 9px;color:#9fa7a7;background:#1a1d1e;border:1px solid #3f4749;
+ border-radius:3px;font-size:9px;line-height:1.4}.update-proof b{display:block;margin-bottom:3px;color:#7ed9ec;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.update-status{margin-top:11px;padding:9px 11px;color:#a7b1b2;background:#192124;border:1px solid #3f6068;border-radius:3px;font-size:10px;line-height:1.45}
+.update-status.bad{color:#ffd0c4;background:#371914;border-color:#9d3e29}.update-status.good{color:#b8eadf;background:#183129;border-color:#3d7c6e}
+.update-progress{display:none;height:8px;margin-top:10px;padding:2px;background:#0d1011;border:1px solid #465052;border-radius:5px;overflow:hidden}
+.update-progress span{display:block;width:38%;height:100%;background:linear-gradient(90deg,#3d8ca0,#78d9ed,#ffd046);animation:updateScan 1.1s ease-in-out infinite}
+.update-modal.installing .update-progress{display:block}.update-modal.installing .update-flow:after{animation-duration:.65s}
+.update-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 21px 16px;background:#1e2223;border-top:1px solid #454c4e}
+.update-foot-note{max-width:270px;color:#899597;font-size:9px;line-height:1.45}.update-buttons{display:flex;align-items:center}.update-buttons .btn+.btn{margin-left:8px}
+.update-install{min-width:174px;overflow:hidden;color:#2b250d;border-color:#ffe072;background:linear-gradient(#fff08a,#ffd046 58%,#d99a14);
+ box-shadow:inset 0 2px #fff9c4,0 3px 0 #76540d;text-shadow:0 1px rgba(255,255,255,.45)}
+.update-install:hover{border-color:#fff5af;background:linear-gradient(#fff6ad,#ffda55 58%,#e9a51b)}
+.update-install:before{content:'';position:absolute;top:0;bottom:0;left:-50%;width:36%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.68),transparent);
+ transform:translate3d(0,0,0) skewX(-18deg);animation:updateButtonSweep 2.4s ease-in-out infinite}
+.update-install:disabled{cursor:not-allowed;color:#7e8382;border-color:#52595a;background:#333738;box-shadow:inset 0 1px #525859,0 3px 0 #151718;text-shadow:none}
+.update-install:disabled:before{display:none}
+.update-toast{position:fixed;right:24px;bottom:24px;z-index:225;width:390px;max-width:calc(100% - 48px);padding:12px 40px 12px 15px;
+ color:#c7d0cf;background:#202728;border:1px solid #5790a0;border-left:5px solid #71d3e9;border-radius:4px 13px 4px 13px;
+ box-shadow:0 14px 40px #000;opacity:0;visibility:hidden;transform:translate3d(18px,0,0);transition:opacity .2s,transform .25s,visibility .25s}
+.update-toast.show{opacity:1;visibility:visible;transform:translate3d(0,0,0)}.update-toast.good{border-left-color:#58d5a8}.update-toast.bad{border-color:#9d422d;border-left-color:#ff6840}
+.update-toast b{display:block;color:#f4f5ef;font:10px Shentox,""Arial Black"",sans-serif;letter-spacing:.55px}.update-toast span{display:block;margin-top:4px;font-size:10px;line-height:1.45}
+.update-toast button{position:absolute;right:8px;top:8px;width:25px;height:25px;padding:0;color:#aab2b2;background:#181b1c;border:1px solid #4e5759;border-radius:3px;cursor:pointer;font:bold 14px Arial}
 .dependency-modal{z-index:170}
 .dependency-modal .hotfix-dialog{width:720px;border-color:#e5ad22;box-shadow:inset 0 0 0 2px #58440f,0 22px 70px #000}
 .dependency-modal .hotfix-head{background:linear-gradient(90deg,#403515,#292b2c 58%,#18333c)}
@@ -533,6 +578,11 @@ button{font:inherit}
 @keyframes stopFlash{0%,68%,100%{background:#d84324;box-shadow:none}82%{background:#ff6b3f;box-shadow:0 0 12px rgba(255,82,42,.75)}}
 @keyframes dangerSweep{0%,52%{left:-55%}78%,100%{left:125%}}
 @keyframes buttonDanger{0%,70%,100%{transform:scale(1)}82%{transform:scale(1.14);box-shadow:0 0 9px #ffd046}}
+@keyframes updateDeploy{0%{opacity:0;transform:translate3d(0,-18px,0) scale(.95)}65%{transform:translate3d(0,2px,0) scale(1.004)}100%{opacity:1;transform:translate3d(0,0,0) scale(1)}}
+@keyframes updateHazard{0%{transform:translate3d(-34px,0,0)}100%{transform:translate3d(0,0,0)}}
+@keyframes updatePacket{0%{opacity:0;transform:translate3d(0,0,0) rotate(45deg)}18%{opacity:1}78%{opacity:1}100%{opacity:0;transform:translate3d(210px,0,0) rotate(45deg)}}
+@keyframes updateScan{0%{transform:translate3d(-115%,0,0)}100%{transform:translate3d(300%,0,0)}}
+@keyframes updateButtonSweep{0%,58%{transform:translate3d(0,0,0) skewX(-18deg)}82%,100%{transform:translate3d(600%,0,0) skewX(-18deg)}}
 @keyframes helpDeploy{0%{opacity:0;transform:translateY(-18px) scale(.96)}68%{transform:translateY(2px) scale(1.004)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes helpCardIn{0%{opacity:0;transform:translateY(7px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes onboardMark{0%,100%{transform:rotate(45deg) scale(1)}50%{transform:rotate(45deg) scale(1.08);box-shadow:0 0 0 3px #101112,0 0 34px rgba(255,208,70,.6)}}
@@ -902,6 +952,16 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
+        <div class=""help-section-title"">RAID RESCUE UPDATES</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>AUTOMATIC CHECKS</b><p>Raid Rescue checks the official GitHub release shortly after startup and every 30 minutes while the app remains open. Network failures stay quiet so save repair is never interrupted.</p></div>
+          <div class=""help-item""><b>ONE-CLICK UPDATE</b><p>Choose <strong>Update + Restart</strong> to download the official executable, verify GitHubâ€™s SHA-256 digest and version, replace this copy, and reopen automatically.</p></div>
+          <div class=""help-item""><b>SAFE REPLACEMENT</b><p>The updater keeps one bounded previous-executable backup, verifies the replacement again, and rolls back if installation or relaunch fails.</p></div>
+          <div class=""help-item""><b>INSTALLED VERSION</b><p>This copy is <strong id=""helpAppVersion"">loading...</strong>. Use <strong>Check Updates</strong> below whenever you want an immediate check.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
         <div class=""help-section-title"">COMMON PROBLEMS</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>THE GAME LOOKS CLOSED BUT CONTROLS STAY LOCKED</b><p>Wait a moment for automatic detection. If needed, open Task Manager and confirm ScrapMechanic.exe and ScrapMechanicServer.exe have exited.</p></div>
@@ -913,7 +973,7 @@ button{font:inherit}
     </div>
     <div class=""help-foot"">
       <div class=""help-status"" id=""helpStatus"">Tutorial controls are available here whenever you need them.</div>
-      <div class=""help-buttons""><button type=""button"" class=""btn"" onclick=""resetTutorialPrompt()"">RESET FIRST-RUN PROMPT</button><button type=""button"" class=""btn btn-primary"" onclick=""replayTutorial()"">REPLAY TUTORIAL</button></div>
+      <div class=""help-buttons""><button type=""button"" class=""btn"" id=""helpUpdateButton"" onclick=""checkForUpdates(true)"">CHECK UPDATES</button><button type=""button"" class=""btn"" onclick=""resetTutorialPrompt()"">RESET FIRST-RUN PROMPT</button><button type=""button"" class=""btn btn-primary"" onclick=""replayTutorial()"">REPLAY TUTORIAL</button></div>
     </div>
   </div>
 </div>
@@ -960,6 +1020,46 @@ button{font:inherit}
   </div>
 </div>
 
+<div class=""update-modal"" id=""updateModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""updateTitle"" onclick=""updateBackdropClick(event)"">
+  <div class=""update-dialog"">
+    <div class=""update-hazard""></div>
+    <div class=""update-head"">
+      <div class=""update-emblem"">
+        <svg viewBox=""0 0 64 64"" aria-hidden=""true"" focusable=""false"">
+          <polygon class=""update-emblem-shadow"" points=""32,2 62,32 32,62 2,32""></polygon>
+          <polygon class=""update-emblem-rim"" points=""32,4 60,32 32,60 4,32""></polygon>
+          <polygon class=""update-emblem-face"" points=""32,9 55,32 32,55 9,32""></polygon>
+          <path class=""update-emblem-arrow"" d=""M22 31 L32 41 L42 31 M32 40 L32 19""></path>
+        </svg>
+      </div>
+      <div class=""update-heading""><strong id=""updateTitle"">NEW RAID RESCUE UNIT AVAILABLE</strong><span>OFFICIAL GITHUB RELEASE &middot; VERIFIED SELF-UPDATE</span></div>
+    </div>
+    <div class=""update-body"">
+      <p class=""update-intro"" id=""updateIntro"">A newer recovery unit is ready. Raid Rescue can install it and reopen automatically.</p>
+      <div class=""update-version-rail"">
+        <div class=""update-version-node""><b>INSTALLED UNIT</b><strong id=""updateCurrentVersion"">0.0.0</strong></div>
+        <div class=""update-flow""></div>
+        <div class=""update-version-node latest""><b>AVAILABLE UNIT</b><strong id=""updateLatestVersion"">0.0.0</strong></div>
+      </div>
+      <div class=""update-proof"">
+        <div><b>OFFICIAL SOURCE</b>Only Cooperkit/Raid-Rescue assets are accepted.</div>
+        <div><b>SHA-256 LOCK</b>The download must match GitHubâ€™s published digest.</div>
+        <div><b>SAFE RELAUNCH</b>One previous EXE is kept for automatic rollback.</div>
+      </div>
+      <div class=""update-status"" id=""updateStatus"">Ready to download and verify the new recovery unit.</div>
+      <div class=""update-progress""><span></span></div>
+    </div>
+    <div class=""update-foot"">
+      <div class=""update-foot-note"">Updating Raid Rescue does not open, modify, or reinstall any Scrap Mechanic save or game patch.</div>
+      <div class=""update-buttons"">
+        <button type=""button"" class=""btn"" id=""updateLaterButton"" onclick=""closeUpdateModal()"">LATER</button>
+        <button type=""button"" class=""btn"" id=""updateReleaseButton"" onclick=""openUpdateRelease()"">VIEW RELEASE</button>
+        <button type=""button"" class=""btn update-install"" id=""updateInstallButton"" onclick=""installAppUpdate()"">UPDATE + RESTART</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class=""hotfix-modal"" id=""hotfixModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""hotfixTitle"" onclick=""hotfixBackdropClick(event)"">
   <div class=""hotfix-dialog"">
     <div class=""hotfix-hazard""></div>
@@ -992,6 +1092,7 @@ button{font:inherit}
   <strong id=""busyTitle"">READING WORLD DATABASE</strong><p id=""busyText"">Local operation in progress.</p>
   <div class=""loading-track""><div class=""loading-fill""></div></div>
 </div></div>
+<div class=""update-toast"" id=""updateToast""><button type=""button"" aria-label=""Close update message"" onclick=""closeUpdateToast()"">&times;</button><b id=""updateToastTitle"">UPDATE STATUS</b><span id=""updateToastText""></span></div>
 
 <script>
 var currentPath='';
@@ -1039,6 +1140,14 @@ var secretModBusy=false;
 var secretModBusyTarget='';
 var secretDependencyAction='';
 var secretCannonDangerAction='';
+var appVersion='';
+var updateCheckBusy=false;
+var updateCheckManual=false;
+var updateInstallBusy=false;
+var updateState=null;
+var pendingUpdateState=null;
+var updateDismissedTag='';
+var updateToastTimer=0;
 var tutorialSteps=[
  {target:'identityPanel',badge:'00',label:'GUIDED RECOVERY TOUR',title:'WELCOME TO RAID RESCUE',
   text:'Raid Rescue helps fix stuck raids. Close the game, choose a save, analyze it, then repair.',
@@ -1071,7 +1180,174 @@ var tutorialSteps=[
 
 function beginWindowDrag(){window.external.BeginDrag();}
 function minimizeWindow(){window.external.Minimize();}
-function closeWindow(){window.external.CloseWindow();}
+function closeWindow(){if(!updateInstallBusy)window.external.CloseWindow();}
+function loadAppUpdateState(){
+ try{appVersion=String(window.external.GetAppVersion()||'');}catch(e){appVersion='';}
+ var versionNode=document.getElementById('helpAppVersion');
+ if(versionNode)versionNode.innerText=appVersion?'version '+appVersion:'an unknown version';
+ try{
+  var startup=parseResult(window.external.ConsumeUpdateStartupStatus());
+  if(startup.HasStatus){
+   if(startup.Success)showUpdateToast('RECOVERY UNIT UPDATED','Raid Rescue '+escPlain(startup.Version)+' installed and reopened successfully.','good',7000);
+   else showUpdateToast('UPDATE ROLLED BACK',startup.Error||'The previous Raid Rescue executable was restored.','bad',9000);
+  }
+ }catch(e){}
+}
+function escPlain(value){return value===null||typeof value==='undefined'?'':String(value);}
+function updateUiBlocked(){
+ if(operationBusy||tutorialActive||updateInstallBusy)return true;
+ var ids=['updateModal','onboardModal','helpModal','hotfixModal','dependencyModal','developerCommandModal','cannonDangerModal','secretModsLayer'];
+ for(var i=0;i<ids.length;i++){
+  var node=document.getElementById(ids[i]);
+  if(node&&String(node.className).indexOf('show')>=0)return true;
+ }
+ return false;
+}
+function checkForUpdates(manual){
+ manual=!!manual;
+ if(updateCheckBusy){
+  if(manual)setHelpUpdateStatus('UPDATE CHECK ALREADY RUNNING.','');
+  return;
+ }
+ updateCheckBusy=true;updateCheckManual=manual;
+ var button=document.getElementById('helpUpdateButton');
+ if(button)button.disabled=true;
+ if(manual)setHelpUpdateStatus('CONTACTING THE OFFICIAL GITHUB RELEASE...','');
+ var started=false;
+ try{started=!!window.external.CheckForUpdates(manual);}catch(e){}
+ if(!started){
+  updateCheckBusy=false;
+  if(button)button.disabled=false;
+  if(manual)setHelpUpdateStatus('THE UPDATE SERVICE IS BUSY. TRY AGAIN IN A MOMENT.','bad');
+ }
+}
+function receiveUpdateCheck(text,manual){
+ updateCheckBusy=false;
+ var button=document.getElementById('helpUpdateButton');
+ if(button)button.disabled=false;
+ var data=parseResult(text),wasManual=!!manual||updateCheckManual;
+ updateCheckManual=false;
+ if(!data.Success){
+  if(wasManual){
+   setHelpUpdateStatus(data.Error||'Could not check GitHub right now.','bad');
+   showUpdateToast('UPDATE CHECK FAILED',data.Error||'Could not check GitHub right now.','bad',7000);
+  }
+  return;
+ }
+ if(!data.UpdateAvailable){
+  if(wasManual){
+   setHelpUpdateStatus('RAID RESCUE '+escPlain(data.CurrentVersion)+' IS UP TO DATE.','good');
+   showUpdateToast('RECOVERY UNIT CURRENT','You already have the latest Raid Rescue release.','good',4500);
+  }
+  return;
+ }
+ updateState=data;
+ if(wasManual){
+  closeHelp();
+  showUpdateModal(data);
+ }else if(updateDismissedTag!==String(data.TagName||'')&&!updateUiBlocked()){
+  showUpdateModal(data);
+ }else{
+  pendingUpdateState=data;
+ }
+}
+function setHelpUpdateStatus(message,kind){
+ var status=document.getElementById('helpStatus');
+ if(!status)return;
+ status.className='help-status'+(kind?' '+kind:'');
+ status.innerText=message;
+}
+function showUpdateModal(data){
+ if(!data||updateInstallBusy)return;
+ pendingUpdateState=null;updateState=data;
+ closeSaveMenu();closeHotfixConfirm();closeSecretMods();
+ document.getElementById('updateCurrentVersion').innerText=data.CurrentVersion||appVersion||'UNKNOWN';
+ document.getElementById('updateLatestVersion').innerText=data.LatestVersion||data.TagName||'NEW';
+ var status=document.getElementById('updateStatus');
+ status.className=data.CanAutoUpdate?'update-status':'update-status bad';
+ status.innerText=data.CanAutoUpdate
+  ?'Ready to download, verify, install, and reopen Raid Rescue.'
+  :(data.Error||'Automatic installation is unavailable for this release.');
+ var install=document.getElementById('updateInstallButton');
+ install.disabled=!data.CanAutoUpdate;
+ install.innerText=data.CanAutoUpdate?'UPDATE + RESTART':'AUTO-UPDATE UNAVAILABLE';
+ document.getElementById('updateLaterButton').disabled=false;
+ document.getElementById('updateReleaseButton').disabled=false;
+ document.getElementById('updateModal').className='update-modal show';
+ window.setTimeout(function(){(data.CanAutoUpdate?install:document.getElementById('updateReleaseButton')).focus();},35);
+}
+function maybeShowPendingUpdate(){
+ if(!pendingUpdateState||updateUiBlocked())return;
+ if(updateDismissedTag===String(pendingUpdateState.TagName||'')){pendingUpdateState=null;return;}
+ showUpdateModal(pendingUpdateState);
+}
+function updateBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('updateModal'))closeUpdateModal();
+}
+function closeUpdateModal(){
+ if(updateInstallBusy)return;
+ if(updateState)updateDismissedTag=String(updateState.TagName||'');
+ document.getElementById('updateModal').className='update-modal';
+}
+function openUpdateRelease(){
+ if(!updateState||!updateState.ReleaseUrl)return;
+ try{window.external.OpenUpdateRelease(String(updateState.ReleaseUrl));}catch(e){}
+}
+function installAppUpdate(){
+ if(updateInstallBusy||!updateState||!updateState.CanAutoUpdate)return;
+ updateInstallBusy=true;
+ var modal=document.getElementById('updateModal');
+ modal.className='update-modal show installing';
+ document.getElementById('updateLaterButton').disabled=true;
+ document.getElementById('updateReleaseButton').disabled=true;
+ var button=document.getElementById('updateInstallButton');
+ button.disabled=true;button.innerText='VERIFYING UPDATE...';
+ var status=document.getElementById('updateStatus');
+ status.className='update-status';
+ status.innerText='Downloading the official executable and checking its SHA-256 digest. Raid Rescue will restart when verification finishes.';
+ var started=false;
+ try{
+  started=!!window.external.InstallAppUpdate(
+   String(updateState.AssetUrl),String(updateState.AssetDigest),String(updateState.LatestVersion));
+ }catch(e){}
+ if(!started)receiveUpdateInstall(JSON.stringify({Success:false,Error:'The update service is already busy.'}),false);
+}
+function receiveUpdateInstall(text){
+ var data=parseResult(text);
+ var modal=document.getElementById('updateModal'),status=document.getElementById('updateStatus');
+ if(data.Success&&data.ReadyToRestart){
+  status.className='update-status good';
+  status.innerText='UPDATE VERIFIED. Closing this recovery unit and reopening the new version...';
+  document.getElementById('updateInstallButton').innerText='RESTARTING...';
+  window.setTimeout(function(){window.external.CloseWindow();},850);
+  return;
+ }
+ updateInstallBusy=false;
+ modal.className='update-modal show';
+ status.className='update-status bad';
+ status.innerText=data.Error||'The update could not be installed. This copy was not changed.';
+ document.getElementById('updateLaterButton').disabled=false;
+ document.getElementById('updateReleaseButton').disabled=false;
+ var button=document.getElementById('updateInstallButton');
+ button.disabled=!updateState||!updateState.CanAutoUpdate;
+ button.innerText='TRY UPDATE AGAIN';
+}
+function showUpdateToast(title,message,kind,duration){
+ var toast=document.getElementById('updateToast');
+ if(!toast)return;
+ if(updateToastTimer)window.clearTimeout(updateToastTimer);
+ document.getElementById('updateToastTitle').innerText=title||'UPDATE STATUS';
+ document.getElementById('updateToastText').innerText=message||'';
+ toast.className='update-toast show'+(kind?' '+kind:'');
+ updateToastTimer=window.setTimeout(closeUpdateToast,duration||5500);
+}
+function closeUpdateToast(){
+ if(updateToastTimer)window.clearTimeout(updateToastTimer);
+ updateToastTimer=0;
+ var toast=document.getElementById('updateToast');
+ if(toast)toast.className='update-toast';
+}
 function secretTriggerMouseDown(e){
  e=e||window.event;
  e.cancelBubble=true;
@@ -1624,6 +1900,7 @@ function acceptTutorial(){
 function declineTutorial(){
  completeTutorialPrompt();
  document.getElementById('onboardModal').className='onboard-modal';
+ window.setTimeout(maybeShowPendingUpdate,180);
 }
 function openHelp(){
  if(operationBusy||tutorialActive)return;
@@ -1635,6 +1912,7 @@ function openHelp(){
 function closeHelp(){
  stopSmoothScroll(document.getElementById('helpBody'));
  document.getElementById('helpModal').className='help-modal';
+ window.setTimeout(maybeShowPendingUpdate,180);
 }
 function helpBackdropClick(e){
  e=e||window.event;
@@ -1776,6 +2054,7 @@ function finishTutorial(){
  document.getElementById('appScroll').scrollTop=tutorialStartScroll;
  updateScrollBar();
  pollGameProcess();
+ window.setTimeout(maybeShowPendingUpdate,180);
 }
 function requestUiFrame(callback){
  var request=window.requestAnimationFrame||window.msRequestAnimationFrame;
@@ -1918,9 +2197,10 @@ function busy(show,title,text){
  document.getElementById('busyText').innerText=text||'Local operation in progress.';
  document.getElementById('busy').className=show?'busy show':'busy';
  applyGameLock(gameRunning);
+ if(!show)window.setTimeout(maybeShowPendingUpdate,180);
 }
 function boot(){
- document.onclick=function(){closeSaveMenu();};
+ document.onclick=function(){closeSaveMenu();window.setTimeout(maybeShowPendingUpdate,180);};
  document.onkeydown=function(e){
   e=e||window.event;
   var key=e.keyCode||e.which;
@@ -1931,6 +2211,7 @@ function boot(){
    if(e.preventDefault)e.preventDefault();
    return false;
   }
+  if(key===27&&document.getElementById('updateModal').className.indexOf('show')>=0){closeUpdateModal();return false;}
   if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
   if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
    if(key===27&&document.getElementById('cannonDangerModal').className.indexOf('show')>=0){closeCannonDangerConfirm();return false;}
@@ -1940,10 +2221,13 @@ function boot(){
   if(key===27)closeHotfixConfirm();
  };
  setupScrollBar();
+ loadAppUpdateState();
  loadSecretModsState();
  refreshSaves();
  window.setInterval(pollGameProcess,1000);
  window.setTimeout(checkFirstRunTutorial,650);
+ window.setTimeout(function(){checkForUpdates(false);},1800);
+ window.setInterval(function(){checkForUpdates(false);},1800000);
 }
 function loadPath(path){
  if(!path)return;

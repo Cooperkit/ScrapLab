@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.12.0
+
+- Added automatic GitHub update checks shortly after startup and every 30
+  minutes while Raid Rescue remains open.
+- Added a Scrap Mechanic-styled update console with **Later**, **View Release**,
+  and one-click **Update + Restart** controls.
+- Update downloads run off the UI thread and require the official
+  `Cooperkit/Raid-Rescue` release URL, the `RaidRescue.exe` asset, GitHub's
+  SHA-256 digest, and a matching newer executable version.
+- Added a temporary self-update helper that waits for Raid Rescue to close,
+  atomically replaces the executable, verifies it again, reopens the app, and
+  restores the bounded previous-executable backup if installation fails.
+- Added manual update checking and the installed version to the Field Manual.
+
 ## 1.11.1
 
 - Moved **Developer Commands** above **Resource Locator Dots** in the Super
