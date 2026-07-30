@@ -9,6 +9,14 @@ namespace RaidRescue
 {
     internal static class RaidService
     {
+        private const string NormalLootUuid =
+            "97fe0cf2-0591-4e98-9beb-9186f4fd83c8";
+        private const string BiggerLootUuid =
+            "282f332e-eb95-4553-b711-4a027e92391d";
+        private const string LimitedLootUuid =
+            "d1d56712-a3f0-4af8-bb53-7ad6cb37d34b";
+        private const long ServerTicksPerSecond = 40;
+
         private static readonly Dictionary<string, string> EnemyNames =
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -103,7 +111,19 @@ namespace RaidRescue
 
         public static AnalysisResult Analyze(string path)
         {
+            return AnalyzeCore(path, true);
+        }
+
+        public static AnalysisResult AnalyzeRaidsOnly(string path)
+        {
+            return AnalyzeCore(path, false);
+        }
+
+        private static AnalysisResult AnalyzeCore(
+            string path, bool includeDroppedItems)
+        {
             AnalysisResult result = NewAnalysis(path);
+            result.DroppedItemsScanned = includeDroppedItems;
             try
             {
                 result.GameRunning = IsGameRunning();
@@ -173,6 +193,12 @@ namespace RaidRescue
                         ValidateRaidPayload(payload);
                         ReadRaids(payload.Value, database, result);
                     }
+
+                    if (includeDroppedItems)
+                    {
+                        result.DroppedItems = ReadDroppedItems(
+                            database, result.GameTick, result, true);
+                    }
                 }
 
                 if (!result.RaidManagerPresent)
@@ -182,9 +208,22 @@ namespace RaidRescue
                 }
 
                 result.RaidCount = result.Raids.Count;
+                result.DroppedItemCount = result.DroppedItems.Count;
+                result.DroppedItemQuantity =
+                    result.DroppedItems.Sum(item => item.Quantity);
+                result.ExpiredDroppedItemCount =
+                    result.DroppedItems.Count(item => item.Expired);
                 result.CanClear =
                     result.RaidManagerPresent &&
                     result.RaidCount > 0 &&
+                    String.Equals(result.DatabaseStatus, "ok", StringComparison.OrdinalIgnoreCase) &&
+                    !result.GameRunning;
+                result.CanClearDroppedItems =
+                    result.DroppedItemCount > 0 &&
+                    String.Equals(result.DatabaseStatus, "ok", StringComparison.OrdinalIgnoreCase) &&
+                    !result.GameRunning;
+                result.CanClearExpiredDroppedItems =
+                    result.ExpiredDroppedItemCount > 0 &&
                     String.Equals(result.DatabaseStatus, "ok", StringComparison.OrdinalIgnoreCase) &&
                     !result.GameRunning;
                 result.Success = true;
@@ -193,6 +232,8 @@ namespace RaidRescue
             {
                 result.Success = false;
                 result.CanClear = false;
+                result.CanClearDroppedItems = false;
+                result.CanClearExpiredDroppedItems = false;
                 result.Error = FriendlyError(exception);
             }
             return result;
@@ -208,7 +249,7 @@ namespace RaidRescue
                     throw new InvalidOperationException(
                         "Scrap Mechanic is running. Close the game completely and try again.");
 
-                AnalysisResult before = Analyze(path);
+                AnalysisResult before = AnalyzeRaidsOnly(path);
                 result.Before = before;
                 if (!before.Success)
                     throw new InvalidOperationException("The save could not be analyzed: " + before.Error);
@@ -270,7 +311,7 @@ namespace RaidRescue
                     throw new InvalidDataException(
                         "The edited save did not pass its final integrity check. Restore the safety backup.");
 
-                result.After = Analyze(path);
+                result.After = AnalyzeRaidsOnly(path);
                 if (!result.After.Success || result.After.RaidManagerPresent)
                     throw new InvalidDataException(
                         "The raid-manager record could not be verified as cleared. Restore the safety backup.");
@@ -283,6 +324,492 @@ namespace RaidRescue
                 result.Error = FriendlyError(exception);
             }
             return result;
+        }
+
+        public static DroppedItemRepairResult ClearDroppedItems(
+            string path, long entityId)
+        {
+            return ClearDroppedItemsCore(path, entityId, false);
+        }
+
+        public static DroppedItemRepairResult ClearExpiredDroppedItems(
+            string path)
+        {
+            return ClearDroppedItemsCore(path, 0, true);
+        }
+
+        private static DroppedItemRepairResult ClearDroppedItemsCore(
+            string path, long entityId, bool expiredOnly)
+        {
+            DroppedItemRepairResult result = new DroppedItemRepairResult
+            {
+                Path = path,
+                TargetEntityId = entityId
+            };
+            try
+            {
+                ValidatePath(path);
+                if (entityId < 0)
+                    throw new ArgumentOutOfRangeException(
+                        "entityId", "The dropped-item identifier is invalid.");
+                if (IsGameRunning())
+                    throw new InvalidOperationException(
+                        "Scrap Mechanic is running. Close the game completely and try again.");
+
+                AnalysisResult before = Analyze(path);
+                result.Before = before;
+                if (!before.Success)
+                    throw new InvalidOperationException(
+                        "The save could not be analyzed: " + before.Error);
+                if (!String.Equals(
+                    before.DatabaseStatus, "ok",
+                    StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(
+                        "The save failed SQLite's integrity check and was not changed.");
+
+                List<DroppedItemInfo> requested = SelectDroppedItems(
+                    before.DroppedItems, entityId, expiredOnly);
+                if (requested.Count == 0)
+                {
+                    throw new InvalidOperationException(
+                        expiredOnly
+                            ? "This save has no expired loose items pending world cleanup."
+                            : entityId == 0
+                            ? "This save has no decoded loose items to clear."
+                            : "That loose item is no longer present in the selected save.");
+                }
+
+                string backup = MakeBackupPath(path);
+                result.BackupPath = backup;
+                SqliteDatabase.Backup(path, backup);
+
+                using (SqliteDatabase backupDatabase =
+                    SqliteDatabase.OpenReadOnly(backup))
+                {
+                    string backupStatus = backupDatabase.QuickCheck();
+                    if (!String.Equals(
+                        backupStatus, "ok",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidDataException(
+                            "The safety backup failed its integrity check. " +
+                            "The original was not changed.");
+                    }
+
+                    long backupVersion;
+                    long backupTick;
+                    backupDatabase.ReadGameInfo(
+                        out backupVersion, out backupTick);
+                    AnalysisResult backupScan = NewAnalysis(backup);
+                    List<DroppedItemInfo> backupItems = ReadDroppedItems(
+                        backupDatabase, backupTick, backupScan, false);
+                    VerifyDroppedItemSnapshot(
+                        requested,
+                        SelectDroppedItems(
+                            backupItems, entityId, expiredOnly));
+                }
+
+                if (IsGameRunning())
+                    throw new InvalidOperationException(
+                        "Scrap Mechanic started while the backup was being made. " +
+                        "The original was not changed.");
+
+                using (SqliteDatabase database =
+                    SqliteDatabase.OpenReadWrite(path, false))
+                {
+                    bool transaction = false;
+                    try
+                    {
+                        database.Execute("BEGIN IMMEDIATE");
+                        transaction = true;
+                        string status = database.QuickCheck();
+                        if (!String.Equals(
+                            status, "ok",
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new InvalidDataException(
+                                "The save failed its final integrity check. " +
+                                "No changes were committed.");
+                        }
+
+                        long saveVersion;
+                        long gameTick;
+                        database.ReadGameInfo(out saveVersion, out gameTick);
+                        AnalysisResult liveScan = NewAnalysis(path);
+                        List<DroppedItemInfo> currentItems =
+                            ReadDroppedItems(
+                                database, gameTick, liveScan, false);
+                        List<DroppedItemInfo> targets =
+                            SelectDroppedItems(
+                                currentItems, entityId, expiredOnly);
+                        VerifyDroppedItemSnapshot(requested, targets);
+
+                        foreach (DroppedItemInfo item in targets)
+                        {
+                            if (database.DeleteScriptDataRow(
+                                item.ScriptRowId) != 1)
+                            {
+                                throw new InvalidDataException(
+                                    "The storage record for " + item.Name +
+                                    " changed before removal. No changes were committed.");
+                            }
+                            if (database.DeleteHarvestable(item.EntityId) != 1)
+                            {
+                                throw new InvalidDataException(
+                                    "The world entity for " + item.Name +
+                                    " changed before removal. No changes were committed.");
+                            }
+                            result.ItemsRemoved++;
+                            result.QuantityRemoved += item.Quantity;
+                        }
+
+                        string editedStatus = database.QuickCheck();
+                        if (!String.Equals(
+                            editedStatus, "ok",
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new InvalidDataException(
+                                "The edited save failed its integrity check. " +
+                                "No changes were committed.");
+                        }
+
+                        database.Execute("COMMIT");
+                        transaction = false;
+                        result.DatabaseStatus = database.QuickCheck();
+                    }
+                    catch
+                    {
+                        if (transaction)
+                        {
+                            try { database.Execute("ROLLBACK"); }
+                            catch { }
+                        }
+                        throw;
+                    }
+                }
+
+                if (!String.Equals(
+                    result.DatabaseStatus, "ok",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException(
+                        "The edited save did not pass its final integrity check. " +
+                        "Restore the safety backup.");
+                }
+
+                result.After = Analyze(path);
+                if (!result.After.Success)
+                    throw new InvalidDataException(
+                        "The edited save could not be re-analyzed. " +
+                        "Restore the safety backup.");
+                if (result.After.RaidManagerPresent !=
+                        before.RaidManagerPresent ||
+                    result.After.RaidCount != before.RaidCount)
+                {
+                    throw new InvalidDataException(
+                        "Unrelated raid storage changed during loose-item removal. " +
+                        "Restore the safety backup.");
+                }
+
+                foreach (DroppedItemInfo removed in requested)
+                {
+                    if (result.After.DroppedItems.Any(
+                        item => item.EntityId == removed.EntityId))
+                    {
+                        throw new InvalidDataException(
+                            "A removed loose item was still present after verification. " +
+                            "Restore the safety backup.");
+                    }
+                }
+
+                result.Success = true;
+            }
+            catch (Exception exception)
+            {
+                result.Success = false;
+                result.Error = FriendlyError(exception);
+            }
+            return result;
+        }
+
+        private static List<DroppedItemInfo> ReadDroppedItems(
+            SqliteDatabase database, long gameTick,
+            AnalysisResult analysis, bool includeIcons)
+        {
+            List<DroppedItemInfo> items = new List<DroppedItemInfo>();
+            Dictionary<int, string> worldNames =
+                WorldStorage.ReadWorldNames(database);
+            foreach (HarvestableRecord harvestable in
+                database.ReadHarvestables())
+            {
+                string harvestableUuid;
+                PositionInfo position;
+                if (!TryReadHarvestableData(
+                    harvestable.Data, out harvestableUuid, out position) ||
+                    !IsLooseLootType(harvestableUuid))
+                    continue;
+
+                try
+                {
+                    if (harvestable.Id < 0 ||
+                        harvestable.Id > UInt32.MaxValue)
+                    {
+                        throw new InvalidDataException(
+                            "The loose-item entity identifier is outside " +
+                            "Scrap Mechanic's supported range.");
+                    }
+
+                    byte[] key = BitConverter.GetBytes(
+                        checked((uint)harvestable.Id));
+                    List<StoredScriptRecord> scripts =
+                        database.ReadScriptRecords(
+                            key, harvestable.WorldId);
+                    if (scripts.Count != 1)
+                    {
+                        throw new InvalidDataException(
+                            scripts.Count == 0
+                                ? "Its Lua storage record is missing."
+                                : "Its Lua storage key is ambiguous.");
+                    }
+
+                    StoredScriptRecord script = scripts[0];
+                    ScriptPayload payload =
+                        LuaStorage.ParseScriptData(script.Data);
+                    if (!BytesEqual(payload.Key, script.Key) ||
+                        payload.WorldId != script.WorldId ||
+                        payload.LuaVersion < 1)
+                    {
+                        throw new InvalidDataException(
+                            "Its Lua storage header does not match the database row.");
+                    }
+
+                    LuaTable root = payload.Value as LuaTable;
+                    LuaUserData uuidData =
+                        root == null
+                            ? null
+                            : root.Get("uuid") as LuaUserData;
+                    if (uuidData == null ||
+                        !String.Equals(
+                            uuidData.Type, "Uuid",
+                            StringComparison.Ordinal) ||
+                        String.IsNullOrEmpty(uuidData.Uuid))
+                    {
+                        throw new InvalidDataException(
+                            "Its item UUID is missing from Lua storage.");
+                    }
+
+                    long quantity = ToLong(root.Get("quantity"), 0);
+                    if (quantity <= 0)
+                        throw new InvalidDataException(
+                            "Its stored stack quantity is invalid.");
+
+                    long killTick = ToLong(root.Get("killTick"), 0);
+                    long remainingTicks =
+                        killTick > 0 ? killTick - gameTick : 0;
+                    ItemCatalogEntry catalog = includeIcons
+                        ? ItemCatalog.Find(uuidData.Uuid)
+                        : new ItemCatalogEntry
+                        {
+                            Name = uuidData.Uuid,
+                            Description = String.Empty,
+                            IconDataUrl = String.Empty
+                        };
+                    if (includeIcons &&
+                        !analysis.DroppedItemIcons.ContainsKey(
+                            uuidData.Uuid))
+                    {
+                        analysis.DroppedItemIcons[uuidData.Uuid] =
+                            catalog.IconDataUrl ?? String.Empty;
+                    }
+
+                    bool epic = ToBool(root.Get("epic"));
+                    bool questItem = ToBool(root.Get("questItem"));
+                    string limitedLoot =
+                        AsString(root.Get("limitedLoot")) ?? String.Empty;
+                    int valueScore = catalog.RecoveryValue;
+                    if (epic)
+                        valueScore = Math.Max(valueScore, 7000);
+                    if (!String.IsNullOrEmpty(limitedLoot))
+                        valueScore = Math.Max(valueScore, 8000);
+                    if (questItem)
+                        valueScore = Math.Max(valueScore, 10000);
+
+                    items.Add(new DroppedItemInfo
+                    {
+                        EntityId = harvestable.Id,
+                        WorldId = harvestable.WorldId,
+                        WorldName = WorldStorage.ResolveName(
+                            worldNames, harvestable.WorldId),
+                        CellX = harvestable.CellX,
+                        CellY = harvestable.CellY,
+                        Uuid = uuidData.Uuid,
+                        Name = catalog.Name,
+                        Description = catalog.Description ?? String.Empty,
+                        Quantity = quantity,
+                        ValueScore = valueScore,
+                        ValueTier = ItemCatalog.RecoveryTier(valueScore),
+                        DropType = LootTypeName(harvestableUuid),
+                        Position = position,
+                        KillTick = killTick,
+                        RemainingTicks = remainingTicks,
+                        RemainingSeconds = remainingTicks > 0
+                            ? (remainingTicks + ServerTicksPerSecond - 1) /
+                                ServerTicksPerSecond
+                            : 0,
+                        Expired = killTick > 0 && remainingTicks <= 0,
+                        Epic = epic,
+                        QuestItem = questItem,
+                        LimitedLoot = limitedLoot,
+                        ScriptRowId = script.RowId,
+                        ScriptKey = script.Key
+                    });
+                }
+                catch (Exception exception)
+                {
+                    analysis.UnreadableDroppedItemCount++;
+                    analysis.Warnings.Add(
+                        "Loose item #" +
+                        harvestable.Id.ToString(
+                            CultureInfo.InvariantCulture) +
+                        " could not be decoded and will not be offered for removal: " +
+                        exception.Message);
+                }
+            }
+
+            return items
+                .OrderByDescending(item => item.ValueScore)
+                .ThenByDescending(item => item.Quantity)
+                .ThenBy(item => item.Name,
+                    StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(item => item.EntityId)
+                .ToList();
+        }
+
+        private static bool TryReadHarvestableData(
+            byte[] data, out string uuid, out PositionInfo position)
+        {
+            uuid = null;
+            position = null;
+            if (data == null || data.Length < 64)
+                return false;
+
+            byte[] uuidBytes = new byte[16];
+            Buffer.BlockCopy(data, 20, uuidBytes, 0, 16);
+            Array.Reverse(uuidBytes);
+            string hex = BitConverter.ToString(uuidBytes)
+                .Replace("-", "").ToLowerInvariant();
+            uuid =
+                hex.Substring(0, 8) + "-" +
+                hex.Substring(8, 4) + "-" +
+                hex.Substring(12, 4) + "-" +
+                hex.Substring(16, 4) + "-" +
+                hex.Substring(20, 12);
+
+            position = new PositionInfo
+            {
+                Z = ReadBigEndianSingle(data, 36),
+                X = ReadBigEndianSingle(data, 40),
+                Y = ReadBigEndianSingle(data, 44)
+            };
+            return true;
+        }
+
+        private static double ReadBigEndianSingle(
+            byte[] data, int offset)
+        {
+            byte[] bytes = new byte[4];
+            Buffer.BlockCopy(data, offset, bytes, 0, 4);
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(bytes);
+            return BitConverter.ToSingle(bytes, 0);
+        }
+
+        private static bool IsLooseLootType(string uuid)
+        {
+            return String.Equals(
+                    uuid, NormalLootUuid,
+                    StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(
+                    uuid, BiggerLootUuid,
+                    StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(
+                    uuid, LimitedLootUuid,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string LootTypeName(string uuid)
+        {
+            if (String.Equals(
+                uuid, LimitedLootUuid,
+                StringComparison.OrdinalIgnoreCase))
+                return "Limited loot";
+            if (String.Equals(
+                uuid, BiggerLootUuid,
+                StringComparison.OrdinalIgnoreCase))
+                return "Quest / large loot";
+            return "Loose pickup";
+        }
+
+        private static List<DroppedItemInfo> SelectDroppedItems(
+            IEnumerable<DroppedItemInfo> items, long entityId,
+            bool expiredOnly)
+        {
+            if (items == null)
+                return new List<DroppedItemInfo>();
+            return items
+                .Where(item =>
+                    (entityId == 0 || item.EntityId == entityId) &&
+                    (!expiredOnly || item.Expired))
+                .OrderBy(item => item.EntityId)
+                .ToList();
+        }
+
+        private static void VerifyDroppedItemSnapshot(
+            IList<DroppedItemInfo> expected,
+            IList<DroppedItemInfo> actual)
+        {
+            if (expected == null || actual == null ||
+                expected.Count != actual.Count)
+            {
+                throw new InvalidDataException(
+                    "The loose-item list changed during backup verification. " +
+                    "The save was not edited.");
+            }
+
+            for (int index = 0; index < expected.Count; index++)
+            {
+                DroppedItemInfo left = expected[index];
+                DroppedItemInfo right = actual[index];
+                if (left.EntityId != right.EntityId ||
+                    left.WorldId != right.WorldId ||
+                    left.Quantity != right.Quantity ||
+                    !String.Equals(
+                        left.Uuid, right.Uuid,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException(
+                        "Loose item #" +
+                        left.EntityId.ToString(
+                            CultureInfo.InvariantCulture) +
+                        " changed during backup verification. " +
+                        "The save was not edited.");
+                }
+            }
+        }
+
+        private static bool BytesEqual(byte[] left, byte[] right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+            if (left == null || right == null ||
+                left.Length != right.Length)
+                return false;
+            for (int index = 0; index < left.Length; index++)
+            {
+                if (left[index] != right[index])
+                    return false;
+            }
+            return true;
         }
 
         private static void ReadRaids(
@@ -537,6 +1064,10 @@ namespace RaidRescue
                 Path = path,
                 DatabaseStatus = "not checked",
                 Raids = new List<RaidInfo>(),
+                DroppedItems = new List<DroppedItemInfo>(),
+                DroppedItemIcons =
+                    new Dictionary<string, string>(
+                        StringComparer.OrdinalIgnoreCase),
                 Warnings = new List<string>()
             };
         }

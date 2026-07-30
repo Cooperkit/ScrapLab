@@ -510,6 +510,11 @@ namespace RaidRescue
 
         public string Analyze(string path)
         {
+            return Serialize(RaidService.AnalyzeRaidsOnly(path));
+        }
+
+        public string ScanDroppedItems(string path)
+        {
             return Serialize(RaidService.Analyze(path));
         }
 
@@ -614,6 +619,18 @@ namespace RaidRescue
                 });
             }
             return Serialize(RaidService.ClearRaids(path));
+        }
+
+        public string ClearDroppedItems(string path, long entityId)
+        {
+            return Serialize(
+                RaidService.ClearDroppedItems(path, entityId));
+        }
+
+        public string ClearExpiredDroppedItems(string path)
+        {
+            return Serialize(
+                RaidService.ClearExpiredDroppedItems(path));
         }
 
         public string InstallRaidHotfix()

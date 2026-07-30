@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -6,6 +7,33 @@ using System.Threading;
 
 namespace RaidRescue
 {
+    internal sealed class HarvestableRecord
+    {
+        public long Id;
+        public int WorldId;
+        public int CellX;
+        public int CellY;
+        public int Size;
+        public byte[] Data;
+    }
+
+    internal sealed class StoredScriptRecord
+    {
+        public long RowId;
+        public byte[] Uid;
+        public byte[] Key;
+        public int WorldId;
+        public int Flags;
+        public byte[] Data;
+    }
+
+    internal sealed class WorldMetadataRecord
+    {
+        public long RowId;
+        public int WorldId;
+        public byte[] Data;
+    }
+
     internal sealed class SqliteException : Exception
     {
         public int ResultCode { get; private set; }
@@ -138,6 +166,103 @@ namespace RaidRescue
                 statement.BindInt64(1, id);
                 return statement.Read();
             }
+        }
+
+        public List<HarvestableRecord> ReadHarvestables()
+        {
+            List<HarvestableRecord> records =
+                new List<HarvestableRecord>();
+            using (SqliteStatement statement = Prepare(
+                "SELECT id, worldId, x, y, size, data " +
+                "FROM Harvestable ORDER BY id"))
+            {
+                while (statement.Read())
+                {
+                    records.Add(new HarvestableRecord
+                    {
+                        Id = statement.GetInt64(0),
+                        WorldId = checked((int)statement.GetInt64(1)),
+                        CellX = checked((int)statement.GetInt64(2)),
+                        CellY = checked((int)statement.GetInt64(3)),
+                        Size = checked((int)statement.GetInt64(4)),
+                        Data = statement.GetBlob(5)
+                    });
+                }
+            }
+            return records;
+        }
+
+        public List<StoredScriptRecord> ReadScriptRecords(
+            byte[] key, int worldId)
+        {
+            List<StoredScriptRecord> records =
+                new List<StoredScriptRecord>();
+            using (SqliteStatement statement = Prepare(
+                "SELECT rowid, uid, key, worldId, flags, data " +
+                "FROM ScriptData WHERE key=?1 AND worldId=?2 " +
+                "ORDER BY rowid"))
+            {
+                statement.BindBlob(1, key);
+                statement.BindInt64(2, worldId);
+                while (statement.Read())
+                {
+                    records.Add(new StoredScriptRecord
+                    {
+                        RowId = statement.GetInt64(0),
+                        Uid = statement.GetBlob(1),
+                        Key = statement.GetBlob(2),
+                        WorldId = checked((int)statement.GetInt64(3)),
+                        Flags = checked((int)statement.GetInt64(4)),
+                        Data = statement.GetBlob(5)
+                    });
+                }
+            }
+            return records;
+        }
+
+        public List<WorldMetadataRecord> ReadWorldMetadata()
+        {
+            List<WorldMetadataRecord> records =
+                new List<WorldMetadataRecord>();
+            const string sql =
+                "SELECT rowid, worldId, data FROM GenericData " +
+                "WHERE uid=x'5297769DF4514E5E9A388B0F95E2EDAD' " +
+                "ORDER BY worldId, rowid";
+            using (SqliteStatement statement = Prepare(sql))
+            {
+                while (statement.Read())
+                {
+                    records.Add(new WorldMetadataRecord
+                    {
+                        RowId = statement.GetInt64(0),
+                        WorldId = checked((int)statement.GetInt64(1)),
+                        Data = statement.GetBlob(2)
+                    });
+                }
+            }
+            return records;
+        }
+
+        public int DeleteScriptDataRow(long rowId)
+        {
+            using (SqliteStatement statement = Prepare(
+                "DELETE FROM ScriptData WHERE rowid=?1"))
+            {
+                statement.BindInt64(1, rowId);
+                statement.ExecuteNonQuery();
+            }
+            return Native.sqlite3_changes(handle);
+        }
+
+        public int DeleteHarvestable(long id)
+        {
+            using (SqliteStatement statement = Prepare(
+                "DELETE FROM Harvestable WHERE id=?1"))
+            {
+                statement.BindInt64(1, id);
+                statement.ExecuteNonQuery();
+            }
+            return Native.sqlite3_changes(handle);
         }
 
         public int DeleteRaidRecord()
@@ -277,6 +402,10 @@ namespace RaidRescue
             internal static extern int sqlite3_bind_int64(IntPtr statement, int index, long value);
 
             [DllImport("winsqlite3.dll", CallingConvention = CallingConvention.Cdecl)]
+            internal static extern int sqlite3_bind_blob(
+                IntPtr statement, int index, byte[] value, int byteCount, IntPtr destructor);
+
+            [DllImport("winsqlite3.dll", CallingConvention = CallingConvention.Cdecl)]
             internal static extern int sqlite3_exec(
                 IntPtr database, byte[] sql, IntPtr callback, IntPtr state, out IntPtr error);
 
@@ -327,6 +456,13 @@ namespace RaidRescue
                 throw new SqliteException(result, owner.ErrorMessage);
             }
 
+            public void ExecuteNonQuery()
+            {
+                int result = Native.sqlite3_step(statement);
+                if (result != SqliteDone)
+                    throw new SqliteException(result, owner.ErrorMessage);
+            }
+
             public long GetInt64(int column)
             {
                 return Native.sqlite3_column_int64(statement, column);
@@ -351,6 +487,16 @@ namespace RaidRescue
             public void BindInt64(int index, long value)
             {
                 int result = Native.sqlite3_bind_int64(statement, index, value);
+                if (result != SqliteOk)
+                    throw new SqliteException(result, owner.ErrorMessage);
+            }
+
+            public void BindBlob(int index, byte[] value)
+            {
+                byte[] content = value ?? new byte[0];
+                int result = Native.sqlite3_bind_blob(
+                    statement, index, content, content.Length,
+                    new IntPtr(-1));
                 if (result != SqliteOk)
                     throw new SqliteException(result, owner.ErrorMessage);
             }

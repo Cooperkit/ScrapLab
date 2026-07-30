@@ -199,14 +199,17 @@ namespace RaidRescue
                 result.Changes.Add(
                     "Reset Scrap Mechanic's generated script cache. " +
                     "It will rebuild automatically on the next normal game launch.");
+                AdaptivePatchSupport.CommitBuildActivations(
+                    result, gamePath);
                 return result;
             }
             catch (Exception exception)
             {
                 string message =
-                    "The Lua files changed, but Raid Rescue could not delete " +
-                    "Cache\\Bundle\\core_data.cbo. The patch will not become active " +
-                    "until that cache is deleted. " + exception.Message;
+                    "Raid Rescue could not finish the patch activation. " +
+                    "Cache\\Bundle\\core_data.cbo must be reset and the Steam " +
+                    "build activation must be recorded before the mod can be shown as active. " +
+                    exception.Message;
                 if (result.Success)
                 {
                     result.Success = false;
@@ -1113,13 +1116,21 @@ namespace RaidRescue
                 string hash = Sha256(path);
                 if (HashEquals(hash, HarvestCoreLocatorV2))
                 {
+                    SteamBuildInfo build =
+                        AdaptivePatchSupport.GetSteamBuild(
+                            gamePath, result.GameVersion);
+                    if (AdaptivePatchSupport.RequiresBuildRefresh(
+                        "ResourceLocator", build))
+                    {
+                        AdaptivePatchSupport.MarkRefreshRequired(
+                            result, build, null);
+                        return result;
+                    }
                     result.Success = true;
                     result.Installed = true;
                     result.AlreadyPatched = true;
                     AdaptivePatchSupport.FillResult(
-                        result,
-                        AdaptivePatchSupport.GetSteamBuild(
-                            gamePath, result.GameVersion),
+                        result, build,
                         PatchCompatibilityState.KnownInstalled,
                         false, true, "Verified Raid Rescue file.");
                     return result;
@@ -1209,8 +1220,23 @@ namespace RaidRescue
                 string desiredHash = enabled ? HarvestCoreLocatorV2 : HarvestCoreOriginal;
                 if (HashEquals(currentHash, desiredHash))
                 {
+                    SteamBuildInfo build =
+                        AdaptivePatchSupport.GetSteamBuild(
+                            gamePath, result.GameVersion);
+                    if (enabled &&
+                        AdaptivePatchSupport.RequiresBuildRefresh(
+                            "ResourceLocator", build))
+                    {
+                        AdaptivePatchSupport.PrepareBuildRefresh(
+                            result, "ResourceLocator", build,
+                            "Resource Locator Dots were reactivated after the Steam update.");
+                        return result;
+                    }
                     result.Success = true;
                     result.AlreadyPatched = true;
+                    if (!enabled)
+                        AdaptivePatchSupport.DeleteBuildActivation(
+                            "ResourceLocator");
                     result.Changes.Add(
                         enabled
                             ? "Resource locator dots are already installed."
@@ -1332,6 +1358,8 @@ namespace RaidRescue
                     enabled
                         ? "Added one inactive logic-output slot and neutral locator colors; the output never sends an ON signal."
                         : "Normal refining behavior remains unchanged.");
+                AdaptivePatchSupport.QueueBuildActivation(
+                    result, "ResourceLocator", enabled);
                 SecretModBackupRetention.Prune(
                     backupRoot, "ResourceLocator",
                     backupPath, result);
@@ -1387,6 +1415,13 @@ namespace RaidRescue
 
             if (v2 == 1 && clean == 0 && v1 == 0)
             {
+                if (AdaptivePatchSupport.RequiresBuildRefresh(
+                    "ResourceLocator", build))
+                {
+                    AdaptivePatchSupport.MarkRefreshRequired(
+                        result, build, null);
+                    return result;
+                }
                 result.Success = true;
                 result.Installed = true;
                 result.AlreadyPatched = true;
@@ -1466,6 +1501,15 @@ namespace RaidRescue
             string transformed;
             if (enabled)
             {
+                if (v2 == 1 && clean == 0 && v1 == 0 &&
+                    AdaptivePatchSupport.RequiresBuildRefresh(
+                        "ResourceLocator", build))
+                {
+                    AdaptivePatchSupport.PrepareBuildRefresh(
+                        result, "ResourceLocator", build,
+                        "Resource Locator Dots were reactivated after the Steam update.");
+                    return result;
+                }
                 string reason = "";
                 if (clean != 1 || v1 != 0 || v2 != 0 ||
                     !AdaptivePatchSupport.CanAdaptCleanFiles(
@@ -1627,6 +1671,8 @@ namespace RaidRescue
             {
                 AdaptivePatchSupport.DeleteReceipt("ResourceLocator");
             }
+            AdaptivePatchSupport.QueueBuildActivation(
+                result, "ResourceLocator", enabled);
             SecretModBackupRetention.Prune(
                 backupRoot, "ResourceLocator", backupPath, result);
             return result;
@@ -2271,15 +2317,24 @@ namespace RaidRescue
                 result.Success = true;
                 result.Installed = installedCount == targets.Count;
                 result.AlreadyPatched = result.Installed;
+                SteamBuildInfo build =
+                    AdaptivePatchSupport.GetSteamBuild(
+                        gamePath, result.GameVersion);
+                if (result.Installed &&
+                    AdaptivePatchSupport.RequiresBuildRefresh(
+                        "ChemicalFertilizerSplash", build))
+                {
+                    AdaptivePatchSupport.MarkRefreshRequired(
+                        result, build, null);
+                    return result;
+                }
                 if (!result.Installed)
                 {
                     AdaptivePatchSupport.DiscardReceiptIfSuperseded(
                         "ChemicalFertilizerSplash", gamePath);
                 }
                 AdaptivePatchSupport.FillResult(
-                    result,
-                    AdaptivePatchSupport.GetSteamBuild(
-                        gamePath, result.GameVersion),
+                    result, build,
                     result.Installed
                         ? PatchCompatibilityState.KnownInstalled
                         : PatchCompatibilityState.KnownClean,
@@ -2572,8 +2627,25 @@ namespace RaidRescue
 
                 if (targetsToPatch.Count == 0)
                 {
+                    SteamBuildInfo build =
+                        AdaptivePatchSupport.GetSteamBuild(
+                            gamePath, result.GameVersion);
+                    if (enabled &&
+                        AdaptivePatchSupport.RequiresBuildRefresh(
+                            "ChemicalFertilizerSplash", build))
+                    {
+                        AdaptivePatchSupport.PrepareBuildRefresh(
+                            result, "ChemicalFertilizerSplash", build,
+                            "Chemical Fertilizer Splash was reactivated after the Steam update.");
+                        return result;
+                    }
                     result.Success = true;
                     result.AlreadyPatched = true;
+                    if (!enabled)
+                    {
+                        AdaptivePatchSupport.DeleteBuildActivation(
+                            "ChemicalFertilizerSplash");
+                    }
                     result.Changes.Add(
                         enabled
                             ? "Chemical Fertilizer Splash is already installed."
@@ -2649,6 +2721,8 @@ namespace RaidRescue
                     enabled
                         ? "The patch runs on the authoritative server and keeps existing fertilizer timing fixes."
                         : "Any installed Raid Rescue raid and fertilizer hotfix was preserved.");
+                AdaptivePatchSupport.QueueBuildActivation(
+                    result, "ChemicalFertilizerSplash", enabled);
                 SecretModBackupRetention.Prune(
                     backupRoot, "ChemicalFertilizerSplash",
                     backupPath, result);
@@ -2710,6 +2784,13 @@ namespace RaidRescue
             result.Success = true;
             if (installed == states.Count)
             {
+                if (AdaptivePatchSupport.RequiresBuildRefresh(
+                    "ChemicalFertilizerSplash", build))
+                {
+                    AdaptivePatchSupport.MarkRefreshRequired(
+                        result, build, null);
+                    return result;
+                }
                 result.Installed = true;
                 result.AlreadyPatched = true;
                 AdaptivePatchSupport.FillResult(
@@ -2805,6 +2886,15 @@ namespace RaidRescue
 
             if (enabled)
             {
+                if (installed == states.Count &&
+                    AdaptivePatchSupport.RequiresBuildRefresh(
+                        "ChemicalFertilizerSplash", build))
+                {
+                    AdaptivePatchSupport.PrepareBuildRefresh(
+                        result, "ChemicalFertilizerSplash", build,
+                        "Chemical Fertilizer Splash was reactivated after the Steam update.");
+                    return result;
+                }
                 string reason = "";
                 if (clean != states.Count ||
                     !AdaptivePatchSupport.CanAdaptCleanFiles(
@@ -3008,6 +3098,8 @@ namespace RaidRescue
                 AdaptivePatchSupport.DeleteReceipt(
                     "ChemicalFertilizerSplash");
             }
+            AdaptivePatchSupport.QueueBuildActivation(
+                result, "ChemicalFertilizerSplash", enabled);
 
             SecretModBackupRetention.Prune(
                 backupRoot, "ChemicalFertilizerSplash",
@@ -3876,6 +3968,13 @@ namespace RaidRescue
                     gamePath, result.GameVersion);
                 if (HashEquals(hash, MountedWaterGunPatched))
                 {
+                    if (AdaptivePatchSupport.RequiresBuildRefresh(
+                        AdaptiveModKey, build))
+                    {
+                        AdaptivePatchSupport.MarkRefreshRequired(
+                            result, build, null);
+                        return result;
+                    }
                     result.Installed = true;
                     result.AlreadyPatched = true;
                     result.Success = true;
@@ -4005,8 +4104,23 @@ namespace RaidRescue
                     : MountedWaterGunOriginal;
                 if (HashEquals(currentHash, desiredHash))
                 {
+                    SteamBuildInfo build =
+                        AdaptivePatchSupport.GetSteamBuild(
+                            gamePath, result.GameVersion);
+                    if (enabled &&
+                        AdaptivePatchSupport.RequiresBuildRefresh(
+                            AdaptiveModKey, build))
+                    {
+                        AdaptivePatchSupport.PrepareBuildRefresh(
+                            result, AdaptiveModKey, build,
+                            "Dual-Fluid Water Cannon was reactivated after the Steam update.");
+                        return result;
+                    }
                     result.Success = true;
                     result.AlreadyPatched = true;
+                    if (!enabled)
+                        AdaptivePatchSupport.DeleteBuildActivation(
+                            AdaptiveModKey);
                     result.Changes.Add(
                         enabled
                             ? "Dual-Fluid Water Cannon is already installed."
@@ -4102,6 +4216,8 @@ namespace RaidRescue
                     enabled
                         ? "Each rising-edge trigger fires every available liquid with one animation and recoil."
                         : "The original water-only firing behavior was restored.");
+                AdaptivePatchSupport.QueueBuildActivation(
+                    result, AdaptiveModKey, enabled);
                 SecretModBackupRetention.Prune(
                     backupRoot, "DualFluidWaterCannon",
                     backupPath, result);
@@ -4125,6 +4241,13 @@ namespace RaidRescue
             result.AlreadyPatched = state.Installed;
             if (state.Installed)
             {
+                if (AdaptivePatchSupport.RequiresBuildRefresh(
+                    AdaptiveModKey, build))
+                {
+                    AdaptivePatchSupport.MarkRefreshRequired(
+                        result, build, null);
+                    return result;
+                }
                 AdaptivePatchSupport.FillResult(
                     result, build,
                     PatchCompatibilityState.AdaptiveInstalled,
@@ -4237,6 +4360,15 @@ namespace RaidRescue
             string transformed;
             if (enabled)
             {
+                if (state.Installed &&
+                    AdaptivePatchSupport.RequiresBuildRefresh(
+                        AdaptiveModKey, build))
+                {
+                    AdaptivePatchSupport.PrepareBuildRefresh(
+                        result, AdaptiveModKey, build,
+                        "Dual-Fluid Water Cannon was reactivated after the Steam update.");
+                    return result;
+                }
                 string reason = "";
                 if (!state.Clean ||
                     !AdaptivePatchSupport.CanAdaptCleanFiles(
@@ -4263,6 +4395,8 @@ namespace RaidRescue
                             true, true,
                             "Dual-Fluid Water Cannon is already removed.");
                         AdaptivePatchSupport.DeleteReceipt(AdaptiveModKey);
+                        AdaptivePatchSupport.DeleteBuildActivation(
+                            AdaptiveModKey);
                         return result;
                     }
                     throw new InvalidOperationException(
@@ -4394,6 +4528,8 @@ namespace RaidRescue
             {
                 AdaptivePatchSupport.DeleteReceipt(AdaptiveModKey);
             }
+            AdaptivePatchSupport.QueueBuildActivation(
+                result, AdaptiveModKey, enabled);
 
             SecretModBackupRetention.Prune(
                 backupRoot, "DualFluidWaterCannon",
@@ -4579,15 +4715,14 @@ namespace RaidRescue
                 bool chemicalWasInstalled =
                     ChemicalFertilizerPatchService.PreflightAt(
                         gamePath, true);
-                GamePatchResult chemicalResult = null;
-                if (!chemicalWasInstalled)
-                {
-                    chemicalResult = ChemicalFertilizerPatchService.SetEnabledAt(
+                GamePatchResult chemicalResult =
+                    ChemicalFertilizerPatchService.SetEnabledAt(
                         gamePath, backupRoot, true);
-                    if (!chemicalResult.Success)
-                        return Failure(
-                            "Dual-Fluid Water Cannon requires Chemical Fertilizer Splash. " +
-                            chemicalResult.Error);
+                if (!chemicalResult.Success)
+                {
+                    return Failure(
+                        "Dual-Fluid Water Cannon requires Chemical Fertilizer Splash. " +
+                        chemicalResult.Error);
                 }
 
                 GamePatchResult cannonResult =
@@ -4611,13 +4746,19 @@ namespace RaidRescue
                 if (!cannonResult.Success)
                     return cannonResult;
 
-                if (chemicalResult != null)
+                if (chemicalResult.FilesPatched > 0 ||
+                    chemicalResult.ActivationChanges != null)
                 {
                     cannonResult.FilesPatched += chemicalResult.FilesPatched;
+                    AdaptivePatchSupport.MergeBuildActivations(
+                        cannonResult, chemicalResult);
                     if (String.IsNullOrEmpty(cannonResult.BackupPath))
                         cannonResult.BackupPath = chemicalResult.BackupPath;
                     cannonResult.Changes.Insert(
-                        0, "Installed the required Chemical Fertilizer Splash dependency.");
+                        0,
+                        chemicalWasInstalled
+                            ? "Reactivated the Chemical Fertilizer Splash dependency for this Steam build."
+                            : "Installed the required Chemical Fertilizer Splash dependency.");
                 }
                 return cannonResult;
             }
@@ -4688,6 +4829,8 @@ namespace RaidRescue
                 if (cannonResult != null)
                 {
                     chemicalResult.FilesPatched += cannonResult.FilesPatched;
+                    AdaptivePatchSupport.MergeBuildActivations(
+                        chemicalResult, cannonResult);
                     if (String.IsNullOrEmpty(chemicalResult.BackupPath))
                         chemicalResult.BackupPath = cannonResult.BackupPath;
                     chemicalResult.Changes.Insert(
@@ -4901,28 +5044,44 @@ namespace RaidRescue
                 string hash = Sha256(path);
                 if (HashEquals(hash, SurvivalGameHostCommands))
                 {
+                    SteamBuildInfo build =
+                        AdaptivePatchSupport.GetSteamBuild(
+                            gamePath, result.GameVersion);
+                    if (AdaptivePatchSupport.RequiresBuildRefresh(
+                        "DeveloperCommands", build))
+                    {
+                        AdaptivePatchSupport.MarkRefreshRequired(
+                            result, build, HostOnlyMode);
+                        return result;
+                    }
                     result.Success = true;
                     result.Installed = true;
                     result.AlreadyPatched = true;
                     result.Mode = HostOnlyMode;
                     AdaptivePatchSupport.FillResult(
-                        result,
-                        AdaptivePatchSupport.GetSteamBuild(
-                            gamePath, result.GameVersion),
+                        result, build,
                         PatchCompatibilityState.KnownInstalled,
                         false, true, "Verified Raid Rescue host-only file.");
                     return result;
                 }
                 if (HashEquals(hash, SurvivalGameEveryoneCommands))
                 {
+                    SteamBuildInfo build =
+                        AdaptivePatchSupport.GetSteamBuild(
+                            gamePath, result.GameVersion);
+                    if (AdaptivePatchSupport.RequiresBuildRefresh(
+                        "DeveloperCommands", build))
+                    {
+                        AdaptivePatchSupport.MarkRefreshRequired(
+                            result, build, EveryoneMode);
+                        return result;
+                    }
                     result.Success = true;
                     result.Installed = true;
                     result.AlreadyPatched = true;
                     result.Mode = EveryoneMode;
                     AdaptivePatchSupport.FillResult(
-                        result,
-                        AdaptivePatchSupport.GetSteamBuild(
-                            gamePath, result.GameVersion),
+                        result, build,
                         PatchCompatibilityState.KnownInstalled,
                         false, true, "Verified Raid Rescue every-player file.");
                     return result;
@@ -5003,8 +5162,24 @@ namespace RaidRescue
                         : SurvivalGameHostCommands);
                 if (HashEquals(currentHash, desiredHash))
                 {
+                    SteamBuildInfo build =
+                        AdaptivePatchSupport.GetSteamBuild(
+                            gamePath, result.GameVersion);
+                    if (enabled &&
+                        AdaptivePatchSupport.RequiresBuildRefresh(
+                            "DeveloperCommands", build))
+                    {
+                        AdaptivePatchSupport.PrepareBuildRefresh(
+                            result, "DeveloperCommands", build,
+                            "Developer Commands were reactivated after the Steam update.");
+                        result.Mode = selectedMode;
+                        return result;
+                    }
                     result.Success = true;
                     result.AlreadyPatched = true;
+                    if (!enabled)
+                        AdaptivePatchSupport.DeleteBuildActivation(
+                            "DeveloperCommands");
                     result.Changes.Add(
                         enabled
                             ? "Developer commands already use the selected access mode."
@@ -5147,6 +5322,8 @@ namespace RaidRescue
                             ? "Joined players receive command registration; kick and ban remain host-only."
                             : "Developer mode itself remains off; normal spawn points, intro flow, and recipes are unchanged.")
                         : "Normal Survival command registration is restored.");
+                AdaptivePatchSupport.QueueBuildActivation(
+                    result, "DeveloperCommands", enabled);
                 SecretModBackupRetention.Prune(
                     backupRoot, "DeveloperCommands",
                     backupPath, result);
@@ -5210,6 +5387,13 @@ namespace RaidRescue
                 everyoneGate == 0 && originalBroadcasts == 3 &&
                 everyoneBroadcasts == 0)
             {
+                if (AdaptivePatchSupport.RequiresBuildRefresh(
+                    "DeveloperCommands", build))
+                {
+                    AdaptivePatchSupport.MarkRefreshRequired(
+                        result, build, HostOnlyMode);
+                    return result;
+                }
                 result.Success = true;
                 result.Installed = true;
                 result.AlreadyPatched = true;
@@ -5225,6 +5409,13 @@ namespace RaidRescue
                 hostGate == 0 && originalBroadcasts == 0 &&
                 everyoneBroadcasts == 3)
             {
+                if (AdaptivePatchSupport.RequiresBuildRefresh(
+                    "DeveloperCommands", build))
+                {
+                    AdaptivePatchSupport.MarkRefreshRequired(
+                        result, build, EveryoneMode);
+                    return result;
+                }
                 result.Success = true;
                 result.Installed = true;
                 result.AlreadyPatched = true;
@@ -5311,6 +5502,21 @@ namespace RaidRescue
                 hostGate == 0 && originalBroadcasts == 0 &&
                 everyoneBroadcasts == 3;
 
+            bool selectedModeAlreadyPresent =
+                enabled &&
+                ((host && selectedMode == HostOnlyMode) ||
+                 (everyone && selectedMode == EveryoneMode));
+            if (selectedModeAlreadyPresent &&
+                AdaptivePatchSupport.RequiresBuildRefresh(
+                    "DeveloperCommands", build))
+            {
+                AdaptivePatchSupport.PrepareBuildRefresh(
+                    result, "DeveloperCommands", build,
+                    "Developer Commands were reactivated after the Steam update.");
+                result.Mode = selectedMode;
+                return result;
+            }
+
             string cleanText;
             if (clean)
             {
@@ -5357,6 +5563,8 @@ namespace RaidRescue
                     PatchCompatibilityState.CompatibleUpdate,
                     true, true, "Developer Commands are already removed.");
                 AdaptivePatchSupport.DeleteReceipt("DeveloperCommands");
+                AdaptivePatchSupport.DeleteBuildActivation(
+                    "DeveloperCommands");
                 return result;
             }
 
@@ -5511,6 +5719,8 @@ namespace RaidRescue
             {
                 AdaptivePatchSupport.DeleteReceipt("DeveloperCommands");
             }
+            AdaptivePatchSupport.QueueBuildActivation(
+                result, "DeveloperCommands", enabled);
 
             SecretModBackupRetention.Prune(
                 backupRoot, "DeveloperCommands", backupPath, result);

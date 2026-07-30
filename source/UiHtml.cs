@@ -227,6 +227,101 @@ button{font:inherit}
 .empty p{margin:0;font-size:11px}
 .success-box{padding:16px;background:#202b2f;border:1px solid #3c7581;border-radius:4px 13px 4px 13px}
 .success-box .backup-label{font:10px Shentox,""Arial Narrow"",sans-serif;color:#ffd046;letter-spacing:.8px;margin-bottom:7px}
+.drop-zone{margin-top:14px;border-top:1px solid #4a4d4e;padding-top:12px}
+.drop-zone-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+ background:linear-gradient(100deg,#17333d,#222728 58%,#352c18);border:1px solid #407384;border-left:5px solid #69cce5;
+ border-radius:4px 14px 4px 14px;box-shadow:inset 0 1px #31515b,0 2px #121415}
+.drop-zone-title{min-width:0}.drop-zone-title b{display:block;color:#76d5eb;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.2px}
+.drop-zone-title strong{display:block;margin-top:3px;color:#f5f6f1;font:15px Shentox,""Arial Black"",sans-serif;letter-spacing:.55px}
+.drop-zone-summary{display:flex;align-items:center;margin-left:14px}.drop-count{padding:6px 9px;margin-right:8px;color:#c4cbca;background:#16191a;
+ border:1px solid #495557;border-radius:3px;font-size:9px}.drop-count b{color:#ffd046;font:11px Shentox,""Arial Black"",sans-serif}
+.drop-collapse{display:flex;align-items:center;justify-content:center;flex:0 0 31px;width:31px;height:31px;margin-right:8px;padding:0;
+ color:#bdecf5;background:linear-gradient(#293437,#171b1c);border:1px solid #54818b;border-radius:3px 9px 3px 9px;
+ box-shadow:inset 0 1px #435256,0 2px #0d1011;cursor:pointer;transition:border-color .14s,background .14s,transform .14s}
+.drop-collapse:hover{color:#fff;border-color:#82dff2;background:linear-gradient(#365057,#1c272a);transform:translateY(-1px)}
+.drop-collapse:active{transform:translateY(1px)}.drop-collapse svg{display:block;width:17px;height:17px;overflow:visible;
+ transition:transform .18s ease}.drop-collapse path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:square;stroke-linejoin:miter}
+.drop-collapse.is-collapsed svg{transform:rotate(180deg)}.drop-items-body[hidden]{display:none}
+.drop-zone-summary .btn+.btn{margin-left:8px}.btn-expired{height:43px;min-width:174px;color:#30260d;border-color:#e6ae24;
+ background:linear-gradient(#ffe681,#eab62d 58%,#a66b12);box-shadow:inset 0 2px #fff3aa,0 3px 0 #65420c;
+ text-shadow:0 1px rgba(255,255,255,.45);overflow:hidden}.btn-expired:hover{border-color:#fff0a0;background:linear-gradient(#fff0a0,#f7c842 58%,#bd7c18)}
+.btn-expired:disabled{color:#8f8a7a;border-color:#59574e;background:#353633;box-shadow:inset 0 1px #52534f,0 3px #171816;text-shadow:none}
+.btn-summary{height:43px;min-width:126px;color:#c8f5ff;border-color:#4faec4;background:linear-gradient(#285b68,#1b3c44 62%,#12292f);
+ box-shadow:inset 0 2px #3f7885,0 3px #0a171a}.btn-summary:hover{color:#fff;border-color:#8ce6f8;background:linear-gradient(#347182,#214b56 62%,#15343b)}
+.drop-scan-panel{position:relative;margin-top:10px;padding:19px 210px 19px 20px;min-height:92px;overflow:hidden;
+ background:linear-gradient(105deg,#1d2426,#202829 60%,#173541);border:1px solid #46646b;border-left:5px solid #69cce5;
+ border-radius:4px 16px 4px 16px;box-shadow:inset 0 1px #344246,0 3px 9px rgba(0,0,0,.35)}
+.drop-scan-panel:before{content:'';position:absolute;right:176px;top:-35px;width:86px;height:150px;transform:rotate(22deg);
+ background:rgba(99,211,235,.06);border-left:1px solid rgba(112,222,244,.18)}
+.drop-scan-panel b{display:block;color:#f4f7f3;font:14px Shentox,""Arial Black"",sans-serif;letter-spacing:.55px}
+.drop-scan-panel p{margin:7px 0 0;color:#aab4b4;font-size:10px;line-height:1.5}.drop-scan-panel .btn{position:absolute;right:18px;top:24px;width:170px}
+.drop-grid{display:flex;flex-wrap:wrap;margin:5px -5px -5px}
+.drop-wrap{width:50%;padding:5px;animation:dropDock .3s cubic-bezier(.16,.83,.3,1) both}
+.drop-wrap:nth-child(2){animation-delay:.035s}.drop-wrap:nth-child(3){animation-delay:.07s}.drop-wrap:nth-child(4){animation-delay:.105s}
+.drop-card{position:relative;min-height:145px;padding:12px 12px 9px 105px;overflow:hidden;background:#202426;
+ border:1px solid #536064;border-top:3px solid #54b7d0;border-radius:5px 15px 5px 15px;
+ box-shadow:inset 0 1px #3a4143,0 3px 9px rgba(0,0,0,.34);transition:border-color .15s,transform .15s}
+.drop-card:hover{border-color:#79d9ee;transform:translateY(-2px)}.drop-card:after{content:'';position:absolute;right:5px;bottom:5px;
+ width:6px;height:6px;border-right:2px solid #718084;border-bottom:2px solid #718084}
+.drop-icon-frame{position:absolute;left:13px;top:13px;width:78px;height:78px;padding:5px;background:linear-gradient(145deg,#384044,#171a1b);
+ border:2px solid #d8a322;border-radius:5px 16px 5px 16px;box-shadow:inset 0 0 0 2px #17191a,0 3px #0c0d0e}
+.drop-icon{display:block;width:64px;height:64px;object-fit:contain}.drop-icon-fallback{display:flex;align-items:center;justify-content:center;
+ width:64px;height:64px;color:#ffd046;background:#252b2d;font:24px Shentox,""Arial Black"",sans-serif}
+.drop-quantity{position:absolute;right:-6px;bottom:-7px;min-width:27px;height:25px;padding:0 6px;color:#27210c;text-align:center;
+ background:#ffd046;border:2px solid #161819;border-radius:10px 3px 10px 3px;font:12px/21px Shentox,""Arial Black"",sans-serif;
+ box-shadow:0 0 0 1px #d79b18}
+.drop-copy{min-width:0;padding-right:3px}.drop-kind{display:block;color:#6fcce3;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1px;text-transform:uppercase}
+.drop-name{display:block;margin-top:3px;color:#fff;font:13px/16px Shentox,""Arial Black"",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drop-description{height:29px;margin:4px 0 6px;color:#aeb5b4;font-size:9px;line-height:1.45;overflow:hidden}
+.drop-life{display:inline-block;padding:4px 7px;color:#c7e7ee;background:#17272c;border:1px solid #386d7b;border-radius:7px 2px 7px 2px;
+ font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.45px}.drop-life.soon{color:#ffd090;background:#332718;border-color:#a46d18}
+.drop-life.expired{color:#ffb29d;background:#351915;border-color:#9e3a26}
+.drop-detail-row{display:flex;flex-wrap:wrap;margin:7px -2px 0}.drop-detail{margin:2px;padding:4px 6px;color:#969e9e;background:#171a1b;
+ border:1px solid #3b4244;border-radius:2px;font-size:8px}.drop-detail b{color:#e8eae6;font-family:Consolas,monospace;font-weight:normal}
+.drop-detail.drop-value{border-color:#80631c;background:#292413}.drop-detail.drop-value b{color:#ffd046;font-family:Shentox,""Arial Black"",sans-serif}
+.drop-remove{position:absolute;left:13px;top:101px;width:78px;height:31px;padding:0;color:#ffd4c8;background:linear-gradient(#692518,#44150f);
+ border:1px solid #c64b2e;border-radius:4px 9px 4px 9px;cursor:pointer;font:8px Shentox,""Arial Black"",sans-serif;letter-spacing:.35px;
+ box-shadow:inset 0 1px #9a3925,0 2px #100706;text-shadow:0 1px #210604}
+.drop-remove:hover{color:#fff3dc;border-color:#ff8b61;background:linear-gradient(#8b321f,#57190f)}
+.drop-remove:disabled{cursor:default;opacity:.35}.drop-empty{padding:20px 12px 8px;text-align:center;color:#7f8889;font-size:10px}
+.drop-warning{margin-top:9px;padding:8px 10px;color:#d5aa5e;background:#2d271b;border:1px solid #6f521b;border-radius:3px;font-size:9px;line-height:1.45}
+.item-clear-modal{z-index:190}.item-clear-modal .hotfix-dialog{width:650px;border-color:#ef5932}
+.item-confirm-preview{display:flex;align-items:center;margin:0 0 11px;padding:10px 11px;background:#171a1b;border:1px solid #4b5355;border-radius:4px 13px 4px 13px}
+.item-confirm-icon{position:relative;box-sizing:border-box;width:66px;height:66px;min-width:66px;max-width:66px;min-height:66px;max-height:66px;
+ flex:0 0 66px;margin-right:13px;padding:4px;background:#282e30;border:2px solid #d9a31f;border-radius:4px 13px 4px 13px}
+.item-confirm-icon img{display:block;width:54px;height:54px;object-fit:contain}.item-confirm-fallback{position:absolute;left:4px;right:4px;top:4px;bottom:4px;
+ width:auto;height:auto;color:#ffd046;text-align:center;font:20px/54px Shentox,""Arial Black"",sans-serif;white-space:nowrap}
+.item-confirm-copy{min-width:0}.item-confirm-copy b{display:block;color:#fff;font:14px Shentox,""Arial Black"",sans-serif}
+.item-confirm-copy span{display:block;margin-top:5px;color:#9ca4a4;font-size:10px;line-height:1.4}.item-clear-modal .hotfix-confirm{min-width:214px}
+.item-summary-modal{z-index:195;background:radial-gradient(circle at 50% 38%,rgba(38,135,157,.3),rgba(4,6,7,.95) 67%)}
+.item-summary-modal .hotfix-dialog{width:720px;border-color:#69cce5;box-shadow:inset 0 0 0 2px #214d57,0 22px 70px #000}
+.item-summary-modal .hotfix-hazard{background:repeating-linear-gradient(135deg,#69cce5 0,#69cce5 18px,#1a1c1d 18px,#1a1c1d 36px)}
+.item-summary-modal .hotfix-head{background:linear-gradient(90deg,#173d47,#292b2c 58%,#3b321b)}
+.item-summary-modal .hotfix-title strong{color:#8ce6f8}.item-summary-emblem{width:58px;height:58px;min-width:58px;max-width:58px;min-height:58px;max-height:58px;
+ flex:0 0 58px;margin-right:16px}.item-summary-emblem svg{display:block;width:58px;height:58px;overflow:visible}
+.item-summary-emblem polygon{fill:#142b31;stroke:#69cce5;stroke-width:3;stroke-linejoin:round;filter:drop-shadow(0 0 2px #081012)}
+.item-summary-emblem text{fill:#ffd046;text-anchor:middle;font:19px Shentox,""Arial Black"",sans-serif}
+.item-summary-stats{display:flex;margin:0 -4px 10px}.item-summary-stat{flex:1;margin:0 4px;padding:9px 11px;background:#171b1c;border:1px solid #46575b;border-radius:3px 10px 3px 10px}
+.item-summary-stat b{display:block;color:#74d5eb;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
+.item-summary-stat strong{display:block;margin-top:3px;color:#fff;font:17px Shentox,""Arial Black"",sans-serif}
+.item-summary-scroll-shell{position:relative;height:390px;padding-right:18px;overflow:hidden}.item-summary-list{display:flex;flex-wrap:wrap;align-content:flex-start;height:390px;
+ margin:-3px;overflow-y:scroll;overflow-x:hidden;-ms-overflow-style:none;scrollbar-width:none}.item-summary-list::-webkit-scrollbar{width:0;height:0}
+.item-summary-row{display:flex;align-items:center;width:calc(50% - 6px);min-height:70px;margin:3px;padding:7px 9px;
+ background:linear-gradient(90deg,#1b2021,#222728);border:1px solid #485356;border-left:4px solid #69cce5;border-radius:3px 12px 3px 12px}
+.item-summary-icon{box-sizing:border-box;width:54px;height:54px;min-width:54px;max-width:54px;min-height:54px;max-height:54px;flex:0 0 54px;
+ margin-right:10px;padding:4px;background:#272d2f;border:2px solid #a77d1a;border-radius:3px 10px 3px 10px;overflow:hidden}
+.item-summary-icon img{display:block;width:42px;height:42px;object-fit:contain}.item-summary-icon span{display:flex;align-items:center;justify-content:center;width:42px;height:42px;color:#ffd046;font:17px Shentox,""Arial Black"",sans-serif}
+.item-summary-copy{min-width:0;flex:1}.item-summary-copy b{display:block;color:#fff;font:12px Shentox,""Arial Black"",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-summary-copy span{display:block;margin-top:4px;color:#829193;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.45px}
+.item-summary-amount{width:52px;flex:0 0 52px;text-align:right;margin-left:7px}.item-summary-amount strong{display:block;color:#ffd046;font:18px Shentox,""Arial Black"",sans-serif}
+.item-summary-amount span{display:block;margin-top:3px;color:#aeb5b4;font-size:8px}.item-summary-empty{padding:28px;text-align:center;color:#899293;background:#171a1b;border:1px solid #41494b}
+.item-summary-scroll-track{position:absolute;right:1px;top:0;bottom:0;width:13px;background:#101516;border:1px solid #42555a;
+ box-shadow:inset 0 0 0 2px #1d292c;border-radius:2px}.item-summary-scroll-track:before,.item-summary-scroll-track:after{content:'';position:absolute;left:3px;width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent}
+.item-summary-scroll-track:before{top:4px;border-bottom:5px solid #7bcfe2}.item-summary-scroll-track:after{bottom:4px;border-top:5px solid #7bcfe2}
+.item-summary-scroll-thumb{position:absolute;left:2px;top:15px;width:7px;min-height:38px;background:linear-gradient(90deg,#4ba9be,#8ce6f8 55%,#39869a);
+ border:1px solid #baf4ff;box-shadow:0 0 7px rgba(105,204,229,.3);cursor:default}
+.item-summary-scroll-thumb:before{content:'';position:absolute;left:1px;right:1px;top:50%;height:2px;margin-top:-1px;background:#1c5663;border-top:1px solid #d5faff}
+.item-summary-scroll-thumb.disabled{opacity:.2;box-shadow:none}
 .footer{text-align:center;margin-top:10px;color:#777c7c;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
 
 .hotfix-modal{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:24;padding:22px;
@@ -296,7 +391,8 @@ button{font:inherit}
 .update-status{margin-top:11px;padding:9px 11px;color:#a7b1b2;background:#192124;border:1px solid #3f6068;border-radius:3px;font-size:10px;line-height:1.45}
 .update-status.bad{color:#ffd0c4;background:#371914;border-color:#9d3e29}.update-status.good{color:#b8eadf;background:#183129;border-color:#3d7c6e}
 .update-progress{display:none;height:8px;margin-top:10px;padding:2px;background:#0d1011;border:1px solid #465052;border-radius:5px;overflow:hidden}
-.update-progress span{display:block;width:38%;height:100%;background:linear-gradient(90deg,#3d8ca0,#78d9ed,#ffd046);animation:updateScan 1.1s ease-in-out infinite}
+.update-progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,#3d8ca0,#78d9ed 72%,#ffd046);
+ box-shadow:0 0 8px rgba(120,217,237,.45);transition:width .18s ease-out}
 .update-modal.installing .update-progress{display:block}.update-modal.installing .update-flow:after{animation-duration:.65s}
 .update-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 21px 16px;background:#1e2223;border-top:1px solid #454c4e}
 .update-foot-note{max-width:270px;color:#899597;font-size:9px;line-height:1.45}.update-buttons{display:flex;align-items:center}.update-buttons .btn+.btn{margin-left:8px}
@@ -463,9 +559,9 @@ button{font:inherit}
 .secret-mod-row.enabled .secret-mod-copy em{color:#ffe17a;border-color:#96701a;background:#292417}
 .secret-compat-reason{display:none!important;margin-top:5px!important;color:#e4a28f!important;font-size:9px!important;line-height:1.38!important}
 .secret-compat-reason.show{display:block!important}
-.secret-mod-actions{display:flex;flex:0 0 68px;flex-direction:column;align-items:stretch}
-.secret-mod-actions .secret-switch{flex:0 0 34px;align-self:center}
-.secret-mod-options{height:23px;margin-bottom:6px;padding:0;color:#84cfe2;background:#182125;border:1px solid #47636a;border-radius:3px 8px 3px 8px;
+.secret-mod-actions{display:flex;box-sizing:border-box;width:68px;min-width:68px;max-width:68px;flex:0 0 68px;flex-direction:column;align-items:stretch}
+.secret-mod-actions .secret-switch{width:68px;min-width:68px;max-width:68px;flex:0 0 34px;align-self:center}
+.secret-mod-options{box-sizing:border-box;width:68px;min-width:68px;max-width:68px;height:23px;margin-bottom:6px;padding:0;color:#84cfe2;background:#182125;border:1px solid #47636a;border-radius:3px 8px 3px 8px;
  cursor:pointer;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
 .secret-mod-options:hover{color:#e8f9fd;background:#24404a;border-color:#73cde5}.secret-mod-options:disabled{cursor:not-allowed;opacity:.45}
 .secret-master-row{flex:0 0 auto;min-height:58px}
@@ -487,7 +583,7 @@ button{font:inherit}
 .secret-mod-tag{display:inline-block;margin:0 0 5px!important;color:#6fcbe3!important;font:8px Shentox,""Arial Narrow"",sans-serif!important;letter-spacing:.8px!important}
 .secret-mods-empty{display:none;margin:18px 5px;padding:18px;text-align:center;color:#758184;background:#15191a;border:1px dashed #415054;border-radius:4px;
  font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
-.secret-switch{position:relative;width:68px;height:34px;flex:0 0 68px;padding:0;cursor:pointer;outline:none;
+.secret-switch{position:relative;box-sizing:border-box;width:68px;min-width:68px;max-width:68px;height:34px;min-height:34px;max-height:34px;flex:0 0 68px;padding:0;cursor:pointer;outline:none;
  background:#151718;border:2px solid #565b5c;border-radius:7px;box-shadow:inset 0 3px 7px #060707,0 2px #080909}
 .secret-switch:disabled{cursor:not-allowed;filter:alpha(opacity=55);opacity:.55}
 .secret-switch-track{position:absolute;left:7px;right:7px;top:13px;height:5px;background:#4b5051;border-radius:4px;
@@ -557,9 +653,10 @@ button{font:inherit}
 .busy-icon{width:29px;height:29px;margin:0 auto 17px;transform:rotate(45deg);background:#ffd046;border:3px solid #1c1d1e;border-radius:4px}
 .busy-icon span{display:block;transform:rotate(-45deg);font:bold 15px/23px Arial;color:#272719}
 .busy-card strong{font:13px Shentox,""Arial Black"",sans-serif;letter-spacing:.5px}.busy-card p{margin:6px 0 13px;color:#aeb2b2;font-size:11px}
-.loading-track{height:10px;padding:2px;background:#111314;border:1px solid #050606;border-radius:4px;overflow:hidden}
-.loading-fill{height:4px;width:43%;background:linear-gradient(90deg,#f19d19,#fff17d,#f19d19);animation:scan 1.1s linear infinite}
-@keyframes scan{0%{margin-left:-43%}100%{margin-left:100%}}
+.loading-status{display:flex;align-items:center;justify-content:space-between;margin:0 1px 5px;color:#737b7c;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.loading-status b{color:#ffd046;font:9px Shentox,""Arial Black"",sans-serif}.loading-track{height:10px;padding:2px;background:#111314;border:1px solid #050606;border-radius:4px;overflow:hidden}
+.loading-fill{position:relative;height:4px;width:0;background:linear-gradient(90deg,#b66a0d,#f19d19 55%,#fff17d);
+ box-shadow:0 0 7px rgba(255,208,70,.38);transition:width .16s ease-out}.loading-fill:after{content:'';position:absolute;right:0;top:-1px;width:4px;height:6px;background:#fff6a8;box-shadow:0 0 7px #ffd046}
 @keyframes hazardMove{0%{background-position:0 0}100%{background-position:51px 0}}
 @keyframes mainHazardFlow{0%{transform:translate3d(-51px,0,0)}100%{transform:translate3d(0,0,0)}}
 @keyframes panelAssemble{0%{opacity:0;transform:translateY(-8px) scaleY(.96)}100%{opacity:1;transform:translateY(0) scaleY(1)}}
@@ -596,11 +693,14 @@ button{font:inherit}
 @keyframes secretMarkSignal{0%,72%,100%{transform:scale(1);opacity:1}82%{transform:scale(1.07);opacity:.88}}
 @keyframes secretEmblemUnlock{0%{transform:rotate(45deg) scale(1)}45%{transform:rotate(135deg) scale(1.12);box-shadow:0 0 0 1px #ffd13b,0 0 15px #ffd046}100%{transform:rotate(45deg) scale(1)}}
 @keyframes secretCardDock{0%{opacity:0;transform:translate3d(-10px,0,0)}100%{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes dropDock{0%{opacity:0;transform:translate3d(0,9px,0) scale(.985)}100%{opacity:1;transform:translate3d(0,0,0) scale(1)}}
 
 @media(max-width:900px){
  .shell{padding-left:13px;padding-right:13px}.local{display:none}.picker{flex-wrap:wrap}.save-picker{width:100%;flex-basis:100%;margin-bottom:8px}
  .picker .save-picker+*{margin-left:0}.picker .btn+.btn{margin-left:8px}.stats{flex-wrap:wrap}.stat{flex-basis:30%}
  .mini{width:33.333%}.raid-meter-wrap{display:none}.repair-bar{align-items:flex-end}.repair-bar p{padding-right:15px}.repair-actions{flex-direction:column}.repair-actions .btn+.btn{margin:8px 0 0}
+ .drop-wrap{width:100%}.drop-zone-head{align-items:flex-end}.drop-zone-summary{flex-wrap:wrap;justify-content:flex-end}.drop-count{margin-bottom:5px}
+ .drop-scan-panel{padding-right:20px}.drop-scan-panel .btn{position:relative;right:auto;top:auto;margin-top:13px}.item-summary-stats{flex-wrap:wrap}.item-summary-stat{flex-basis:42%;margin-bottom:6px}
  .help-grid{display:block}.help-item{width:100%}.help-quick{flex-wrap:wrap}.help-step{flex-basis:44%}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -667,12 +767,12 @@ button{font:inherit}
   </div>
 
   <div class=""panel diagnostics"" id=""diagnosticsPanel"">
-    <div class=""panel-title""><strong>RAID DIAGNOSTICS</strong><span>READ-ONLY UNTIL REPAIR IS CONFIRMED</span></div>
+    <div class=""panel-title""><strong>WORLD DIAGNOSTICS</strong><span>RAIDS &middot; LOOSE ITEMS &middot; BACKUP-FIRST RECOVERY</span></div>
     <div class=""diagnostic-body"" id=""result"">
-      <div class=""empty""><div class=""diamond""><span>?</span></div><h4>NO WORLD ANALYZED</h4><p>Select a survival world and run the raid diagnostic.</p></div>
+      <div class=""empty""><div class=""diamond""><span>?</span></div><h4>NO WORLD ANALYZED</h4><p>Select a Survival world and run the world diagnostic.</p></div>
     </div>
   </div>
-  <div class=""footer"">BACKUP-FIRST UTILITY &middot; INVENTORY / BUILDS / QUESTS / PLAYERS ARE NEVER EDITED</div>
+  <div class=""footer"">BACKUP-FIRST UTILITY &middot; PLAYER INVENTORIES / BUILDS / QUESTS / PLAYERS ARE NEVER EDITED</div>
 </div>
 </div>
 <div class=""scroll-track"" id=""scrollTrack""><div class=""scroll-thumb"" id=""scrollThumb""></div></div>
@@ -738,6 +838,51 @@ button{font:inherit}
       <div class=""secret-mods-feedback"" id=""secretModsFeedback""></div>
       <div class=""secret-mods-slots""><b>DEPENDENCY-SAFE CATALOG</b>Linked patches install and roll back together; risky removals require confirmation.</div>
       <div class=""secret-mods-status"" id=""secretModsStatus""><i></i><span>SECRET PATCH SYSTEM OFFLINE</span></div>
+    </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal item-clear-modal"" id=""itemClearModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""itemClearTitle"" onclick=""itemClearBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head"">
+      <div class=""hotfix-alert""><span>!</span></div>
+      <div class=""hotfix-title""><strong id=""itemClearTitle"">REMOVE LOOSE WORLD ITEM?</strong><span id=""itemClearKicker"">BACKUP-FIRST WORLD CLEANUP</span></div>
+    </div>
+    <div class=""hotfix-body"">
+      <div class=""item-confirm-preview"" id=""itemClearPreview""></div>
+      <p class=""hotfix-intro"" id=""itemClearIntro"">Raid Rescue will remove only the selected loose pickup and its matching Lua storage record.</p>
+      <ul class=""hotfix-checks"">
+        <li>A timestamped database backup is created and integrity-checked first.</li>
+        <li>Player inventories, builds, containers, quests, terrain, and raid storage are left alone.</li>
+        <li>The removed item can be recovered only by restoring the backup.</li>
+      </ul>
+      <div class=""hotfix-stop"">SCRAP MECHANIC MUST REMAIN CLOSED UNTIL VERIFICATION FINISHES.</div>
+    </div>
+    <div class=""hotfix-foot"">
+      <div class=""hotfix-foot-note"">Cancel if this is not the correct world or pickup.</div>
+      <div class=""hotfix-buttons"">
+        <button type=""button"" class=""btn"" onclick=""closeItemClearConfirm()"">CANCEL</button>
+        <button type=""button"" class=""btn hotfix-confirm"" id=""itemClearConfirmButton"" onclick=""confirmDroppedItemClear()""><span>!</span>REMOVE THIS DROP</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal item-summary-modal"" id=""itemSummaryModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""itemSummaryTitle"" onclick=""itemSummaryBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head"">
+      <div class=""item-summary-emblem""><svg viewBox=""0 0 64 64"" width=""58"" height=""58"" aria-hidden=""true""><polygon points=""32,3 61,32 32,61 3,32""></polygon><text x=""32"" y=""39"">&Sigma;</text></svg></div>
+      <div class=""hotfix-title""><strong id=""itemSummaryTitle"">LOOSE ITEM TOTALS</strong><span>VALUE-SORTED WORLD INVENTORY REPORT</span></div>
+    </div>
+    <div class=""hotfix-body"">
+      <div class=""item-summary-stats"" id=""itemSummaryStats""></div>
+      <div class=""item-summary-scroll-shell""><div class=""item-summary-list"" id=""itemSummaryList""></div><div class=""item-summary-scroll-track"" id=""itemSummaryScrollTrack"" onmousedown=""itemSummaryTrackDown(event)""><div class=""item-summary-scroll-thumb"" id=""itemSummaryScrollThumb"" onmousedown=""itemSummaryThumbDown(event)""></div></div></div>
+    </div>
+    <div class=""hotfix-foot"">
+      <div class=""hotfix-foot-note"">Counts include only decoded loose pickups, not containers, player inventories, or placed creations.</div>
+      <div class=""hotfix-buttons""><button type=""button"" class=""btn btn-primary"" onclick=""closeItemSummary()"">CLOSE REPORT</button></div>
     </div>
   </div>
 </div>
@@ -842,7 +987,7 @@ button{font:inherit}
       <div class=""onboard-copy"">
         <div class=""onboard-kicker"">FIRST START &middot; RECOVERY ASSISTANT</div>
         <h2 id=""onboardTitle"">WOULD YOU LIKE A QUICK TUTORIAL?</h2>
-        <p>An interactive two-minute tour will show you how to choose the correct world, read raid information, make a safe backup-first repair, and use the temporary game hotfix.</p>
+        <p>An interactive tour will show you how to choose the correct world, inspect raids and loose items, make a safe backup-first repair, and use the temporary game hotfix.</p>
       </div>
     </div>
     <div class=""onboard-preview"">
@@ -862,14 +1007,14 @@ button{font:inherit}
     <div class=""help-hazard""></div>
     <div class=""help-head"">
       <div class=""help-emblem"">?</div>
-      <div class=""help-heading""><strong id=""helpTitle"">RAID RESCUE FIELD MANUAL</strong><span>QUICK START &middot; DIAGNOSTICS &middot; REPAIRS &middot; TEMPORARY HOTFIX</span></div>
+      <div class=""help-heading""><strong id=""helpTitle"">RAID RESCUE FIELD MANUAL</strong><span>WORLD DIAGNOSTICS &middot; RAIDS &middot; LOOSE ITEMS &middot; GAME PATCHES</span></div>
       <button type=""button"" class=""help-close"" title=""Close help"" aria-label=""Close help"" onclick=""closeHelp()"">&times;</button>
     </div>
     <div class=""help-body"" id=""helpBody"">
       <div class=""help-quick"">
         <div class=""help-step""><b>01</b><span>Close Scrap Mechanic completely.</span></div>
         <div class=""help-step""><b>02</b><span>Select the correct Survival world.</span></div>
-        <div class=""help-step""><b>03</b><span>Analyze and review every detected raid.</span></div>
+        <div class=""help-step""><b>03</b><span>Analyze raids, then scan loose items if needed.</span></div>
         <div class=""help-step""><b>04</b><span>Repair only after checking the results.</span></div>
       </div>
 
@@ -878,9 +1023,24 @@ button{font:inherit}
         <div class=""help-grid"">
           <div class=""help-item""><b>AUTOMATIC SAVE LIST</b><p>Raid Rescue searches every Scrap Mechanic <strong>User_*</strong> Survival folder and puts the newest saves first. Check the world name, date, size, and user folder before continuing.</p></div>
           <div class=""help-item""><b>BROWSE</b><p>Use Browse only when the save is not listed automatically. Choose the world’s normal <strong>.db</strong> file, not a backup file.</p></div>
-          <div class=""help-item""><b>ANALYZE WORLD</b><p>This is a read-only scan. It checks SQLite health, reads save information, and decodes the raid-manager record without changing the world.</p></div>
+          <div class=""help-item""><b>ANALYZE WORLD</b><p>This read-only check validates SQLite health and decodes the raid manager. Loose pickups stay unloaded until you choose <strong>Scan Loose Items</strong>.</p></div>
           <div class=""help-item""><b>LIVE-SAVE SAFETY LOCK</b><p>If Scrap Mechanic is running, world controls lock. A second native check happens immediately before SQLite opens, preventing stale or fast clicks from reaching the live database.</p></div>
         </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">LOOSE WORLD ITEMS</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>OPTIONAL SCAN</b><p>Click <strong>Scan Loose Items</strong> after analyzing a world. Pickups are then ordered by value and shown with their real Scrap Mechanic icon, stack quantity, world, coordinates, and remaining lifetime.</p></div>
+          <div class=""help-item""><b>ITEM TOTALS</b><p>Open <strong>Item Totals</strong> for one combined quantity per item type, plus unique-item, loose-stack, and expired-stack totals.</p></div>
+          <div class=""help-item""><b>VALUE ORDER</b><p>Progression and quest items rank first. Crafted parts use the installed game's recipe ingredients; consumables, crops, materials, common objects, and unknown modded items receive safe category fallbacks.</p></div>
+          <div class=""help-item""><b>WHAT IS NOT LISTED</b><p>Placed blocks, vehicle parts, player inventories, containers, quest reward objects, and loot attached to scenery are not treated as ordinary loose pickups.</p></div>
+          <div class=""help-item""><b>REMOVE ONE</b><p>Use <strong>Remove Item</strong> on a card to delete only that pickup's harvestable entity and matching Lua-storage row.</p></div>
+          <div class=""help-item""><b>CLEANUP OPTIONS</b><p><strong>Clear Expired</strong> removes only pickups marked Pending World Cleanup. <strong>Clear All Dropped Items</strong> removes every safely decoded loose pickup shown. Unreadable or ambiguous records are always skipped.</p></div>
+          <div class=""help-item""><b>EXPIRY TIMER</b><p>Normal loose loot lasts one in-game hour. The displayed countdown is calculated from the saved game tick; it advances only while the world is running.</p></div>
+          <div class=""help-item""><b>BACKUP AND VERIFICATION</b><p>Every cleanup option creates a timestamped verified backup, uses one SQLite transaction, preserves raid storage, and re-analyzes the edited save before reporting success.</p></div>
+        </div>
+        <div class=""help-danger""><b>REMOVAL IS A REAL SAVE EDIT.</b> Confirm the correct world and item first. Keep the generated backup until the world has loaded and saved normally.</div>
       </div>
 
       <div class=""help-section"">
@@ -904,21 +1064,9 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
-        <div class=""help-section-title"">INSTALL / UPDATE HOTFIX — GAME PATCH</div>
-        <div class=""help-grid"">
-          <div class=""help-item""><b>WHAT IT FIXES</b><p>The cumulative Scrap Mechanic 1.0.2 hotfix repairs stuck raid behavior and synchronizes fertilizer growth timing with the real server-side crop finish time.</p></div>
-          <div class=""help-item""><b>SAFE UPDATES</b><p>It accepts only exact supported original scripts or verified earlier Raid Rescue patches. Running it again safely adds newer fixes without removing older ones.</p></div>
-          <div class=""help-item""><b>ONE ADMINISTRATOR PROMPT</b><p>Windows may ask once because Steam commonly installs games under Program Files. A hidden authenticated patch session then handles later hotfix and secret-mod actions until Raid Rescue closes. Verified backups are stored under <strong>%LOCALAPPDATA%\Raid Rescue\Game Backups</strong>.</p></div>
-          <div class=""help-item""><b>AUTOMATIC CACHE RESET</b><p>After a patch changes Lua files, Raid Rescue deletes only the generated <strong>core_data.cbo</strong> cache. Scrap Mechanic rebuilds it on the next normal launch, which may take a little longer. The <strong>-dev</strong> option is not required.</p></div>
-          <div class=""help-item""><b>TEMPORARY MEANS REVERSIBLE</b><p>A Steam update or <strong>Verify integrity of game files</strong> can restore official scripts. Re-run the latest Raid Rescue hotfix afterward only if the game bug still exists.</p></div>
-        </div>
-        <div class=""help-danger""><b>DO NOT PATCH A RUNNING GAME.</b> Close Scrap Mechanic completely. If installation is interrupted, use the verified game backup or Steam’s Verify integrity option before trying again.</div>
-      </div>
-
-      <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; BACKUPS AND REMOVAL</div>
         <div class=""help-grid"">
-          <div class=""help-item""><b>ADAPTIVE GAME UPDATES</b><p>On a newer verified Steam build, <strong>Compatible Game Update</strong> means every protected snippet and callback is still exact. Toggle the wanted mod to reapply it manually; Raid Rescue never reinstalls mods automatically.</p></div>
+          <div class=""help-item""><b>ADAPTIVE GAME UPDATES</b><p>After Steam installs a new build, secret-mod switches turn off until you intentionally re-enable them. If the protected code is still exact, Raid Rescue safely refreshes the generated script cache without rewriting unchanged Lua.</p></div>
           <div class=""help-item""><b>PROTECTED CODE</b><p>Formatting or comments inside required code block the patch. Unrelated updated code elsewhere is preserved. The normal cumulative raid/fertilizer hotfix remains strictly version-locked.</p></div>
           <div class=""help-item""><b>HYBRID RESTORATION</b><p>Unchanged adaptive installs restore their exact pre-install bytes. If unrelated edits were added later, Raid Rescue removes only its intact snippets. Edited, duplicated, or partial patch snippets block removal safely.</p></div>
           <div class=""help-item""><b>HOTFIX INDEPENDENCE</b><p>Chemical Fertilizer removal restores the exact state from before that mod. If the separate cumulative fertilizer hotfix was installed, that normal hotfix remains installed.</p></div>
@@ -1047,7 +1195,7 @@ button{font:inherit}
         <div><b>SAFE RELAUNCH</b>One previous EXE is kept for automatic rollback.</div>
       </div>
       <div class=""update-status"" id=""updateStatus"">Ready to download and verify the new recovery unit.</div>
-      <div class=""update-progress""><span></span></div>
+      <div class=""update-progress""><span id=""updateProgressFill""></span></div>
     </div>
     <div class=""update-foot"">
       <div class=""update-foot-note"">Updating Raid Rescue does not open, modify, or reinstall any Scrap Mechanic save or game patch.</div>
@@ -1090,7 +1238,8 @@ button{font:inherit}
 
 <div class=""busy"" id=""busy""><div class=""busy-card""><div class=""busy-icon""><span>!</span></div>
   <strong id=""busyTitle"">READING WORLD DATABASE</strong><p id=""busyText"">Local operation in progress.</p>
-  <div class=""loading-track""><div class=""loading-fill""></div></div>
+  <div class=""loading-status""><span id=""busyPhase"">INITIALIZING</span><b id=""busyPercent"">0%</b></div>
+  <div class=""loading-track""><div class=""loading-fill"" id=""busyProgressFill""></div></div>
 </div></div>
 <div class=""update-toast"" id=""updateToast""><button type=""button"" aria-label=""Close update message"" onclick=""closeUpdateToast()"">&times;</button><b id=""updateToastTitle"">UPDATE STATUS</b><span id=""updateToastText""></span></div>
 
@@ -1109,6 +1258,10 @@ var smoothScrollTarget=0;
 var smoothScrollPane=null;
 var gameRunning=null;
 var operationBusy=false;
+var busyProgressValue=0;
+var busyProgressTimer=0;
+var busyHideTimer=0;
+var busyProgressToken=0;
 var tutorialActive=false;
 var tutorialIndex=0;
 var tutorialStartScroll=0;
@@ -1144,13 +1297,22 @@ var appVersion='';
 var updateCheckBusy=false;
 var updateCheckManual=false;
 var updateInstallBusy=false;
+var updateProgressValue=0;
+var updateProgressTimer=0;
 var updateState=null;
 var pendingUpdateState=null;
 var updateDismissedTag='';
 var updateToastTimer=0;
+var pendingDroppedEntityId=0;
+var pendingDroppedItem=null;
+var pendingDroppedMode='';
+var itemSummaryScrollDrag=false;
+var itemSummaryScrollDragY=0;
+var itemSummaryScrollDragTop=0;
+var droppedItemsCollapsed=false;
 var tutorialSteps=[
  {target:'identityPanel',badge:'00',label:'GUIDED RECOVERY TOUR',title:'WELCOME TO RAID RESCUE',
-  text:'Raid Rescue helps fix stuck raids. Close the game, choose a save, analyze it, then repair.',
+  text:'Raid Rescue inspects stuck raids and can optionally scan loose world items. Close the game, choose a save, then analyze.',
   tip:'This tour only points things out. It changes nothing.'},
  {target:'selectorPanel',badge:'01',label:'STEP 1 — SAFETY FIRST',title:'CLOSE SCRAP MECHANIC',
   text:'Close Scrap Mechanic before opening a save. Raid Rescue locks world controls while the game is running.',
@@ -1159,18 +1321,21 @@ var tutorialSteps=[
   text:'Choose your world from the list and check its name and date. Use Browse only if it is missing.',
   tip:'Pick the normal .db file, not a raidrescue-backup file.'},
  {target:'analyzeBtn',badge:'03',label:'STEP 3 — READ-ONLY CHECK',title:'ANALYZE BEFORE REPAIRING',
-  text:'Analyze World safely reads the save and shows its stored raids. It does not edit anything.',
-  tip:'If disabled, close the game and wait for the automatic unlock.'},
+  text:'Analyze World checks database health and stored raids without editing anything.',
+  tip:'Loose items are scanned separately only when you request it.'},
  {target:'tutorialRaidExample',fallback:'result',badge:'04',label:'STEP 4 — UNDERSTAND THE REPORT',title:'READ EACH RAID CARD',
   text:'Each card shows the raid tier, threat, robots, crops, and timing. Read any warning before repairing.',
   tip:'A high raid tier by itself does not mean the raid is bugged.'},
- {target:'clearAllBtn',fallback:'diagnosticsPanel',badge:'05',label:'STEP 5 — SAVE REPAIR',title:'CLEAR ALL RAIDS SAFELY',
+ {target:'droppedItemsZone',fallback:'result',badge:'05',label:'STEP 5 — LOOSE ITEM RECOVERY',title:'REVIEW DROPPED WORLD ITEMS',
+  text:'Click Scan Loose Items to load pickup icons, totals, positions, and despawn timers.',
+  tip:'Both actions create and verify a backup before changing the save.'},
+ {target:'clearAllBtn',fallback:'diagnosticsPanel',badge:'06',label:'STEP 6 — SAVE REPAIR',title:'CLEAR ALL RAIDS SAFELY',
   text:'Clear All Raids backs up the save, then removes only its stored raid data.',
   tip:'Your builds, inventory, quests, and players stay untouched.'},
- {target:'installHotfixBtn',fallback:'diagnosticsPanel',badge:'06',label:'STEP 6 — OPTIONAL GAME PATCH',title:'INSTALL OR UPDATE THE HOTFIX',
-  text:'The hotfix patches the game’s stuck-raid and fertilizer bugs. Changed game scripts are backed up first.',
-  tip:'Close the game first. Steam Verify can restore the official files.'},
- {target:'helpBtn',badge:'07',label:'STEP 7 — HELP IS ALWAYS HERE',title:'OPEN THE FIELD MANUAL',
+ {target:'repairActionsBar',fallback:'diagnosticsPanel',badge:'07',label:'STEP 7 — BACKUP-FIRST REPAIR',title:'KEEP THE VERIFIED BACKUP',
+  text:'Every save repair creates and checks a timestamped backup before the database changes.',
+  tip:'Test the repaired world before deleting its backup.'},
+ {target:'helpBtn',badge:'08',label:'STEP 8 — HELP IS ALWAYS HERE',title:'OPEN THE FIELD MANUAL',
   text:'Use the ? button anytime for instructions, troubleshooting, and backup help.',
   tip:'You can also replay this tour from the Help menu.'},
  {target:'identityPanel',badge:'OK',label:'TOUR COMPLETE',title:'YOU ARE READY',
@@ -1196,7 +1361,7 @@ function loadAppUpdateState(){
 function escPlain(value){return value===null||typeof value==='undefined'?'':String(value);}
 function updateUiBlocked(){
  if(operationBusy||tutorialActive||updateInstallBusy)return true;
- var ids=['updateModal','onboardModal','helpModal','hotfixModal','dependencyModal','developerCommandModal','cannonDangerModal','secretModsLayer'];
+ var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','cannonDangerModal','secretModsLayer'];
  for(var i=0;i<ids.length;i++){
   var node=document.getElementById(ids[i]);
   if(node&&String(node.className).indexOf('show')>=0)return true;
@@ -1294,6 +1459,25 @@ function openUpdateRelease(){
  if(!updateState||!updateState.ReleaseUrl)return;
  try{window.external.OpenUpdateRelease(String(updateState.ReleaseUrl));}catch(e){}
 }
+function setUpdateProgress(value){
+ updateProgressValue=Math.max(0,Math.min(100,Number(value)||0));
+ var fill=document.getElementById('updateProgressFill');
+ if(fill)fill.style.width=Math.round(updateProgressValue)+'%';
+}
+function startUpdateProgress(){
+ if(updateProgressTimer)window.clearInterval(updateProgressTimer);
+ setUpdateProgress(4);
+ updateProgressTimer=window.setInterval(function(){
+  var ceiling=92;
+  if(updateProgressValue>=ceiling)return;
+  var step=updateProgressValue<28?3.4:(updateProgressValue<65?1.7:.55);
+  setUpdateProgress(Math.min(ceiling,updateProgressValue+step));
+ },110);
+}
+function finishUpdateProgress(success){
+ if(updateProgressTimer){window.clearInterval(updateProgressTimer);updateProgressTimer=0;}
+ setUpdateProgress(success?100:0);
+}
 function installAppUpdate(){
  if(updateInstallBusy||!updateState||!updateState.CanAutoUpdate)return;
  updateInstallBusy=true;
@@ -1306,6 +1490,7 @@ function installAppUpdate(){
  var status=document.getElementById('updateStatus');
  status.className='update-status';
  status.innerText='Downloading the official executable and checking its SHA-256 digest. Raid Rescue will restart when verification finishes.';
+ startUpdateProgress();
  var started=false;
  try{
   started=!!window.external.InstallAppUpdate(
@@ -1317,12 +1502,14 @@ function receiveUpdateInstall(text){
  var data=parseResult(text);
  var modal=document.getElementById('updateModal'),status=document.getElementById('updateStatus');
  if(data.Success&&data.ReadyToRestart){
+  finishUpdateProgress(true);
   status.className='update-status good';
   status.innerText='UPDATE VERIFIED. Closing this recovery unit and reopening the new version...';
   document.getElementById('updateInstallButton').innerText='RESTARTING...';
   window.setTimeout(function(){window.external.CloseWindow();},850);
   return;
  }
+ finishUpdateProgress(false);
  updateInstallBusy=false;
  modal.className='update-modal show';
  status.className='update-status bad';
@@ -1379,7 +1566,7 @@ function captureSecretCompatibility(kind,data){
 }
 function compatibilityStateLabel(installed,state,fallback){
  if(installed)return 'INSTALLED';
- if(state==='COMPATIBLE GAME UPDATE')return 'COMPATIBLE GAME UPDATE';
+ if(state==='COMPATIBLE GAME UPDATE')return 'GAME UPDATED - RE-ENABLE';
  if(state==='GAME UPDATE CHANGED REQUIRED CODE')return 'GAME UPDATE CHANGED REQUIRED CODE';
  if(state==='OTHER MODIFICATION DETECTED')return 'OTHER MODIFICATION DETECTED';
  if(state==='PARTIAL PATCH - REPAIR REQUIRED')return 'PARTIAL PATCH \u2014 REPAIR REQUIRED';
@@ -1475,7 +1662,7 @@ function renderSecretModsState(){
   locator.setAttribute('aria-checked',secretResourceLocatorInstalled?'true':'false');
   locator.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!secretResourceLocatorCanApply;
   locatorRow.className='secret-mod-row secret-mod-card'+(secretResourceLocatorInstalled?' enabled':'')+((!secretModsEnabled||!secretResourceLocatorCanApply)?' locked':'');
-  locatorState.innerText=secretModBusy&&secretModBusyTarget==='resource'?'APPLYING...':(gameRunning?'GAME RUNNING · CLOSE IT FIRST':(secretResourceLocatorNeedsUpdate?'UPDATE READY · DOT VISIBILITY FIX':compatibilityStateLabel(secretResourceLocatorInstalled,secretResourceLocatorCompatibility,'NOT INSTALLED')));
+  locatorState.innerText=secretModBusy&&secretModBusyTarget==='resource'?'APPLYING...':(gameRunning?'GAME RUNNING · CLOSE IT FIRST':(secretResourceLocatorNeedsUpdate&&secretResourceLocatorCompatibility!=='COMPATIBLE GAME UPDATE'?'UPDATE READY · DOT VISIBILITY FIX':compatibilityStateLabel(secretResourceLocatorInstalled,secretResourceLocatorCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('resourceLocatorReason',secretResourceLocatorInstalled,secretResourceLocatorCanApply,secretResourceLocatorReason);
  }
  var commands=document.getElementById('developerCommandsSwitch');
@@ -1941,6 +2128,7 @@ function startTutorial(){
 function renderTutorialDiagnostics(){
  var example={
   Success:true,DatabaseStatus:'ok',SaveVersion:28,GameTick:'12,458,920',RaidCount:1,Size:'31.1 MB',CanClear:false,
+  DroppedItemsScanned:true,DroppedItemCount:1,DroppedItemQuantity:3,ExpiredDroppedItemCount:0,CanClearDroppedItems:false,CanClearExpiredDroppedItems:false,UnreadableDroppedItemCount:0,DroppedItemIcons:{},
   Warnings:['TUTORIAL EXAMPLE — sample raid data only. No save has been opened or changed.'],
   Raids:[{
    Number:1,Tier:4,Key:'EXAMPLE RAID RECORD · SAMPLE DATA',ThreatValue:824,MaximumThreatValue:1000,
@@ -1950,6 +2138,12 @@ function renderTutorialDiagnostics(){
    Crops:[{Name:'Tomato',Quantity:31},{Name:'Broccoli',Quantity:22}],
    SavedTick:12454102,LastSpawnTick:12449230,NeedsSpawnPoints:false,PlantingRecords:53,LooksStuck:true,
    Notes:['This example shows the kind of raid information Raid Rescue reads from a real world.']
+  }],
+  DroppedItems:[{
+   EntityId:4223,WorldId:1,WorldName:'Overworld',CellX:-37,CellY:-42,Uuid:'db66f0b1-0c50-4b74-bdc7-771374204b1f',
+   Name:'Big Wheel',Description:'A large wheel dropped from an inventory.',Quantity:3,ValueScore:420,ValueTier:'VALUABLE',
+   DropType:'Loose pickup',Position:{X:-2624.4,Y:-2349.7,Z:8.0},KillTick:12601000,
+   RemainingSeconds:3552,Expired:false,Epic:false,QuestItem:false
   }]
  };
  renderAnalysis(example);
@@ -2171,12 +2365,24 @@ function setupScrollBar(){
   pane.scrollTop=Math.max(0,Math.min(pane.scrollHeight-pane.clientHeight,ratio*(pane.scrollHeight-pane.clientHeight)));
  };
  document.onmousemove=function(e){
+  if(itemSummaryScrollDrag){
+   e=e||window.event;
+   var summaryPane=document.getElementById('itemSummaryList'),summaryTrack=document.getElementById('itemSummaryScrollTrack'),summaryThumb=document.getElementById('itemSummaryScrollThumb');
+   var summaryUsable=Math.max(0,summaryTrack.clientHeight-30-summaryThumb.offsetHeight);
+   var summaryTop=Math.max(15,Math.min(15+summaryUsable,itemSummaryScrollDragTop+e.clientY-itemSummaryScrollDragY));
+   summaryThumb.style.top=summaryTop+'px';
+   summaryPane.scrollTop=summaryUsable>0?(summaryTop-15)/summaryUsable*(summaryPane.scrollHeight-summaryPane.clientHeight):0;
+   return;
+  }
   if(!scrollDrag)return;e=e||window.event;
   var usable=track.clientHeight-4-thumb.offsetHeight;
   var top=Math.max(2,Math.min(2+usable,scrollDragTop+e.clientY-scrollDragY));
   pane.scrollTop=usable>0?(top-2)/usable*(pane.scrollHeight-pane.clientHeight):0;
  };
- document.onmouseup=function(){if(scrollDrag){scrollDrag=false;thumb.className='scroll-thumb';}};
+ document.onmouseup=function(){
+  if(itemSummaryScrollDrag){itemSummaryScrollDrag=false;updateItemSummaryScroll();}
+  if(scrollDrag){scrollDrag=false;thumb.className='scroll-thumb';}
+ };
  window.onresize=function(){
   stopSmoothScroll(pane);
   scheduleScrollUi();
@@ -2191,13 +2397,68 @@ function esc(value){
 function parseResult(text){
  try{return JSON.parse(String(text));}catch(e){return {Success:false,Error:'The utility returned unreadable data: '+e.message};}
 }
+function busyPhase(value){
+ if(value>=100)return 'COMPLETE';
+ if(value>=82)return 'FINAL VERIFICATION';
+ if(value>=58)return 'VALIDATING RESULTS';
+ if(value>=30)return 'PROCESSING LOCAL DATA';
+ if(value>=12)return 'READING FILES';
+ return 'INITIALIZING';
+}
+function setBusyProgress(value,phase){
+ busyProgressValue=Math.max(0,Math.min(100,Number(value)||0));
+ var fill=document.getElementById('busyProgressFill'),percent=document.getElementById('busyPercent'),label=document.getElementById('busyPhase');
+ if(fill)fill.style.width=Math.round(busyProgressValue)+'%';
+ if(percent)percent.innerText=Math.round(busyProgressValue)+'%';
+ if(label)label.innerText=phase||busyPhase(busyProgressValue);
+}
+function resetBusyProgress(){
+ var fill=document.getElementById('busyProgressFill');
+ if(fill){
+  fill.style.transition='none';fill.style.width='0%';
+  var ignored=fill.offsetWidth;
+  fill.style.transition='';
+ }
+ busyProgressValue=0;
+ var percent=document.getElementById('busyPercent'),label=document.getElementById('busyPhase');
+ if(percent)percent.innerText='0%';if(label)label.innerText='INITIALIZING';
+}
+function startBusyProgress(){
+ if(busyProgressTimer)window.clearInterval(busyProgressTimer);
+ if(busyHideTimer)window.clearTimeout(busyHideTimer);
+ var token=++busyProgressToken;
+ resetBusyProgress();
+ window.setTimeout(function(){if(token===busyProgressToken)setBusyProgress(4);},25);
+ busyProgressTimer=window.setInterval(function(){
+  if(token!==busyProgressToken)return;
+  var ceiling=89;
+  if(busyProgressValue>=ceiling)return;
+  var step=busyProgressValue<28?4:(busyProgressValue<62?2:.65);
+  setBusyProgress(Math.min(ceiling,busyProgressValue+step));
+ },85);
+}
+function finishBusyProgress(){
+ var token=busyProgressToken;
+ if(busyProgressTimer){window.clearInterval(busyProgressTimer);busyProgressTimer=0;}
+ setBusyProgress(100,'COMPLETE');
+ busyHideTimer=window.setTimeout(function(){
+  if(token!==busyProgressToken)return;
+  document.getElementById('busy').className='busy';
+  operationBusy=false;applyGameLock(gameRunning);resetBusyProgress();
+  window.setTimeout(maybeShowPendingUpdate,180);
+ },220);
+}
+function busyLeadDelay(){return 520;}
 function busy(show,title,text){
- operationBusy=show;
- document.getElementById('busyTitle').innerText=title||'WORKING';
- document.getElementById('busyText').innerText=text||'Local operation in progress.';
- document.getElementById('busy').className=show?'busy show':'busy';
- applyGameLock(gameRunning);
- if(!show)window.setTimeout(maybeShowPendingUpdate,180);
+ if(show){
+  operationBusy=true;
+  document.getElementById('busyTitle').innerText=title||'WORKING';
+  document.getElementById('busyText').innerText=text||'Local operation in progress.';
+  document.getElementById('busy').className='busy show';
+  startBusyProgress();applyGameLock(gameRunning);
+ }else{
+  finishBusyProgress();
+ }
 }
 function boot(){
  document.onclick=function(){closeSaveMenu();window.setTimeout(maybeShowPendingUpdate,180);};
@@ -2212,6 +2473,8 @@ function boot(){
    return false;
   }
   if(key===27&&document.getElementById('updateModal').className.indexOf('show')>=0){closeUpdateModal();return false;}
+  if(key===27&&document.getElementById('itemSummaryModal').className.indexOf('show')>=0){closeItemSummary();return false;}
+  if(key===27&&document.getElementById('itemClearModal').className.indexOf('show')>=0){closeItemClearConfirm();return false;}
   if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
   if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
    if(key===27&&document.getElementById('cannonDangerModal').className.indexOf('show')>=0){closeCannonDangerConfirm();return false;}
@@ -2291,6 +2554,10 @@ function setAnalysisGameState(running){
  lastAnalysis.GameRunning=running;
  lastAnalysis.CanClear=!!(lastAnalysis.RaidManagerPresent&&lastAnalysis.RaidCount>0&&
   String(lastAnalysis.DatabaseStatus).toLowerCase()==='ok'&&!running);
+ lastAnalysis.CanClearDroppedItems=!!(lastAnalysis.DroppedItemCount>0&&
+  String(lastAnalysis.DatabaseStatus).toLowerCase()==='ok'&&!running);
+ lastAnalysis.CanClearExpiredDroppedItems=!!(lastAnalysis.ExpiredDroppedItemCount>0&&
+  String(lastAnalysis.DatabaseStatus).toLowerCase()==='ok'&&!running);
  renderAnalysis(lastAnalysis);
 }
 function pollGameProcess(){
@@ -2368,8 +2635,8 @@ function browseSave(){
 function analyzeSelected(autoRefresh){
  if(!currentPath){showError('Choose a survival world first.');return;}
  if(!ensureGameClosed()||operationBusy)return;
- busy(true,autoRefresh?'GAME CLOSED — REFRESHING':'DECODING RAID STORAGE',
-  autoRefresh?'Updating the save status and unlocking safe repair controls.':'Running database integrity checks and reading channel 45.');
+ busy(true,autoRefresh?'GAME CLOSED — REFRESHING':'DECODING WORLD STORAGE',
+  autoRefresh?'Updating raid diagnostics and safe repair controls.':'Checking database integrity and stored raids. Loose items remain unscanned.');
  window.setTimeout(function(){
   if(!ensureGameClosed()){busy(false);return;}
   var data=parseResult(window.external.Analyze(currentPath));
@@ -2379,7 +2646,22 @@ function analyzeSelected(autoRefresh){
    renderGameBanner(gameRunning);
   }
   renderAnalysis(data);busy(false);
- },25);
+ },busyLeadDelay());
+}
+function scanDroppedItems(){
+ if(!currentPath){showError('Choose and analyze a survival world first.');return;}
+ if(!ensureGameClosed()||operationBusy)return;
+ busy(true,'SCANNING LOOSE WORLD ITEMS','Decoding pickup storage, item values, icons, quantities, positions, and expiry timers.');
+ window.setTimeout(function(){
+  if(!ensureGameClosed()){busy(false);return;}
+  var data=parseResult(window.external.ScanDroppedItems(currentPath));
+  lastAnalysis=data;
+  if(data.Success||data.GameRunning){
+   gameRunning=!!data.GameRunning;
+   renderGameBanner(gameRunning);
+  }
+  renderAnalysis(data);busy(false);
+ },busyLeadDelay());
 }
 function showError(message){
  document.getElementById('result').innerHTML='<div class=""banner banner-error""><b>DIAGNOSTIC FAILED.</b> '+esc(message)+'</div>';
@@ -2399,20 +2681,185 @@ function renderAnalysis(data){
   stat('SAVE VERSION',number(data.SaveVersion),'',false)+
   stat('GAME TICK',number(data.GameTick),'',false)+
   stat('STORED RAIDS',number(data.RaidCount),data.RaidCount?'accent':'ok',false)+
+  stat('LOOSE DROPS',data.DroppedItemsScanned?number(data.DroppedItemCount):'NOT SCANNED',data.DroppedItemsScanned?(data.DroppedItemCount?'accent':'ok'):'',true)+
   stat('WORLD SIZE',data.Size,'',true)+'</div>';
  if(data.Raids&&data.Raids.length){
   for(var i=0;i<data.Raids.length;i++)html+=raidCard(data.Raids[i]);
  }else{
   html+='<div class=""empty""><div class=""diamond""><span>&#10003;</span></div><h4>RAID STORAGE CLEAR</h4><p>No persisted raid-manager entries were found in this world.</p></div>';
  }
-  html+='<div class=""repair-bar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Install or update the cumulative 1.0.2 game hotfix for stuck raids and fertilizer timing, or clear the stored raids from this save.</p>'+
-   '<div class=""repair-actions""><button class=""btn btn-patch"" id=""installHotfixBtn"" onclick=""installRaidHotfix()"">INSTALL / UPDATE HOTFIX</button>'+
-   '<button class=""btn btn-danger"" id=""clearAllBtn"" '+(data.CanClear?'':'disabled=""disabled""')+' onclick=""clearRaids()"">CLEAR ALL RAIDS</button></div></div>';
+ html+=droppedItemsSection(data);
+  html+='<div class=""repair-bar"" id=""repairActionsBar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Clear stored raid data only when a world still contains a stuck or unwanted saved raid. Raid Rescue verifies a backup before making the repair.</p>'+
+   '<div class=""repair-actions""><button class=""btn btn-danger"" id=""clearAllBtn"" '+(data.CanClear?'':'disabled=""disabled""')+' onclick=""clearRaids()"">CLEAR ALL RAIDS</button></div></div>';
  document.getElementById('result').innerHTML=html;
  updateScrollBar();
 }
 function stat(label,value,cls,small){
  return '<div class=""stat""><div class=""label"">'+esc(label)+'</div><div class=""value '+(small?'small ':'')+esc(cls||'')+'"">'+esc(value)+'</div></div>';
+}
+function droppedItemsSection(data){
+ if(!data.DroppedItemsScanned){
+  return '<div class=""drop-zone"" id=""droppedItemsZone""><div class=""drop-scan-panel"">'+
+   '<b>LOOSE ITEMS HAVE NOT BEEN SCANNED</b><p>Scan this world to view dropped-item cards, totals, despawn timers, and safe cleanup options.</p>'+
+   '<button type=""button"" class=""btn btn-primary"" id=""scanDroppedItemsBtn"" onclick=""scanDroppedItems()"">SCAN LOOSE ITEMS</button></div></div>';
+ }
+ var items=data.DroppedItems||[],count=Number(data.DroppedItemCount)||items.length,quantity=Number(data.DroppedItemQuantity)||0;
+ var html='<div class=""drop-zone"" id=""droppedItemsZone""><div class=""drop-zone-head""><div class=""drop-zone-title"">'+
+ '<b>VALUE-SORTED RECOVERY</b><strong>DROPPED ITEMS IN THIS WORLD</strong></div><div class=""drop-zone-summary"">'+
+ '<span class=""drop-count""><b>'+esc(count)+'</b> STACK'+(count===1?'':'S')+'</span>'+
+  '<span class=""drop-count""><b>'+esc(quantity)+'</b> ITEM'+(quantity===1?'':'S')+'</span>'+
+  '<button type=""button"" class=""drop-collapse'+(droppedItemsCollapsed?' is-collapsed':'')+'"" id=""dropCollapseBtn"" '+
+  'onclick=""toggleDroppedItems()"" title=""'+(droppedItemsCollapsed?'Expand item list':'Collapse item list')+'"" '+
+  'aria-label=""'+(droppedItemsCollapsed?'Expand item list':'Collapse item list')+'"" aria-expanded=""'+(!droppedItemsCollapsed)+'"">'+
+  '<svg viewBox=""0 0 24 24"" aria-hidden=""true""><path d=""M5 15 L12 8 L19 15""></path></svg></button>'+
+  '<button type=""button"" class=""btn btn-summary"" id=""itemSummaryBtn"" onclick=""openItemSummary()"" '+(items.length?'':'disabled=""disabled""')+'>ITEM TOTALS</button>'+
+  '<button type=""button"" class=""btn btn-expired"" id=""clearExpiredItemsBtn"" onclick=""requestExpiredDroppedItemClear()"" '+
+  (data.CanClearExpiredDroppedItems?'':'disabled=""disabled""')+'>CLEAR EXPIRED ('+esc(data.ExpiredDroppedItemCount||0)+')</button>'+
+  '<button type=""button"" class=""btn btn-danger"" id=""clearDroppedItemsBtn"" onclick=""requestDroppedItemClear(0)"" '+
+  (data.CanClearDroppedItems?'':'disabled=""disabled""')+'>CLEAR ALL DROPPED ITEMS</button></div></div>'+
+  '<div class=""drop-items-body"" id=""droppedItemsBody""'+(droppedItemsCollapsed?' hidden=""hidden""':'')+'>';
+ if(items.length){
+  html+='<div class=""drop-grid"">';
+  for(var i=0;i<items.length;i++)html+=droppedItemCard(items[i],!!data.CanClearDroppedItems,data.DroppedItemIcons||{});
+  html+='</div>';
+ }else{
+  html+='<div class=""drop-empty"">NO LOOSE INVENTORY PICKUPS ARE STORED IN THIS WORLD.</div>';
+ }
+ if(Number(data.UnreadableDroppedItemCount)>0)html+='<div class=""drop-warning""><b>SAFE SKIP:</b> '+
+  esc(data.UnreadableDroppedItemCount)+' loose record(s) could not be proven safe and were excluded from removal.</div>';
+ return html+'</div></div>';
+}
+function toggleDroppedItems(){
+ droppedItemsCollapsed=!droppedItemsCollapsed;
+ var body=document.getElementById('droppedItemsBody'),button=document.getElementById('dropCollapseBtn');
+ if(body)body.hidden=droppedItemsCollapsed;
+ if(button){
+  button.className='drop-collapse'+(droppedItemsCollapsed?' is-collapsed':'');
+  button.title=droppedItemsCollapsed?'Expand item list':'Collapse item list';
+  button.setAttribute('aria-label',button.title);
+  button.setAttribute('aria-expanded',String(!droppedItemsCollapsed));
+ }
+ updateScrollBar();
+}
+function droppedItemCard(item,canRemove,icons){
+ var iconUrl=droppedIconUrl(item,icons),icon=iconUrl?
+  '<img class=""drop-icon"" src=""'+esc(iconUrl)+'"" alt="""" />':
+  '<span class=""drop-icon-fallback"">'+esc(String(item.Name||'?').charAt(0).toUpperCase()||'?')+'</span>';
+ var remaining=droppedLifetime(item),lifeClass=item.Expired?' expired':(Number(item.RemainingSeconds)>0&&Number(item.RemainingSeconds)<=300?' soon':'');
+ var description=item.Description||'Loose Scrap Mechanic inventory pickup.';
+ var details='<span class=""drop-detail drop-value""><b>'+esc(item.ValueTier||'STANDARD')+'</b></span>'+
+  '<span class=""drop-detail"">WORLD <b>'+esc(item.WorldName||('World '+item.WorldId))+'</b></span>'+
+  '<span class=""drop-detail"">XYZ <b>'+esc(shortPosition(item.Position))+'</b></span>';
+ if(item.Epic)details+='<span class=""drop-detail""><b>EPIC</b></span>';
+ if(item.QuestItem)details+='<span class=""drop-detail""><b>QUEST ITEM</b></span>';
+ return '<div class=""drop-wrap""><div class=""drop-card""><div class=""drop-icon-frame"">'+icon+
+  '<span class=""drop-quantity"">&times;'+esc(item.Quantity)+'</span></div>'+
+  '<button type=""button"" class=""drop-remove"" onclick=""requestDroppedItemClear('+esc(item.EntityId)+')"" '+
+  (canRemove?'':'disabled=""disabled""')+'>REMOVE ITEM</button><div class=""drop-copy"">'+
+  '<span class=""drop-kind"">'+esc(item.DropType||'Loose pickup')+'</span><span class=""drop-name"">'+esc(item.Name||'Unknown item')+'</span>'+
+  '<p class=""drop-description"">'+esc(description)+'</p><span class=""drop-life'+lifeClass+'"">'+esc(remaining)+'</span>'+
+  '<div class=""drop-detail-row"">'+details+'</div></div></div></div>';
+}
+function droppedIconUrl(item,icons){
+ if(!item||!icons)return '';
+ return icons[item.Uuid]||icons[String(item.Uuid||'').toLowerCase()]||'';
+}
+function shortPosition(position){
+ if(!position)return 'NOT STORED';
+ return Number(position.X).toFixed(1)+', '+Number(position.Y).toFixed(1)+', '+Number(position.Z).toFixed(1);
+}
+function droppedLifetime(item){
+ if(item.Expired)return 'EXPIRED - PENDING WORLD CLEANUP';
+ var seconds=Number(item.RemainingSeconds)||0;
+ if(!item.KillTick)return 'NO EXPIRY TICK STORED';
+ if(seconds<=0)return 'EXPIRES WHEN WORLD RESUMES';
+ var hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),secs=Math.floor(seconds%60),parts=[];
+ if(hours)parts.push(hours+'H');
+ if(minutes||hours)parts.push(minutes+'M');
+ parts.push(secs+'S');
+ return 'DESPAWNS IN '+parts.join(' ');
+}
+function openItemSummary(){
+ if(operationBusy||!lastAnalysis||!lastAnalysis.DroppedItemsScanned)return;
+ var items=lastAnalysis.DroppedItems||[],groups={},totalQuantity=0,expiredStacks=0;
+ for(var i=0;i<items.length;i++){
+  var item=items[i],key=String(item.Uuid||item.Name||('item-'+i)).toLowerCase(),group=groups[key];
+  if(!group){
+   group=groups[key]={Uuid:item.Uuid,Name:item.Name||'Unknown item',Quantity:0,Stacks:0,
+    ValueScore:Number(item.ValueScore)||0,ValueTier:item.ValueTier||'STANDARD'};
+  }
+  group.Quantity+=Number(item.Quantity)||0;group.Stacks++;
+  group.ValueScore=Math.max(group.ValueScore,Number(item.ValueScore)||0);
+  if(item.Expired)expiredStacks++;
+  totalQuantity+=Number(item.Quantity)||0;
+ }
+ var totals=[];
+ for(var key in groups)if(groups.hasOwnProperty(key))totals.push(groups[key]);
+ totals.sort(function(a,b){
+  return b.ValueScore-a.ValueScore||b.Quantity-a.Quantity||
+   String(a.Name).localeCompare(String(b.Name));
+ });
+ document.getElementById('itemSummaryStats').innerHTML=
+  itemSummaryStat('UNIQUE ITEMS',totals.length)+itemSummaryStat('TOTAL QUANTITY',totalQuantity)+
+  itemSummaryStat('LOOSE STACKS',items.length)+itemSummaryStat('EXPIRED STACKS',expiredStacks);
+ var html='';
+ for(var j=0;j<totals.length;j++){
+  var total=totals[j],iconUrl=droppedIconUrl(total,lastAnalysis.DroppedItemIcons||{}),icon=iconUrl?
+   '<img src=""'+esc(iconUrl)+'"" alt="""" />':
+   '<span>'+esc(String(total.Name||'?').charAt(0).toUpperCase()||'?')+'</span>';
+  html+='<div class=""item-summary-row""><div class=""item-summary-icon"">'+icon+'</div>'+
+   '<div class=""item-summary-copy""><b>'+esc(total.Name)+'</b><span>'+esc(total.ValueTier)+
+   ' - '+esc(total.Stacks)+' STACK'+(total.Stacks===1?'':'S')+'</span></div>'+
+   '<div class=""item-summary-amount""><strong>&times;'+esc(total.Quantity)+'</strong><span>TOTAL ITEMS</span></div></div>';
+ }
+ var summaryList=document.getElementById('itemSummaryList');
+ summaryList.innerHTML=html||'<div class=""item-summary-empty"">NO LOOSE ITEMS WERE FOUND IN THIS WORLD.</div>';
+ summaryList.scrollTop=0;
+ summaryList.onscroll=updateItemSummaryScroll;
+ summaryList.onmousewheel=function(e){return smoothWheelInput(summaryList,e,true);};
+ document.getElementById('itemSummaryModal').className='hotfix-modal item-summary-modal show';
+ window.setTimeout(updateItemSummaryScroll,30);
+}
+function itemSummaryStat(label,value){
+ return '<div class=""item-summary-stat""><b>'+esc(label)+'</b><strong>'+esc(value)+'</strong></div>';
+}
+function updateItemSummaryScroll(){
+ var pane=document.getElementById('itemSummaryList'),track=document.getElementById('itemSummaryScrollTrack'),thumb=document.getElementById('itemSummaryScrollThumb');
+ if(!pane||!track||!thumb)return;
+ var viewport=pane.clientHeight,total=pane.scrollHeight,usable=Math.max(1,track.clientHeight-30);
+ if(total<=viewport+1){
+  thumb.className='item-summary-scroll-thumb disabled';thumb.style.height=Math.max(38,usable)+'px';thumb.style.top='15px';return;
+ }
+ thumb.className='item-summary-scroll-thumb';
+ var height=Math.max(38,Math.floor(usable*viewport/total)),travel=Math.max(0,usable-height),maximum=total-viewport;
+ thumb.style.height=height+'px';
+ thumb.style.top=(15+(maximum>0?Math.round(travel*pane.scrollTop/maximum):0))+'px';
+}
+function itemSummaryThumbDown(e){
+ e=e||window.event;var thumb=document.getElementById('itemSummaryScrollThumb');
+ if(String(thumb.className).indexOf('disabled')>=0)return false;
+ stopSmoothScroll(document.getElementById('itemSummaryList'));
+ itemSummaryScrollDrag=true;itemSummaryScrollDragY=e.clientY;itemSummaryScrollDragTop=parseInt(thumb.style.top,10)||15;
+ if(e.stopPropagation)e.stopPropagation();e.cancelBubble=true;if(e.preventDefault)e.preventDefault();return false;
+}
+function itemSummaryTrackDown(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('itemSummaryScrollThumb'))return false;
+ var pane=document.getElementById('itemSummaryList'),track=document.getElementById('itemSummaryScrollTrack'),thumb=document.getElementById('itemSummaryScrollThumb');
+ stopSmoothScroll(pane);
+ var rect=track.getBoundingClientRect(),usable=Math.max(1,track.clientHeight-30),maximum=Math.max(0,pane.scrollHeight-pane.clientHeight);
+ var ratio=Math.max(0,Math.min(1,(e.clientY-rect.top-15)/usable));
+ pane.scrollTop=ratio*maximum;updateItemSummaryScroll();
+ if(e.preventDefault)e.preventDefault();return false;
+}
+function closeItemSummary(){
+ stopSmoothScroll(document.getElementById('itemSummaryList'));
+ itemSummaryScrollDrag=false;
+ document.getElementById('itemSummaryModal').className='hotfix-modal item-summary-modal';
+}
+function itemSummaryBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('itemSummaryModal'))closeItemSummary();
 }
 function raidMeter(tier){
  var value=Number(tier)||0,superRaid=value>5,html='<div class=""raid-meter"">';
@@ -2451,6 +2898,101 @@ function chips(items,isCrop,empty){
   esc(items[i].Name).toUpperCase()+' <b>&times;'+esc(items[i].Quantity)+'</b></span>';
  return html;
 }
+function requestExpiredDroppedItemClear(){
+ requestDroppedItemClear(0,true);
+}
+function requestDroppedItemClear(entityId,expiredOnly){
+ expiredOnly=!!expiredOnly;
+ if(operationBusy||!lastAnalysis||
+  (expiredOnly?!lastAnalysis.CanClearExpiredDroppedItems:!lastAnalysis.CanClearDroppedItems)||
+  !ensureGameClosed())return;
+ pendingDroppedEntityId=Number(entityId)||0;
+ pendingDroppedItem=null;
+ pendingDroppedMode=expiredOnly?'expired':(pendingDroppedEntityId?'one':'all');
+ var allItems=lastAnalysis.DroppedItems||[],items=[];
+ for(var i=0;i<allItems.length;i++)if(!expiredOnly||allItems[i].Expired)items.push(allItems[i]);
+ if(pendingDroppedEntityId){
+  for(var j=0;j<allItems.length;j++)if(Number(allItems[j].EntityId)===pendingDroppedEntityId){pendingDroppedItem=allItems[j];break;}
+  if(!pendingDroppedItem){showError('That loose item is no longer in the current analysis. Analyze the world again.');return;}
+ }
+ var mode=pendingDroppedMode,title=mode==='expired'?'CLEAR EXPIRED LOOSE ITEMS?':
+  (mode==='all'?'CLEAR EVERY LOOSE WORLD ITEM?':'REMOVE THIS LOOSE WORLD ITEM?');
+ var kicker='';
+ kicker=mode==='expired'?'EXPIRED PICKUPS - '+items.length+' STACKS':
+  (mode==='all'?'ALL DECODED PICKUPS - '+items.length+' STACKS':'ENTITY #'+pendingDroppedEntityId+' - BACKUP-FIRST REMOVAL');
+ document.getElementById('itemClearTitle').innerText=title;
+ document.getElementById('itemClearKicker').innerText=kicker;
+ document.getElementById('itemClearIntro').innerText=mode==='expired'?
+  'Raid Rescue will remove only loose pickups marked Expired - Pending World Cleanup.':
+  (mode==='all'?'Raid Rescue will remove every safely decoded loose pickup shown in this report.':
+  'Raid Rescue will remove only this loose pickup and its matching Lua storage record.');
+ document.getElementById('itemClearConfirmButton').innerHTML='<span>!</span>'+
+  (mode==='expired'?'CLEAR EXPIRED ITEMS':(mode==='all'?'CLEAR ALL DROPPED ITEMS':'REMOVE THIS DROP'));
+ document.getElementById('itemClearPreview').innerHTML=itemClearPreview(mode,items);
+ document.getElementById('itemClearModal').className='hotfix-modal item-clear-modal show';
+ window.setTimeout(function(){document.getElementById('itemClearConfirmButton').focus();},30);
+}
+function itemClearPreview(mode,items){
+ if(mode!=='one'){
+  var quantity=0;
+  for(var i=0;i<items.length;i++)quantity+=Number(items[i].Quantity)||0;
+  return '<div class=""item-confirm-icon""><span class=""item-confirm-fallback"">'+esc(items.length)+'</span></div>'+
+   '<div class=""item-confirm-copy""><b>'+(mode==='expired'?'EXPIRED PICKUPS ONLY':'ALL LOOSE PICKUPS')+'</b><span>'+
+   esc(quantity)+' total item(s) across '+esc(items.length)+
+   ' stack(s). Placed creations and player inventories are not included.</span></div>';
+ }
+ var item=pendingDroppedItem||{},iconUrl=droppedIconUrl(item,lastAnalysis.DroppedItemIcons||{}),icon=iconUrl?
+  '<img src=""'+esc(iconUrl)+'"" alt="""" />':
+  '<span class=""item-confirm-fallback"">'+esc(String(item.Name||'?').charAt(0).toUpperCase())+'</span>';
+ return '<div class=""item-confirm-icon"">'+icon+'</div><div class=""item-confirm-copy""><b>'+
+  esc(item.Name||'Unknown item')+' &times;'+esc(item.Quantity||0)+'</b><span>'+esc(item.WorldName||('World '+item.WorldId))+
+  ' &middot; '+esc(shortPosition(item.Position))+' &middot; '+esc(droppedLifetime(item))+'</span></div>';
+}
+function itemClearBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('itemClearModal'))closeItemClearConfirm();
+}
+function closeItemClearConfirm(){
+ document.getElementById('itemClearModal').className='hotfix-modal item-clear-modal';
+ pendingDroppedItem=null;pendingDroppedEntityId=0;pendingDroppedMode='';
+}
+function confirmDroppedItemClear(){
+ if(operationBusy)return;
+ var targetId=pendingDroppedEntityId,targetItem=pendingDroppedItem,mode=pendingDroppedMode;
+ var expiredOnly=mode==='expired';
+ document.getElementById('itemClearModal').className='hotfix-modal item-clear-modal';
+ pendingDroppedItem=null;pendingDroppedEntityId=0;pendingDroppedMode='';
+ if(!ensureGameClosed())return;
+ busy(true,targetId?'REMOVING ONE LOOSE PICKUP':(expiredOnly?'CLEARING EXPIRED PICKUPS':'CLEARING LOOSE WORLD ITEMS'),
+  'Creating and verifying a safety backup before the database transaction.');
+ window.setTimeout(function(){
+  if(!ensureGameClosed()){busy(false);return;}
+  var data=expiredOnly?
+   parseResult(window.external.ClearExpiredDroppedItems(currentPath)):
+   parseResult(window.external.ClearDroppedItems(currentPath,targetId));
+  busy(false);
+  if(data.Cancelled)return;
+  if(!data.Success){
+   renderAnalysis(lastAnalysis);
+   document.getElementById('result').insertAdjacentHTML('afterbegin','<div class=""banner banner-error""><b>ITEM REMOVAL STOPPED.</b> '+
+    esc(data.Error||'The loose-item repair did not complete.')+'</div>');
+   updateScrollBar();return;
+  }
+  lastBackupPath=data.BackupPath||'';
+  lastAnalysis=data.After;
+  renderAnalysis(lastAnalysis);
+  var removedName=targetItem?(targetItem.Name||'Loose pickup'):'Loose world items';
+  var message=targetId?
+   esc(removedName)+' was removed after full database verification.':
+   esc(data.ItemsRemoved)+(expiredOnly?' expired':'')+' stack(s), containing '+esc(data.QuantityRemoved)+
+   ' total item(s), were removed and verified.';
+  var html='<div class=""banner banner-good""><b>LOOSE ITEM CLEANUP COMPLETE.</b> '+message+'</div>';
+  if(lastBackupPath)html+='<div class=""success-box"" style=""margin-bottom:10px""><div class=""backup-label"">VERIFIED SAFETY BACKUP</div>'+
+   '<div class=""path"">'+esc(lastBackupPath)+'</div><div style=""margin-top:12px""><button class=""btn"" onclick=""openBackup()"">SHOW BACKUP IN FOLDER</button></div></div>';
+  document.getElementById('result').insertAdjacentHTML('afterbegin',html);
+  updateScrollBar();
+ },busyLeadDelay());
+}
 function clearRaids(){
  if(!lastAnalysis||!lastAnalysis.CanClear)return;
  busy(true,'CREATING SAFETY BACKUP','The original remains untouched until the backup passes verification.');
@@ -2459,13 +3001,14 @@ function clearRaids(){
   if(data.Cancelled)return;
   if(!data.Success){showError(data.Error||'The repair did not complete.');return;}
   lastBackupPath=data.BackupPath||'';
-  document.getElementById('result').innerHTML=
+  lastAnalysis=data.After;
+  renderAnalysis(lastAnalysis);
+  document.getElementById('result').insertAdjacentHTML('afterbegin',
    '<div class=""banner banner-good""><b>RAID STORAGE CLEARED.</b> The repaired save passed its final integrity check.</div>'+
-   '<div class=""success-box""><div class=""backup-label"">VERIFIED SAFETY BACKUP</div><div class=""path"">'+esc(lastBackupPath)+'</div>'+
-   '<div style=""margin-top:12px""><button class=""btn"" onclick=""openBackup()"">SHOW BACKUP IN FOLDER</button></div></div>';
-   updateScrollBar();
-   lastAnalysis=data.After;
- },25);
+   '<div class=""success-box"" style=""margin-bottom:10px""><div class=""backup-label"">VERIFIED SAFETY BACKUP</div><div class=""path"">'+esc(lastBackupPath)+'</div>'+
+   '<div style=""margin-top:12px""><button class=""btn"" onclick=""openBackup()"">SHOW BACKUP IN FOLDER</button></div></div>');
+  updateScrollBar();
+ },busyLeadDelay());
 }
 var lastGameBackupPath='';
 function installRaidHotfix(){
@@ -2501,7 +3044,7 @@ function confirmHotfixInstall(){
    '<div class=""path"">'+esc(lastGameBackupPath)+'</div><div style=""margin-top:12px""><button class=""btn"" onclick=""openGameBackup()"">SHOW GAME BACKUP</button></div></div>';
   document.getElementById('result').insertAdjacentHTML('afterbegin',html);
   updateScrollBar();
- },25);
+ },busyLeadDelay());
 }
 function openBackup(){if(lastBackupPath)window.external.OpenFolder(lastBackupPath);}
 function openGameBackup(){if(lastGameBackupPath)window.external.OpenFolder(lastGameBackupPath);}

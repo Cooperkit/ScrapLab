@@ -311,7 +311,7 @@ namespace RaidRescue
             return BitConverter.ToSingle(bytes, 0);
         }
 
-        private static byte[] DecompressLz4Block(byte[] source)
+        internal static byte[] DecompressLz4Block(byte[] source)
         {
             List<byte> output = new List<byte>(Math.Max(source.Length * 2, 256));
             int index = 0;

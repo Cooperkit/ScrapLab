@@ -211,6 +211,39 @@ try {
     Assert-True $resourceInstall.Success (
         'Resource Locator adaptive install failed: ' + $resourceInstall.Error)
     Assert-True $resourceInstall.Adaptive 'Resource Locator did not report adaptive mode.'
+    Invoke-Static $supportType 'CommitBuildActivations' `
+        $resourceInstall $fakeGame
+    $firstBuild = Invoke-Static $supportType 'GetSteamBuild' `
+        $fakeGame $resourceInstall.GameVersion
+    Assert-True (-not (Invoke-Static $supportType 'RequiresBuildRefresh' `
+        'ResourceLocator' $firstBuild)) `
+        'A freshly activated mod was incorrectly marked stale.'
+
+    $nextManifest = [IO.File]::ReadAllText($manifestPath).Replace(
+        '"99999999"', '"99999998"')
+    Write-Utf8NoBom $manifestPath $nextManifest
+    $nextBuild = Invoke-Static $supportType 'GetSteamBuild' `
+        $fakeGame $resourceInstall.GameVersion
+    Assert-True (Invoke-Static $supportType 'RequiresBuildRefresh' `
+        'ResourceLocator' $nextBuild) `
+        'A Steam build change did not mark the installed mod inactive.'
+    $beforeRefreshHash = Get-Sha256 $resourceFixturePath
+    $resourceRefresh = Invoke-Static $resourceType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $resourceRefresh.Success `
+        'A cache-only mod reactivation failed.'
+    Assert-True ($resourceRefresh.FilesPatched -eq 1) `
+        'Cache-only reactivation did not request bundle invalidation.'
+    Assert-True ((Get-Sha256 $resourceFixturePath) -eq $beforeRefreshHash) `
+        'Cache-only reactivation rewrote unchanged Lua.'
+    Invoke-Static $supportType 'CommitBuildActivations' `
+        $resourceRefresh $fakeGame
+    Assert-True (-not (Invoke-Static $supportType 'RequiresBuildRefresh' `
+        'ResourceLocator' $nextBuild)) `
+        'The refreshed build activation was not recorded.'
+    Write-Utf8NoBom $manifestPath (
+        $nextManifest.Replace('"99999998"', '"99999999"'))
+
     $resourceRemove = Invoke-Static $resourceType 'SetEnabledAt' `
         $fakeGame $backupRoot $false
     Assert-True $resourceRemove.Success 'Resource Locator adaptive removal failed.'

@@ -1,5 +1,55 @@
 # Changelog
 
+## 1.13.0
+
+- Expanded world analysis with a **Dropped Items** scanner for loose Scrap
+  Mechanic inventory pickups stored as loot harvestables.
+- Added real item names and icons loaded from the installed game's English
+  inventory catalogs and 96-pixel icon atlases, with safe fallbacks for
+  unknown or modded UUIDs.
+- Each pickup card now shows stack quantity, loot type, the decoded world name,
+  precise XYZ coordinates, special loot flags, description, and the remaining
+  in-game despawn time without exposing internal cell or entity identifiers.
+- Dropped-item cards are now ordered by recovery value. Progression and quest
+  items rank first, crafted items use Scrap Mechanic's installed recipe
+  ingredients, and the full item catalog has stable category fallbacks.
+- Loose pickups are now opt-in: the normal raid diagnostic leaves them
+  unloaded until **Scan Loose Items** is selected.
+- Added a Scrap Mechanic-styled **Item Totals** report with combined
+  quantities, stack counts, value tiers, and world-wide summary counters.
+- Refined Item Totals with a two-column grid, locked square icon frames, a
+  geometry-safe SVG diamond badge, and a draggable custom cyan scrollbar.
+- Added a compact header control that collapses or expands every dropped-item
+  card while keeping totals and cleanup actions available.
+- Replaced static scanner animations with staged percentage progress for
+  world analysis, loose-item scans, save cleanup, secret-mod operations, and
+  automatic app updates. Bars now finish only when the operation returns.
+- Removed cell coordinates and internal entity IDs from pickup-card pills;
+  safe cleanup still retains and verifies those identifiers internally.
+- Added backup-first **Remove Item** and **Clear All Dropped Items** actions
+  with a Scrap Mechanic-styled in-app confirmation.
+- Added **Clear Expired** for removing only loose pickups marked
+  **Pending World Cleanup** while preserving every active drop.
+- Loose-item removal validates the Harvestable-to-ScriptData relationship,
+  verifies a timestamped SQLite backup, deletes only the exact paired rows in
+  one transaction, preserves raid storage, performs final integrity checks,
+  and re-analyzes the edited save.
+- Ambiguous, malformed, or undecodable loot is reported and excluded instead
+  of being guessed or deleted.
+- Secret Mods now track the Steam build for which their generated script
+  bundle was activated. After Steam updates the game, intact old patch
+  snippets display as **Game Updated - Re-enable** until the user deliberately
+  refreshes them; a cache-only refresh does not rewrite unchanged Lua.
+- Hidden the legacy cumulative raid/fertilizer hotfix control and its Help
+  section now that Scrap Mechanic ships the official raid correction. Offline
+  **Clear All Raids** remains available for already-affected saves.
+- Locked every Patch Bay switch and its Options control column to matching
+  border-box geometry.
+- Updated the tutorial, Field Manual, diagnostics wording, and automated
+  regression coverage for icon loading, individual removal, clear-all,
+  backups, raid preservation, source-save isolation, and Steam-build cache
+  reactivation.
+
 ## 1.12.0
 
 - Added automatic GitHub update checks shortly after startup and every 30

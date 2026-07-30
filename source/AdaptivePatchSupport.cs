@@ -90,6 +90,14 @@ namespace RaidRescue
         public bool HasBom { get; set; }
     }
 
+    internal sealed class PatchBuildActivation
+    {
+        public string ModKey { get; set; }
+        public string SteamBuildId { get; set; }
+        public string GameVersion { get; set; }
+        public string ActivatedUtc { get; set; }
+    }
+
     internal static class AdaptivePatchSupport
     {
         internal const string KnownBuildId = "24417028";
@@ -385,6 +393,186 @@ namespace RaidRescue
             // superseded the installed output and the bounded active receipt
             // is no longer a valid uninstall source.
             DeleteReceipt(modKey);
+            DeleteBuildActivation(modKey);
+        }
+
+        internal static bool RequiresBuildRefresh(
+            string modKey, SteamBuildInfo build)
+        {
+            if (build == null || !build.Valid || build.IsKnownBuild)
+                return false;
+
+            PatchBuildActivation activation =
+                LoadBuildActivation(modKey);
+            return activation == null ||
+                !String.Equals(
+                    activation.SteamBuildId, build.BuildId,
+                    StringComparison.Ordinal) ||
+                !String.Equals(
+                    activation.GameVersion ?? "",
+                    build.GameVersion ?? "",
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static void MarkRefreshRequired(
+            GamePatchResult result, SteamBuildInfo build,
+            string mode)
+        {
+            result.Success = true;
+            result.Installed = false;
+            result.AlreadyPatched = false;
+            result.NeedsUpdate = true;
+            if (mode != null)
+                result.Mode = mode;
+            FillResult(
+                result, build,
+                PatchCompatibilityState.CompatibleUpdate,
+                true, true,
+                "Steam installed a new game build. Re-enable this mod once " +
+                "to refresh Scrap Mechanic's generated script cache.");
+        }
+
+        internal static void PrepareBuildRefresh(
+            GamePatchResult result, string modKey,
+            SteamBuildInfo build, string message)
+        {
+            result.Success = true;
+            result.Installed = true;
+            result.AlreadyPatched = false;
+            result.NeedsUpdate = false;
+            // The Lua is intact, but the new Steam build generated a fresh
+            // official bundle. Treat cache invalidation as a patch change.
+            result.FilesPatched = Math.Max(result.FilesPatched, 1);
+            FillResult(
+                result, build,
+                PatchCompatibilityState.AdaptiveInstalled,
+                !build.IsKnownBuild, true,
+                "The mod code was still intact and was activated for this Steam build.");
+            if (result.Changes == null)
+                result.Changes = new List<string>();
+            result.Changes.Add(message);
+            QueueBuildActivation(result, modKey, true);
+        }
+
+        internal static void QueueBuildActivation(
+            GamePatchResult result, string modKey, bool enabled)
+        {
+            if (result == null || String.IsNullOrWhiteSpace(modKey))
+                return;
+            if (result.ActivationChanges == null)
+            {
+                result.ActivationChanges =
+                    new Dictionary<string, bool>(
+                        StringComparer.OrdinalIgnoreCase);
+            }
+            result.ActivationChanges[modKey] = enabled;
+        }
+
+        internal static void MergeBuildActivations(
+            GamePatchResult target, GamePatchResult source)
+        {
+            if (target == null || source == null ||
+                source.ActivationChanges == null)
+                return;
+            foreach (KeyValuePair<string, bool> pair in
+                source.ActivationChanges)
+            {
+                QueueBuildActivation(target, pair.Key, pair.Value);
+            }
+        }
+
+        internal static void CommitBuildActivations(
+            GamePatchResult result, string gamePath)
+        {
+            if (result == null || result.ActivationChanges == null ||
+                result.ActivationChanges.Count == 0)
+                return;
+
+            SteamBuildInfo build = GetSteamBuild(
+                gamePath, result.GameVersion);
+            foreach (KeyValuePair<string, bool> pair in
+                result.ActivationChanges)
+            {
+                if (!pair.Value)
+                {
+                    DeleteBuildActivation(pair.Key);
+                    continue;
+                }
+                if (!build.Valid)
+                {
+                    throw new InvalidOperationException(
+                        "The Steam build could not be recorded after resetting " +
+                        "the script cache. " + build.Error);
+                }
+                SaveBuildActivation(
+                    pair.Key,
+                    new PatchBuildActivation
+                    {
+                        ModKey = pair.Key,
+                        SteamBuildId = build.BuildId,
+                        GameVersion = result.GameVersion ?? "",
+                        ActivatedUtc = DateTime.UtcNow.ToString("O")
+                    });
+            }
+        }
+
+        internal static void DeleteBuildActivation(string modKey)
+        {
+            try
+            {
+                string path = GetActivationPath(modKey);
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            catch { }
+        }
+
+        private static PatchBuildActivation LoadBuildActivation(
+            string modKey)
+        {
+            try
+            {
+                string path = GetActivationPath(modKey);
+                if (!File.Exists(path))
+                    return null;
+                return new JavaScriptSerializer()
+                    .Deserialize<PatchBuildActivation>(
+                        File.ReadAllText(
+                            path, new UTF8Encoding(false, true)));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static void SaveBuildActivation(
+            string modKey, PatchBuildActivation activation)
+        {
+            string path = GetActivationPath(modKey);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            string temporary =
+                path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                File.WriteAllText(
+                    temporary,
+                    new JavaScriptSerializer().Serialize(activation),
+                    new UTF8Encoding(false));
+                if (File.Exists(path))
+                    File.Replace(temporary, path, null, true);
+                else
+                    File.Move(temporary, path);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(temporary))
+                        File.Delete(temporary);
+                }
+                catch { }
+            }
         }
 
         internal static string CaptureBaseBackup(
@@ -500,6 +688,14 @@ namespace RaidRescue
             return Path.Combine(
                 GetPatchStateRoot(),
                 modKey);
+        }
+
+        private static string GetActivationPath(string modKey)
+        {
+            ValidateModKey(modKey);
+            return Path.Combine(
+                GetPatchStateRoot(),
+                modKey + ".activation.json");
         }
 
         private static string GetPatchStateRoot()
