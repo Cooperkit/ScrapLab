@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.0.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.0.1.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -191,7 +191,7 @@ the selected save database.
 
 | Mod | Effect |
 | --- | --- |
-| **Developer Commands** | Unlocks the game's Survival chat commands with configurable Host Only or Every Player access. |
+| **Developer Commands** | Unlocks Survival chat commands plus `/fly` collision-free flight, with configurable Host Only or Every Player access. |
 | **Resource Locator Dots** | Makes refineable resource cores and haybot spines visible with the Connect Tool. |
 | **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
 | **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
@@ -215,6 +215,16 @@ known build are blocked without writing.
 
 Developer commands and optional mods can permanently change gameplay. Back up
 important worlds and use Every Player command access only with trusted players.
+`/fly` uses ScrapLab's hidden input tool and isolated scripts under
+`Survival/Scripts/ScrapLab`. Smooth impulse flight handles open space, while
+short capsule-checked position steps cross solid geometry. Scrap Mechanic's
+normal camera and mouse controls remain untouched, falling and ragdolling are
+suppressed during flight, god mode stays active, and noclip refuses to exit
+inside solid geometry. The world-bound player script performs flight physics;
+the command script only coordinates permissions, input, and multiplayer state.
+Because Scrap Mechanic's god-mode flag is global, one noclipping player temporarily
+protects every player in that hosted world; the previous god-mode state is
+restored after the last noclipping player exits.
 
 ## Updates and migration
 
@@ -258,7 +268,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.0.0.zip
+release\ScrapLab-2.0.1.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

@@ -11,7 +11,7 @@ construct 3-by-3 neighborhoods, or claim that any record causes FPS loss.
 
 ## Operation lifecycle
 
-`source/PerformanceScanOperationManager.cs` owns one scan operation at a time:
+`source/Performance/PerformanceScanOperationManager.cs` owns one scan operation at a time:
 
 - `Begin` returns immediately with an opaque operation ID.
 - A second scan is rejected while one is active.

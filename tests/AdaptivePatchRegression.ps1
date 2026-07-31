@@ -101,6 +101,7 @@ $chemicalType = $assembly.GetType('RaidRescue.ChemicalFertilizerPatchService', $
 $cannonType = $assembly.GetType('RaidRescue.DualFluidCannonPatchService', $true)
 $coordinatorType = $assembly.GetType('RaidRescue.DualFluidCannonPatchCoordinator', $true)
 $commandsType = $assembly.GetType('RaidRescue.DeveloperCommandsPatchService', $true)
+$noclipAssetsType = $assembly.GetType('RaidRescue.NoclipAssetSupport', $true)
 $revivalType = $assembly.GetType('RaidRescue.RevivalBuffPatchService', $true)
 
 $liveGame = Invoke-Static $gameService 'FindGameInstall'
@@ -151,13 +152,43 @@ try {
         [Text.UTF8Encoding]::new($true))
 
     $commandsRelative = Get-StaticField $commandsType 'SurvivalGameRelativePath'
+    $noclipToolsRelative = Get-StaticField $noclipAssetsType 'ToolsRelativePath'
+    $noclipModuleRelative = Get-StaticField $noclipAssetsType 'ModuleRelativePath'
+    $noclipInputRelative = Get-StaticField $noclipAssetsType 'InputToolRelativePath'
+    $noclipToolsPath = Join-Path $fakeGame $noclipToolsRelative
+    $noclipCleanTail = Get-StaticField $noclipAssetsType 'CleanTail'
+    $noclipInstalledTail = Get-StaticField $noclipAssetsType 'InstalledTail'
+    [IO.Directory]::CreateDirectory(
+        (Split-Path -Parent $noclipToolsPath)) | Out-Null
+    Copy-Item -LiteralPath (Join-Path $liveGame $noclipToolsRelative) `
+        -Destination $noclipToolsPath
+    $noclipToolsFixtureText = Normalize-Lua ([IO.File]::ReadAllText(
+        $noclipToolsPath))
+    if ($noclipToolsFixtureText.Contains($noclipInstalledTail)) {
+        $noclipToolsFixtureText = $noclipToolsFixtureText.Replace(
+            $noclipInstalledTail, $noclipCleanTail)
+        Write-Utf8NoBom $noclipToolsPath $noclipToolsFixtureText
+    }
+    $noclipToolsBaseline = [IO.File]::ReadAllBytes($noclipToolsPath)
     $originalGate = Get-StaticField $commandsType 'OriginalGate'
     $hostGate = Get-StaticField $commandsType 'HostOnlyGate'
     $everyoneGate = Get-StaticField $commandsType 'EveryoneGate'
     $originalClientData = Get-StaticField $commandsType 'OriginalClientData'
     $everyoneClientData = Get-StaticField $commandsType 'EveryoneClientData'
+    $noclipRuntime = Get-StaticField $commandsType 'NoclipRuntime'
+    $noclipMarker = Get-StaticField $commandsType 'NoclipRuntimeMarker'
+    $noclipModuleStream = $assembly.GetManifestResourceStream(
+        'RaidRescue.ScrapLabNoclip.lua')
+    $noclipModuleReader = [IO.StreamReader]::new(
+        $noclipModuleStream, [Text.UTF8Encoding]::new($false, $true))
+    $noclipModuleText = $noclipModuleReader.ReadToEnd()
+    $noclipModuleReader.Dispose()
+    $knownCommandsOriginalHash = Get-StaticField $commandsType 'SurvivalGameOriginal'
+    $knownCommandsHostHash = Get-StaticField $commandsType 'SurvivalGameHostCommandsWithNoclip'
+    $knownCommandsEveryoneHash = Get-StaticField $commandsType 'SurvivalGameEveryoneCommandsWithNoclip'
     Copy-CleanFixture $commandsRelative {
         param($text, $source)
+        $text = Invoke-Static $commandsType 'RemoveNoclipRuntime' $text
         if ($text.Contains($hostGate)) {
             return $text.Replace($hostGate, $originalGate)
         }
@@ -318,9 +349,102 @@ try {
     $commandsHost = Invoke-Static $commandsType 'SetEnabledAt' `
         $fakeGame $backupRoot $true 'host'
     Assert-True $commandsHost.Success 'Developer Commands host install failed.'
+    $commandsHostText = Normalize-Lua ([IO.File]::ReadAllText(
+        (Join-Path $fakeGame $commandsRelative)))
+    Assert-True ($commandsHostText.Contains($noclipRuntime)) `
+        'Developer Commands host install omitted the /noclip runtime.'
+    Assert-True (
+        [regex]::Matches(
+            $commandsHostText,
+            [regex]::Escape($noclipMarker)).Count -eq 2) `
+        'Developer Commands host install duplicated or truncated the /noclip marker pair.'
+    Assert-True ($noclipModuleText.Contains(
+        'sv_scrapLabNoclipInput')) `
+        'Developer Commands host install omitted synchronized noclip movement input.'
+    Assert-True ($noclipModuleText.Contains(
+        'getRelativeMoveDirection()')) `
+        'Developer Commands noclip does not use the engine movement-input vector.'
+    Assert-True (-not $noclipModuleText.Contains(
+        'character:setClimbing( true )')) `
+        'Developer Commands noclip still enables the spring-like climbing controller.'
+    Assert-True ($noclipModuleText.Contains(
+        'character:setTumbling( false )')) `
+        'Developer Commands noclip does not prevent ragdoll state.'
+    Assert-True ($noclipModuleText.Contains(
+        'sm.physics.applyImpulse')) `
+        'Developer Commands noclip does not use smooth free-space flight.'
+    Assert-True ($noclipModuleText.Contains(
+        'function BasePlayer.server_onFixedUpdate')) `
+        'Developer Commands noclip physics is not hosted by the world-bound player script.'
+    $gameClassUpdate = [regex]::Match(
+        $noclipModuleText,
+        '(?s)function SurvivalGame\.sv_scrapLabUpdateNoclip.*?local ScrapLabOriginalServerFixedUpdate').Value
+    Assert-True (-not $gameClassUpdate.Contains('sm.physics.applyImpulse')) `
+        'Developer Commands still calls world-dependent physics from SurvivalGame.'
+    Assert-True ($noclipModuleText.Contains(
+        'height * ScrapLabNoclipSweepScale')) `
+        'Developer Commands noclip movement sweep can still catch ordinary floor contact.'
+    Assert-True ($noclipModuleText.Contains(
+        'ScrapLabNoclipTargetResponse')) `
+        'Developer Commands noclip does not smooth target acceleration.'
+    Assert-True ($noclipModuleText.Contains(
+        'ScrapLabNoclipMaximumDeltaVelocity')) `
+        'Developer Commands noclip does not cap per-tick physics correction.'
+    Assert-True (-not $noclipModuleText.Contains(
+        'sm.localPlayer.getMouseDelta()')) `
+        'Developer Commands noclip still contains custom inverted mouse math.'
+    Assert-True (-not $noclipModuleText.Contains(
+        'ScrapLabNoclipProbeHeight')) `
+        'Developer Commands noclip still uses the airborne input probe.'
+    Assert-True (-not $noclipModuleText.Contains(
+        'sm.camera.setDirection')) `
+        'Developer Commands noclip still overrides the normal mouse camera.'
+    Assert-True (-not $noclipModuleText.Contains(
+        'sm.localPlayer.setLockedControls')) `
+        'Developer Commands noclip still locks the normal player controls.'
+    Assert-True (Test-Path -LiteralPath (
+        Join-Path $fakeGame $noclipModuleRelative)) `
+        'Developer Commands did not install Scripts/ScrapLab/Noclip.lua.'
+    Assert-True (Test-Path -LiteralPath (
+        Join-Path $fakeGame $noclipInputRelative)) `
+        'Developer Commands did not install the isolated input ToolClass.'
+    Assert-True ([IO.File]::ReadAllText(
+        (Join-Path $fakeGame $noclipInputRelative)).Contains(
+            'isSprinting()')) `
+        'Developer Commands input tool does not report the Shift sprint state.'
+    Assert-True ([IO.File]::ReadAllText($noclipToolsPath).Contains(
+        'ScrapLabNoclipInputTool')) `
+        'Developer Commands did not register the hidden ScrapLab input tool.'
+    $toolJsonWithoutComments = ([IO.File]::ReadAllLines(
+        $noclipToolsPath) | Where-Object {
+            -not $_.TrimStart().StartsWith('//')
+        }) -join "`n"
+    try {
+        $null = $toolJsonWithoutComments | ConvertFrom-Json
+    }
+    catch {
+        throw 'Developer Commands produced invalid tools.json: ' +
+            $_.Exception.Message
+    }
+    $noclipInstalledEntry = Get-StaticField $noclipAssetsType 'InstalledEntry'
+    Assert-True ((Normalize-Lua ([IO.File]::ReadAllText(
+        $noclipToolsPath))).Contains($noclipInstalledEntry)) `
+        'Developer Commands input-tool registration does not match its protected descriptor.'
     $commandsEveryone = Invoke-Static $commandsType 'SetEnabledAt' `
         $fakeGame $backupRoot $true 'everyone'
-    Assert-True $commandsEveryone.Success 'Developer Commands mode switch failed.'
+    Assert-True $commandsEveryone.Success (
+        'Developer Commands mode switch failed: ' + $commandsEveryone.Error)
+    $commandsEveryoneText = Normalize-Lua ([IO.File]::ReadAllText(
+        (Join-Path $fakeGame $commandsRelative)))
+    Assert-True ($commandsEveryoneText.Contains($noclipRuntime)) `
+        'Developer Commands mode switch removed the /noclip runtime.'
+    Assert-True ($noclipModuleText.Contains('/fly')) `
+        'Developer Commands installed runtime does not bind /fly.'
+    Assert-True (-not $noclipModuleText.Contains('"/noclip"')) `
+        'Developer Commands still exposes the old /noclip command.'
+    Assert-True ($noclipModuleText.Contains(
+        'ScrapLabNoclipSprintSpeed = 36')) `
+        'Developer Commands does not provide the faster Shift flight speed.'
     $commandsRemove = Invoke-Static $commandsType 'SetEnabledAt' `
         $fakeGame $backupRoot $false 'host'
     Assert-True $commandsRemove.Success 'Developer Commands adaptive removal failed.'
@@ -329,6 +453,187 @@ try {
             [byte[]]$baseline[$commandsRelative],
             [byte[]][IO.File]::ReadAllBytes((Join-Path $fakeGame $commandsRelative)))) `
         'Developer Commands exact adaptive restore failed.'
+    Assert-True ([Linq.Enumerable]::SequenceEqual(
+        [byte[]]$noclipToolsBaseline,
+        [byte[]][IO.File]::ReadAllBytes($noclipToolsPath))) `
+        'Developer Commands removal did not restore tools.json exactly.'
+    Assert-True (-not (Test-Path -LiteralPath (
+        Join-Path $fakeGame $noclipModuleRelative))) `
+        'Developer Commands removal left Noclip.lua installed.'
+    Assert-True (-not (Test-Path -LiteralPath (
+        Join-Path $fakeGame $noclipInputRelative))) `
+        'Developer Commands removal left NoclipInputTool.lua installed.'
+
+    $liveLegacyModule = Join-Path $liveGame $noclipModuleRelative
+    $liveLegacyInput = Join-Path $liveGame $noclipInputRelative
+    if (Test-Path -LiteralPath $liveLegacyModule) {
+        $legacyModuleHash = Get-Sha256 $liveLegacyModule
+        $knownLegacyModuleHashes = @(
+            (Get-StaticField $noclipAssetsType 'LegacyV4ModuleHash'),
+            (Get-StaticField $noclipAssetsType 'LegacyV5ModuleHash'),
+            (Get-StaticField $noclipAssetsType 'LegacyV6ModuleHash')
+        )
+        if ($knownLegacyModuleHashes -contains $legacyModuleHash) {
+            $legacyAssetInstall = Invoke-Static $commandsType 'SetEnabledAt' `
+                $fakeGame $backupRoot $true 'host'
+            Assert-True $legacyAssetInstall.Success `
+                'Developer Commands legacy-module setup failed.'
+            Copy-Item -LiteralPath $liveLegacyModule `
+                -Destination (Join-Path $fakeGame $noclipModuleRelative) -Force
+            if (Test-Path -LiteralPath $liveLegacyInput) {
+                Copy-Item -LiteralPath $liveLegacyInput `
+                    -Destination (Join-Path $fakeGame $noclipInputRelative) -Force
+            }
+            $legacyAssetUpgrade = Invoke-Static $commandsType 'SetEnabledAt' `
+                $fakeGame $backupRoot $true 'host'
+            Assert-True $legacyAssetUpgrade.Success `
+                'Developer Commands did not accept the verified legacy module upgrade.'
+            Assert-True ([IO.File]::ReadAllText(
+                (Join-Path $fakeGame $noclipModuleRelative)).Contains(
+                    'NOCLIP MODULE v7')) `
+                'Developer Commands did not replace the legacy module with v7.'
+            Assert-True ([IO.File]::ReadAllText(
+                (Join-Path $fakeGame $noclipInputRelative)).Contains(
+                    'isSprinting()')) `
+                'Developer Commands did not upgrade the legacy input tool.'
+            $legacyAssetRemove = Invoke-Static $commandsType 'SetEnabledAt' `
+                $fakeGame $backupRoot $false 'host'
+            Assert-True $legacyAssetRemove.Success `
+                'Developer Commands v7 migration cleanup failed.'
+        }
+    }
+
+    $assetTamperInstall = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true 'host'
+    Assert-True $assetTamperInstall.Success `
+        'Developer Commands asset-tamper setup failed.'
+    $assetTamperModulePath = Join-Path $fakeGame $noclipModuleRelative
+    $verifiedModuleBytes = [IO.File]::ReadAllBytes($assetTamperModulePath)
+    [IO.File]::AppendAllText(
+        $assetTamperModulePath,
+        "`n-- third-party edit`n",
+        [Text.UTF8Encoding]::new($false))
+    $assetTamperMainHash = Get-Sha256 (
+        Join-Path $fakeGame $commandsRelative)
+    $assetTamperToolsHash = Get-Sha256 $noclipToolsPath
+    $assetTamperModuleHash = Get-Sha256 $assetTamperModulePath
+    $assetTamperRemove = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false 'host'
+    Assert-True (-not $assetTamperRemove.Success) `
+        'Developer Commands removal accepted an edited ScrapLab noclip module.'
+    Assert-True ((Get-Sha256 (
+        Join-Path $fakeGame $commandsRelative)) -eq $assetTamperMainHash) `
+        'Rejected noclip-module removal still wrote SurvivalGame.lua.'
+    Assert-True ((Get-Sha256 $noclipToolsPath) -eq $assetTamperToolsHash) `
+        'Rejected noclip-module removal still wrote tools.json.'
+    Assert-True ((Get-Sha256 $assetTamperModulePath) -eq $assetTamperModuleHash) `
+        'Rejected noclip-module removal still wrote the edited module.'
+    [IO.File]::WriteAllBytes($assetTamperModulePath, $verifiedModuleBytes)
+    $assetTamperCleanup = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false 'host'
+    Assert-True $assetTamperCleanup.Success `
+        'Developer Commands asset-tamper cleanup failed.'
+
+    $commandsTamperInstall = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true 'host'
+    Assert-True $commandsTamperInstall.Success `
+        'Developer Commands noclip-tamper setup failed.'
+    $commandsFixturePath = Join-Path $fakeGame $commandsRelative
+    $tamperedCommands = [IO.File]::ReadAllText($commandsFixturePath).Replace(
+        '$SURVIVAL_DATA/Scripts/ScrapLab/Noclip.lua',
+        '$SURVIVAL_DATA/Scripts/ScrapLab/Noclip-edited.lua')
+    [IO.File]::WriteAllText(
+        $commandsFixturePath,
+        $tamperedCommands,
+        [Text.UTF8Encoding]::new($false))
+    $tamperedCommandsHash = Get-Sha256 $commandsFixturePath
+    $commandsTamperRemove = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false 'host'
+    Assert-True (-not $commandsTamperRemove.Success) `
+        'Developer Commands removal accepted an edited /noclip runtime.'
+    Assert-True ((Get-Sha256 $commandsFixturePath) -eq $tamperedCommandsHash) `
+        'Rejected /noclip runtime removal still wrote SurvivalGame.lua.'
+    [IO.File]::WriteAllBytes(
+        $commandsFixturePath,
+        [byte[]]$baseline[$commandsRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'DeveloperCommands'
+
+    $knownCommandsText = Normalize-Lua ([IO.File]::ReadAllText(
+        (Join-Path $liveGame $commandsRelative)))
+    $knownCommandsText = Invoke-Static $commandsType `
+        'RemoveNoclipRuntime' $knownCommandsText
+    $knownCommandsText = $knownCommandsText.Replace(
+        $hostGate, $originalGate).Replace(
+        $everyoneGate, $originalGate).Replace(
+        $everyoneClientData, $originalClientData)
+    Write-Utf8NoBom $commandsFixturePath $knownCommandsText
+    Assert-True ((Get-Sha256 $commandsFixturePath) -eq $knownCommandsOriginalHash) `
+        'Known-file Developer Commands fixture is not the verified original.'
+    $knownHostInstall = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true 'host'
+    Assert-True $knownHostInstall.Success `
+        'Known-file Developer Commands host install failed.'
+    Assert-True ((Get-Sha256 $commandsFixturePath) -eq $knownCommandsHostHash) `
+        'Known-file Developer Commands host output hash is wrong.'
+    $knownEveryoneInstall = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true 'everyone'
+    Assert-True $knownEveryoneInstall.Success `
+        'Known-file Developer Commands Every Player switch failed.'
+    Assert-True ((Get-Sha256 $commandsFixturePath) -eq $knownCommandsEveryoneHash) `
+        'Known-file Developer Commands Every Player output hash is wrong.'
+    $knownCommandsRemove = Invoke-Static $commandsType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false 'host'
+    Assert-True $knownCommandsRemove.Success `
+        'Known-file Developer Commands removal failed.'
+    Assert-True ((Get-Sha256 $commandsFixturePath) -eq $knownCommandsOriginalHash) `
+        'Known-file Developer Commands removal did not restore the verified original.'
+    [IO.File]::WriteAllBytes(
+        $commandsFixturePath,
+        [byte[]]$baseline[$commandsRelative])
+
+    $legacyCommandsText = Normalize-Lua ([IO.File]::ReadAllText(
+        (Join-Path $liveGame $commandsRelative)))
+    $legacyMarker = if ($legacyCommandsText.Contains(
+        'SCRAPLAB DEVELOPER COMMANDS NOCLIP v3')) {
+        'SCRAPLAB DEVELOPER COMMANDS NOCLIP v3'
+    }
+    elseif ($legacyCommandsText.Contains(
+        'SCRAPLAB DEVELOPER COMMANDS NOCLIP v2')) {
+        'SCRAPLAB DEVELOPER COMMANDS NOCLIP v2'
+    }
+    elseif ($legacyCommandsText.Contains(
+        'SCRAPLAB DEVELOPER COMMANDS NOCLIP v1')) {
+        'SCRAPLAB DEVELOPER COMMANDS NOCLIP v1'
+    }
+    else { $null }
+    if ($null -ne $legacyMarker) {
+        Write-Utf8NoBom $commandsFixturePath $legacyCommandsText
+        $legacyCommandsUpgrade = Invoke-Static $commandsType 'SetEnabledAt' `
+            $fakeGame $backupRoot $true 'host'
+        Assert-True $legacyCommandsUpgrade.Success `
+            'Legacy Developer Commands noclip upgrade failed.'
+        $legacyUpgradedText = Normalize-Lua ([IO.File]::ReadAllText(
+            $commandsFixturePath))
+        Assert-True ($legacyUpgradedText.Contains($noclipRuntime)) `
+            'Legacy Developer Commands upgrade did not install noclip v4.'
+        Assert-True (-not $legacyUpgradedText.Contains(
+            $legacyMarker)) `
+            'Legacy Developer Commands upgrade left the old noclip runtime installed.'
+        Assert-True ((Get-Sha256 $commandsFixturePath) -eq $knownCommandsHostHash) `
+            'Legacy Developer Commands upgrade produced the wrong host hash.'
+        $legacyCommandsRemove = Invoke-Static $commandsType 'SetEnabledAt' `
+            $fakeGame $backupRoot $false 'host'
+        Assert-True $legacyCommandsRemove.Success `
+            'Upgraded legacy Developer Commands removal failed.'
+        Assert-True ((Get-Sha256 $commandsFixturePath) -eq $knownCommandsOriginalHash) `
+            'Upgraded legacy Developer Commands removal did not restore the original.'
+    }
+    else {
+        Write-Output 'Legacy noclip live fixture unavailable; migration fixture skipped.'
+    }
+    [IO.File]::WriteAllBytes(
+        $commandsFixturePath,
+        [byte[]]$baseline[$commandsRelative])
 
     $revivalInstall = Invoke-Static $revivalType 'SetEnabledAt' `
         $fakeGame $backupRoot $true

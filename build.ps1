@@ -4,6 +4,17 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $source = Join-Path $root "source"
 $output = Join-Path $root "dist"
 
+function Get-SourcePath([string]$RelativePath) {
+    $path = Join-Path $source $RelativePath
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "A required source file is missing: $RelativePath"
+    }
+    return $path
+}
+
+$manifest = Get-SourcePath "Assets\app.manifest"
+$icon = Get-SourcePath "Assets\ScrapLab.ico"
+
 $compilerCandidates = @(
     (Join-Path $env:WINDIR "Microsoft.NET\Framework64\v4.0.30319\csc.exe"),
     (Join-Path $env:WINDIR "Microsoft.NET\Framework\v4.0.30319\csc.exe")
@@ -20,34 +31,34 @@ if (-not $compiler) {
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 
 $mainSources = @(
-    "Program.cs",
-    "ProductPaths.cs",
-    "Models.cs",
-    "LuaStorage.cs",
-    "WorldStorage.cs",
-    "SqliteNative.cs",
-    "PerformanceScanner.cs",
-    "PerformanceHotspotRanker.cs",
-    "PerformanceScanOperationManager.cs",
-    "PerformanceReportExporter.cs",
-    "ItemCatalog.cs",
-    "GameInstallLocator.cs",
-    "RaidService.cs",
-    "PatchHelperProtocol.cs",
-    "CompanionSecurity.cs",
-    "PatchHelperClient.cs",
-    "AppUpdateService.cs",
-    "UiHtml.cs",
-    "AssemblyInfo.cs"
-) | ForEach-Object { Join-Path $source $_ }
+    "App\Program.cs",
+    "App\UiHtml.cs",
+    "App\AppUpdateService.cs",
+    "App\PatchHelperClient.cs",
+    "App\AssemblyInfo.cs",
+    "Shared\ProductPaths.cs",
+    "Shared\Models.cs",
+    "Shared\GameInstallLocator.cs",
+    "Shared\PatchHelperProtocol.cs",
+    "Shared\CompanionSecurity.cs",
+    "World\LuaStorage.cs",
+    "World\WorldStorage.cs",
+    "World\SqliteNative.cs",
+    "World\ItemCatalog.cs",
+    "World\RaidService.cs",
+    "Performance\PerformanceScanner.cs",
+    "Performance\PerformanceHotspotRanker.cs",
+    "Performance\PerformanceScanOperationManager.cs",
+    "Performance\PerformanceReportExporter.cs"
+) | ForEach-Object { Get-SourcePath $_ }
 
 & $compiler `
     /nologo `
     /target:winexe `
     /platform:anycpu `
     /optimize+ `
-    "/win32manifest:$source\app.manifest" `
-    "/win32icon:$source\ScrapLab.ico" `
+    "/win32manifest:$manifest" `
+    "/win32icon:$icon" `
     "/out:$output\ScrapLab.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
@@ -60,24 +71,30 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $patchSources = @(
-    "PatchHelperProgram.cs",
-    "ProductPaths.cs",
-    "PatchHelperProtocol.cs",
-    "CompanionSecurity.cs",
-    "Models.cs",
-    "GamePatchService.cs",
-    "RevivalBuffPatchService.cs",
-    "AdaptivePatchSupport.cs",
-    "PatchHelperAssemblyInfo.cs"
-) | ForEach-Object { Join-Path $source $_ }
+    "Companions\PatchHelper\PatchHelperProgram.cs",
+    "Companions\PatchHelper\PatchHelperAssemblyInfo.cs",
+    "Shared\ProductPaths.cs",
+    "Shared\PatchHelperProtocol.cs",
+    "Shared\CompanionSecurity.cs",
+    "Shared\Models.cs",
+    "Patching\GamePatchService.cs",
+    "Patching\NoclipAssetSupport.cs",
+    "Patching\RevivalBuffPatchService.cs",
+    "Patching\AdaptivePatchSupport.cs"
+) | ForEach-Object { Get-SourcePath $_ }
+
+$noclipModule = Get-SourcePath "Patching\Scripts\ScrapLabNoclip.lua"
+$noclipInputTool = Get-SourcePath "Patching\Scripts\ScrapLabNoclipInputTool.lua"
 
 & $compiler `
     /nologo `
     /target:exe `
     /platform:anycpu `
     /optimize+ `
-    "/win32manifest:$source\app.manifest" `
-    "/win32icon:$source\ScrapLab.ico" `
+    "/win32manifest:$manifest" `
+    "/win32icon:$icon" `
+    "/resource:$noclipModule,RaidRescue.ScrapLabNoclip.lua" `
+    "/resource:$noclipInputTool,RaidRescue.ScrapLabNoclipInputTool.lua" `
     "/out:$output\ScrapLab.PatchHelper.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
@@ -90,19 +107,19 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $updaterSources = @(
-    "UpdaterProgram.cs",
-    "ProductPaths.cs",
-    "CompanionSecurity.cs",
-    "UpdaterAssemblyInfo.cs"
-) | ForEach-Object { Join-Path $source $_ }
+    "Companions\Updater\UpdaterProgram.cs",
+    "Companions\Updater\UpdaterAssemblyInfo.cs",
+    "Shared\ProductPaths.cs",
+    "Shared\CompanionSecurity.cs"
+) | ForEach-Object { Get-SourcePath $_ }
 
 & $compiler `
     /nologo `
     /target:winexe `
     /platform:anycpu `
     /optimize+ `
-    "/win32manifest:$source\app.manifest" `
-    "/win32icon:$source\ScrapLab.ico" `
+    "/win32manifest:$manifest" `
+    "/win32icon:$icon" `
     "/out:$output\ScrapLab.Updater.exe" `
     /reference:System.Core.dll `
     $updaterSources
@@ -144,7 +161,7 @@ foreach ($name in $builtFiles) {
     Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
 }
 
-$version = "2.0.0"
+$version = "2.0.1"
 $releaseRoot = Join-Path $root "release"
 $bundle = Join-Path $releaseRoot "ScrapLab-$version"
 New-Item -ItemType Directory -Path $bundle -Force | Out-Null

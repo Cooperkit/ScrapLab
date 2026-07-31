@@ -5014,6 +5014,495 @@ namespace RaidRescue
             "540604098ED587EA50EE392C28FC1FCB331ACA189BB46332250BE2DB3E8B9C34";
         private const string SurvivalGameEveryoneCommands =
             "6078F8982DA46CCDA2F809C2F4D0D57611E341DBFDA22CF0C5B587A4E2C389D9";
+        private const string SurvivalGameHostCommandsWithNoclipV1 =
+            "10D60BAC84061D9AB3E2599B4DDABBBF2E8B402F86017572AC5287BE1F9AD93F";
+        private const string SurvivalGameEveryoneCommandsWithNoclipV1 =
+            "D430763833114D990CECDDA9CC38A7E86DF07DB6AFEEAF1080900EC9F64AE43D";
+        private const string SurvivalGameHostCommandsWithNoclipV2 =
+            "83D8712594356BD842DBE48CB3DBB5951CAA90A17ADDC378D085C94B4AC7F69A";
+        private const string SurvivalGameEveryoneCommandsWithNoclipV2 =
+            "177438542AC623D14148B7CBCF99FD1A9DA9E63330B6164CE5D1329ABCBB813E";
+        private const string SurvivalGameHostCommandsWithNoclipV3 =
+            "5C3BA2745273F339B5F1B0B34D1AF52605CCBDD8F9627EB130BDB83B35F69B19";
+        private const string SurvivalGameEveryoneCommandsWithNoclipV3 =
+            "E57CF4FE4B2B50B999BFB8368A327C560844C94CBF6678E6BC9851E27DD3850C";
+        private const string SurvivalGameHostCommandsWithNoclip =
+            "5CB0572E71AAB8630AD0CF9EBC5B7B15AE17819731A662B7BEC0F8FB48447302";
+        private const string SurvivalGameEveryoneCommandsWithNoclip =
+            "98811D8C2F1EAA6F00E8CD14D48632F62011B50F7A7FDD112124893371DC1563";
+        private const string NoclipRuntimeMarker =
+            "SCRAPLAB DEVELOPER COMMANDS NOCLIP v4";
+        private const string LegacyNoclipRuntimeMarker =
+            "SCRAPLAB DEVELOPER COMMANDS NOCLIP v1";
+        private const string LegacyNoclipRuntimeHash =
+            "67BD272F5F04CC6BFAEC0043BFBBE7C5A1B6CFAE1FB3819D4862C4C168460407";
+        private const string LegacyV2NoclipRuntimeMarker =
+            "SCRAPLAB DEVELOPER COMMANDS NOCLIP v2";
+        private const string LegacyV2NoclipRuntimeHash =
+            "BD8D9D2F5C80DF0690DDA8FEBA93542FD0654264408DB4F5EECB819EFCBA8C6A";
+        private const string LegacyV3NoclipRuntimeMarker =
+            "SCRAPLAB DEVELOPER COMMANDS NOCLIP v3";
+        private const string LegacyV3NoclipRuntimeHash =
+            "5555C1DD2E6F585D3F6402D8F406A4A9A3C1FC2E6ECDB18A58DB48F0FA6DBCDC";
+        private static readonly string LegacyV2NoclipRuntime = "\n" + String.Join("\n", new[]
+        {
+            "-- SCRAPLAB DEVELOPER COMMANDS NOCLIP v2",
+            "-- Camera-driven collision bypass for privileged Survival chat commands.",
+            "local ScrapLabNoclipEyeHeight = 0.7",
+            "local ScrapLabNoclipSyncTicks = 4",
+            "local ScrapLabNoclipUp = sm.vec3.new( 0, 0, 1 )",
+            "",
+            "local function scrapLabHasNoclipPlayers( players )",
+            "\treturn players ~= nil and next( players ) ~= nil",
+            "end",
+            "",
+            "local function scrapLabSafeDirection( direction, fallback )",
+            "\tif direction and direction:length2() > 0.0001 then",
+            "\t\treturn direction:normalize()",
+            "\tend",
+            "\treturn fallback or sm.vec3.new( 0, 1, 0 )",
+            "end",
+            "",
+            "local ScrapLabOriginalServerOnCreate = SurvivalGame.server_onCreate",
+            "function SurvivalGame.server_onCreate( self )",
+            "\tScrapLabOriginalServerOnCreate( self )",
+            "\tself.sv.scrapLabNoclipPlayers = {}",
+            "\tself.sv.scrapLabNoclipGodBase = nil",
+            "end",
+            "",
+            "local ScrapLabOriginalClientOnCreate = SurvivalGame.client_onCreate",
+            "function SurvivalGame.client_onCreate( self )",
+            "\tScrapLabOriginalClientOnCreate( self )",
+            "\tself.cl.scrapLabNoclip = nil",
+            "end",
+            "",
+            "local ScrapLabOriginalBindChatCommands = SurvivalGame.bindChatCommands",
+            "function SurvivalGame.bindChatCommands( self )",
+            "\tScrapLabOriginalBindChatCommands( self )",
+            "\tif sm.isHost or g_survivalDev then",
+            "\t\tsm.game.bindChatCommand( \"/noclip\", {}, \"cl_onChatCommand\", \"Toggle collision-free flight and temporary god mode\" )",
+            "\tend",
+            "end",
+            "",
+            "local ScrapLabOriginalClientChatCommand = SurvivalGame.cl_onChatCommand",
+            "function SurvivalGame.cl_onChatCommand( self, params )",
+            "\tif params[1] == \"/noclip\" then",
+            "\t\tlocal direction = sm.camera.getDirection()",
+            "\t\tself.network:sendToServer( \"sv_scrapLabToggleNoclip\", { direction = direction } )",
+            "\t\treturn",
+            "\tend",
+            "\tScrapLabOriginalClientChatCommand( self, params )",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabRestoreGodMode( self )",
+            "\tif not scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) then",
+            "\t\tif self.sv.scrapLabNoclipGodBase ~= nil then",
+            "\t\t\tg_godMode = self.sv.scrapLabNoclipGodBase",
+            "\t\tend",
+            "\t\tself.sv.scrapLabNoclipGodBase = nil",
+            "\tend",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabStopNoclip( self, player, moveToTarget, notifyClient )",
+            "\tlocal entries = self.sv.scrapLabNoclipPlayers",
+            "\tlocal entry = entries and entries[player.id]",
+            "\tif not entry then return end",
+            "\tlocal character = player:getCharacter()",
+            "\tif character and sm.exists( character ) then",
+            "\t\tif moveToTarget and character == entry.character and character:getWorld() == entry.world then",
+            "\t\t\tcharacter:setWorldPosition( entry.position - ScrapLabNoclipUp * ScrapLabNoclipEyeHeight )",
+            "\t\tend",
+            "\tend",
+            "\tentries[player.id] = nil",
+            "\tself:sv_scrapLabRestoreGodMode()",
+            "\tif notifyClient then",
+            "\t\tself.network:sendToClient( player, \"cl_scrapLabNoclipState\", { enabled = false } )",
+            "\tend",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabToggleNoclip( self, params, player )",
+            "\tlocal character = player and player:getCharacter()",
+            "\tif not character or not sm.exists( character ) then return end",
+            "\tself.sv.scrapLabNoclipPlayers = self.sv.scrapLabNoclipPlayers or {}",
+            "\tlocal entry = self.sv.scrapLabNoclipPlayers[player.id]",
+            "\tif entry then",
+            "\t\tif character ~= entry.character or character:getWorld() ~= entry.world then",
+            "\t\t\tself:sv_scrapLabStopNoclip( player, false, true )",
+            "\t\t\treturn",
+            "\t\tend",
+            "\t\tlocal feet = entry.position - ScrapLabNoclipUp * ScrapLabNoclipEyeHeight",
+            "\t\tlocal radius = character:getRadius()",
+            "\t\tlocal height = character:getHeight()",
+            "\t\tlocal castHeight = math.max( height - 2 * radius, 0.1 )",
+            "\t\tlocal castCenter = feet + ScrapLabNoclipUp * ( height * 0.5 )",
+            "\t\tlocal blocked = sm.physics.capsulecast( castCenter, castCenter, radius, castHeight, character, sm.physics.filter.default, entry.world )",
+            "\t\tif blocked then",
+            "\t\t\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: Move clear of solid objects before disabling\" )",
+            "\t\t\treturn",
+            "\t\tend",
+            "\t\tself:sv_scrapLabStopNoclip( player, true, true )",
+            "\t\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: Off\" )",
+            "\t\treturn",
+            "\tend",
+            "",
+            "\tif character:isSeated() or character:isTumbling() or character:isDowned() then",
+            "\t\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: Stand normally before enabling flight\" )",
+            "\t\treturn",
+            "\tend",
+            "\tif not character:isOnGround() then",
+            "\t\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: Stand on solid ground before enabling flight\" )",
+            "\t\treturn",
+            "\tend",
+            "",
+            "\tif not scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) then",
+            "\t\tself.sv.scrapLabNoclipGodBase = g_godMode == true",
+            "\tend",
+            "\tg_godMode = true",
+            "\tlocal direction = scrapLabSafeDirection( params and params.direction, character:getDirection() )",
+            "\tlocal anchor = character:getWorldPosition()",
+            "\tlocal position = anchor + ScrapLabNoclipUp * ScrapLabNoclipEyeHeight",
+            "\tself.sv.scrapLabNoclipPlayers[player.id] = {",
+            "\t\tplayer = player, character = character, world = character:getWorld(),",
+            "\t\tposition = position, anchor = anchor, direction = direction, move = sm.vec3.zero(), syncTicks = 0",
+            "\t}",
+            "\tself.network:sendToClient( player, \"cl_scrapLabNoclipState\", { enabled = true, position = position, direction = direction } )",
+            "\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: On - use movement keys and look where you want to fly\" )",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabNoclipInput( self, params, player )",
+            "\tlocal entry = self.sv.scrapLabNoclipPlayers and self.sv.scrapLabNoclipPlayers[player.id]",
+            "\tif entry then",
+            "\t\tentry.direction = scrapLabSafeDirection( params and params.direction, entry.direction )",
+            "\t\tlocal move = params and params.move or sm.vec3.zero()",
+            "\t\tmove = sm.vec3.new( move.x, move.y, 0 )",
+            "\t\tif move:length2() > 400 then move = move:normalize() * 20 end",
+            "\t\tentry.move = move",
+            "\tend",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabUpdateNoclip( self, timeStep )",
+            "\tlocal entries = self.sv.scrapLabNoclipPlayers",
+            "\tif not scrapLabHasNoclipPlayers( entries ) then return end",
+            "\tg_godMode = true",
+            "\tlocal stopped = {}",
+            "\tfor playerId, entry in pairs( entries ) do",
+            "\t\tlocal player = entry.player",
+            "\t\tlocal character = player and player:getCharacter()",
+            "\t\tif not character or not sm.exists( character ) or character ~= entry.character or character:getWorld() ~= entry.world then",
+            "\t\t\tstopped[#stopped + 1] = player",
+            "\t\telse",
+            "\t\t\tlocal direction = scrapLabSafeDirection( entry.direction, character:getDirection() )",
+            "\t\t\tlocal flatForward = sm.vec3.new( direction.x, direction.y, 0 )",
+            "\t\t\tflatForward = scrapLabSafeDirection( flatForward, sm.vec3.new( 0, 1, 0 ) )",
+            "\t\t\tlocal right = sm.vec3.new( flatForward.y, -flatForward.x, 0 )",
+            "\t\t\tlocal move = entry.move or sm.vec3.zero()",
+            "\t\t\tlocal travelVelocity = direction * move:dot( flatForward ) + right * move:dot( right )",
+            "\t\t\tentry.position = entry.position + travelVelocity * timeStep",
+            "\t\t\tcharacter:setWorldPosition( entry.anchor )",
+            "\t\t\tentry.syncTicks = entry.syncTicks + 1",
+            "\t\t\tif entry.syncTicks >= ScrapLabNoclipSyncTicks then",
+            "\t\t\t\tentry.syncTicks = 0",
+            "\t\t\t\tself.network:sendToClient( player, \"cl_scrapLabNoclipSync\", entry.position )",
+            "\t\t\tend",
+            "\t\tend",
+            "\tend",
+            "\tfor _, player in ipairs( stopped ) do",
+            "\t\tif player then self:sv_scrapLabStopNoclip( player, false, true ) end",
+            "\tend",
+            "end",
+            "",
+            "local ScrapLabOriginalServerFixedUpdate = SurvivalGame.server_onFixedUpdate",
+            "function SurvivalGame.server_onFixedUpdate( self, timeStep )",
+            "\tScrapLabOriginalServerFixedUpdate( self, timeStep )",
+            "\tself:sv_scrapLabUpdateNoclip( timeStep )",
+            "end",
+            "",
+            "function SurvivalGame.cl_scrapLabNoclipState( self, data )",
+            "\tlocal localPlayer = sm.localPlayer.getPlayer()",
+            "\tlocal character = localPlayer and localPlayer:getCharacter()",
+            "\tif data.enabled then",
+            "\t\tif character and sm.exists( character ) then character:setVisible( false ) end",
+            "\t\tself.cl.scrapLabNoclip = { position = data.position, correction = data.position, direction = scrapLabSafeDirection( data.direction, sm.camera.getDirection() ), aimTimer = 0 }",
+            "\telse",
+            "\t\tif character and sm.exists( character ) then character:setVisible( true ) end",
+            "\t\tself.cl.scrapLabNoclip = nil",
+            "\t\tsm.camera.setCameraState( sm.camera.state.default )",
+            "\t\tsm.localPlayer.setLockedControls( false )",
+            "\tend",
+            "end",
+            "",
+            "function SurvivalGame.cl_scrapLabNoclipSync( self, position )",
+            "\tif self.cl.scrapLabNoclip then self.cl.scrapLabNoclip.correction = position end",
+            "end",
+            "",
+            "function SurvivalGame.cl_scrapLabUpdateNoclip( self, dt )",
+            "\tlocal state = self.cl.scrapLabNoclip",
+            "\tif not state then return end",
+            "\tlocal player = sm.localPlayer.getPlayer()",
+            "\tlocal character = player and player:getCharacter()",
+            "\tif not character then return end",
+            "",
+            "\tstate.direction = scrapLabSafeDirection( sm.localPlayer.getDirection(), state.direction )",
+            "\tlocal velocity = character:getVelocity()",
+            "\tlocal flatVelocity = sm.vec3.new( velocity.x, velocity.y, 0 )",
+            "\tif flatVelocity:length2() > 400 then flatVelocity = flatVelocity:normalize() * 20 end",
+            "\tlocal flatForward = sm.vec3.new( state.direction.x, state.direction.y, 0 )",
+            "\tflatForward = scrapLabSafeDirection( flatForward, sm.vec3.new( 0, 1, 0 ) )",
+            "\tlocal right = sm.vec3.new( flatForward.y, -flatForward.x, 0 )",
+            "\tlocal predictedVelocity = state.direction * flatVelocity:dot( flatForward ) + right * flatVelocity:dot( right )",
+            "\tstate.position = state.position + predictedVelocity * dt",
+            "\tif state.correction then",
+            "\t\tlocal error = state.correction - state.position",
+            "\t\tif error:length2() > 9 then",
+            "\t\t\tstate.position = state.correction",
+            "\t\telse",
+            "\t\t\tstate.position = state.position + error * math.min( dt * 8, 1 )",
+            "\t\tend",
+            "\tend",
+            "",
+            "\tstate.aimTimer = state.aimTimer + dt",
+            "\tif state.aimTimer >= 0.05 then",
+            "\t\tstate.aimTimer = 0",
+            "\t\tself.network:sendToServer( \"sv_scrapLabNoclipInput\", { direction = state.direction, move = flatVelocity } )",
+            "\tend",
+            "\tsm.camera.setCameraState( sm.camera.state.cutsceneFP )",
+            "\tsm.camera.setPosition( state.position )",
+            "\tsm.camera.setDirection( state.direction )",
+            "\tsm.camera.setFov( sm.camera.getDefaultFov() )",
+            "end",
+            "",
+            "local ScrapLabOriginalClientUpdate = SurvivalGame.client_onUpdate",
+            "function SurvivalGame.client_onUpdate( self, dt )",
+            "\tScrapLabOriginalClientUpdate( self, dt )",
+            "\tself:cl_scrapLabUpdateNoclip( dt )",
+            "end",
+            "",
+            "local ScrapLabOriginalServerPlayerLeft = SurvivalGame.server_onPlayerLeft",
+            "function SurvivalGame.server_onPlayerLeft( self, player )",
+            "\tif self.sv.scrapLabNoclipPlayers and self.sv.scrapLabNoclipPlayers[player.id] then",
+            "\t\tself:sv_scrapLabStopNoclip( player, false, false )",
+            "\tend",
+            "\tScrapLabOriginalServerPlayerLeft( self, player )",
+            "end",
+            "",
+            "local ScrapLabOriginalServerOnDestroy = SurvivalGame.server_onDestroy",
+            "function SurvivalGame.server_onDestroy( self )",
+            "\tif scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) and self.sv.scrapLabNoclipGodBase ~= nil then",
+            "\t\tg_godMode = self.sv.scrapLabNoclipGodBase",
+            "\tend",
+            "\tScrapLabOriginalServerOnDestroy( self )",
+            "end",
+            "-- END SCRAPLAB DEVELOPER COMMANDS NOCLIP v2",
+            ""
+        });
+        private static readonly string LegacyV3NoclipRuntime = "\n" + String.Join("\n", new[]
+        {
+            "-- SCRAPLAB DEVELOPER COMMANDS NOCLIP v3",
+            "-- Engine-input flight using the always-present Survival Lift tool; the normal camera remains untouched.",
+            "local ScrapLabNoclipUp = sm.vec3.new( 0, 0, 1 )",
+            "",
+            "local function scrapLabHasNoclipPlayers( players )",
+            "\treturn players ~= nil and next( players ) ~= nil",
+            "end",
+            "",
+            "local function scrapLabSafeDirection( direction, fallback )",
+            "\tif direction and direction:length2() > 0.0001 then return direction:normalize() end",
+            "\treturn fallback or sm.vec3.new( 0, 1, 0 )",
+            "end",
+            "",
+            "local function scrapLabInstallLiftInputBridge()",
+            "\tif SurvivalLift == nil or SurvivalLift.client_onUpdate == nil then return false end",
+            "\tif g_scrapLabNoclipLiftClass == SurvivalLift and SurvivalLift.client_onUpdate == g_scrapLabNoclipLiftWrapper then return true end",
+            "\tlocal originalUpdate = SurvivalLift.client_onUpdate",
+            "\tlocal wrapper = function( self, dt )",
+            "\t\toriginalUpdate( self, dt )",
+            "\t\tif self.tool and self.tool:isLocal() then",
+            "\t\t\tg_scrapLabNoclipToolInput = {",
+            "\t\t\t\tmove = self.tool:getRelativeMoveDirection(),",
+            "\t\t\t\tdirection = self.tool:getDirection(),",
+            "\t\t\t\tspeed = self.tool:getMovementSpeedFraction()",
+            "\t\t\t}",
+            "\t\tend",
+            "\tend",
+            "\tg_scrapLabNoclipLiftClass = SurvivalLift",
+            "\tg_scrapLabNoclipLiftWrapper = wrapper",
+            "\tSurvivalLift.client_onUpdate = wrapper",
+            "\treturn true",
+            "end",
+            "",
+            "local ScrapLabOriginalServerOnCreate = SurvivalGame.server_onCreate",
+            "function SurvivalGame.server_onCreate( self )",
+            "\tScrapLabOriginalServerOnCreate( self )",
+            "\tself.sv.scrapLabNoclipPlayers = {}",
+            "\tself.sv.scrapLabNoclipGodBase = nil",
+            "end",
+            "",
+            "local ScrapLabOriginalClientOnCreate = SurvivalGame.client_onCreate",
+            "function SurvivalGame.client_onCreate( self )",
+            "\tScrapLabOriginalClientOnCreate( self )",
+            "\tself.cl.scrapLabNoclip = nil",
+            "\tscrapLabInstallLiftInputBridge()",
+            "end",
+            "",
+            "local ScrapLabOriginalBindChatCommands = SurvivalGame.bindChatCommands",
+            "function SurvivalGame.bindChatCommands( self )",
+            "\tScrapLabOriginalBindChatCommands( self )",
+            "\tif sm.isHost or g_survivalDev then",
+            "\t\tsm.game.bindChatCommand( \"/noclip\", {}, \"cl_onChatCommand\", \"Toggle collision-free flight and temporary god mode\" )",
+            "\tend",
+            "end",
+            "",
+            "local ScrapLabOriginalClientChatCommand = SurvivalGame.cl_onChatCommand",
+            "function SurvivalGame.cl_onChatCommand( self, params )",
+            "\tif params[1] == \"/noclip\" then",
+            "\t\tself.network:sendToServer( \"sv_scrapLabToggleNoclip\" )",
+            "\t\treturn",
+            "\tend",
+            "\tScrapLabOriginalClientChatCommand( self, params )",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabRestoreGodMode( self )",
+            "\tif not scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) then",
+            "\t\tif self.sv.scrapLabNoclipGodBase ~= nil then g_godMode = self.sv.scrapLabNoclipGodBase end",
+            "\t\tself.sv.scrapLabNoclipGodBase = nil",
+            "\tend",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabStopNoclip( self, player, placeCharacter, notifyClient )",
+            "\tlocal entries = self.sv.scrapLabNoclipPlayers",
+            "\tlocal entry = entries and entries[player.id]",
+            "\tif not entry then return end",
+            "\tlocal character = player:getCharacter()",
+            "\tif placeCharacter and character and sm.exists( character ) and character == entry.character and character:getWorld() == entry.world then",
+            "\t\tcharacter:setWorldPosition( entry.position )",
+            "\tend",
+            "\tentries[player.id] = nil",
+            "\tself:sv_scrapLabRestoreGodMode()",
+            "\tif notifyClient then self.network:sendToClient( player, \"cl_scrapLabNoclipState\", false ) end",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabToggleNoclip( self, _, player )",
+            "\tlocal character = player and player:getCharacter()",
+            "\tif not character or not sm.exists( character ) then return end",
+            "\tself.sv.scrapLabNoclipPlayers = self.sv.scrapLabNoclipPlayers or {}",
+            "\tlocal entry = self.sv.scrapLabNoclipPlayers[player.id]",
+            "\tif entry then",
+            "\t\tif character ~= entry.character or character:getWorld() ~= entry.world then",
+            "\t\t\tself:sv_scrapLabStopNoclip( player, false, true )",
+            "\t\t\treturn",
+            "\t\tend",
+            "\t\tlocal radius = character:getRadius()",
+            "\t\tlocal height = character:getHeight()",
+            "\t\tlocal castHeight = math.max( height - 2 * radius, 0.1 )",
+            "\t\tlocal castCenter = entry.position + ScrapLabNoclipUp * ( height * 0.5 )",
+            "\t\tlocal blocked = sm.physics.capsulecast( castCenter, castCenter, radius, castHeight, character, sm.physics.filter.default, entry.world )",
+            "\t\tif blocked then",
+            "\t\t\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: Move clear of solid objects before disabling\" )",
+            "\t\t\treturn",
+            "\t\tend",
+            "\t\tself:sv_scrapLabStopNoclip( player, true, true )",
+            "\t\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: Off\" )",
+            "\t\treturn",
+            "\tend",
+            "\tif character:isSeated() or character:isTumbling() or character:isDowned() then",
+            "\t\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: Stand normally before enabling flight\" )",
+            "\t\treturn",
+            "\tend",
+            "\tif not scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) then self.sv.scrapLabNoclipGodBase = g_godMode == true end",
+            "\tg_godMode = true",
+            "\tself.sv.scrapLabNoclipPlayers[player.id] = {",
+            "\t\tplayer = player, character = character, world = character:getWorld(),",
+            "\t\tposition = character:getWorldPosition(), velocity = sm.vec3.zero()",
+            "\t}",
+            "\tself.network:sendToClient( player, \"cl_scrapLabNoclipState\", true )",
+            "\tself.network:sendToClient( player, \"client_showMessage\", \"NOCLIP: On - WASD flies, mouse aims, sprint increases speed\" )",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabNoclipInput( self, velocity, player )",
+            "\tlocal entry = self.sv.scrapLabNoclipPlayers and self.sv.scrapLabNoclipPlayers[player.id]",
+            "\tif entry and velocity then",
+            "\t\tif velocity:length2() > 400 then velocity = velocity:normalize() * 20 end",
+            "\t\tentry.velocity = velocity",
+            "\tend",
+            "end",
+            "",
+            "function SurvivalGame.sv_scrapLabUpdateNoclip( self, timeStep )",
+            "\tlocal entries = self.sv.scrapLabNoclipPlayers",
+            "\tif not scrapLabHasNoclipPlayers( entries ) then return end",
+            "\tg_godMode = true",
+            "\tlocal stopped = {}",
+            "\tfor _, entry in pairs( entries ) do",
+            "\t\tlocal player = entry.player",
+            "\t\tlocal character = player and player:getCharacter()",
+            "\t\tif not character or not sm.exists( character ) or character ~= entry.character or character:getWorld() ~= entry.world then",
+            "\t\t\tstopped[#stopped + 1] = player",
+            "\t\telse",
+            "\t\t\tentry.position = entry.position + entry.velocity * timeStep",
+            "\t\t\tcharacter:setWorldPosition( entry.position )",
+            "\t\tend",
+            "\tend",
+            "\tfor _, player in ipairs( stopped ) do if player then self:sv_scrapLabStopNoclip( player, false, true ) end end",
+            "end",
+            "",
+            "local ScrapLabOriginalServerFixedUpdate = SurvivalGame.server_onFixedUpdate",
+            "function SurvivalGame.server_onFixedUpdate( self, timeStep )",
+            "\tScrapLabOriginalServerFixedUpdate( self, timeStep )",
+            "\tself:sv_scrapLabUpdateNoclip( timeStep )",
+            "end",
+            "",
+            "function SurvivalGame.cl_scrapLabNoclipState( self, enabled )",
+            "\tself.cl.scrapLabNoclip = enabled and { sendTimer = 0 } or nil",
+            "end",
+            "",
+            "function SurvivalGame.cl_scrapLabUpdateNoclip( self, dt )",
+            "\tscrapLabInstallLiftInputBridge()",
+            "\tlocal state = self.cl.scrapLabNoclip",
+            "\tif not state then return end",
+            "\tlocal input = g_scrapLabNoclipToolInput",
+            "\tif not input or not input.move then return end",
+            "\tlocal move = input.move",
+            "\tif move:length2() > 1 then move = move:normalize() end",
+            "\tlocal direction = scrapLabSafeDirection( input.direction, sm.localPlayer.getDirection() )",
+            "\tlocal flatForward = scrapLabSafeDirection( sm.vec3.new( direction.x, direction.y, 0 ), sm.vec3.new( 0, 1, 0 ) )",
+            "\tlocal right = sm.vec3.new( flatForward.y, -flatForward.x, 0 )",
+            "\tlocal desired = direction * move.y + right * move.x",
+            "\tif desired:length2() > 1 then desired = desired:normalize() end",
+            "\tlocal speedFraction = math.max( math.min( input.speed or 0.5, 1.0 ), 0.25 )",
+            "\tlocal velocity = desired * ( 20 * speedFraction )",
+            "\tstate.sendTimer = state.sendTimer + dt",
+            "\tif state.sendTimer >= 0.025 then",
+            "\t\tstate.sendTimer = 0",
+            "\t\tself.network:sendToServer( \"sv_scrapLabNoclipInput\", velocity )",
+            "\tend",
+            "end",
+            "",
+            "local ScrapLabOriginalClientUpdate = SurvivalGame.client_onUpdate",
+            "function SurvivalGame.client_onUpdate( self, dt )",
+            "\tScrapLabOriginalClientUpdate( self, dt )",
+            "\tself:cl_scrapLabUpdateNoclip( dt )",
+            "end",
+            "",
+            "local ScrapLabOriginalServerPlayerLeft = SurvivalGame.server_onPlayerLeft",
+            "function SurvivalGame.server_onPlayerLeft( self, player )",
+            "\tif self.sv.scrapLabNoclipPlayers and self.sv.scrapLabNoclipPlayers[player.id] then self:sv_scrapLabStopNoclip( player, false, false ) end",
+            "\tScrapLabOriginalServerPlayerLeft( self, player )",
+            "end",
+            "",
+            "local ScrapLabOriginalServerOnDestroy = SurvivalGame.server_onDestroy",
+            "function SurvivalGame.server_onDestroy( self )",
+            "\tif scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) and self.sv.scrapLabNoclipGodBase ~= nil then g_godMode = self.sv.scrapLabNoclipGodBase end",
+            "\tScrapLabOriginalServerOnDestroy( self )",
+            "end",
+            "-- END SCRAPLAB DEVELOPER COMMANDS NOCLIP v3",
+            ""
+        });
+        private static readonly string NoclipRuntime = "\n" + String.Join("\n", new[]
+        {
+            "-- SCRAPLAB DEVELOPER COMMANDS NOCLIP v4",
+            "dofile( \"$SURVIVAL_DATA/Scripts/ScrapLab/Noclip.lua\" )",
+            "-- END SCRAPLAB DEVELOPER COMMANDS NOCLIP v4",
+            ""
+        });
         internal const string HostOnlyMode = "host";
         internal const string EveryoneMode = "everyone";
         private static readonly string SurvivalGameRelativePath = Path.Combine(
@@ -5051,7 +5540,33 @@ namespace RaidRescue
                     throw new FileNotFoundException("SurvivalGame.lua was not found.", path);
 
                 string hash = Sha256(path);
-                if (HashEquals(hash, SurvivalGameHostCommands))
+                if (HashEquals(hash, SurvivalGameHostCommandsWithNoclip) ||
+                    HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclip))
+                {
+                    string assetReason;
+                    if (!NoclipAssetSupport.IsInstalled(gamePath, out assetReason))
+                    {
+                        string applyReason;
+                        bool canApply = NoclipAssetSupport.CanApply(
+                            gamePath, out applyReason);
+                        result.Success = true;
+                        result.Installed = false;
+                        result.Mode = HashEquals(
+                            hash, SurvivalGameEveryoneCommandsWithNoclip)
+                            ? EveryoneMode : HostOnlyMode;
+                        AdaptivePatchSupport.FillResult(
+                            result,
+                            AdaptivePatchSupport.GetSteamBuild(
+                                gamePath, result.GameVersion),
+                            canApply
+                                ? PatchCompatibilityState.CompatibleUpdate
+                                : PatchCompatibilityState.PartialConflict,
+                            true, canApply,
+                            canApply ? assetReason : applyReason);
+                        return result;
+                    }
+                }
+                if (HashEquals(hash, SurvivalGameHostCommandsWithNoclip))
                 {
                     SteamBuildInfo build =
                         AdaptivePatchSupport.GetSteamBuild(
@@ -5073,7 +5588,7 @@ namespace RaidRescue
                         false, true, "Verified ScrapLab host-only file.");
                     return result;
                 }
-                if (HashEquals(hash, SurvivalGameEveryoneCommands))
+                if (HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclip))
                 {
                     SteamBuildInfo build =
                         AdaptivePatchSupport.GetSteamBuild(
@@ -5110,6 +5625,31 @@ namespace RaidRescue
                         false, true, "Verified official file.");
                     return result;
                 }
+                if (HashEquals(hash, SurvivalGameHostCommands) ||
+                    HashEquals(hash, SurvivalGameEveryoneCommands) ||
+                    HashEquals(hash, SurvivalGameHostCommandsWithNoclipV1) ||
+                    HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclipV1) ||
+                    HashEquals(hash, SurvivalGameHostCommandsWithNoclipV2) ||
+                    HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclipV2) ||
+                    HashEquals(hash, SurvivalGameHostCommandsWithNoclipV3) ||
+                    HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclipV3))
+                {
+                    SteamBuildInfo build = AdaptivePatchSupport.GetSteamBuild(
+                        gamePath, result.GameVersion);
+                    result.Success = true;
+                    result.Installed = false;
+                    result.Mode = HashEquals(hash, SurvivalGameEveryoneCommands) ||
+                        HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclipV1) ||
+                        HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclipV2) ||
+                        HashEquals(hash, SurvivalGameEveryoneCommandsWithNoclipV3)
+                        ? EveryoneMode : HostOnlyMode;
+                    AdaptivePatchSupport.FillResult(
+                        result, build,
+                        PatchCompatibilityState.CompatibleUpdate,
+                        true, true,
+                        "Developer Commands are installed, but the improved /fly controls are not. Enable the mod to upgrade them.");
+                    return result;
+                }
                 return GetAdaptiveDeveloperStatus(
                     result, gamePath, path);
             }
@@ -5143,6 +5683,49 @@ namespace RaidRescue
         internal static GamePatchResult SetEnabledAt(
             string gamePath, string backupRoot, bool enabled, string mode)
         {
+            NoclipAssetSupport.NoclipAssetTransaction assets = null;
+            try
+            {
+                assets = NoclipAssetSupport.Prepare(
+                    gamePath, backupRoot, enabled);
+                assets.Apply();
+                GamePatchResult result = SetEnabledCoreAt(
+                    gamePath, backupRoot, enabled, mode);
+                if (!result.Success)
+                {
+                    assets.Rollback();
+                    return result;
+                }
+                if (assets.FilesChanged > 0)
+                {
+                    result.FilesPatched += assets.FilesChanged;
+                    result.Changes.Add(enabled
+                        ? "Installed ScrapLab's isolated noclip module and hidden input tool."
+                        : "Removed ScrapLab's isolated noclip scripts and input-tool registration.");
+                }
+                SecretModBackupRetention.Prune(
+                    backupRoot, "DeveloperCommandsAssets",
+                    assets.BackupPath, result);
+                return result;
+            }
+            catch (Exception exception)
+            {
+                if (assets != null)
+                {
+                    try { assets.Rollback(); }
+                    catch (Exception rollback)
+                    {
+                        return Failure(exception.Message +
+                            " Asset rollback also failed: " + rollback.Message);
+                    }
+                }
+                return Failure(exception.Message);
+            }
+        }
+
+        private static GamePatchResult SetEnabledCoreAt(
+            string gamePath, string backupRoot, bool enabled, string mode)
+        {
             string selectedMode = enabled ? NormalizeMode(mode) : "";
             GamePatchResult result = new GamePatchResult
             {
@@ -5166,8 +5749,8 @@ namespace RaidRescue
                 string desiredHash = !enabled
                     ? SurvivalGameOriginal
                     : (selectedMode == EveryoneMode
-                        ? SurvivalGameEveryoneCommands
-                        : SurvivalGameHostCommands);
+                        ? SurvivalGameEveryoneCommandsWithNoclip
+                        : SurvivalGameHostCommandsWithNoclip);
                 if (HashEquals(currentHash, desiredHash))
                 {
                     SteamBuildInfo build =
@@ -5198,7 +5781,15 @@ namespace RaidRescue
                 bool knownFile =
                     HashEquals(currentHash, SurvivalGameOriginal) ||
                     HashEquals(currentHash, SurvivalGameHostCommands) ||
-                    HashEquals(currentHash, SurvivalGameEveryoneCommands);
+                    HashEquals(currentHash, SurvivalGameEveryoneCommands) ||
+                    HashEquals(currentHash, SurvivalGameHostCommandsWithNoclipV1) ||
+                    HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclipV1) ||
+                    HashEquals(currentHash, SurvivalGameHostCommandsWithNoclipV2) ||
+                    HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclipV2) ||
+                    HashEquals(currentHash, SurvivalGameHostCommandsWithNoclipV3) ||
+                    HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclipV3) ||
+                    HashEquals(currentHash, SurvivalGameHostCommandsWithNoclip) ||
+                    HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclip);
                 if (!knownFile)
                 {
                     return SetAdaptiveDeveloperEnabledAt(
@@ -5212,14 +5803,24 @@ namespace RaidRescue
                 {
                     originalSource = source;
                 }
-                else if (HashEquals(currentHash, SurvivalGameHostCommands))
+                else if (HashEquals(currentHash, SurvivalGameHostCommands) ||
+                         HashEquals(currentHash, SurvivalGameHostCommandsWithNoclipV1) ||
+                         HashEquals(currentHash, SurvivalGameHostCommandsWithNoclipV2) ||
+                         HashEquals(currentHash, SurvivalGameHostCommandsWithNoclipV3) ||
+                         HashEquals(currentHash, SurvivalGameHostCommandsWithNoclip))
                 {
+                    source = RemoveNoclipRuntime(source);
                     originalSource = ReplaceUnique(
                         source, HostOnlyGate, OriginalGate,
                         "Survival developer-command gate");
                 }
-                else if (HashEquals(currentHash, SurvivalGameEveryoneCommands))
+                else if (HashEquals(currentHash, SurvivalGameEveryoneCommands) ||
+                         HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclipV1) ||
+                         HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclipV2) ||
+                         HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclipV3) ||
+                         HashEquals(currentHash, SurvivalGameEveryoneCommandsWithNoclip))
                 {
+                    source = RemoveNoclipRuntime(source);
                     originalSource = ReplaceUnique(
                         source, EveryoneGate, OriginalGate,
                         "Survival developer-command gate");
@@ -5241,6 +5842,7 @@ namespace RaidRescue
                     transformed = ReplaceUnique(
                         originalSource, OriginalGate, HostOnlyGate,
                         "Survival developer-command gate");
+                    transformed = InstallNoclipRuntime(transformed);
                 }
                 else if (enabled && selectedMode == EveryoneMode)
                 {
@@ -5250,6 +5852,7 @@ namespace RaidRescue
                     transformed = ReplaceExactCount(
                         transformed, OriginalClientData, EveryoneClientData, 3,
                         "developer-command client permission broadcasts");
+                    transformed = InstallNoclipRuntime(transformed);
                 }
 
                 string generatedHash = Sha256(Encoding.UTF8.GetBytes(transformed));
@@ -5390,10 +5993,52 @@ namespace RaidRescue
                 document.NormalizedText, OriginalClientData);
             int everyoneBroadcasts = AdaptivePatchSupport.Count(
                 document.NormalizedText, EveryoneClientData);
+            int noclipRuntime = AdaptivePatchSupport.Count(
+                document.NormalizedText, NoclipRuntime);
+            bool noclipMarker = document.NormalizedText.IndexOf(
+                NoclipRuntimeMarker, StringComparison.Ordinal) >= 0;
+            bool legacyNoclipRuntime = GetVerifiedLegacyNoclipRuntime(
+                document.NormalizedText) != null;
+
+            if (noclipRuntime > 1 || (noclipMarker && noclipRuntime != 1))
+            {
+                result.Success = true;
+                result.Installed = false;
+                result.Mode = "";
+                AdaptivePatchSupport.FillResult(
+                    result, build,
+                    PatchCompatibilityState.PartialConflict,
+                    false, false,
+                    "The /noclip runtime is partial, duplicated, or edited.");
+                return result;
+            }
+
+            if (noclipRuntime == 1)
+            {
+                string assetReason;
+                if (!NoclipAssetSupport.IsInstalled(gamePath, out assetReason))
+                {
+                    string applyReason;
+                    bool canApply = NoclipAssetSupport.CanApply(
+                        gamePath, out applyReason);
+                    result.Success = true;
+                    result.Installed = false;
+                    result.Mode = everyoneGate == 1
+                        ? EveryoneMode : HostOnlyMode;
+                    AdaptivePatchSupport.FillResult(
+                        result, build,
+                        canApply
+                            ? PatchCompatibilityState.CompatibleUpdate
+                            : PatchCompatibilityState.PartialConflict,
+                        true, canApply,
+                        canApply ? assetReason : applyReason);
+                    return result;
+                }
+            }
 
             if (hostGate == 1 && originalGate == 0 &&
                 everyoneGate == 0 && originalBroadcasts == 3 &&
-                everyoneBroadcasts == 0)
+                everyoneBroadcasts == 0 && noclipRuntime == 1)
             {
                 if (AdaptivePatchSupport.RequiresBuildRefresh(
                     "DeveloperCommands", build))
@@ -5415,7 +6060,7 @@ namespace RaidRescue
             }
             if (everyoneGate == 1 && originalGate == 0 &&
                 hostGate == 0 && originalBroadcasts == 0 &&
-                everyoneBroadcasts == 3)
+                everyoneBroadcasts == 3 && noclipRuntime == 1)
             {
                 if (AdaptivePatchSupport.RequiresBuildRefresh(
                     "DeveloperCommands", build))
@@ -5437,7 +6082,8 @@ namespace RaidRescue
             }
             if (originalGate == 1 && hostGate == 0 &&
                 everyoneGate == 0 && originalBroadcasts == 3 &&
-                everyoneBroadcasts == 0)
+                everyoneBroadcasts == 0 && noclipRuntime == 0 &&
+                !legacyNoclipRuntime)
             {
                 AdaptivePatchSupport.DiscardReceiptIfSuperseded(
                     "DeveloperCommands", gamePath);
@@ -5456,12 +6102,43 @@ namespace RaidRescue
                 return result;
             }
 
+            bool legacyHost = hostGate == 1 && originalGate == 0 &&
+                everyoneGate == 0 && originalBroadcasts == 3 &&
+                everyoneBroadcasts == 0 && noclipRuntime == 0;
+            bool legacyEveryone = everyoneGate == 1 && originalGate == 0 &&
+                hostGate == 0 && originalBroadcasts == 0 &&
+                everyoneBroadcasts == 3 && noclipRuntime == 0;
+            if (legacyHost || legacyEveryone)
+            {
+                result.Success = true;
+                result.Installed = false;
+                result.Mode = legacyEveryone ? EveryoneMode : HostOnlyMode;
+                AdaptivePatchSupport.FillResult(
+                    result, build,
+                    PatchCompatibilityState.CompatibleUpdate,
+                    true, true,
+                    legacyNoclipRuntime
+                        ? "Developer Commands use a legacy flight runtime. Enable the mod to install the rewritten /fly controls."
+                        : "Developer Commands are installed, but /fly is missing. Enable the mod to upgrade it.");
+                return result;
+            }
+
             bool partial =
                 document.NormalizedText.IndexOf(
                     "RAID RESCUE SECRET MOD",
                     StringComparison.Ordinal) >= 0 ||
                 originalGate + hostGate + everyoneGate > 0 ||
-                originalBroadcasts + everyoneBroadcasts > 0;
+                originalBroadcasts + everyoneBroadcasts > 0 ||
+                noclipMarker ||
+                document.NormalizedText.IndexOf(
+                    LegacyNoclipRuntimeMarker,
+                    StringComparison.Ordinal) >= 0 ||
+                document.NormalizedText.IndexOf(
+                    LegacyV2NoclipRuntimeMarker,
+                    StringComparison.Ordinal) >= 0 ||
+                document.NormalizedText.IndexOf(
+                    LegacyV3NoclipRuntimeMarker,
+                    StringComparison.Ordinal) >= 0;
             result.Success = true;
             result.Installed = false;
             result.Mode = "";
@@ -5499,10 +6176,18 @@ namespace RaidRescue
                 document.NormalizedText, OriginalClientData);
             int everyoneBroadcasts = AdaptivePatchSupport.Count(
                 document.NormalizedText, EveryoneClientData);
+            int noclipRuntime = AdaptivePatchSupport.Count(
+                document.NormalizedText, NoclipRuntime);
+            bool noclipMarker = document.NormalizedText.IndexOf(
+                NoclipRuntimeMarker, StringComparison.Ordinal) >= 0;
+            if (noclipRuntime > 1 || (noclipMarker && noclipRuntime != 1))
+                throw new InvalidOperationException(
+                    "Developer Commands cannot be changed because the /noclip runtime is partial, duplicated, or edited.");
+            bool hasNoclipRuntime = noclipRuntime == 1;
 
             bool clean = originalGate == 1 && hostGate == 0 &&
                 everyoneGate == 0 && originalBroadcasts == 3 &&
-                everyoneBroadcasts == 0;
+                everyoneBroadcasts == 0 && !hasNoclipRuntime;
             bool host = hostGate == 1 && originalGate == 0 &&
                 everyoneGate == 0 && originalBroadcasts == 3 &&
                 everyoneBroadcasts == 0;
@@ -5511,7 +6196,7 @@ namespace RaidRescue
                 everyoneBroadcasts == 3;
 
             bool selectedModeAlreadyPresent =
-                enabled &&
+                enabled && hasNoclipRuntime &&
                 ((host && selectedMode == HostOnlyMode) ||
                  (everyone && selectedMode == EveryoneMode));
             if (selectedModeAlreadyPresent &&
@@ -5537,15 +6222,19 @@ namespace RaidRescue
             }
             else if (host)
             {
+                string withoutRuntime = RemoveNoclipRuntime(
+                    document.NormalizedText);
                 cleanText = ReplaceUnique(
-                    document.NormalizedText,
+                    withoutRuntime,
                     HostOnlyGate, OriginalGate,
                     "Survival developer-command gate");
             }
             else if (everyone)
             {
+                string withoutRuntime = RemoveNoclipRuntime(
+                    document.NormalizedText);
                 cleanText = ReplaceUnique(
-                    document.NormalizedText,
+                    withoutRuntime,
                     EveryoneGate, OriginalGate,
                     "Survival developer-command gate");
                 cleanText = ReplaceExactCount(
@@ -5582,6 +6271,7 @@ namespace RaidRescue
                 transformed = ReplaceUnique(
                     cleanText, OriginalGate, HostOnlyGate,
                     "Survival developer-command gate");
+                transformed = InstallNoclipRuntime(transformed);
             }
             else if (enabled && selectedMode == EveryoneMode)
             {
@@ -5592,6 +6282,7 @@ namespace RaidRescue
                     transformed, OriginalClientData,
                     EveryoneClientData, 3,
                     "developer-command client permission broadcasts");
+                transformed = InstallNoclipRuntime(transformed);
             }
 
             byte[] outputBytes = document.Render(transformed);
@@ -5613,7 +6304,7 @@ namespace RaidRescue
             AdaptivePatchSupport.WriteBackupManifest(
                 backupPath, "Developer Commands",
                 enabled ? "Configure " + selectedMode : "Remove",
-                gamePath, build, "2",
+                gamePath, build, "6",
                 new[]
                 {
                     new AdaptivePatchReceiptFile
@@ -5711,7 +6402,7 @@ namespace RaidRescue
                     new AdaptivePatchReceipt
                     {
                         ModKey = "DeveloperCommands",
-                        DefinitionVersion = "2",
+                        DefinitionVersion = "6",
                         SteamBuildId = build.BuildId,
                         GameVersion = result.GameVersion,
                         CreatedUtc = existing == null
@@ -5737,14 +6428,143 @@ namespace RaidRescue
 
         private static void RequireAdaptiveDeveloperGuards(string text)
         {
+            string guardedText = text;
+            if (AdaptivePatchSupport.Count(text, NoclipRuntime) == 1)
+            {
+                guardedText = text.Replace(NoclipRuntime, "");
+            }
+            else
+            {
+                string legacyRuntime = GetVerifiedLegacyNoclipRuntime(text);
+                if (legacyRuntime != null)
+                    guardedText = text.Replace(legacyRuntime, "");
+            }
             AdaptivePatchSupport.RequireUnique(
-                text,
+                guardedText,
                 "function SurvivalGame.bindChatCommands( self )",
                 "Survival command registration callback");
             AdaptivePatchSupport.RequireUnique(
-                text,
+                guardedText,
                 "function SurvivalGame.sv_updateClientData( self )",
                 "Survival client-data callback");
+            AdaptivePatchSupport.RequireUnique(
+                guardedText,
+                "function SurvivalGame.server_onCreate( self )",
+                "Survival server creation callback");
+            AdaptivePatchSupport.RequireUnique(
+                guardedText,
+                "function SurvivalGame.client_onCreate( self )",
+                "Survival client creation callback");
+            AdaptivePatchSupport.RequireUnique(
+                guardedText,
+                "function SurvivalGame.server_onFixedUpdate( self, timeStep )",
+                "Survival server update callback");
+            AdaptivePatchSupport.RequireUnique(
+                guardedText,
+                "function SurvivalGame.client_onUpdate( self, dt )",
+                "Survival client update callback");
+            AdaptivePatchSupport.RequireUnique(
+                guardedText,
+                "function SurvivalGame.server_onPlayerLeft( self, player )",
+                "Survival player-leave callback");
+            AdaptivePatchSupport.RequireUnique(
+                guardedText,
+                "function SurvivalGame.server_onDestroy( self )",
+                "Survival server destruction callback");
+            AdaptivePatchSupport.RequireUnique(
+                guardedText,
+                "function SurvivalGame.cl_onChatCommand( self, params )",
+                "Survival chat-command callback");
+        }
+
+        private static string InstallNoclipRuntime(string text)
+        {
+            int runtimeCount = AdaptivePatchSupport.Count(text, NoclipRuntime);
+            bool hasMarker = text.IndexOf(
+                NoclipRuntimeMarker, StringComparison.Ordinal) >= 0;
+            if (runtimeCount == 1)
+                return text;
+            if (runtimeCount != 0 || hasMarker ||
+                GetVerifiedLegacyNoclipRuntime(text) != null)
+                throw new InvalidDataException(
+                    "The /noclip runtime is partial, duplicated, or edited.");
+            return text + NoclipRuntime;
+        }
+
+        private static string RemoveNoclipRuntime(string text)
+        {
+            int runtimeCount = AdaptivePatchSupport.Count(text, NoclipRuntime);
+            bool hasMarker = text.IndexOf(
+                NoclipRuntimeMarker, StringComparison.Ordinal) >= 0;
+            if (runtimeCount == 0)
+            {
+                if (hasMarker)
+                    throw new InvalidDataException(
+                        "The /noclip runtime is partial or edited.");
+                string legacyRuntime = GetVerifiedLegacyNoclipRuntime(text);
+                if (legacyRuntime != null)
+                    return text.Replace(legacyRuntime, "");
+                return text;
+            }
+            if (runtimeCount != 1)
+                throw new InvalidDataException(
+                    "The /noclip runtime is duplicated.");
+            return text.Replace(NoclipRuntime, "");
+        }
+
+        private static string GetVerifiedLegacyNoclipRuntime(string text)
+        {
+            string v1 = GetVerifiedLegacyNoclipRuntime(
+                text, LegacyNoclipRuntimeMarker, LegacyNoclipRuntimeHash);
+            string v2 = GetVerifiedLegacyNoclipRuntime(
+                text, LegacyV2NoclipRuntimeMarker, LegacyV2NoclipRuntimeHash);
+            string v3 = GetVerifiedLegacyNoclipRuntime(
+                text, LegacyV3NoclipRuntimeMarker, LegacyV3NoclipRuntimeHash);
+            int found = (v1 != null ? 1 : 0) + (v2 != null ? 1 : 0) +
+                (v3 != null ? 1 : 0);
+            if (found > 1)
+                throw new InvalidDataException(
+                    "Multiple legacy /noclip runtimes were found.");
+            return v1 ?? v2 ?? v3;
+        }
+
+        private static string GetVerifiedLegacyNoclipRuntime(
+            string text, string marker, string expectedHash)
+        {
+            string startToken = "\n-- " + marker + "\n";
+            string endToken = "-- END " + marker + "\n";
+            if (text.IndexOf(marker, StringComparison.Ordinal) < 0)
+                return null;
+
+            int start = text.IndexOf(
+                startToken, StringComparison.Ordinal);
+            int end = start < 0
+                ? -1
+                : text.IndexOf(
+                    endToken, start + startToken.Length,
+                    StringComparison.Ordinal);
+            if (start < 0 || end < 0 ||
+                text.IndexOf(
+                    startToken, start + startToken.Length,
+                    StringComparison.Ordinal) >= 0 ||
+                text.IndexOf(
+                    endToken, end + endToken.Length,
+                    StringComparison.Ordinal) >= 0)
+            {
+                throw new InvalidDataException(
+                    "The original /noclip runtime is partial or duplicated.");
+            }
+
+            string runtime = text.Substring(
+                start, end + endToken.Length - start);
+            string runtimeHash = AdaptivePatchSupport.Sha256(
+                Encoding.UTF8.GetBytes(runtime));
+            if (!HashEquals(runtimeHash, expectedHash))
+            {
+                throw new InvalidDataException(
+                    "The original /noclip runtime was edited.");
+            }
+            return runtime;
         }
 
         private static string NormalizeMode(string mode)

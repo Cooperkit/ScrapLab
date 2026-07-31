@@ -16,7 +16,7 @@ work began.
 
 ## Ranking policy
 
-`source/PerformanceHotspotRanker.cs` performs deterministic ranking:
+`source/Performance/PerformanceHotspotRanker.cs` performs deterministic ranking:
 
 1. Group populated cells by decoded world.
 2. Calculate record and payload totals for the centered 3-by-3 neighborhood

@@ -898,8 +898,8 @@ button{font:inherit}
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""FILTER MODS..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
-        <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-search=""developer dev commands cheats unlimited god spawn time raid host chat utility"">
-          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock built-in Survival commands such as /unlimited, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-search=""developer dev commands cheats unlimited god noclip fly flight collision spawn time raid host chat utility"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock Survival developer tools plus /fly collision-free flight, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
           <div class=""secret-mod-actions"">
             <button type=""button"" class=""secret-mod-options"" id=""developerCommandsOptions"" aria-label=""Open Developer Commands options"" onclick=""openDeveloperCommandOptions()"" disabled=""disabled"">OPTIONS</button>
             <button type=""button"" class=""secret-switch"" id=""developerCommandsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Developer Commands"" onclick=""toggleDeveloperCommandsMod()"" disabled=""disabled"">
@@ -1032,7 +1032,8 @@ button{font:inherit}
         </button>
       </div>
       <ul class=""hotfix-checks"">
-        <li>Includes /unlimited, /god, /spawn, time controls, item commands, and raid utilities.</li>
+        <li>Includes /unlimited, /god, /fly, /spawn, time controls, item commands, and raid utilities.</li>
+        <li>/fly follows your view direction, passes through collisions, and keeps god mode active until you leave flight.</li>
         <li>/kick and /ban remain restricted to the host in both access modes.</li>
         <li>Installing or changing access edits no save data; commands players run can permanently change the world.</li>
       </ul>
@@ -1188,9 +1189,14 @@ button{font:inherit}
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; DEVELOPER COMMANDS</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>HOW TO USE</b><p>Open <strong>Options</strong>, choose an access mode, and install with Scrap Mechanic closed. In a hosted Survival world, open chat and enter a command such as <strong>/unlimited</strong>. Use <strong>/limited</strong> to return to normal inventory rules.</p></div>
+          <div class=""help-item""><b>FLIGHT COMMAND</b><p>Enter <strong>/fly</strong>, then use WASD and look where you want to fly. Forward and backward follow your view, including straight up or down. Hold Shift for high-speed flight, and enter <strong>/fly</strong> again to exit.</p></div>
+          <div class=""help-item""><b>NATIVE CONTROLS</b><p>Noclip reads movement through ScrapLab's hidden input tool and never replaces Scrap Mechanic's camera. Mouse sensitivity and inverted-look preferences stay under the game's control.</p></div>
+          <div class=""help-item""><b>SMOOTH, STABLE FLIGHT</b><p>The world-bound player controller uses smooth velocity control instead of constant teleporting. Falling and ragdolling are suppressed while noclip is active; short position steps occur only when crossing solid geometry.</p></div>
+          <div class=""help-item""><b>SAFE EXIT</b><p>Noclip refuses to turn off while your exit position overlaps solid terrain, harvestables, or creations. Move into open space and try again so your character cannot be trapped inside geometry.</p></div>
+          <div class=""help-item""><b>TEMPORARY GOD MODE</b><p>Noclip keeps god mode active until the last flying player exits, then restores the previous god-mode state. Scrap Mechanic's god flag is global, so multiplayer noclip temporarily protects every player in that hosted world.</p></div>
           <div class=""help-item""><b>HOST ONLY</b><p>The recommended mode registers commands only for the world host. Joined players keep normal Survival controls.</p></div>
           <div class=""help-item""><b>EVERY PLAYER</b><p>Every joined player receives the command list while connected. Use this only with players you completely trust. <strong>/kick</strong> and <strong>/ban</strong> stay host-only.</p></div>
-          <div class=""help-item""><b>AVAILABLE TOOLS</b><p>Built-in commands cover items and weapons, god mode, inventory mode, unit spawning, time controls, player values, aggro, raids, starter kits, and unstuck tools.</p></div>
+          <div class=""help-item""><b>AVAILABLE TOOLS</b><p>Commands cover items and weapons, god mode, collision-free flight, inventory mode, unit spawning, time controls, player values, aggro, raids, starter kits, and unstuck tools.</p></div>
           <div class=""help-item""><b>NOT SERVER DEV MODE</b><p>ScrapLab does not enable the server-side <strong>g_survivalDev</strong> mode, so normal world spawn points and progression remain active. Every Player mode sends the client permission needed to register commands and may expose other client-only developer behavior during that session.</p></div>
         </div>
         <div class=""help-danger""><b>COMMANDS CAN PERMANENTLY CHANGE YOUR WORLD.</b> Back up important saves before experimenting. In Every Player mode, any joined player can make these changes. ScrapLab verifies and backs up the game script, but it cannot undo effects produced by commands.</div>
@@ -2046,8 +2052,8 @@ function setDeveloperCommandsMod(enabled,mode){
  showSecretModFeedback(
   secretDeveloperCommandsInstalled
    ?(secretDeveloperCommandsMode==='everyone'
-     ?'DEVELOPER COMMANDS READY FOR EVERY PLAYER - all joined players receive the built-in command list.'
-     :'DEVELOPER COMMANDS READY FOR HOST ONLY - open chat and enter a built-in command such as /unlimited.')
+     ?'DEVELOPER COMMANDS READY FOR EVERY PLAYER - all joined players receive the command list and /fly flight.'
+     :'DEVELOPER COMMANDS READY FOR HOST ONLY - open chat and enter /fly or a built-in command such as /unlimited.')
    :'DEVELOPER COMMANDS REMOVED - the verified original SurvivalGame script was restored.',
   'good');
  applyGameLock(gameRunning);renderSecretModsState();

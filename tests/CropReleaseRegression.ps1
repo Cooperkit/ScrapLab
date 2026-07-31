@@ -295,7 +295,8 @@ function New-Fixture {
         [UInt32]$CropId,
         [bool]$IncludeRaid,
         [string]$FlagState = 'false',
-        [bool]$IncludeCrop = $true
+        [bool]$IncludeCrop = $true,
+        [bool]$IncludeCropStorage = $true
     )
 
     $database = $script:OpenReadWrite.Invoke(
@@ -316,7 +317,9 @@ function New-Fixture {
             Add-HarvestableRecord `
                 $database $CropId `
                 (New-HarvestableBlob 'c6f80a93-5b16-45ef-a478-ca56a50f61ae')
-            Add-ScriptRecord $database $cropUid $cropKey 1 0 $cropData
+            if ($IncludeCropStorage) {
+                Add-ScriptRecord $database $cropUid $cropKey 1 0 $cropData
+            }
         }
 
         if ($IncludeRaid) {
@@ -481,6 +484,22 @@ try {
     Assert-True ((Read-CropFlag $orphanPath 202) -eq $true) `
         'The orphan crop survival flag was not persisted.'
 
+    $missingStoragePath = Join-Path $fixtureRoot 'modern-crop-without-storage.db'
+    New-Fixture $missingStoragePath 212 $false 'false' $true $false
+    $missingStorage = $analyze.Invoke(
+        $null, [object[]]@(
+            [string]$missingStoragePath, [bool]$false, [bool]$false))
+    Assert-True $missingStorage.Success `
+        ("Missing-storage crop analysis failed: " + $missingStorage.Error)
+    Assert-True ($missingStorage.UnreadableRaidCropCount -eq 0) `
+        'A crop without legacy raid storage was reported as unreadable.'
+    Assert-True ($missingStorage.OrphanedRaidCropCount -eq 0) `
+        'A crop without legacy raid storage was reported as repairable.'
+    Assert-True (-not ($missingStorage.Warnings | Where-Object {
+        $_ -like '*crop storage record is missing*'
+    })) `
+        'A crop without legacy raid storage produced a noisy warning.'
+
     $safePath = Join-Path $fixtureRoot 'already-safe-crop.db'
     New-Fixture $safePath 303 $true 'true'
     $safeResult = $clearRaids.Invoke(
@@ -525,7 +544,8 @@ try {
     Write-Host (
         'Crop release regression passed: one-bit Lua rewrite, active crop ' +
         'release, already-safe and stale references, orphan detection and ' +
-        'repair, post-write verification, and fail-closed invalid storage.')
+        'repair, silent modern crops without legacy storage, post-write ' +
+        'verification, and fail-closed invalid active storage.')
 }
 finally {
     if (Test-Path -LiteralPath $fixtureRoot) {

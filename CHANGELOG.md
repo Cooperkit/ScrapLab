@@ -1,7 +1,25 @@
 # Changelog
 
+## 2.0.1
+
+- Added `/fly` to Developer Commands with smooth camera-directed flight,
+  collision traversal, ragdoll prevention, god-mode coordination, and faster
+  Shift movement. ScrapLab-owned Lua now lives under
+  `Survival/Scripts/ScrapLab` and supports verified upgrades from earlier
+  noclip implementations.
+- Reorganized the source tree by application, companion, patching,
+  performance, shared, and world responsibilities without changing the
+  portable three-program layout.
+- Stopped reporting warnings for modern growing crops that legitimately omit
+  obsolete raid-growth storage. Ambiguous, malformed, or actively referenced
+  crop storage remains fail-closed.
+
 ## 2.0.0
 
+- Stopped reporting one warning per growing crop when its obsolete
+  raid-growth storage row is simply absent and no active raid references it.
+  Ambiguous or malformed storage still warns, and active raid crops remain
+  fail-closed when their required storage cannot be verified.
 - Rebranded Raid Rescue as **ScrapLab**, a broader Scrap Mechanic Survival
   world viewer, save-maintenance toolkit, performance scanner, and optional
   mod workshop. Raid recovery remains available as one focused feature.
@@ -26,6 +44,47 @@
   `Cooperkit/Raid-Rescue` repository and a future `Cooperkit/ScrapLab` rename.
   Installing 2.0 from a 1.x build requires the complete ZIP once; automatic
   updates resume after the transition.
+- Added `/noclip` to Developer Commands. It provides camera-directed flight
+  through collisions, keeps god mode active while anyone is noclipping,
+  restores the previous god-mode state after the last player exits, and
+  refuses to place a player back inside solid geometry.
+- Upgraded existing Developer Commands installs in place, added exact and
+  adaptive runtime detection, and made edited, duplicated, or partial noclip
+  code block installation and removal without writing.
+- Rebuilt noclip v4 around isolated `Survival/Scripts/ScrapLab` modules and a
+  hidden ScrapLab input tool. The Lift script is no longer the primary input
+  provider; a delayed Lift hook remains only as a compatibility fallback for
+  game builds that fail to instantiate the hidden tool.
+- Fixed noclip v5 after live game logs showed that Scrap Mechanic rejects
+  physics impulses issued by the world-less `SurvivalGame` GameClass. Flight
+  physics now runs from the world-bound `BasePlayer` PlayerClass, while
+  `SurvivalGame` retains command, permission, and multiplayer state handling.
+- Added an exact, checksum-locked upgrade from the affected v4 module to v5 so
+  users can repair the installed mod by enabling Developer Commands once.
+- Reworked noclip v6 after live testing exposed spring-like oscillation between
+  the vanilla character controller and instant full-strength velocity
+  correction. Removed the climbing controller, smoothed acceleration and
+  braking, capped every physics correction, and added gravity feed-forward for
+  stable hovering without alternating overshoot.
+- Added checksum-locked upgrades from both v4 and v5 modules to v6.
+- Renamed the flight command from `/noclip` to `/fly` in noclip module v7.
+  Normal flight keeps its comfortable existing speed, while holding Shift now
+  uses a separately detected sprint state and raises top speed from 20 to 36.
+- Added exact upgrades for the v6 controller and its earlier hidden input tool,
+  so both scripts update together without requiring mod removal.
+- Replaced constant character teleporting with smooth velocity-impulse flight
+  in open space. Short authoritative position steps are used only when a
+  capsule sweep detects geometry that noclip must cross.
+- Suppressed normal falling with the character climbing state and added both a
+  per-player tumble guard and a fixed-update safety check so collisions cannot
+  leave a noclipping player ragdolled.
+- Removed every scripted camera override, control lock, hidden-character mode,
+  and stationary anchor. Scrap Mechanic retains ownership of mouse input,
+  sensitivity, and inverted-look preferences.
+- Added checksum-verified migration from noclip v1, v2, and v3 to v4. The
+  installer backs up and restores `tools.json` byte-for-byte, owns only its two
+  ScrapLab Lua files, rejects edited assets, and preserves adaptive-patching
+  and exact-removal safety.
 
 ## 1.16.0
 

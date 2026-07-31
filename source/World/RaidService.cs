@@ -23,6 +23,14 @@ namespace RaidRescue
 
     internal static class RaidService
     {
+        private sealed class MissingRaidCropStorageException : Exception
+        {
+            internal MissingRaidCropStorageException()
+                : base("Its crop storage record is missing.")
+            {
+            }
+        }
+
         private const string NormalLootUuid =
             "97fe0cf2-0591-4e98-9beb-9186f4fd83c8";
         private const string BiggerLootUuid =
@@ -1191,6 +1199,13 @@ namespace RaidRescue
                         orphaned.Add(storage);
                     }
                 }
+                catch (MissingRaidCropStorageException)
+                {
+                    // Newer crop records do not always have the legacy
+                    // raid-growth storage row. With no active raid reference,
+                    // there is nothing to diagnose or repair.
+                    continue;
+                }
                 catch (Exception exception)
                 {
                     analysis.UnreadableRaidCropCount++;
@@ -1254,10 +1269,10 @@ namespace RaidRescue
                     crop.WorldId);
             if (scripts.Count != 1)
             {
+                if (scripts.Count == 0)
+                    throw new MissingRaidCropStorageException();
                 throw new InvalidDataException(
-                    scripts.Count == 0
-                        ? "Its crop storage record is missing."
-                        : "Its crop storage key is ambiguous.");
+                    "Its crop storage key is ambiguous.");
             }
 
             StoredScriptRecord script = scripts[0];

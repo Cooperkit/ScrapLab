@@ -257,7 +257,8 @@ payload sums fit in a 32-bit integer.
 
 ### New scanner service
 
-Create `source/PerformanceScanner.cs` rather than expanding `RaidService.cs`.
+Create `source/Performance/PerformanceScanner.cs` rather than expanding
+`source/World/RaidService.cs`.
 Its responsibilities:
 
 - Validate the input path and game-closed requirement.

@@ -13,7 +13,7 @@ not started.
 
 ### Result model
 
-`source/Models.cs` now defines:
+`source/Shared/Models.cs` now defines:
 
 - `PerformanceScanResult`
 - `PerformanceSchemaCoverage`
@@ -29,7 +29,7 @@ the Phase 3 ranking policy is implemented.
 
 ### Read-only SQLite APIs
 
-`source/SqliteNative.cs` now provides narrowly scoped, constant-SQL methods for:
+`source/World/SqliteNative.cs` now provides narrowly scoped, constant-SQL methods for:
 
 - SQLite page size, page count, and free-page count;
 - the Phase 0 schema capability checks;
@@ -43,7 +43,7 @@ collected into a full-record list.
 
 ### Scanner service
 
-`source/PerformanceScanner.cs`:
+`source/Performance/PerformanceScanner.cs`:
 
 1. validates the selected `.db` path;
 2. refuses to scan while Scrap Mechanic or its server is running;
