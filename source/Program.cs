@@ -602,10 +602,11 @@ namespace RaidRescue
             DialogResult answer = MessageBox.Show(
                 owner,
                 "Raid Rescue will first create and verify a timestamped backup beside the save.\r\n\r\n" +
-                "It will then remove the saved raid-manager state. Inventories, builds, quests, " +
-                "players, and other world data are not edited.\r\n\r\n" +
+                "It will release the exact growing crops registered to these raids, then remove " +
+                "the saved raid-manager state in the same verified transaction.\r\n\r\n" +
+                "Inventories, builds, quests, players, and unrelated world data are not edited.\r\n\r\n" +
                 "Scrap Mechanic must be completely closed.\r\n\r\nContinue?",
-                "Clear every stored raid?",
+                "Resolve crops and clear every stored raid?",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
@@ -619,6 +620,36 @@ namespace RaidRescue
                 });
             }
             return Serialize(RaidService.ClearRaids(path));
+        }
+
+        public string RepairOrphanedRaidCrops(
+            string path, int expectedCount)
+        {
+            DialogResult answer = MessageBox.Show(
+                owner,
+                "Raid Rescue found " +
+                expectedCount.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture) +
+                " growing crop(s) still waiting for a raid that is no longer stored.\r\n\r\n" +
+                "A timestamped backup will be created and verified first. Only proven orphaned " +
+                "crop survival flags will be released; active raid crops and unrelated storage " +
+                "will remain unchanged.\r\n\r\n" +
+                "Scrap Mechanic must be completely closed.\r\n\r\nContinue?",
+                "Repair orphaned raid crops?",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+            if (answer != DialogResult.Yes)
+            {
+                return Serialize(new RepairResult
+                {
+                    Success = false,
+                    Cancelled = true,
+                    Path = path
+                });
+            }
+            return Serialize(
+                RaidService.RepairOrphanedRaidCrops(path));
         }
 
         public string ClearDroppedItems(string path, long entityId)

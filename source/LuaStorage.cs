@@ -72,6 +72,11 @@ namespace RaidRescue
             get { return ((long)data.Length * 8L) - bitIndex; }
         }
 
+        public long PositionBits
+        {
+            get { return bitIndex; }
+        }
+
         public ulong ReadUnsigned(int count)
         {
             if (count < 1 || count > 64 || RemainingBits < count)
@@ -152,6 +157,188 @@ namespace RaidRescue
                 LuaVersion = version,
                 Value = value
             };
+        }
+
+        public static byte[] SetRootBoolean(
+            byte[] blob, string fieldName, bool value,
+            out bool found, out bool originalValue)
+        {
+            if (String.IsNullOrEmpty(fieldName))
+                throw new ArgumentException(
+                    "A Lua storage field name is required.",
+                    "fieldName");
+
+            ScriptPayload payload = ParseScriptData(blob);
+            long bitOffset;
+            found = TryFindRootBoolean(
+                payload.Decompressed, fieldName,
+                out bitOffset, out originalValue);
+            if (!found || originalValue == value)
+                return blob;
+
+            byte[] decompressed =
+                (byte[])payload.Decompressed.Clone();
+            SetBit(decompressed, bitOffset, value);
+            byte[] compressed =
+                CompressLz4LiteralBlock(decompressed);
+            byte[] rewritten =
+                ReplaceCompressedPayload(blob, compressed);
+
+            ScriptPayload verification =
+                ParseScriptData(rewritten);
+            long verifiedOffset;
+            bool verifiedValue;
+            bool verified = TryFindRootBoolean(
+                verification.Decompressed, fieldName,
+                out verifiedOffset, out verifiedValue);
+            if (!verified || verifiedValue != value)
+            {
+                throw new InvalidDataException(
+                    "The rewritten Lua storage field could not be verified.");
+            }
+
+            if (payload.WorldId != verification.WorldId ||
+                payload.Flags != verification.Flags ||
+                !BytesEqual(payload.Key, verification.Key) ||
+                payload.LuaVersion != verification.LuaVersion)
+            {
+                throw new InvalidDataException(
+                    "The rewritten Lua storage header changed unexpectedly.");
+            }
+            return rewritten;
+        }
+
+        private static bool TryFindRootBoolean(
+            byte[] decompressed, string fieldName,
+            out long bitOffset, out bool value)
+        {
+            bitOffset = -1;
+            value = false;
+            BitReader reader = new BitReader(decompressed);
+            byte[] magic = reader.ReadBytes(3);
+            if (magic[0] != (byte)'L' ||
+                magic[1] != (byte)'U' ||
+                magic[2] != (byte)'A')
+            {
+                throw new InvalidDataException(
+                    "The ScriptData record does not contain a serialized Lua object.");
+            }
+
+            reader.ReadUnsigned(32);
+            int rootType = checked((int)reader.ReadUnsigned(8));
+            if (rootType != 5)
+                throw new InvalidDataException(
+                    "The ScriptData root value is not a Lua table.");
+
+            uint count = checked((uint)reader.ReadUnsigned(32));
+            if (count > 10000000)
+                throw new InvalidDataException(
+                    "The serialized Lua table is unreasonably large.");
+            bool isArray = reader.ReadUnsigned(1) != 0;
+            if (isArray)
+                throw new InvalidDataException(
+                    "The ScriptData root table is unexpectedly an array.");
+
+            bool found = false;
+            for (uint index = 0; index < count; index++)
+            {
+                object key = ParseValue(reader, 1);
+                string name = key as string;
+                if (String.Equals(
+                    name, fieldName, StringComparison.Ordinal))
+                {
+                    if (found)
+                        throw new InvalidDataException(
+                            "The Lua storage field appears more than once.");
+                    int valueType =
+                        checked((int)reader.ReadUnsigned(8));
+                    if (valueType != 2)
+                        throw new InvalidDataException(
+                            "The Lua storage field is not a boolean.");
+                    bitOffset = reader.PositionBits;
+                    value = reader.ReadUnsigned(1) != 0;
+                    found = true;
+                }
+                else
+                {
+                    ParseValue(reader, 1);
+                }
+            }
+            return found;
+        }
+
+        private static void SetBit(
+            byte[] data, long bitOffset, bool value)
+        {
+            if (bitOffset < 0 ||
+                bitOffset >= (long)data.Length * 8L)
+            {
+                throw new ArgumentOutOfRangeException("bitOffset");
+            }
+            int byteIndex = checked((int)(bitOffset / 8L));
+            int mask = 1 << (7 - checked((int)(bitOffset % 8L)));
+            if (value)
+                data[byteIndex] = (byte)(data[byteIndex] | mask);
+            else
+                data[byteIndex] = (byte)(data[byteIndex] & ~mask);
+        }
+
+        internal static byte[] CompressLz4LiteralBlock(
+            byte[] source)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+
+            List<byte> output =
+                new List<byte>(source.Length + 8);
+            int literalLength = source.Length;
+            output.Add((byte)(Math.Min(literalLength, 15) << 4));
+            if (literalLength >= 15)
+            {
+                int remaining = literalLength - 15;
+                while (remaining >= 255)
+                {
+                    output.Add(255);
+                    remaining -= 255;
+                }
+                output.Add((byte)remaining);
+            }
+            output.AddRange(source);
+            return output.ToArray();
+        }
+
+        private static byte[] ReplaceCompressedPayload(
+            byte[] blob, byte[] compressed)
+        {
+            int keyLength = ReadBigUInt16(blob, 16);
+            int headerPosition = checked(18 + keyLength);
+            uint oldLength = ReadBigUInt32(blob, headerPosition + 3);
+            int oldPayloadStart = checked(headerPosition + 7);
+            int oldPayloadEnd =
+                checked(oldPayloadStart + checked((int)oldLength));
+            if (oldPayloadEnd > blob.Length)
+                throw new InvalidDataException(
+                    "The ScriptData compressed payload is truncated.");
+
+            int suffixLength = blob.Length - oldPayloadEnd;
+            byte[] result = new byte[
+                checked(oldPayloadStart + compressed.Length + suffixLength)];
+            Buffer.BlockCopy(
+                blob, 0, result, 0, oldPayloadStart);
+            WriteBigUInt32(
+                result, headerPosition + 3,
+                checked((uint)compressed.Length));
+            Buffer.BlockCopy(
+                compressed, 0, result,
+                oldPayloadStart, compressed.Length);
+            if (suffixLength > 0)
+            {
+                Buffer.BlockCopy(
+                    blob, oldPayloadEnd, result,
+                    oldPayloadStart + compressed.Length,
+                    suffixLength);
+            }
+            return result;
         }
 
         private static object ParseValue(BitReader reader, int depth)
@@ -380,6 +567,31 @@ namespace RaidRescue
                    ((uint)value[offset + 1] << 16) |
                    ((uint)value[offset + 2] << 8) |
                    value[offset + 3];
+        }
+
+        private static void WriteBigUInt32(
+            byte[] value, int offset, uint number)
+        {
+            value[offset] = (byte)(number >> 24);
+            value[offset + 1] = (byte)(number >> 16);
+            value[offset + 2] = (byte)(number >> 8);
+            value[offset + 3] = (byte)number;
+        }
+
+        private static bool BytesEqual(
+            byte[] left, byte[] right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+            if (left == null || right == null ||
+                left.Length != right.Length)
+                return false;
+            for (int index = 0; index < left.Length; index++)
+            {
+                if (left[index] != right[index])
+                    return false;
+            }
+            return true;
         }
 
         private static byte[] Slice(byte[] value, int offset, int count)

@@ -49,6 +49,10 @@ try {
 
     $before = $analyze.Invoke($null, [object[]]@([string]$fixtureSave))
     Assert-True $before.Success ("Initial analysis failed: " + $before.Error)
+    foreach ($raid in $before.Raids) {
+        Assert-True ($raid.WorldName -eq 'Overworld') `
+            'The save world descriptor did not resolve raid world 1 to Overworld.'
+    }
     Assert-True $before.DroppedItemsScanned `
         'The explicit loose-item scan did not report completion.'
     Assert-True ($before.DroppedItemCount -eq 5) `

@@ -41,15 +41,17 @@ function Assert-True {
 
 $currentVersion = [string]$service.GetProperty(
     "CurrentVersion", $flags).GetValue($null, $null)
-Assert-True ($currentVersion -eq "1.13.0") `
-    "The update service did not report version 1.13.0."
+$assemblyVersion = $assembly.GetName().Version
+$expectedCurrentVersion = $assemblyVersion.ToString(3)
+Assert-True ($currentVersion -eq $expectedCurrentVersion) `
+    "The update service version did not match the executable assembly version."
 
 $officialAsset =
-    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v1.13.1/RaidRescue.exe"
+    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v1.14.1/RaidRescue.exe"
 $lookalikeAsset =
-    "https://github.com.evil.example/Cooperkit/Raid-Rescue/releases/download/v1.13.1/RaidRescue.exe"
+    "https://github.com.evil.example/Cooperkit/Raid-Rescue/releases/download/v1.14.1/RaidRescue.exe"
 $wrongRepository =
-    "https://github.com/SomeoneElse/Raid-Rescue/releases/download/v1.13.1/RaidRescue.exe"
+    "https://github.com/SomeoneElse/Raid-Rescue/releases/download/v1.14.1/RaidRescue.exe"
 
 Assert-True ([bool](Invoke-UpdateMethod "IsOfficialDownloadUrl" @($officialAsset))) `
     "The official release asset URL was rejected."
@@ -64,7 +66,7 @@ Assert-True ([bool](Invoke-UpdateMethod "IsSha256" @($digest))) `
 Assert-True (-not [bool](Invoke-UpdateMethod "IsSha256" @("ABC123"))) `
     "A malformed SHA-256 digest was accepted."
 
-$expected = [Version]"1.13.0"
+$expected = [Version]$expectedCurrentVersion
 [void](Invoke-UpdateMethod "VerifyDownloadedExecutable" @(
     $exePath, $digest, $expected))
 
@@ -80,7 +82,7 @@ Assert-True $tamperBlocked `
     "A mismatched GitHub digest was not rejected."
 
 $sameVersion = Invoke-UpdateMethod "PrepareAndLaunchUpdate" @(
-    $officialAsset, $digest, "1.13.0")
+    $officialAsset, $digest, $expectedCurrentVersion)
 Assert-True (-not [bool]$sameVersion.Success) `
     "The updater tried to install the current version."
 Assert-True (-not [bool]$sameVersion.ReadyToRestart) `

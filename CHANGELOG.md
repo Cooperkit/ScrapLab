@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.14.0
+
+- Raid cards now show the decoded world name, matching dropped-item cards,
+  instead of exposing the internal numeric world slot.
+- Replaced the old destructive **Clear All Raids** workflow with
+  **Resolve & Clear Raids**. Raid Rescue now releases the exact live growing
+  crops registered to each stored raid before removing the raid-manager record
+  in the same SQLite transaction.
+- Added detection and backup-first repair for growing crops stranded by an
+  older raid clear. Only crops with `hasSurvivedRaid = false` and no active
+  raid reference are eligible.
+- Added strict crop-storage validation, optimistic row updates, post-write Lua
+  verification, final SQLite integrity checks, and a fail-closed repair lock
+  when a live crop cannot be proven safe.
+- Added regression coverage for one-bit Lua rewriting, active crop release,
+  orphan detection and repair, stale references, and malformed crop storage.
+
 ## 1.13.0
 
 - Expanded world analysis with a **Dropped Items** scanner for loose Scrap

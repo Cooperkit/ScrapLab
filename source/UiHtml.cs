@@ -1054,12 +1054,12 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
-        <div class=""help-section-title"">CLEAR ALL RAIDS — SAVE REPAIR</div>
+        <div class=""help-section-title"">RESOLVE &amp; CLEAR RAIDS — SAVE REPAIR</div>
         <div class=""help-grid"">
-          <div class=""help-item""><b>WHAT IT CHANGES</b><p>It removes only the exact base-game raid-manager storage record. This clears persisted raid state so the game can rebuild it normally.</p></div>
+          <div class=""help-item""><b>WHAT IT CHANGES</b><p>It first releases the exact growing crops registered to the stored raids, then removes the base-game raid-manager record in the same transaction.</p></div>
           <div class=""help-item""><b>WHAT IT LEAVES ALONE</b><p>Inventories, builds, quests, players, containers, terrain, and unrelated script data are not edited.</p></div>
           <div class=""help-item""><b>BACKUP FIRST</b><p>A timestamped copy is created beside the save and verified before repair. The repaired database must also pass a final integrity check.</p></div>
-          <div class=""help-item""><b>AFTER REPAIR</b><p>Start the game, load the world, confirm the stuck raid is gone, then save normally. Keep the backup until everything is confirmed.</p></div>
+          <div class=""help-item""><b>ORPHANED CROPS</b><p>If an older Raid Rescue version removed a raid without releasing its crops, Repair Orphaned Crops safely releases only crops no longer referenced by an active raid.</p></div>
         </div>
       </div>
 
@@ -1329,9 +1329,9 @@ var tutorialSteps=[
  {target:'droppedItemsZone',fallback:'result',badge:'05',label:'STEP 5 — LOOSE ITEM RECOVERY',title:'REVIEW DROPPED WORLD ITEMS',
   text:'Click Scan Loose Items to load pickup icons, totals, positions, and despawn timers.',
   tip:'Both actions create and verify a backup before changing the save.'},
- {target:'clearAllBtn',fallback:'diagnosticsPanel',badge:'06',label:'STEP 6 — SAVE REPAIR',title:'CLEAR ALL RAIDS SAFELY',
-  text:'Clear All Raids backs up the save, then removes only its stored raid data.',
-  tip:'Your builds, inventory, quests, and players stay untouched.'},
+ {target:'clearAllBtn',fallback:'diagnosticsPanel',badge:'06',label:'STEP 6 — SAVE REPAIR',title:'RESOLVE RAIDS SAFELY',
+  text:'Resolve & Clear Raids backs up the save, releases its registered crops, then removes the stored raid state.',
+  tip:'Active crop growth is preserved while builds, inventory, quests, and players stay untouched.'},
  {target:'repairActionsBar',fallback:'diagnosticsPanel',badge:'07',label:'STEP 7 — BACKUP-FIRST REPAIR',title:'KEEP THE VERIFIED BACKUP',
   text:'Every save repair creates and checks a timestamped backup before the database changes.',
   tip:'Test the repaired world before deleting its backup.'},
@@ -2128,11 +2128,12 @@ function startTutorial(){
 function renderTutorialDiagnostics(){
  var example={
   Success:true,DatabaseStatus:'ok',SaveVersion:28,GameTick:'12,458,920',RaidCount:1,Size:'31.1 MB',CanClear:false,
+  OrphanedRaidCropCount:0,UnreadableRaidCropCount:0,UnreleasableRaidCropCount:0,CanRepairOrphanedCrops:false,
   DroppedItemsScanned:true,DroppedItemCount:1,DroppedItemQuantity:3,ExpiredDroppedItemCount:0,CanClearDroppedItems:false,CanClearExpiredDroppedItems:false,UnreadableDroppedItemCount:0,DroppedItemIcons:{},
   Warnings:['TUTORIAL EXAMPLE — sample raid data only. No save has been opened or changed.'],
   Raids:[{
    Number:1,Tier:4,Key:'EXAMPLE RAID RECORD · SAMPLE DATA',ThreatValue:824,MaximumThreatValue:1000,
-   State:'WAVE STORED',PlannedEnemyCount:7,SpawnGroups:2,WorldSlot:11,Center:{X:873,Y:107,Z:47},
+   State:'WAVE STORED',PlannedEnemyCount:7,SpawnGroups:2,WorldSlot:11,WorldName:'Warehouse 2 - Floor 3',Center:{X:873,Y:107,Z:47},
    TrackedCrops:53,StaleCropReferences:53,LiveRaiderReferences:0,TickCounter:4872,TimeoutTick:4890,
    Enemies:[{Name:'Haybot',Quantity:4},{Name:'Totebot',Quantity:2},{Name:'Tapebot',Quantity:1}],
    Crops:[{Name:'Tomato',Quantity:31},{Name:'Broccoli',Quantity:22}],
@@ -2553,6 +2554,9 @@ function setAnalysisGameState(running){
  lastAnalysis.Warnings=warnings;
  lastAnalysis.GameRunning=running;
  lastAnalysis.CanClear=!!(lastAnalysis.RaidManagerPresent&&lastAnalysis.RaidCount>0&&
+  Number(lastAnalysis.UnreleasableRaidCropCount||0)===0&&
+  String(lastAnalysis.DatabaseStatus).toLowerCase()==='ok'&&!running);
+ lastAnalysis.CanRepairOrphanedCrops=!!(Number(lastAnalysis.OrphanedRaidCropCount||0)>0&&
   String(lastAnalysis.DatabaseStatus).toLowerCase()==='ok'&&!running);
  lastAnalysis.CanClearDroppedItems=!!(lastAnalysis.DroppedItemCount>0&&
   String(lastAnalysis.DatabaseStatus).toLowerCase()==='ok'&&!running);
@@ -2681,6 +2685,7 @@ function renderAnalysis(data){
   stat('SAVE VERSION',number(data.SaveVersion),'',false)+
   stat('GAME TICK',number(data.GameTick),'',false)+
   stat('STORED RAIDS',number(data.RaidCount),data.RaidCount?'accent':'ok',false)+
+  stat('ORPHANED CROPS',number(data.OrphanedRaidCropCount||0),data.OrphanedRaidCropCount?'bad':'ok',false)+
   stat('LOOSE DROPS',data.DroppedItemsScanned?number(data.DroppedItemCount):'NOT SCANNED',data.DroppedItemsScanned?(data.DroppedItemCount?'accent':'ok'):'',true)+
   stat('WORLD SIZE',data.Size,'',true)+'</div>';
  if(data.Raids&&data.Raids.length){
@@ -2689,8 +2694,13 @@ function renderAnalysis(data){
   html+='<div class=""empty""><div class=""diamond""><span>&#10003;</span></div><h4>RAID STORAGE CLEAR</h4><p>No persisted raid-manager entries were found in this world.</p></div>';
  }
  html+=droppedItemsSection(data);
-  html+='<div class=""repair-bar"" id=""repairActionsBar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Clear stored raid data only when a world still contains a stuck or unwanted saved raid. Raid Rescue verifies a backup before making the repair.</p>'+
-   '<div class=""repair-actions""><button class=""btn btn-danger"" id=""clearAllBtn"" '+(data.CanClear?'':'disabled=""disabled""')+' onclick=""clearRaids()"">CLEAR ALL RAIDS</button></div></div>';
+  var orphaned=Number(data.OrphanedRaidCropCount||0);
+  html+='<div class=""repair-bar"" id=""repairActionsBar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Resolve stored raids without stranding crop growth, or repair crops left waiting by an older clear. Raid Rescue verifies a backup before either repair.</p>'+
+   '<div class=""repair-actions"">'+
+   '<button class=""btn btn-primary"" id=""repairOrphanedCropsBtn"" '+(data.CanRepairOrphanedCrops?'':'disabled=""disabled""')+
+   ' onclick=""repairOrphanedCrops()"">REPAIR ORPHANED CROPS'+(orphaned?' ('+esc(orphaned)+')':'')+'</button>'+
+   '<button class=""btn btn-danger"" id=""clearAllBtn"" '+(data.CanClear?'':'disabled=""disabled""')+
+   ' onclick=""clearRaids()"">RESOLVE &amp; CLEAR RAIDS</button></div></div>';
  document.getElementById('result').innerHTML=html;
  updateScrollBar();
 }
@@ -2877,7 +2887,7 @@ function raidCard(r){
   '<div class=""state"">'+esc(r.State).toUpperCase()+'</div></div><div class=""raid-body"">';
  html+='<div class=""mini-grid"">'+
   mini('PLANNED ROBOTS',r.PlannedEnemyCount)+mini('SPAWN GROUPS',r.SpawnGroups)+
-  mini('THREAT VALUE',r.ThreatValue+' / '+r.MaximumThreatValue)+mini('WORLD SLOT',r.WorldSlot)+mini('CENTER',pos(r.Center))+
+  mini('THREAT VALUE',r.ThreatValue+' / '+r.MaximumThreatValue)+mini('WORLD',r.WorldName||('World '+r.WorldSlot))+mini('CENTER',pos(r.Center))+
   mini('STORED CROPS',r.TrackedCrops)+mini('STALE CROPS',r.StaleCropReferences)+
   mini('LIVE RAIDERS',r.LiveRaiderReferences)+mini('TICK COUNTER',r.TickCounter)+mini('TIMEOUT TICK',r.TimeoutTick)+'</div>';
  html+='<div class=""section-label"">ROBOT WAVE COMPOSITION</div><div class=""chips"">'+chips(r.Enemies,false,'NO DECODED ENEMY GROUPS')+'</div>';
@@ -2995,7 +3005,7 @@ function confirmDroppedItemClear(){
 }
 function clearRaids(){
  if(!lastAnalysis||!lastAnalysis.CanClear)return;
- busy(true,'CREATING SAFETY BACKUP','The original remains untouched until the backup passes verification.');
+ busy(true,'RELEASING CROPS & CLEARING RAIDS','Creating a verified backup, releasing registered crop growth, and removing stored raid state.');
  window.setTimeout(function(){
   var data=parseResult(window.external.ClearRaids(currentPath));busy(false);
   if(data.Cancelled)return;
@@ -3003,8 +3013,30 @@ function clearRaids(){
   lastBackupPath=data.BackupPath||'';
   lastAnalysis=data.After;
   renderAnalysis(lastAnalysis);
+  var cropMessage=Number(data.CropsReleased||0)+' crop'+(Number(data.CropsReleased||0)===1?' was':'s were')+' released';
+  if(Number(data.CropsAlreadySafe||0)>0)cropMessage+='; '+Number(data.CropsAlreadySafe)+' already safe';
+  if(Number(data.MissingCropReferences||0)>0)cropMessage+='; '+Number(data.MissingCropReferences)+' stale reference'+(Number(data.MissingCropReferences)===1?'':'s')+' skipped';
   document.getElementById('result').insertAdjacentHTML('afterbegin',
-   '<div class=""banner banner-good""><b>RAID STORAGE CLEARED.</b> The repaired save passed its final integrity check.</div>'+
+   '<div class=""banner banner-good""><b>RAIDS RESOLVED SAFELY.</b> '+esc(cropMessage)+'. The repaired save passed its final integrity check.</div>'+
+   '<div class=""success-box"" style=""margin-bottom:10px""><div class=""backup-label"">VERIFIED SAFETY BACKUP</div><div class=""path"">'+esc(lastBackupPath)+'</div>'+
+   '<div style=""margin-top:12px""><button class=""btn"" onclick=""openBackup()"">SHOW BACKUP IN FOLDER</button></div></div>');
+  updateScrollBar();
+ },busyLeadDelay());
+}
+function repairOrphanedCrops(){
+ if(!lastAnalysis||!lastAnalysis.CanRepairOrphanedCrops)return;
+ var expected=Number(lastAnalysis.OrphanedRaidCropCount||0);
+ busy(true,'RELEASING ORPHANED CROPS','Creating a verified backup and repairing only crops that are no longer linked to an active raid.');
+ window.setTimeout(function(){
+  var data=parseResult(window.external.RepairOrphanedRaidCrops(currentPath,expected));busy(false);
+  if(data.Cancelled)return;
+  if(!data.Success){showError(data.Error||'The orphaned crop repair did not complete.');return;}
+  lastBackupPath=data.BackupPath||'';
+  lastAnalysis=data.After;
+  renderAnalysis(lastAnalysis);
+  document.getElementById('result').insertAdjacentHTML('afterbegin',
+   '<div class=""banner banner-good""><b>CROP GROWTH RELEASED.</b> '+esc(Number(data.CropsReleased||0))+
+   ' orphaned crop'+(Number(data.CropsReleased||0)===1?' is':'s are')+' no longer waiting for a deleted raid.</div>'+
    '<div class=""success-box"" style=""margin-bottom:10px""><div class=""backup-label"">VERIFIED SAFETY BACKUP</div><div class=""path"">'+esc(lastBackupPath)+'</div>'+
    '<div style=""margin-top:12px""><button class=""btn"" onclick=""openBackup()"">SHOW BACKUP IN FOLDER</button></div></div>');
   updateScrollBar();

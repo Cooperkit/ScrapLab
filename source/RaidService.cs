@@ -7,6 +7,20 @@ using System.Linq;
 
 namespace RaidRescue
 {
+    internal sealed class RaidCropReference
+    {
+        public int WorldId;
+        public long HarvestableId;
+    }
+
+    internal sealed class RaidCropStorageState
+    {
+        public RaidCropReference Crop;
+        public StoredScriptRecord Script;
+        public bool FlagPresent;
+        public bool HasSurvivedRaid;
+    }
+
     internal static class RaidService
     {
         private const string NormalLootUuid =
@@ -45,6 +59,23 @@ namespace RaidRescue
                 { "81f76937-af88-4882-a64c-bc86a4092c20", "Chili" },
                 { "1ebfd7c2-89df-4455-a0cc-2a43a718125b", "Pigment flower" }
             };
+
+        private static readonly HashSet<string> RaidCropUuids =
+            new HashSet<string>(
+                new[]
+                {
+                    "d3fdedca-7e1c-45cc-a1db-f0deee381a71",
+                    "bb600268-cd29-4715-babe-5fd02645eb1c",
+                    "b1a17952-b6a2-436d-81e4-df8ffb552166",
+                    "1337f492-aa23-42d0-af7a-fae45b47e55f",
+                    "6dd177f4-3312-4b1e-a986-4421b5e83bff",
+                    "18efedc5-8706-4ecb-afd4-e9294d3f1052",
+                    "c6f80a93-5b16-45ef-a478-ca56a50f61ae",
+                    "1675314b-0dfc-4d34-b854-0bdf0476221d",
+                    "ec1cf82f-e8f3-4ca6-8e35-a4bdf0e8e259",
+                    "81f76937-af88-4882-a64c-bc86a4092c20"
+                },
+                StringComparer.OrdinalIgnoreCase);
 
         public static bool IsGameRunning()
         {
@@ -111,22 +142,24 @@ namespace RaidRescue
 
         public static AnalysisResult Analyze(string path)
         {
-            return AnalyzeCore(path, true);
+            return AnalyzeCore(path, true, true);
         }
 
         public static AnalysisResult AnalyzeRaidsOnly(string path)
         {
-            return AnalyzeCore(path, false);
+            return AnalyzeCore(path, false, true);
         }
 
         private static AnalysisResult AnalyzeCore(
-            string path, bool includeDroppedItems)
+            string path, bool includeDroppedItems,
+            bool enforceGameClosed)
         {
             AnalysisResult result = NewAnalysis(path);
             result.DroppedItemsScanned = includeDroppedItems;
             try
             {
-                result.GameRunning = IsGameRunning();
+                result.GameRunning =
+                    enforceGameClosed && IsGameRunning();
                 if (result.GameRunning)
                 {
                     result.Success = false;
@@ -147,7 +180,8 @@ namespace RaidRescue
                 result.Size = FormatBytes(file.Length);
 
                 // Close the UI-to-I/O race if the game starts after the first check.
-                result.GameRunning = IsGameRunning();
+                result.GameRunning =
+                    enforceGameClosed && IsGameRunning();
                 if (result.GameRunning)
                 {
                     result.Success = false;
@@ -187,12 +221,21 @@ namespace RaidRescue
                     byte[] record = database.ReadRaidRecord(out rowId);
                     result.RaidManagerPresent = record != null;
                     result.RaidManagerRowId = rowId;
+                    object raidRoot = null;
                     if (record != null)
                     {
                         ScriptPayload payload = LuaStorage.ParseScriptData(record);
                         ValidateRaidPayload(payload);
-                        ReadRaids(payload.Value, database, result);
+                        raidRoot = payload.Value;
+                        ReadRaids(raidRoot, database, result);
                     }
+
+                    List<RaidCropReference> activeRaidCrops =
+                        CollectRaidCropReferences(raidRoot);
+                    ValidateActiveRaidCrops(
+                        database, activeRaidCrops, result);
+                    FindOrphanedRaidCrops(
+                        database, activeRaidCrops, result);
 
                     if (includeDroppedItems)
                     {
@@ -216,6 +259,11 @@ namespace RaidRescue
                 result.CanClear =
                     result.RaidManagerPresent &&
                     result.RaidCount > 0 &&
+                    result.UnreleasableRaidCropCount == 0 &&
+                    String.Equals(result.DatabaseStatus, "ok", StringComparison.OrdinalIgnoreCase) &&
+                    !result.GameRunning;
+                result.CanRepairOrphanedCrops =
+                    result.OrphanedRaidCropCount > 0 &&
                     String.Equals(result.DatabaseStatus, "ok", StringComparison.OrdinalIgnoreCase) &&
                     !result.GameRunning;
                 result.CanClearDroppedItems =
@@ -232,6 +280,7 @@ namespace RaidRescue
             {
                 result.Success = false;
                 result.CanClear = false;
+                result.CanRepairOrphanedCrops = false;
                 result.CanClearDroppedItems = false;
                 result.CanClearExpiredDroppedItems = false;
                 result.Error = FriendlyError(exception);
@@ -241,15 +290,22 @@ namespace RaidRescue
 
         public static RepairResult ClearRaids(string path)
         {
+            return ClearRaidsCore(path, true);
+        }
+
+        private static RepairResult ClearRaidsCore(
+            string path, bool enforceGameClosed)
+        {
             RepairResult result = new RepairResult { Path = path };
             try
             {
                 ValidatePath(path);
-                if (IsGameRunning())
+                if (enforceGameClosed && IsGameRunning())
                     throw new InvalidOperationException(
                         "Scrap Mechanic is running. Close the game completely and try again.");
 
-                AnalysisResult before = AnalyzeRaidsOnly(path);
+                AnalysisResult before =
+                    AnalyzeCore(path, false, enforceGameClosed);
                 result.Before = before;
                 if (!before.Success)
                     throw new InvalidOperationException("The save could not be analyzed: " + before.Error);
@@ -258,6 +314,10 @@ namespace RaidRescue
                         "The save failed SQLite's integrity check and was not changed.");
                 if (!before.RaidManagerPresent || before.RaidCount == 0)
                     throw new InvalidOperationException("This save has no stored raids to clear.");
+                if (before.UnreleasableRaidCropCount > 0)
+                    throw new InvalidOperationException(
+                        "One or more live raid crops could not be safely decoded. " +
+                        "The raid was not cleared.");
 
                 string backup = MakeBackupPath(path);
                 result.BackupPath = backup;
@@ -271,7 +331,7 @@ namespace RaidRescue
                             "The safety backup failed its integrity check. The original was not changed.");
                 }
 
-                if (IsGameRunning())
+                if (enforceGameClosed && IsGameRunning())
                     throw new InvalidOperationException(
                         "Scrap Mechanic started while the backup was being made. The original was not changed.");
 
@@ -286,6 +346,25 @@ namespace RaidRescue
                         if (!String.Equals(status, "ok", StringComparison.OrdinalIgnoreCase))
                             throw new InvalidDataException(
                                 "The save failed its final integrity check. No changes were committed.");
+
+                        long currentRaidRowId;
+                        byte[] currentRaidRecord =
+                            database.ReadRaidRecord(out currentRaidRowId);
+                        if (currentRaidRecord == null ||
+                            currentRaidRowId != before.RaidManagerRowId)
+                        {
+                            throw new InvalidDataException(
+                                "The raid-manager record changed after analysis. " +
+                                "No changes were committed.");
+                        }
+                        ScriptPayload currentRaidPayload =
+                            LuaStorage.ParseScriptData(currentRaidRecord);
+                        ValidateRaidPayload(currentRaidPayload);
+                        List<RaidCropReference> cropReferences =
+                            CollectRaidCropReferences(
+                                currentRaidPayload.Value);
+                        ReleaseRaidCrops(
+                            database, cropReferences, result);
 
                         result.RecordsRemoved = database.DeleteRaidRecord();
                         if (result.RecordsRemoved != 1)
@@ -311,11 +390,169 @@ namespace RaidRescue
                     throw new InvalidDataException(
                         "The edited save did not pass its final integrity check. Restore the safety backup.");
 
-                result.After = AnalyzeRaidsOnly(path);
+                result.After =
+                    AnalyzeCore(path, false, enforceGameClosed);
                 if (!result.After.Success || result.After.RaidManagerPresent)
                     throw new InvalidDataException(
                         "The raid-manager record could not be verified as cleared. Restore the safety backup.");
 
+                result.Success = true;
+            }
+            catch (Exception exception)
+            {
+                result.Success = false;
+                result.Error = FriendlyError(exception);
+            }
+            return result;
+        }
+
+        public static RepairResult RepairOrphanedRaidCrops(
+            string path)
+        {
+            return RepairOrphanedRaidCropsCore(
+                path, true);
+        }
+
+        private static RepairResult
+            RepairOrphanedRaidCropsCore(
+                string path, bool enforceGameClosed)
+        {
+            RepairResult result =
+                new RepairResult { Path = path };
+            try
+            {
+                ValidatePath(path);
+                if (enforceGameClosed && IsGameRunning())
+                    throw new InvalidOperationException(
+                        "Scrap Mechanic is running. Close the game completely and try again.");
+
+                AnalysisResult before =
+                    AnalyzeCore(path, false, enforceGameClosed);
+                result.Before = before;
+                if (!before.Success)
+                    throw new InvalidOperationException(
+                        "The save could not be analyzed: " +
+                        before.Error);
+                if (!String.Equals(
+                    before.DatabaseStatus, "ok",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        "The save failed SQLite's integrity check and was not changed.");
+                }
+                if (before.OrphanedRaidCropCount == 0)
+                    throw new InvalidOperationException(
+                        "This save has no orphaned raid crops to repair.");
+
+                string backup = MakeBackupPath(path);
+                result.BackupPath = backup;
+                SqliteDatabase.Backup(path, backup);
+                using (SqliteDatabase backupDatabase =
+                    SqliteDatabase.OpenReadOnly(backup))
+                {
+                    string backupStatus =
+                        backupDatabase.QuickCheck();
+                    if (!String.Equals(
+                        backupStatus, "ok",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidDataException(
+                            "The safety backup failed its integrity check. " +
+                            "The original was not changed.");
+                    }
+                }
+
+                if (enforceGameClosed && IsGameRunning())
+                    throw new InvalidOperationException(
+                        "Scrap Mechanic started while the backup was being made. " +
+                        "The original was not changed.");
+
+                using (SqliteDatabase database =
+                    SqliteDatabase.OpenReadWrite(path, false))
+                {
+                    bool transaction = false;
+                    try
+                    {
+                        database.Execute("BEGIN IMMEDIATE");
+                        transaction = true;
+                        string status = database.QuickCheck();
+                        if (!String.Equals(
+                            status, "ok",
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new InvalidDataException(
+                                "The save failed its final integrity check. " +
+                                "No changes were committed.");
+                        }
+
+                        long raidRowId;
+                        byte[] raidRecord =
+                            database.ReadRaidRecord(out raidRowId);
+                        object raidRoot = null;
+                        if (raidRecord != null)
+                        {
+                            ScriptPayload raidPayload =
+                                LuaStorage.ParseScriptData(
+                                    raidRecord);
+                            ValidateRaidPayload(raidPayload);
+                            raidRoot = raidPayload.Value;
+                        }
+                        List<RaidCropReference> activeRaidCrops =
+                            CollectRaidCropReferences(raidRoot);
+                        AnalysisResult current =
+                            NewAnalysis(path);
+                        List<RaidCropStorageState> orphaned =
+                            FindOrphanedRaidCrops(
+                                database, activeRaidCrops,
+                                current);
+                        if (orphaned.Count == 0)
+                        {
+                            throw new InvalidDataException(
+                                "The orphaned crop list changed after analysis. " +
+                                "No changes were committed.");
+                        }
+
+                        foreach (
+                            RaidCropStorageState crop in orphaned)
+                        {
+                            ReleaseCropStorage(
+                                database, crop, result);
+                        }
+
+                        database.Execute("COMMIT");
+                        transaction = false;
+                        result.DatabaseStatus =
+                            database.QuickCheck();
+                    }
+                    catch
+                    {
+                        if (transaction)
+                        {
+                            try { database.Execute("ROLLBACK"); }
+                            catch { }
+                        }
+                        throw;
+                    }
+                }
+
+                if (!String.Equals(
+                    result.DatabaseStatus, "ok",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException(
+                        "The edited save did not pass its final integrity check. " +
+                        "Restore the safety backup.");
+                }
+
+                result.After =
+                    AnalyzeCore(path, false, enforceGameClosed);
+                if (!result.After.Success ||
+                    result.After.OrphanedRaidCropCount != 0)
+                {
+                    throw new InvalidDataException(
+                        "The orphaned crop repair could not be verified. " +
+                        "Restore the safety backup.");
+                }
                 result.Success = true;
             }
             catch (Exception exception)
@@ -812,6 +1049,372 @@ namespace RaidRescue
             return true;
         }
 
+        private static List<RaidCropReference>
+            CollectRaidCropReferences(object rootValue)
+        {
+            Dictionary<string, RaidCropReference> references =
+                new Dictionary<string, RaidCropReference>(
+                    StringComparer.Ordinal);
+            LuaTable root = rootValue as LuaTable;
+            LuaTable worlds =
+                root == null
+                    ? null
+                    : root.Get("worldRaids") as LuaTable;
+            if (worlds == null)
+                return references.Values.ToList();
+
+            foreach (LuaEntry worldEntry in worlds.Entries)
+            {
+                int worldId = ToInt(worldEntry.Key, 0);
+                LuaTable raids = worldEntry.Value as LuaTable;
+                if (raids == null)
+                    continue;
+                foreach (LuaEntry raidEntry in raids.Entries)
+                {
+                    LuaTable raid = raidEntry.Value as LuaTable;
+                    LuaTable crops =
+                        raid == null
+                            ? null
+                            : raid.Get("existingCrops") as LuaTable;
+                    if (crops == null)
+                        continue;
+                    foreach (LuaEntry cropEntry in crops.Entries)
+                    {
+                        LuaUserData reference =
+                            cropEntry.Value as LuaUserData;
+                        if (reference == null ||
+                            !String.Equals(
+                                reference.Type, "Harvestable",
+                                StringComparison.Ordinal) ||
+                            reference.Id < 0 ||
+                            reference.Id > UInt32.MaxValue)
+                        {
+                            continue;
+                        }
+                        RaidCropReference crop =
+                            new RaidCropReference
+                            {
+                                WorldId = worldId,
+                                HarvestableId = reference.Id
+                            };
+                        references[CropKey(crop)] = crop;
+                    }
+                }
+            }
+            return references.Values
+                .OrderBy(crop => crop.WorldId)
+                .ThenBy(crop => crop.HarvestableId)
+                .ToList();
+        }
+
+        private static void ValidateActiveRaidCrops(
+            SqliteDatabase database,
+            IList<RaidCropReference> crops,
+            AnalysisResult analysis)
+        {
+            foreach (RaidCropReference crop in crops)
+            {
+                HarvestableRecord harvestable =
+                    database.ReadHarvestable(
+                        crop.HarvestableId);
+                if (harvestable == null ||
+                    harvestable.WorldId != crop.WorldId)
+                {
+                    continue;
+                }
+                try
+                {
+                    ReadRaidCropStorage(
+                        database, crop, harvestable);
+                }
+                catch (Exception exception)
+                {
+                    analysis.UnreleasableRaidCropCount++;
+                    analysis.Warnings.Add(
+                        "Raid crop #" +
+                        crop.HarvestableId.ToString(
+                            CultureInfo.InvariantCulture) +
+                        " could not be prepared for safe raid clearing: " +
+                        exception.Message);
+                }
+            }
+            if (analysis.UnreleasableRaidCropCount > 0)
+            {
+                analysis.Warnings.Add(
+                    "Raid clearing is locked because " +
+                    analysis.UnreleasableRaidCropCount.ToString(
+                        CultureInfo.InvariantCulture) +
+                    " existing raid crop record(s) could not be proven safe.");
+            }
+        }
+
+        private static List<RaidCropStorageState>
+            FindOrphanedRaidCrops(
+                SqliteDatabase database,
+                IList<RaidCropReference> activeRaidCrops,
+                AnalysisResult analysis)
+        {
+            HashSet<string> active =
+                new HashSet<string>(
+                    activeRaidCrops.Select(CropKey),
+                    StringComparer.Ordinal);
+            List<RaidCropStorageState> orphaned =
+                new List<RaidCropStorageState>();
+
+            foreach (HarvestableRecord harvestable in
+                database.ReadHarvestables())
+            {
+                string uuid;
+                PositionInfo position;
+                if (!TryReadHarvestableData(
+                    harvestable.Data, out uuid, out position) ||
+                    !RaidCropUuids.Contains(uuid))
+                {
+                    continue;
+                }
+
+                RaidCropReference crop =
+                    new RaidCropReference
+                    {
+                        WorldId = harvestable.WorldId,
+                        HarvestableId = harvestable.Id
+                    };
+                try
+                {
+                    RaidCropStorageState storage =
+                        ReadRaidCropStorage(
+                            database, crop, harvestable);
+                    if (storage.FlagPresent &&
+                        !storage.HasSurvivedRaid &&
+                        !active.Contains(CropKey(crop)))
+                    {
+                        orphaned.Add(storage);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    analysis.UnreadableRaidCropCount++;
+                    if (analysis.UnreadableRaidCropCount <= 8)
+                    {
+                        analysis.Warnings.Add(
+                            "Growing crop #" +
+                            harvestable.Id.ToString(
+                                CultureInfo.InvariantCulture) +
+                            " has unreadable raid-growth storage: " +
+                            exception.Message);
+                    }
+                }
+            }
+
+            analysis.OrphanedRaidCropCount = orphaned.Count;
+            if (analysis.UnreadableRaidCropCount > 8)
+            {
+                analysis.Warnings.Add(
+                    (analysis.UnreadableRaidCropCount - 8).ToString(
+                        CultureInfo.InvariantCulture) +
+                    " additional growing crop storage warning(s) were omitted.");
+            }
+            if (orphaned.Count > 0)
+            {
+                analysis.Warnings.Add(
+                    orphaned.Count.ToString(
+                        CultureInfo.InvariantCulture) +
+                    " growing crop(s) are still waiting for a raid that no longer exists. " +
+                    "Use Repair Orphaned Crops to release their growth safely.");
+            }
+            return orphaned;
+        }
+
+        private static RaidCropStorageState
+            ReadRaidCropStorage(
+                SqliteDatabase database,
+                RaidCropReference crop,
+                HarvestableRecord harvestable)
+        {
+            if (harvestable.Id != crop.HarvestableId ||
+                harvestable.WorldId != crop.WorldId)
+            {
+                throw new InvalidDataException(
+                    "The harvestable identity does not match the raid reference.");
+            }
+
+            string uuid;
+            PositionInfo position;
+            if (!TryReadHarvestableData(
+                harvestable.Data, out uuid, out position) ||
+                !RaidCropUuids.Contains(uuid))
+            {
+                throw new InvalidDataException(
+                    "The referenced harvestable is not a supported growing raid crop.");
+            }
+
+            List<StoredScriptRecord> scripts =
+                database.ReadScriptRecords(
+                    CropStorageKey(crop.HarvestableId),
+                    crop.WorldId);
+            if (scripts.Count != 1)
+            {
+                throw new InvalidDataException(
+                    scripts.Count == 0
+                        ? "Its crop storage record is missing."
+                        : "Its crop storage key is ambiguous.");
+            }
+
+            StoredScriptRecord script = scripts[0];
+            ScriptPayload payload =
+                LuaStorage.ParseScriptData(script.Data);
+            if (!BytesEqual(payload.Key, script.Key) ||
+                payload.WorldId != script.WorldId ||
+                payload.Flags != script.Flags ||
+                payload.LuaVersion < 1)
+            {
+                throw new InvalidDataException(
+                    "Its Lua storage header does not match the database row.");
+            }
+            LuaTable root = payload.Value as LuaTable;
+            if (root == null)
+                throw new InvalidDataException(
+                    "Its crop storage root is not a Lua table.");
+
+            object flag = root.Get("hasSurvivedRaid");
+            RaidCropStorageState state =
+                new RaidCropStorageState
+                {
+                    Crop = crop,
+                    Script = script,
+                    FlagPresent = flag != null
+                };
+            if (flag != null)
+            {
+                if (!(flag is bool))
+                    throw new InvalidDataException(
+                        "Its hasSurvivedRaid value is not a boolean.");
+                state.HasSurvivedRaid = (bool)flag;
+            }
+            return state;
+        }
+
+        private static void ReleaseRaidCrops(
+            SqliteDatabase database,
+            IList<RaidCropReference> crops,
+            RepairResult result)
+        {
+            foreach (RaidCropReference crop in crops)
+            {
+                HarvestableRecord harvestable =
+                    database.ReadHarvestable(
+                        crop.HarvestableId);
+                if (harvestable == null ||
+                    harvestable.WorldId != crop.WorldId)
+                {
+                    result.MissingCropReferences++;
+                    continue;
+                }
+
+                RaidCropStorageState storage =
+                    ReadRaidCropStorage(
+                        database, crop, harvestable);
+                if (!storage.FlagPresent ||
+                    storage.HasSurvivedRaid)
+                {
+                    result.CropsAlreadySafe++;
+                    continue;
+                }
+                ReleaseCropStorage(
+                    database, storage, result);
+            }
+        }
+
+        private static void ReleaseCropStorage(
+            SqliteDatabase database,
+            RaidCropStorageState storage,
+            RepairResult result)
+        {
+            if (!storage.FlagPresent ||
+                storage.HasSurvivedRaid)
+            {
+                result.CropsAlreadySafe++;
+                return;
+            }
+
+            bool found;
+            bool originalValue;
+            byte[] rewritten = LuaStorage.SetRootBoolean(
+                storage.Script.Data, "hasSurvivedRaid",
+                true, out found, out originalValue);
+            if (!found || originalValue)
+            {
+                throw new InvalidDataException(
+                    "The crop survival flag changed before it could be repaired.");
+            }
+            int changed = database.UpdateScriptData(
+                storage.Script.RowId,
+                storage.Script.Key,
+                storage.Script.WorldId,
+                storage.Script.Data,
+                rewritten);
+            if (changed != 1)
+            {
+                throw new InvalidDataException(
+                    "The crop storage row changed before it could be repaired.");
+            }
+
+            StoredScriptRecord verified =
+                database.ReadScriptRecord(
+                    storage.Script.RowId);
+            if (verified == null ||
+                !BytesEqual(
+                    verified.Key, storage.Script.Key) ||
+                verified.WorldId !=
+                    storage.Script.WorldId)
+            {
+                throw new InvalidDataException(
+                    "The repaired crop storage row could not be found.");
+            }
+            ScriptPayload payload =
+                LuaStorage.ParseScriptData(verified.Data);
+            LuaTable root = payload.Value as LuaTable;
+            object flag =
+                root == null
+                    ? null
+                    : root.Get("hasSurvivedRaid");
+            if (!(flag is bool) || !(bool)flag)
+            {
+                throw new InvalidDataException(
+                    "The repaired crop survival flag could not be verified.");
+            }
+            result.CropsReleased++;
+        }
+
+        private static byte[] CropStorageKey(
+            long harvestableId)
+        {
+            if (harvestableId < 0 ||
+                harvestableId > UInt32.MaxValue)
+            {
+                throw new InvalidDataException(
+                    "The crop identifier is outside Scrap Mechanic's supported range.");
+            }
+            uint value = checked((uint)harvestableId);
+            return new[]
+            {
+                (byte)value,
+                (byte)(value >> 8),
+                (byte)(value >> 16),
+                (byte)(value >> 24)
+            };
+        }
+
+        private static string CropKey(
+            RaidCropReference crop)
+        {
+            return crop.WorldId.ToString(
+                CultureInfo.InvariantCulture) +
+                ":" +
+                crop.HarvestableId.ToString(
+                    CultureInfo.InvariantCulture);
+        }
+
         private static void ReadRaids(
             object rootValue, SqliteDatabase database, AnalysisResult analysis)
         {
@@ -823,6 +1426,8 @@ namespace RaidRescue
             if (worlds == null)
                 return;
 
+            Dictionary<int, string> worldNames =
+                WorldStorage.ReadWorldNames(database);
             foreach (LuaEntry worldEntry in worlds.Entries)
             {
                 LuaTable raids = worldEntry.Value as LuaTable;
@@ -836,6 +1441,8 @@ namespace RaidRescue
                     if (raid == null)
                         continue;
                     RaidInfo info = ParseRaid(raidEntry.Key, raid, worldSlot, database);
+                    info.WorldName =
+                        WorldStorage.ResolveName(worldNames, worldSlot);
                     info.Number = analysis.Raids.Count + 1;
                     analysis.Raids.Add(info);
                     if (info.LiveRaiderReferences > 0)

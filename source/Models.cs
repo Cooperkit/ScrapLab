@@ -39,6 +39,7 @@ namespace RaidRescue
     {
         public int Number { get; set; }
         public int WorldSlot { get; set; }
+        public string WorldName { get; set; }
         public string Key { get; set; }
         public long Tier { get; set; }
         public long ThreatValue { get; set; }
@@ -115,6 +116,10 @@ namespace RaidRescue
         public List<string> Warnings { get; set; }
         public bool GameRunning { get; set; }
         public bool CanClear { get; set; }
+        public int OrphanedRaidCropCount { get; set; }
+        public int UnreadableRaidCropCount { get; set; }
+        public int UnreleasableRaidCropCount { get; set; }
+        public bool CanRepairOrphanedCrops { get; set; }
         public bool CanClearDroppedItems { get; set; }
         public bool CanClearExpiredDroppedItems { get; set; }
     }
@@ -127,6 +132,9 @@ namespace RaidRescue
         public string Path { get; set; }
         public string BackupPath { get; set; }
         public int RecordsRemoved { get; set; }
+        public int CropsReleased { get; set; }
+        public int CropsAlreadySafe { get; set; }
+        public int MissingCropReferences { get; set; }
         public string DatabaseStatus { get; set; }
         public AnalysisResult Before { get; set; }
         public AnalysisResult After { get; set; }

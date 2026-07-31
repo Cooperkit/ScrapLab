@@ -151,23 +151,32 @@ the saved game tick and advances only while the world is running.
 
 Scroll to the bottom of the diagnostic:
 
-- **Clear All Raids** repairs the selected save and removes its stored raid
-  schedule.
+- **Resolve & Clear Raids** releases the growing crops registered to every
+  stored raid and then removes the stored raid schedule.
+- **Repair Orphaned Crops** appears when Raid Rescue finds crops that are still
+  waiting for a raid even though no active raid references them. This repairs
+  crops stranded by an older clear.
 
 The old cumulative hotfix button is hidden because Scrap Mechanic now includes
-an official raid correction. **Clear All Raids** remains useful for a save that
-already contains unwanted persisted raid state. Close Scrap Mechanic before
-repairing a save.
+an official raid correction. **Resolve & Clear Raids** remains useful for a
+save that already contains unwanted persisted raid state. Close Scrap Mechanic
+before repairing a save.
 
-![Warnings and Clear All Raids button](docs/images/03-review-and-clear.png)
+![Warnings and raid recovery controls](docs/images/03-review-and-clear.png)
 
 Read the confirmation and choose **Yes**. Raid Rescue then:
 
 1. checks the save database;
 2. creates a complete timestamped backup beside the save;
 3. verifies the backup;
-4. clears the exact base-game raid-manager record in a transaction;
-5. checks the repaired save again.
+4. validates every live crop registered to the stored raids;
+5. changes only those crops' `hasSurvivedRaid` flag to `true`;
+6. clears the exact base-game raid-manager record in the same transaction;
+7. verifies the rewritten crop storage and checks the repaired save again.
+
+Missing crop references are treated as stale and skipped. If a referenced live
+crop or its Lua storage cannot be decoded exactly, Raid Rescue disables the
+clear action instead of guessing.
 
 ## Tutorial and Help
 
@@ -195,8 +204,10 @@ the world is working.
 
 ## What Raid Rescue changes
 
-Raid Rescue can remove the saved base-game raid-manager record that schedules
-and tracks raids. When the user chooses a dropped-item action, it can also
+Raid Rescue can release the exact growing crops registered to saved raids and
+remove the base-game raid-manager record that schedules and tracks those raids.
+It can also repair a growing crop with `hasSurvivedRaid = false` when no active
+raid references that crop. When the user chooses a dropped-item action, it can
 remove the explicitly selected loose loot harvestable and its matching Lua
 storage record, or every safely decoded loose pickup shown in the report.
 
@@ -313,10 +324,11 @@ and manual backups are left untouched.
 
 - SQLite integrity and repair readiness
 - Save version, game tick, and file size
-- Raid tier, state, threat value, world slot, and coordinates
+- Raid tier, state, threat value, decoded world name, and coordinates
 - Planned robot total, spawn groups, and robot composition
 - Crops and planting records that triggered the raid
 - Missing crop references that can indicate a permanent raid
+- Orphaned crop-growth flags left behind by an older raid clear
 - Stored timing and spawn-point state
 
 ## Frequently asked questions
@@ -327,10 +339,19 @@ Click **Browse** and select the `.db` file manually. The standard folder is
 shown above. Make sure you choose a Survival save, not a backup from a different
 world.
 
-### The Clear All Raids button is disabled
+### The Resolve & Clear Raids button is disabled
 
 Close Scrap Mechanic completely, including any game process still stopping in
-the background. Reopen Raid Rescue and analyze the world again.
+the background. Reopen Raid Rescue and analyze the world again. If the game is
+already closed, review the warning above the raid cards: the action also stays
+locked when a live registered crop cannot be decoded and released safely.
+
+### My crops stopped growing after I cleared a raid with an older version
+
+Close Scrap Mechanic and analyze the affected world. Raid Rescue identifies
+growing crops whose raid-survival flag is still false but which are not
+referenced by any active raid. Select **Repair Orphaned Crops** to create a
+verified backup and release only those proven orphaned crops.
 
 ### Patch Bay says Compatible Game Update
 

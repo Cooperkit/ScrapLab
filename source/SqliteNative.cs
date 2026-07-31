@@ -192,6 +192,27 @@ namespace RaidRescue
             return records;
         }
 
+        public HarvestableRecord ReadHarvestable(long id)
+        {
+            using (SqliteStatement statement = Prepare(
+                "SELECT id, worldId, x, y, size, data " +
+                "FROM Harvestable WHERE id=?1 LIMIT 1"))
+            {
+                statement.BindInt64(1, id);
+                if (!statement.Read())
+                    return null;
+                return new HarvestableRecord
+                {
+                    Id = statement.GetInt64(0),
+                    WorldId = checked((int)statement.GetInt64(1)),
+                    CellX = checked((int)statement.GetInt64(2)),
+                    CellY = checked((int)statement.GetInt64(3)),
+                    Size = checked((int)statement.GetInt64(4)),
+                    Data = statement.GetBlob(5)
+                };
+            }
+        }
+
         public List<StoredScriptRecord> ReadScriptRecords(
             byte[] key, int worldId)
         {
@@ -218,6 +239,27 @@ namespace RaidRescue
                 }
             }
             return records;
+        }
+
+        public StoredScriptRecord ReadScriptRecord(long rowId)
+        {
+            using (SqliteStatement statement = Prepare(
+                "SELECT rowid, uid, key, worldId, flags, data " +
+                "FROM ScriptData WHERE rowid=?1 LIMIT 1"))
+            {
+                statement.BindInt64(1, rowId);
+                if (!statement.Read())
+                    return null;
+                return new StoredScriptRecord
+                {
+                    RowId = statement.GetInt64(0),
+                    Uid = statement.GetBlob(1),
+                    Key = statement.GetBlob(2),
+                    WorldId = checked((int)statement.GetInt64(3)),
+                    Flags = checked((int)statement.GetInt64(4)),
+                    Data = statement.GetBlob(5)
+                };
+            }
         }
 
         public List<WorldMetadataRecord> ReadWorldMetadata()
@@ -249,6 +291,24 @@ namespace RaidRescue
                 "DELETE FROM ScriptData WHERE rowid=?1"))
             {
                 statement.BindInt64(1, rowId);
+                statement.ExecuteNonQuery();
+            }
+            return Native.sqlite3_changes(handle);
+        }
+
+        public int UpdateScriptData(
+            long rowId, byte[] key, int worldId,
+            byte[] expectedData, byte[] replacementData)
+        {
+            using (SqliteStatement statement = Prepare(
+                "UPDATE ScriptData SET data=?1 " +
+                "WHERE rowid=?2 AND key=?3 AND worldId=?4 AND data=?5"))
+            {
+                statement.BindBlob(1, replacementData);
+                statement.BindInt64(2, rowId);
+                statement.BindBlob(3, key);
+                statement.BindInt64(4, worldId);
+                statement.BindBlob(5, expectedData);
                 statement.ExecuteNonQuery();
             }
             return Native.sqlite3_changes(handle);
