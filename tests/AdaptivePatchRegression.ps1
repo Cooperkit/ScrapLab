@@ -1,5 +1,5 @@
 param(
-    [string]$RaidRescueExe = (Join-Path $PSScriptRoot '..\dist\RaidRescue.exe')
+    [string]$RaidRescueExe = (Join-Path $PSScriptRoot '..\dist\RaidRescue.PatchHelper.exe')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -101,6 +101,7 @@ $chemicalType = $assembly.GetType('RaidRescue.ChemicalFertilizerPatchService', $
 $cannonType = $assembly.GetType('RaidRescue.DualFluidCannonPatchService', $true)
 $coordinatorType = $assembly.GetType('RaidRescue.DualFluidCannonPatchCoordinator', $true)
 $commandsType = $assembly.GetType('RaidRescue.DeveloperCommandsPatchService', $true)
+$revivalType = $assembly.GetType('RaidRescue.RevivalBuffPatchService', $true)
 
 $liveGame = Invoke-Static $gameService 'FindGameInstall'
 Assert-True (-not [String]::IsNullOrWhiteSpace($liveGame)) 'Scrap Mechanic install was not found.'
@@ -167,6 +168,17 @@ try {
         }
         return $text
     }
+
+    $revivalRelative = Get-StaticField $revivalType 'SurvivalPlayerRelativePath'
+    $revivalMarker = Get-StaticField $revivalType 'PatchMarker'
+    Copy-CleanFixture $revivalRelative {
+        param($text, $source)
+        if ($text.Contains($revivalMarker)) {
+            return Invoke-Static $revivalType 'UnpatchText' $text
+        }
+        return $text
+    }
+    $revivalFixturePath = Join-Path $fakeGame $revivalRelative
 
     $chemicalTargets = Invoke-Static $chemicalType 'GetTargets'
     foreach ($target in $chemicalTargets) {
@@ -317,6 +329,87 @@ try {
             [byte[]]$baseline[$commandsRelative],
             [byte[]][IO.File]::ReadAllBytes((Join-Path $fakeGame $commandsRelative)))) `
         'Developer Commands exact adaptive restore failed.'
+
+    $revivalInstall = Invoke-Static $revivalType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $revivalInstall.Success (
+        'Revival Buff Recovery adaptive install failed: ' + $revivalInstall.Error)
+    Assert-True $revivalInstall.Adaptive `
+        'Revival Buff Recovery did not report adaptive mode.'
+    $revivalText = Normalize-Lua ([IO.File]::ReadAllText($revivalFixturePath))
+    Assert-True $revivalText.Contains($revivalMarker) `
+        'Revival Buff Recovery marker was not installed.'
+    Assert-True (
+        [regex]::Matches(
+            $revivalText,
+            [regex]::Escape('self:sv_raidRescueCaptureRevivalPerks()')).Count -eq 3) `
+        'Every real knockout transition was not patched exactly once.'
+    Assert-True $revivalText.Contains(
+        'local raidRescueUsedBaguette = self.sv.saved.hasRevivalItem and not params.skipRevivalItem') `
+        'Real Revival Baguette detection was not installed.'
+    Assert-True $revivalText.Contains(
+        'self:sv_raidRescueRestoreRevivalPerks()') `
+        'The baguette revival callback does not restore captured buffs.'
+    Assert-True $revivalText.Contains(
+        'self.sv.saved.raidRescueRevivalPerks = nil') `
+        'Normal respawn and forced-revival snapshot clearing is missing.'
+    Assert-True $revivalText.Contains(
+        'for _, perk in pairs( SurvivalPlayer.Perks ) do') `
+        'Snapshots are not constrained to known food perks.'
+
+    $revivalRemove = Invoke-Static $revivalType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $revivalRemove.Success (
+        'Revival Buff Recovery adaptive removal failed: ' + $revivalRemove.Error)
+    Assert-True (
+        [Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$revivalRelative],
+            [byte[]][IO.File]::ReadAllBytes($revivalFixturePath))) `
+        'Revival Buff Recovery exact restore failed.'
+
+    $revivalSurgicalInstall = Invoke-Static $revivalType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $revivalSurgicalInstall.Success `
+        'Revival Buff Recovery surgical-removal setup failed.'
+    [IO.File]::AppendAllText(
+        $revivalFixturePath,
+        "-- POST-INSTALL UNRELATED REVIVAL EDIT`n",
+        [Text.UTF8Encoding]::new($false))
+    $revivalSurgicalRemove = Invoke-Static $revivalType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $revivalSurgicalRemove.Success (
+        'Revival Buff Recovery surgical removal failed: ' +
+        $revivalSurgicalRemove.Error)
+    $revivalAfterSurgery = [IO.File]::ReadAllText($revivalFixturePath)
+    Assert-True $revivalAfterSurgery.Contains(
+        '-- POST-INSTALL UNRELATED REVIVAL EDIT') `
+        'Revival Buff Recovery removal discarded an unrelated later edit.'
+    Assert-True (-not $revivalAfterSurgery.Contains($revivalMarker)) `
+        'Revival Buff Recovery removal left its patch marker behind.'
+    [IO.File]::WriteAllBytes(
+        $revivalFixturePath,
+        [byte[]]$baseline[$revivalRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'RevivalBuffRecovery'
+
+    $revivalTamperInstall = Invoke-Static $revivalType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $revivalTamperInstall.Success `
+        'Revival Buff Recovery tamper-test setup failed.'
+    $revivalTamperedText = [IO.File]::ReadAllText($revivalFixturePath).Replace(
+        'local restoredPerks = {}',
+        'local restoredPerks = { false }')
+    Write-Utf8NoBom $revivalFixturePath $revivalTamperedText
+    $revivalTamperedHash = Get-Sha256 $revivalFixturePath
+    $revivalTamperedRemove = Invoke-Static $revivalType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True (-not $revivalTamperedRemove.Success) `
+        'Revival Buff Recovery removal accepted an edited protected helper.'
+    Assert-True ((Get-Sha256 $revivalFixturePath) -eq $revivalTamperedHash) `
+        'Rejected Revival Buff Recovery removal still wrote the game script.'
+    [IO.File]::WriteAllBytes(
+        $revivalFixturePath,
+        [byte[]]$baseline[$revivalRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'RevivalBuffRecovery'
 
     $chemicalInstall = Invoke-Static $chemicalType 'SetEnabledAt' `
         $fakeGame $backupRoot $true

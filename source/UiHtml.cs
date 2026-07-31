@@ -579,7 +579,7 @@ button{font:inherit}
 .secret-mods-list::-webkit-scrollbar{width:11px}.secret-mods-list::-webkit-scrollbar-track{background:#101314;border:1px solid #050606}
 .secret-mods-list::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#33454a,#587078);border:2px solid #101314;border-radius:5px}
 .secret-mods-list::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#45616a,#70a5b4)}
-.secret-mod-card{animation:secretCardDock .26s ease-out both}.secret-mod-card:nth-child(2){animation-delay:.035s}.secret-mod-card:nth-child(3){animation-delay:.07s}.secret-mod-card:nth-child(4){animation-delay:.105s}
+.secret-mod-card{animation:secretCardDock .26s ease-out both}.secret-mod-card:nth-child(2){animation-delay:.035s}.secret-mod-card:nth-child(3){animation-delay:.07s}.secret-mod-card:nth-child(4){animation-delay:.105s}.secret-mod-card:nth-child(5){animation-delay:.14s}
 .secret-mod-tag{display:inline-block;margin:0 0 5px!important;color:#6fcbe3!important;font:8px Shentox,""Arial Narrow"",sans-serif!important;letter-spacing:.8px!important}
 .secret-mods-empty{display:none;margin:18px 5px;padding:18px;text-align:center;color:#758184;background:#15191a;border:1px dashed #415054;border-radius:4px;
  font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
@@ -802,7 +802,7 @@ button{font:inherit}
         </button>
       </div>
       <div class=""secret-mods-catalog-head"">
-        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 4 AVAILABLE</span></div>
+        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 5 AVAILABLE</span></div>
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""FILTER MODS..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
@@ -818,6 +818,12 @@ button{font:inherit}
         <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">UTILITY &middot; CONNECT TOOL</span><strong>RESOURCE LOCATOR DOTS</strong><span id=""resourceLocatorDescription"">Reveal haybot spines and refineable resource cores with an inactive Connect Tool output.</span><em id=""resourceLocatorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""resourceLocatorReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""revivalBuffRow"" data-search=""revival baguette buffs pizza veggie burger perk knockout death revive multiplayer survival"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">SURVIVAL &middot; REVIVAL</span><strong>REVIVAL BUFF RECOVERY</strong><span>Revival Baguettes restore every pizza and veggie-burger buff held when the player was knocked out.</span><em id=""revivalBuffState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""revivalBuffReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""revivalBuffSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Revival Buff Recovery"" onclick=""toggleRevivalBuffMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
@@ -1077,6 +1083,16 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; REVIVAL BUFF RECOVERY</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>REVIVAL BAGUETTES ONLY</b><p>When a knocked-out player is revived with a real Revival Baguette, every active food buff they held at the moment of knockout returns with them.</p></div>
+          <div class=""help-item""><b>ALL FOOD BUFFS</b><p>The exact pizza and veggie-burger perk set is preserved, including maximum health, hammer speed, fall protection, and high jump. No random replacement buff is granted.</p></div>
+          <div class=""help-item""><b>NORMAL RESPAWNS STAY NORMAL</b><p>Choosing a normal respawn or using a forced revival still clears the recovery snapshot. Buffs cannot leak into a later life or an unrelated revival.</p></div>
+          <div class=""help-item""><b>MULTIPLAYER SAFE</b><p>The host records each player independently. A player who disconnects while knocked out can reconnect and still receive their own saved buffs when revived with a baguette.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; DEVELOPER COMMANDS</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>HOW TO USE</b><p>Open <strong>Options</strong>, choose an access mode, and install with Scrap Mechanic closed. In a hosted Survival world, open chat and enter a command such as <strong>/unlimited</strong>. Use <strong>/limited</strong> to return to normal inventory rules.</p></div>
@@ -1273,6 +1289,10 @@ var secretResourceLocatorNeedsUpdate=false;
 var secretResourceLocatorCompatibility='';
 var secretResourceLocatorCanApply=true;
 var secretResourceLocatorReason='';
+var secretRevivalBuffInstalled=false;
+var secretRevivalBuffCompatibility='';
+var secretRevivalBuffCanApply=true;
+var secretRevivalBuffReason='';
 var secretDeveloperCommandsInstalled=false;
 var secretDeveloperCommandsError='';
 var secretDeveloperCommandsCompatibility='';
@@ -1489,12 +1509,14 @@ function installAppUpdate(){
  button.disabled=true;button.innerText='VERIFYING UPDATE...';
  var status=document.getElementById('updateStatus');
  status.className='update-status';
- status.innerText='Downloading the official executable and checking its SHA-256 digest. Raid Rescue will restart when verification finishes.';
+ status.innerText='Downloading the verified app and patch companion, then checking both SHA-256 digests. Raid Rescue will restart when verification finishes.';
  startUpdateProgress();
  var started=false;
  try{
   started=!!window.external.InstallAppUpdate(
-   String(updateState.AssetUrl),String(updateState.AssetDigest),String(updateState.LatestVersion));
+   String(updateState.AssetUrl),String(updateState.AssetDigest),
+   String(updateState.PatchAssetUrl),String(updateState.PatchAssetDigest),
+   String(updateState.LatestVersion));
  }catch(e){}
  if(!started)receiveUpdateInstall(JSON.stringify({Success:false,Error:'The update service is already busy.'}),false);
 }
@@ -1547,9 +1569,13 @@ function captureSecretCompatibility(kind,data){
  var canApply=data.CanApply!==false;
  var reason=String(data.CompatibilityReason||'');
  if(kind==='resource'){
-  secretResourceLocatorCompatibility=state;
-  secretResourceLocatorCanApply=canApply;
-  secretResourceLocatorReason=reason;
+ secretResourceLocatorCompatibility=state;
+ secretResourceLocatorCanApply=canApply;
+ secretResourceLocatorReason=reason;
+ }else if(kind==='revival'){
+  secretRevivalBuffCompatibility=state;
+  secretRevivalBuffCanApply=canApply;
+  secretRevivalBuffReason=reason;
  }else if(kind==='commands'){
   secretDeveloperCommandsCompatibility=state;
   secretDeveloperCommandsCanApply=canApply;
@@ -1593,7 +1619,19 @@ function loadSecretModsState(){
    showSecretModFeedback(data.Error||'Could not read the installed resource-locator state.','bad');
   }
  }catch(e){
-  showSecretModFeedback('Could not read the installed resource-locator state.','bad');
+ showSecretModFeedback('Could not read the installed resource-locator state.','bad');
+ }
+ try{
+  var revivalData=parseResult(window.external.GetRevivalBuffModStatus());
+  if(revivalData.Success){
+   secretRevivalBuffInstalled=!!revivalData.Installed;
+   captureSecretCompatibility('revival',revivalData);
+   installedSecretMod=installedSecretMod||secretRevivalBuffInstalled;
+  }else{
+   showSecretModFeedback(revivalData.Error||'Could not read the installed revival-buff state.','bad');
+  }
+ }catch(e){
+  showSecretModFeedback('Could not read the installed revival-buff state.','bad');
  }
  try{
   var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
@@ -1665,6 +1703,17 @@ function renderSecretModsState(){
   locatorState.innerText=secretModBusy&&secretModBusyTarget==='resource'?'APPLYING...':(gameRunning?'GAME RUNNING · CLOSE IT FIRST':(secretResourceLocatorNeedsUpdate&&secretResourceLocatorCompatibility!=='COMPATIBLE GAME UPDATE'?'UPDATE READY · DOT VISIBILITY FIX':compatibilityStateLabel(secretResourceLocatorInstalled,secretResourceLocatorCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('resourceLocatorReason',secretResourceLocatorInstalled,secretResourceLocatorCanApply,secretResourceLocatorReason);
  }
+ var revival=document.getElementById('revivalBuffSwitch');
+ var revivalRow=document.getElementById('revivalBuffRow');
+ var revivalState=document.getElementById('revivalBuffState');
+ if(revival&&revivalRow&&revivalState){
+  revival.className=secretRevivalBuffInstalled?'secret-switch on':'secret-switch';
+  revival.setAttribute('aria-checked',secretRevivalBuffInstalled?'true':'false');
+  revival.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!secretRevivalBuffCanApply;
+  revivalRow.className='secret-mod-row secret-mod-card'+(secretRevivalBuffInstalled?' enabled':'')+((!secretModsEnabled||!secretRevivalBuffCanApply)?' locked':'');
+  revivalState.innerText=secretModBusy&&secretModBusyTarget==='revival'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretRevivalBuffInstalled,secretRevivalBuffCompatibility,'NOT INSTALLED'));
+  renderCompatibilityReason('revivalBuffReason',secretRevivalBuffInstalled,secretRevivalBuffCanApply,secretRevivalBuffReason);
+ }
  var commands=document.getElementById('developerCommandsSwitch');
  var commandOptions=document.getElementById('developerCommandsOptions');
  var commandsRow=document.getElementById('developerCommandsRow');
@@ -1702,8 +1751,8 @@ function renderSecretModsState(){
  }
  var count=document.getElementById('secretModCount');
  if(count){
-  var active=(secretResourceLocatorInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
-  count.innerText=active+' ACTIVE \u00b7 4 AVAILABLE';
+  var active=(secretResourceLocatorInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+  count.innerText=active+' ACTIVE \u00b7 5 AVAILABLE';
  }
  filterSecretMods();
 }
@@ -1770,6 +1819,7 @@ function disableAllSecretModsConfirmed(){
   if(secretDualFluidCannonInstalled&&!setDualFluidCannonMod(false))return false;
   if(secretChemicalFertilizerInstalled&&!setChemicalFertilizerMod(false))return false;
  }
+ if(secretRevivalBuffInstalled&&!setRevivalBuffMod(false))return false;
  if(secretDeveloperCommandsInstalled&&!setDeveloperCommandsMod(false))return false;
  if(secretResourceLocatorInstalled&&!setResourceLocatorMod(false))return false;
  secretModsEnabled=false;
@@ -1781,6 +1831,43 @@ function disableAllSecretModsConfirmed(){
 function toggleResourceLocatorMod(){
  if(!secretModsEnabled||secretModBusy)return;
  setResourceLocatorMod(secretResourceLocatorNeedsUpdate||!secretResourceLocatorInstalled);
+}
+function toggleRevivalBuffMod(){
+ if(!secretModsEnabled||secretModBusy)return;
+ setRevivalBuffMod(!secretRevivalBuffInstalled);
+}
+function setRevivalBuffMod(enabled){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Revival Buff Recovery.','bad');
+  return false;
+ }
+ secretModBusy=true;secretModBusyTarget='revival';operationBusy=true;
+ showSecretModFeedback(
+  enabled?'PREPARING REVIVAL BUFF RECOVERY...':'REMOVING REVIVAL BUFF RECOVERY...',
+  'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetRevivalBuffMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The revival-buff installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Revival Buff Recovery could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretRevivalBuffInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(
+  secretRevivalBuffInstalled
+   ?'REVIVAL BUFF RECOVERY INSTALLED - Revival Baguettes now restore all pizza and veggie-burger buffs held at knockout.'
+   :'REVIVAL BUFF RECOVERY REMOVED - normal SurvivalPlayer behavior was restored.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();
+ return true;
 }
 function setResourceLocatorMod(enabled){
  if(gameRunning){

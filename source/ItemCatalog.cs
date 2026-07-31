@@ -90,7 +90,7 @@ namespace RaidRescue
                     return;
                 loaded = true;
 
-                string gamePath = GamePatchService.FindGameInstall();
+                string gamePath = GameInstallLocator.Find();
                 if (String.IsNullOrEmpty(gamePath))
                     return;
 

@@ -2,8 +2,12 @@ $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $exePath = Join-Path $root "dist\RaidRescue.exe"
-if (-not (Test-Path -LiteralPath $exePath)) {
-    throw "Build dist\RaidRescue.exe before running update regression tests."
+$patchPath = Join-Path $root "dist\RaidRescue.PatchHelper.exe"
+$updaterPath = Join-Path $root "dist\RaidRescue.Updater.exe"
+if (-not (Test-Path -LiteralPath $exePath) -or
+    -not (Test-Path -LiteralPath $patchPath) -or
+    -not (Test-Path -LiteralPath $updaterPath)) {
+    throw "Build the complete three-program bundle before running update regression tests."
 }
 
 $assembly = [Reflection.Assembly]::LoadFrom($exePath)
@@ -47,7 +51,9 @@ Assert-True ($currentVersion -eq $expectedCurrentVersion) `
     "The update service version did not match the executable assembly version."
 
 $officialAsset =
-    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v1.14.1/RaidRescue.exe"
+    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v1.16.1/RaidRescue.exe"
+$officialPatchAsset =
+    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v1.16.1/RaidRescue.PatchHelper.exe"
 $lookalikeAsset =
     "https://github.com.evil.example/Cooperkit/Raid-Rescue/releases/download/v1.14.1/RaidRescue.exe"
 $wrongRepository =
@@ -61,6 +67,7 @@ Assert-True (-not [bool](Invoke-UpdateMethod "IsOfficialDownloadUrl" @($wrongRep
     "A different GitHub repository was accepted."
 
 $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $exePath).Hash
+$patchDigest = (Get-FileHash -Algorithm SHA256 -LiteralPath $patchPath).Hash
 Assert-True ([bool](Invoke-UpdateMethod "IsSha256" @($digest))) `
     "The built executable's SHA-256 digest was rejected."
 Assert-True (-not [bool](Invoke-UpdateMethod "IsSha256" @("ABC123"))) `
@@ -68,12 +75,16 @@ Assert-True (-not [bool](Invoke-UpdateMethod "IsSha256" @("ABC123"))) `
 
 $expected = [Version]$expectedCurrentVersion
 [void](Invoke-UpdateMethod "VerifyDownloadedExecutable" @(
-    $exePath, $digest, $expected))
+    $exePath, $digest, $expected, "Raid Rescue for Scrap Mechanic"))
+[void](Invoke-UpdateMethod "VerifyDownloadedExecutable" @(
+    $patchPath, $patchDigest, $expected,
+    "Raid Rescue Patch Helper for Scrap Mechanic"))
 
 $tamperBlocked = $false
 try {
     [void](Invoke-UpdateMethod "VerifyDownloadedExecutable" @(
-        $exePath, ("0" * 64), $expected))
+        $exePath, ("0" * 64), $expected,
+        "Raid Rescue for Scrap Mechanic"))
 }
 catch {
     $tamperBlocked = $true
@@ -82,11 +93,19 @@ Assert-True $tamperBlocked `
     "A mismatched GitHub digest was not rejected."
 
 $sameVersion = Invoke-UpdateMethod "PrepareAndLaunchUpdate" @(
-    $officialAsset, $digest, $expectedCurrentVersion)
+    $officialAsset, $digest,
+    $officialPatchAsset, $patchDigest,
+    $expectedCurrentVersion)
 Assert-True (-not [bool]$sameVersion.Success) `
     "The updater tried to install the current version."
 Assert-True (-not [bool]$sameVersion.ReadyToRestart) `
     "A rejected same-version update requested a restart."
+
+$updaterAssembly = [Reflection.Assembly]::LoadFrom($updaterPath)
+$updaterType = $updaterAssembly.GetType("RaidRescue.UpdaterProgram", $true)
+$replaceMethod = $updaterType.GetMethod("Replace", $flags)
+Assert-True ($null -ne $replaceMethod) `
+    "The fixed updater replacement method was not found."
 
 $replaceFixture = Join-Path ([IO.Path]::GetTempPath()) (
     "RaidRescue-Update-Test-" + [Guid]::NewGuid().ToString("N"))
@@ -97,7 +116,11 @@ try {
     Copy-Item -LiteralPath $exePath -Destination $target
     [IO.File]::AppendAllText($target, "OLD")
     Copy-Item -LiteralPath $exePath -Destination $stage
-    [void](Invoke-UpdateMethod "ReplaceExecutable" @($stage, $target))
+    [object[]]$replaceArguments = @(
+        ([string]$stage),
+        ([string]$target)
+    )
+    [void]$replaceMethod.Invoke($null, $replaceArguments)
     Assert-True ((Get-FileHash -Algorithm SHA256 -LiteralPath $target).Hash -eq $digest) `
         "The replacement helper did not install the staged executable."
     Assert-True (-not (Test-Path -LiteralPath $stage)) `
@@ -108,5 +131,22 @@ finally {
         Remove-Item -LiteralPath $replaceFixture -Recurse -Force
     }
 }
+
+$legacyUpdateHelper = $service.GetMethod("TryRunHelper", $flags)
+Assert-True ($null -eq $legacyUpdateHelper) `
+    "The main executable still exposes the legacy self-update helper."
+Assert-True ($null -eq $assembly.GetType("RaidRescue.GamePatchService", $false)) `
+    "The main executable still contains the privileged game patch implementation."
+Assert-True ($null -eq $assembly.GetType("RaidRescue.ElevatedPatchBroker", $false)) `
+    "The main executable still contains the legacy self-elevation broker."
+
+$patchInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($patchPath)
+$updaterInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($updaterPath)
+Assert-True ($patchInfo.ProductName -eq
+    "Raid Rescue Patch Helper for Scrap Mechanic") `
+    "The patch helper has the wrong product identity."
+Assert-True ($updaterInfo.ProductName -eq
+    "Raid Rescue Updater for Scrap Mechanic") `
+    "The updater has the wrong product identity."
 
 Write-Host "App update regression tests passed."

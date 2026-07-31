@@ -16,15 +16,6 @@ namespace RaidRescue
         [STAThread]
         private static void Main(string[] args)
         {
-            if (AppUpdateService.TryRunHelper(args) ||
-                ElevatedPatchBroker.TryRunHelper(args) ||
-                GamePatchLauncher.TryRunHelper(args) ||
-                SecretModPatchLauncher.TryRunHelper(args) ||
-                ChemicalFertilizerPatchLauncher.TryRunHelper(args) ||
-                DualFluidCannonPatchLauncher.TryRunHelper(args) ||
-                DeveloperCommandsPatchLauncher.TryRunHelper(args))
-                return;
-
             AppUpdateService.ScheduleCleanup();
             ConfigureBrowserMode();
             GameFonts.TryLoad();
@@ -378,7 +369,11 @@ namespace RaidRescue
         }
 
         internal bool BeginUpdateInstall(
-            string assetUrl, string digest, string latestVersion)
+            string assetUrl,
+            string digest,
+            string patchAssetUrl,
+            string patchDigest,
+            string latestVersion)
         {
             if (Interlocked.CompareExchange(
                 ref updateInstallActive, 1, 0) != 0)
@@ -388,7 +383,9 @@ namespace RaidRescue
             {
                 AppUpdateResult result =
                     AppUpdateService.PrepareAndLaunchUpdate(
-                        assetUrl, digest, latestVersion);
+                        assetUrl, digest,
+                        patchAssetUrl, patchDigest,
+                        latestVersion);
                 NotifyUpdateScript(
                     "receiveUpdateInstall", result, false,
                     delegate
@@ -559,10 +556,16 @@ namespace RaidRescue
         }
 
         public bool InstallAppUpdate(
-            string assetUrl, string digest, string latestVersion)
+            string assetUrl,
+            string digest,
+            string patchAssetUrl,
+            string patchDigest,
+            string latestVersion)
         {
             return owner.BeginUpdateInstall(
-                assetUrl, digest, latestVersion);
+                assetUrl, digest,
+                patchAssetUrl, patchDigest,
+                latestVersion);
         }
 
         public string ConsumeUpdateStartupStatus()
@@ -666,47 +669,68 @@ namespace RaidRescue
 
         public string InstallRaidHotfix()
         {
-            return Serialize(GamePatchLauncher.Install());
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.Hotfix, true, ""));
         }
 
         public string GetResourceLocatorModStatus()
         {
-            return Serialize(SecretModPatchService.GetStatus());
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.ResourceLocator));
         }
 
         public string SetResourceLocatorMod(bool enabled)
         {
-            return Serialize(SecretModPatchLauncher.SetEnabled(enabled));
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.ResourceLocator, enabled, ""));
+        }
+
+        public string GetRevivalBuffModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.RevivalBuffs));
+        }
+
+        public string SetRevivalBuffMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.RevivalBuffs, enabled, ""));
         }
 
         public string GetChemicalFertilizerModStatus()
         {
-            return Serialize(ChemicalFertilizerPatchService.GetStatus());
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.ChemicalFertilizer));
         }
 
         public string SetChemicalFertilizerMod(bool enabled)
         {
-            return Serialize(DualFluidCannonPatchLauncher.SetChemicalEnabled(enabled));
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.ChemicalFertilizer, enabled, ""));
         }
 
         public string GetDualFluidCannonModStatus()
         {
-            return Serialize(DualFluidCannonPatchService.GetStatus());
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.DualFluidCannon));
         }
 
         public string SetDualFluidCannonMod(bool enabled)
         {
-            return Serialize(DualFluidCannonPatchLauncher.SetCannonEnabled(enabled));
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.DualFluidCannon, enabled, ""));
         }
 
         public string GetDeveloperCommandsModStatus()
         {
-            return Serialize(DeveloperCommandsPatchService.GetStatus());
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.DeveloperCommands));
         }
 
         public string SetDeveloperCommandsMod(bool enabled, string mode)
         {
-            return Serialize(DeveloperCommandsPatchLauncher.SetEnabled(enabled, mode));
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.DeveloperCommands, enabled, mode ?? ""));
         }
 
         public void OpenFolder(string path)

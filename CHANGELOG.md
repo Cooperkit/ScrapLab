@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.16.0
+
+- Split automatic replacement into a fixed `RaidRescue.Updater.exe`
+  companion. The main app no longer copies itself to a random temporary EXE
+  or accepts an internal update-helper command line.
+- Split every game-script status and patch operation into
+  `RaidRescue.PatchHelper.exe`. The main app no longer contains the patch
+  implementation and can no longer relaunch itself elevated.
+- Restricted elevated Patch Bay requests to a versioned allowlist over a
+  current-Windows-user-only named pipe, verified that the connected process is
+  the exact helper Windows started, verified from the elevated side that the
+  pipe server is the declared parent process, and bound the session to the
+  exact sibling `RaidRescue.exe` parent.
+- The fixed updater accepts only same-folder Raid Rescue components, verifies
+  GitHub SHA-256 digests, product names, file versions, and matching publisher
+  certificates when signed, and rolls the main app and patch helper back
+  together on failure.
+- Added optional same-certificate Authenticode signing for all three programs
+  through `RAID_RESCUE_SIGN_CERT_SHA1`.
+- Changed Windows distribution to a complete three-file portable ZIP. Version
+  1.16.0 is a one-time manual bundle transition from older single-file builds.
+
+## 1.15.0
+
+- Added **Revival Buff Recovery** to the hidden Super Secret Mods patch bay.
+- Players revived with a real Revival Baguette now regain the exact pizza and
+  veggie-burger buffs they held when knocked out: maximum health, hammer
+  speed, fall protection, and high jump.
+- Buff snapshots are isolated per player and persist if a knocked-out player
+  disconnects and rejoins before revival.
+- Normal respawns and forced revivals explicitly discard the snapshot so buffs
+  cannot leak into another life or an unrelated revival.
+- Added exact protected-code matching, checksum-verified backups, adaptive
+  Steam-update compatibility, surgical removal, cache invalidation, and
+  elevated patch-session support for the new mod.
+
 ## 1.14.0
 
 - Raid cards now show the decoded world name, matching dropped-item cards,

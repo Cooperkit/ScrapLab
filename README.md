@@ -13,7 +13,7 @@ verified backup. Its optional Patch Bay also installs carefully guarded
 quality-of-life game-script mods.
 
 It is designed for regular players: no database editor, command prompt,
-installer, or extra dependencies are required.
+installer, or external dependencies are required.
 
 On first launch, Raid Rescue offers an optional interactive tutorial. The
 animated tour explains the safe workflow using the real controls without
@@ -31,13 +31,16 @@ where the tutorial can be replayed or its first-run prompt can be reset.
 ## Download
 
 1. Open the repository's [latest release](../../releases/latest).
-2. Download `RaidRescue.exe`.
-3. Put it anywhere convenient and double-click it.
+2. Download `RaidRescue-1.16.0.zip`.
+3. Extract all three files into one folder.
+4. Double-click `RaidRescue.exe`.
 
-The app is portable and does not need to be installed. Clearing a save does not
-need administrator access. The first secret-mod change in an app session asks
-for Windows administrator approval because Steam normally stores the game
-under Program Files. Later patch actions reuse that protected session without
+The app is portable and does not need to be installed. Keep
+`RaidRescue.exe`, `RaidRescue.PatchHelper.exe`, and
+`RaidRescue.Updater.exe` together. Clearing a save does not need
+administrator access. The first secret-mod change in an app session asks for
+Windows administrator approval because Steam normally stores the game under
+Program Files. Later patch actions reuse the restricted helper session without
 asking again.
 
 Whenever a secret-mod action changes game Lua files or reactivates an intact
@@ -59,27 +62,32 @@ background and network failures stay quiet, so save analysis and repair remain
 responsive and usable offline. Open the **?** Field Manual and choose
 **Check Updates** to run an immediate check.
 
-When a newer `RaidRescue.exe` is available, the in-app update console offers:
+When a newer complete release is available, the in-app update console offers:
 
 - **Later**, which dismisses that version for the current app session;
 - **View Release**, which opens the official GitHub release;
 - **Update + Restart**, which downloads, verifies, installs, and reopens the
   app automatically.
 
-One-click installation accepts only an HTTPS asset from
-`Cooperkit/Raid-Rescue`, requires GitHub's published SHA-256 asset digest, and
-checks that the downloaded Windows executable has the expected newer Raid
-Rescue version. A temporary helper waits for the running app to close, replaces
-the EXE, verifies it again, and reopens it. One bounded previous-executable
-backup is retained under:
+One-click installation accepts only HTTPS assets from
+`Cooperkit/Raid-Rescue`, requires GitHub's published SHA-256 asset digests, and
+checks the product identity and version of both the main app and patch helper.
+The fixed `RaidRescue.Updater.exe` companion waits for the running app to
+close, replaces only its two known sibling components, verifies them again,
+and reopens the app. Bounded previous-component backups are retained under:
 
 ```text
-%LOCALAPPDATA%\Raid Rescue\Updates\previous.exe
+%LOCALAPPDATA%\Raid Rescue\Updates\previous-main.exe
+%LOCALAPPDATA%\Raid Rescue\Updates\previous-patch-helper.exe
 ```
 
-If replacement or relaunch fails, the helper restores that verified previous
-copy. Updating Raid Rescue does not open or alter a save and does not reinstall
-secret mods.
+If either replacement or relaunch fails, the updater restores both verified
+previous components. Updating Raid Rescue does not open or alter a save and
+does not reinstall secret mods.
+
+Version 1.16.0 is the one-time transition from the old single-file layout.
+Install its complete ZIP manually. Future complete releases can use the new
+fixed updater.
 
 ## Quick start
 
@@ -250,6 +258,12 @@ hidden patch bay. Turn on the master switch, then install any optional mod:
   and metal cores while the Connect Tool is equipped. The game requires one
   output slot before it will draw the dot, so the patch exposes one inactive
   logic output. It never sends an ON signal.
+- **Revival Buff Recovery** records the exact set of pizza and veggie-burger
+  buffs a player has when knocked out, then restores all of them if that player
+  is revived with a real Revival Baguette. Normal respawns and forced revivals
+  still clear the snapshot and buffs normally. A downed player's snapshot is
+  stored independently by the host, so reconnecting before the baguette revive
+  does not lose it.
 - **Developer Commands** unlocks Scrap Mechanic's existing Survival developer
   chat commands. Its **Host Only** option is recommended and grants them only
   to the player hosting the world. **Every Player** gives the command list to
@@ -424,9 +438,16 @@ The source is in [`source`](source). On Windows, run:
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-The compiled app is written to `dist\RaidRescue.exe`. The build uses the .NET
+The three compiled programs are written to `dist`, and the complete portable
+ZIP is written to `release\RaidRescue-1.16.0.zip`. The build uses the .NET
 Framework compiler included with Windows and links only Windows framework
 assemblies.
+
+Release builds are Authenticode-signing ready. Set
+`RAID_RESCUE_SIGN_CERT_SHA1` to the code-signing certificate thumbprint and
+make `signtool.exe` available before running the build; all three programs are
+then signed with the same certificate and timestamped. At runtime, a signed
+main app refuses companions or updates signed by a different publisher.
 
 ## Privacy and game assets
 

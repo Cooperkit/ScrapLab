@@ -1768,6 +1768,7 @@ namespace RaidRescue
         }
     }
 
+#if LEGACY_SELF_HELPERS
     internal sealed class ElevatedPatchRequest
     {
         public string Token { get; set; }
@@ -1785,6 +1786,7 @@ namespace RaidRescue
         internal const string ChemicalAction = "chemical";
         internal const string CannonAction = "cannon";
         internal const string CommandsAction = "commands";
+        internal const string RevivalBuffsAction = "revival-buffs";
         private static readonly object Sync = new object();
         private static Process brokerProcess;
         private static string brokerPipe;
@@ -2013,6 +2015,9 @@ namespace RaidRescue
                 case CommandsAction:
                     return DeveloperCommandsPatchService.SetEnabled(
                         request.Enabled, request.Mode);
+                case RevivalBuffsAction:
+                    return RevivalBuffPatchService.SetEnabled(
+                        request.Enabled);
                 default:
                     return Failure(
                         "The elevated patch session rejected an unknown action.");
@@ -2211,6 +2216,8 @@ namespace RaidRescue
             };
         }
     }
+
+#endif
 
     internal static class ChemicalFertilizerPatchService
     {
@@ -3652,6 +3659,7 @@ namespace RaidRescue
         }
     }
 
+#if LEGACY_SELF_HELPERS
     internal static class ChemicalFertilizerPatchLauncher
     {
         private const string HelperSwitch = "--set-chemical-fertilizer-mod";
@@ -3762,6 +3770,8 @@ namespace RaidRescue
             };
         }
     }
+
+#endif
 
     internal static class DualFluidCannonPatchService
     {
@@ -4862,6 +4872,7 @@ namespace RaidRescue
         }
     }
 
+#if LEGACY_SELF_HELPERS
     internal static class DualFluidCannonPatchLauncher
     {
         private const string HelperSwitch = "--set-dual-fluid-cannon-mod";
@@ -4996,6 +5007,8 @@ namespace RaidRescue
             };
         }
     }
+
+#endif
 
     internal static class DeveloperCommandsPatchService
     {
@@ -5848,6 +5861,7 @@ namespace RaidRescue
         }
     }
 
+#if LEGACY_SELF_HELPERS
     internal static class DeveloperCommandsPatchLauncher
     {
         private const string HelperSwitch = "--set-developer-commands-mod";
@@ -6068,4 +6082,5 @@ namespace RaidRescue
             };
         }
     }
+#endif
 }

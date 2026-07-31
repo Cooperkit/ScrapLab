@@ -25,6 +25,9 @@ namespace RaidRescue
         public string AssetUrl { get; set; }
         public string AssetDigest { get; set; }
         public long AssetSize { get; set; }
+        public string PatchAssetUrl { get; set; }
+        public string PatchAssetDigest { get; set; }
+        public long PatchAssetSize { get; set; }
     }
 
     public sealed class AppUpdateStartupStatus
@@ -78,9 +81,11 @@ namespace RaidRescue
             "https://github.com/Cooperkit/Raid-Rescue/releases/";
         private const string DownloadPathPrefix =
             "/Cooperkit/Raid-Rescue/releases/download/";
-        private const string AssetName = "RaidRescue.exe";
-        private const string HelperArgument = "--raid-rescue-apply-update";
-        private const string HelperPrefix = "RaidRescue-Updater-";
+        private const string MainAssetName = "RaidRescue.exe";
+        private const string PatchAssetName = "RaidRescue.PatchHelper.exe";
+        private const string UpdaterFileName = "RaidRescue.Updater.exe";
+        private const string UpdaterProduct =
+            "Raid Rescue Updater for Scrap Mechanic";
         private const string StagePrefix = ".RaidRescue.Update.";
         private static Timer cleanupTimer;
 
@@ -88,36 +93,22 @@ namespace RaidRescue
         {
             get
             {
-                Version version = Assembly.GetExecutingAssembly().GetName().Version;
-                return FormatVersion(version);
+                return FormatVersion(
+                    Assembly.GetExecutingAssembly().GetName().Version);
             }
         }
 
         public static AppUpdateResult CheckForUpdates()
         {
-            AppUpdateResult result = new AppUpdateResult
-            {
-                CurrentVersion = CurrentVersion,
-                LatestVersion = "",
-                TagName = "",
-                ReleaseUrl = ReleasePrefix + "latest",
-                AssetUrl = "",
-                AssetDigest = ""
-            };
-
+            AppUpdateResult result = NewResult();
             try
             {
                 EnableTls12();
                 string json;
                 using (TimedWebClient client = CreateWebClient())
                     json = client.DownloadString(LatestReleaseApi);
-
-                JavaScriptSerializer serializer = new JavaScriptSerializer
-                {
-                    MaxJsonLength = 1024 * 1024
-                };
                 GitHubRelease release =
-                    serializer.Deserialize<GitHubRelease>(json);
+                    Serializer().Deserialize<GitHubRelease>(json);
                 if (release == null || release.draft || release.prerelease)
                     throw new InvalidDataException(
                         "GitHub did not return a stable Raid Rescue release.");
@@ -130,30 +121,46 @@ namespace RaidRescue
                     throw new InvalidDataException(
                         "GitHub returned an unexpected release address.");
 
-                result.TagName = release.tag_name;
+                result.TagName = release.tag_name ?? "";
                 result.LatestVersion = FormatVersion(latest);
                 result.ReleaseUrl = release.html_url;
                 result.UpdateAvailable =
                     CompareVersions(latest, CurrentAssemblyVersion()) > 0;
                 result.Success = true;
 
-                GitHubReleaseAsset asset = FindReleaseAsset(release.assets);
-                if (asset != null)
+                GitHubReleaseAsset main =
+                    FindReleaseAsset(release.assets, MainAssetName);
+                GitHubReleaseAsset patch =
+                    FindReleaseAsset(release.assets, PatchAssetName);
+                if (main != null)
                 {
-                    result.AssetUrl = asset.browser_download_url ?? "";
-                    result.AssetDigest = NormalizeDigest(asset.digest);
-                    result.AssetSize = asset.size;
-                    result.CanAutoUpdate =
-                        IsOfficialDownloadUrl(result.AssetUrl) &&
-                        IsSha256(result.AssetDigest) &&
-                        asset.size > 0;
+                    result.AssetUrl = main.browser_download_url ?? "";
+                    result.AssetDigest = NormalizeDigest(main.digest);
+                    result.AssetSize = main.size;
                 }
+                if (patch != null)
+                {
+                    result.PatchAssetUrl =
+                        patch.browser_download_url ?? "";
+                    result.PatchAssetDigest =
+                        NormalizeDigest(patch.digest);
+                    result.PatchAssetSize = patch.size;
+                }
+
+                result.CanAutoUpdate =
+                    IsOfficialDownloadUrl(result.AssetUrl) &&
+                    IsSha256(result.AssetDigest) &&
+                    result.AssetSize > 0 &&
+                    IsOfficialDownloadUrl(result.PatchAssetUrl) &&
+                    IsSha256(result.PatchAssetDigest) &&
+                    result.PatchAssetSize > 0 &&
+                    HasValidUpdater();
 
                 if (result.UpdateAvailable && !result.CanAutoUpdate)
                 {
                     result.Error =
-                        "The release is available, but its verified Windows " +
-                        "download is not ready. Open GitHub to update manually.";
+                        "This release needs the complete verified Windows bundle. " +
+                        "Open GitHub and keep RaidRescue.exe with both companion programs.";
                 }
                 return result;
             }
@@ -168,17 +175,20 @@ namespace RaidRescue
         }
 
         public static AppUpdateResult PrepareAndLaunchUpdate(
-            string assetUrl, string digest, string latestVersion)
+            string assetUrl,
+            string digest,
+            string patchAssetUrl,
+            string patchDigest,
+            string latestVersion)
         {
-            AppUpdateResult result = new AppUpdateResult
-            {
-                CurrentVersion = CurrentVersion,
-                LatestVersion = latestVersion ?? "",
-                AssetUrl = assetUrl ?? "",
-                AssetDigest = NormalizeDigest(digest)
-            };
-            string stagePath = null;
-            string helperPath = null;
+            AppUpdateResult result = NewResult();
+            result.LatestVersion = latestVersion ?? "";
+            result.AssetUrl = assetUrl ?? "";
+            result.AssetDigest = NormalizeDigest(digest);
+            result.PatchAssetUrl = patchAssetUrl ?? "";
+            result.PatchAssetDigest = NormalizeDigest(patchDigest);
+            string mainStage = null;
+            string patchStage = null;
 
             try
             {
@@ -187,54 +197,68 @@ namespace RaidRescue
                     CompareVersions(expected, CurrentAssemblyVersion()) <= 0)
                     throw new InvalidDataException(
                         "The selected release is not newer than this copy.");
-                if (!IsOfficialDownloadUrl(assetUrl))
-                    throw new InvalidDataException(
-                        "The update download is not an official Raid Rescue asset.");
-                if (!IsSha256(result.AssetDigest))
-                    throw new InvalidDataException(
-                        "GitHub did not provide a valid SHA-256 digest.");
+                ValidateAsset(result.AssetUrl, result.AssetDigest);
+                ValidateAsset(
+                    result.PatchAssetUrl, result.PatchAssetDigest);
 
-                string targetPath = Path.GetFullPath(
+                string targetMain = Path.GetFullPath(
                     Assembly.GetExecutingAssembly().Location);
-                string targetDirectory = Path.GetDirectoryName(targetPath);
-                stagePath = Path.Combine(
-                    targetDirectory,
-                    StagePrefix + Guid.NewGuid().ToString("N") + ".tmp");
+                string directory = Path.GetDirectoryName(targetMain);
+                string targetPatch = Path.Combine(
+                    directory, PatchHelperProtocol.HelperFileName);
+                if (!File.Exists(targetPatch))
+                    throw new FileNotFoundException(
+                        "The patch companion is missing. Install the complete release bundle.",
+                        targetPatch);
+                string updater = Path.Combine(
+                    directory, UpdaterFileName);
+                CompanionSecurity.ValidateCompanion(
+                    updater, UpdaterProduct, false);
+
+                string suffix = Guid.NewGuid().ToString("N");
+                mainStage = Path.Combine(
+                    directory, StagePrefix + "Main." + suffix + ".tmp");
+                patchStage = Path.Combine(
+                    directory, StagePrefix + "Patch." + suffix + ".tmp");
 
                 EnableTls12();
                 using (TimedWebClient client = CreateWebClient())
-                    client.DownloadFile(assetUrl, stagePath);
-
+                {
+                    client.DownloadFile(result.AssetUrl, mainStage);
+                    client.DownloadFile(result.PatchAssetUrl, patchStage);
+                }
                 VerifyDownloadedExecutable(
-                    stagePath, result.AssetDigest, expected);
-
-                helperPath = Path.Combine(
-                    Path.GetTempPath(),
-                    HelperPrefix + Guid.NewGuid().ToString("N") + ".exe");
-                File.Copy(targetPath, helperPath, false);
-                if (!HashesEqual(
-                    ComputeSha256(helperPath), ComputeSha256(targetPath)))
-                    throw new IOException(
-                        "The temporary update helper failed verification.");
+                    mainStage, result.AssetDigest, expected,
+                    "Raid Rescue for Scrap Mechanic");
+                VerifyDownloadedExecutable(
+                    patchStage, result.PatchAssetDigest, expected,
+                    "Raid Rescue Patch Helper for Scrap Mechanic");
+                CompanionSecurity.RequireMatchingSignerWhenSigned(
+                    targetMain, mainStage);
+                CompanionSecurity.RequireMatchingSignerWhenSigned(
+                    targetMain, patchStage);
 
                 ProcessStartInfo start = new ProcessStartInfo
                 {
-                    FileName = helperPath,
+                    FileName = updater,
                     UseShellExecute = false,
-                    WorkingDirectory = targetDirectory,
+                    WorkingDirectory = directory,
                     CreateNoWindow = true,
                     Arguments =
-                        HelperArgument + " " +
+                        "--apply-update " +
                         Process.GetCurrentProcess().Id.ToString() + " " +
-                        QuoteArgument(stagePath) + " " +
-                        QuoteArgument(targetPath) + " " +
+                        QuoteArgument(mainStage) + " " +
+                        QuoteArgument(targetMain) + " " +
                         QuoteArgument(result.AssetDigest) + " " +
+                        QuoteArgument(patchStage) + " " +
+                        QuoteArgument(targetPatch) + " " +
+                        QuoteArgument(result.PatchAssetDigest) + " " +
                         QuoteArgument(FormatVersion(expected))
                 };
                 Process helper = Process.Start(start);
                 if (helper == null)
                     throw new InvalidOperationException(
-                        "Windows could not start the update helper.");
+                        "Windows could not start the fixed update helper.");
 
                 result.Success = true;
                 result.ReadyToRestart = true;
@@ -242,111 +266,14 @@ namespace RaidRescue
             }
             catch (Exception exception)
             {
-                TryDelete(stagePath);
-                TryDelete(helperPath);
+                TryDelete(mainStage);
+                TryDelete(patchStage);
                 result.Success = false;
                 result.Error =
                     "The update was not installed. " +
                     FriendlyMessage(exception);
                 return result;
             }
-        }
-
-        public static bool TryRunHelper(string[] args)
-        {
-            if (args == null || args.Length == 0 ||
-                !String.Equals(
-                    args[0], HelperArgument,
-                    StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            string targetPath = null;
-            string backupPath = null;
-            string expectedDigest = "";
-            string expectedVersion = "";
-            try
-            {
-                if (args.Length != 6)
-                    throw new InvalidDataException(
-                        "The update helper received incomplete instructions.");
-
-                int parentId;
-                if (!Int32.TryParse(args[1], out parentId) || parentId <= 0)
-                    throw new InvalidDataException(
-                        "The update helper received an invalid process ID.");
-
-                string stagePath = Path.GetFullPath(args[2]);
-                targetPath = Path.GetFullPath(args[3]);
-                expectedDigest = NormalizeDigest(args[4]);
-                expectedVersion = args[5] ?? "";
-
-                ValidateHelperPaths(stagePath, targetPath);
-                Version expected;
-                if (!TryParseReleaseVersion(expectedVersion, out expected))
-                    throw new InvalidDataException(
-                        "The update helper received an invalid version.");
-                if (!IsSha256(expectedDigest))
-                    throw new InvalidDataException(
-                        "The update helper received an invalid SHA-256 digest.");
-
-                WaitForParent(parentId);
-                VerifyDownloadedExecutable(stagePath, expectedDigest, expected);
-
-                string updateDirectory = GetUpdateDataDirectory();
-                Directory.CreateDirectory(updateDirectory);
-                backupPath = Path.Combine(updateDirectory, "previous.exe");
-                File.Copy(targetPath, backupPath, true);
-                string previousDigest = ComputeSha256(targetPath);
-                if (!HashesEqual(
-                    previousDigest, ComputeSha256(backupPath)))
-                    throw new IOException(
-                        "The previous executable backup failed verification.");
-
-                ReplaceExecutable(stagePath, targetPath);
-                if (!HashesEqual(
-                    expectedDigest, ComputeSha256(targetPath)))
-                    throw new IOException(
-                        "The installed executable failed final verification.");
-
-                WriteStartupStatus(true, expectedVersion, "");
-                try
-                {
-                    StartUpdatedApplication(targetPath);
-                }
-                catch
-                {
-                    RestorePreviousExecutable(
-                        backupPath, targetPath, previousDigest);
-                    throw;
-                }
-            }
-            catch (Exception exception)
-            {
-                string failure =
-                    "The automatic update was rolled back. " +
-                    FriendlyMessage(exception);
-                if (!String.IsNullOrEmpty(targetPath) &&
-                    !String.IsNullOrEmpty(backupPath) &&
-                    File.Exists(backupPath))
-                {
-                    try
-                    {
-                        string backupDigest = ComputeSha256(backupPath);
-                        RestorePreviousExecutable(
-                            backupPath, targetPath, backupDigest);
-                    }
-                    catch { }
-                }
-                WriteStartupStatus(false, expectedVersion, failure);
-                try
-                {
-                    if (!String.IsNullOrEmpty(targetPath) &&
-                        File.Exists(targetPath))
-                        StartUpdatedApplication(targetPath);
-                }
-                catch { }
-            }
-            return true;
         }
 
         public static AppUpdateStartupStatus ConsumeStartupStatus()
@@ -366,23 +293,19 @@ namespace RaidRescue
                         continue;
                     string key = line.Substring(0, split);
                     string value = line.Substring(split + 1);
-                    if (String.Equals(key, "Success",
-                        StringComparison.OrdinalIgnoreCase))
-                        result.Success = String.Equals(
-                            value, "1", StringComparison.Ordinal);
-                    else if (String.Equals(key, "Version",
-                        StringComparison.OrdinalIgnoreCase))
+                    if (String.Equals(
+                        key, "Success", StringComparison.OrdinalIgnoreCase))
+                        result.Success = value == "1";
+                    else if (String.Equals(
+                        key, "Version", StringComparison.OrdinalIgnoreCase))
                         result.Version = value;
-                    else if (String.Equals(key, "Error",
-                        StringComparison.OrdinalIgnoreCase))
+                    else if (String.Equals(
+                        key, "Error", StringComparison.OrdinalIgnoreCase))
                         result.Error = DecodeStatusValue(value);
                 }
                 result.HasStatus = true;
             }
-            catch
-            {
-                // A missing update notice must never block startup.
-            }
+            catch { }
             return result;
         }
 
@@ -406,10 +329,44 @@ namespace RaidRescue
                 });
                 return true;
             }
-            catch
+            catch { return false; }
+        }
+
+        private static AppUpdateResult NewResult()
+        {
+            return new AppUpdateResult
             {
-                return false;
+                CurrentVersion = CurrentVersion,
+                LatestVersion = "",
+                TagName = "",
+                ReleaseUrl = ReleasePrefix + "latest",
+                AssetUrl = "",
+                AssetDigest = "",
+                PatchAssetUrl = "",
+                PatchAssetDigest = ""
+            };
+        }
+
+        private static bool HasValidUpdater()
+        {
+            try
+            {
+                CompanionSecurity.ValidateCompanion(
+                    CompanionSecurity.GetSibling(UpdaterFileName),
+                    UpdaterProduct, false);
+                return true;
             }
+            catch { return false; }
+        }
+
+        private static void ValidateAsset(string url, string digest)
+        {
+            if (!IsOfficialDownloadUrl(url))
+                throw new InvalidDataException(
+                    "The update download is not an official Raid Rescue asset.");
+            if (!IsSha256(digest))
+                throw new InvalidDataException(
+                    "GitHub did not provide a valid SHA-256 digest.");
         }
 
         private static TimedWebClient CreateWebClient()
@@ -423,8 +380,16 @@ namespace RaidRescue
             return client;
         }
 
+        private static JavaScriptSerializer Serializer()
+        {
+            return new JavaScriptSerializer
+            {
+                MaxJsonLength = 1024 * 1024
+            };
+        }
+
         private static GitHubReleaseAsset FindReleaseAsset(
-            List<GitHubReleaseAsset> assets)
+            List<GitHubReleaseAsset> assets, string expectedName)
         {
             if (assets == null)
                 return null;
@@ -432,7 +397,7 @@ namespace RaidRescue
             {
                 if (asset != null &&
                     String.Equals(
-                        asset.name, AssetName,
+                        asset.name, expectedName,
                         StringComparison.OrdinalIgnoreCase) &&
                     (String.IsNullOrEmpty(asset.state) ||
                      String.Equals(
@@ -443,196 +408,106 @@ namespace RaidRescue
             return null;
         }
 
-        private static void VerifyDownloadedExecutable(
-            string path, string digest, Version expected)
+        internal static void VerifyDownloadedExecutable(
+            string path,
+            string digest,
+            Version expected,
+            string expectedProduct)
         {
             FileInfo file = new FileInfo(path);
-            if (!file.Exists || file.Length < 100000 || file.Length > 8 * 1024 * 1024)
+            if (!file.Exists || file.Length < 50000 ||
+                file.Length > 12 * 1024 * 1024)
                 throw new InvalidDataException(
-                    "The downloaded executable has an unexpected size.");
+                    "A downloaded executable has an unexpected size.");
             if (!HashesEqual(digest, ComputeSha256(path)))
                 throw new InvalidDataException(
-                    "The downloaded executable does not match GitHub's SHA-256 digest.");
-
+                    "A downloaded executable does not match GitHub's SHA-256 digest.");
             FileVersionInfo info = FileVersionInfo.GetVersionInfo(path);
             Version downloaded;
             if (!Version.TryParse(info.FileVersion, out downloaded) ||
                 CompareVersions(downloaded, expected) != 0)
                 throw new InvalidDataException(
-                    "The downloaded executable version does not match the release.");
+                    "A downloaded executable version does not match the release.");
             if (!String.Equals(
-                info.ProductName,
-                "Raid Rescue for Scrap Mechanic",
-                StringComparison.Ordinal))
+                info.ProductName, expectedProduct, StringComparison.Ordinal))
                 throw new InvalidDataException(
-                    "The downloaded file is not a Raid Rescue executable.");
+                    "A downloaded file has an unexpected product identity.");
         }
 
-        private static void ValidateHelperPaths(
-            string stagePath, string targetPath)
+        internal static bool IsOfficialDownloadUrl(string value)
         {
-            if (!File.Exists(stagePath) || !File.Exists(targetPath))
-                throw new FileNotFoundException(
-                    "An update file disappeared before installation.");
-            if (!String.Equals(
-                Path.GetDirectoryName(stagePath),
-                Path.GetDirectoryName(targetPath),
-                StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException(
-                    "The staged update is not beside the installed executable.");
-            if (!Path.GetFileName(stagePath).StartsWith(
-                StagePrefix, StringComparison.OrdinalIgnoreCase) ||
-                !String.Equals(
-                    Path.GetExtension(targetPath), ".exe",
+            Uri uri;
+            return Uri.TryCreate(value, UriKind.Absolute, out uri) &&
+                String.Equals(
+                    uri.Scheme, Uri.UriSchemeHttps,
+                    StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(
+                    uri.Host, "github.com",
+                    StringComparison.OrdinalIgnoreCase) &&
+                uri.AbsolutePath.StartsWith(
+                    DownloadPathPrefix,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static bool IsOfficialReleaseUrl(string value)
+        {
+            Uri uri;
+            return Uri.TryCreate(value, UriKind.Absolute, out uri) &&
+                String.Equals(
+                    uri.Scheme, Uri.UriSchemeHttps,
+                    StringComparison.OrdinalIgnoreCase) &&
+                String.Equals(
+                    uri.Host, "github.com",
+                    StringComparison.OrdinalIgnoreCase) &&
+                uri.AbsolutePath.StartsWith(
+                    "/Cooperkit/Raid-Rescue/releases",
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static bool IsSha256(string value)
+        {
+            if (String.IsNullOrEmpty(value) || value.Length != 64)
+                return false;
+            foreach (char character in value)
+            {
+                if (!Uri.IsHexDigit(character))
+                    return false;
+            }
+            return true;
+        }
+
+        internal static string ComputeSha256(string path)
+        {
+            using (FileStream stream = new FileStream(
+                path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (SHA256 algorithm = SHA256.Create())
+            {
+                StringBuilder result = new StringBuilder(64);
+                foreach (byte value in algorithm.ComputeHash(stream))
+                    result.Append(value.ToString("X2"));
+                return result.ToString();
+            }
+        }
+
+        private static string NormalizeDigest(string value)
+        {
+            string digest = (value ?? "").Trim();
+            int split = digest.IndexOf(':');
+            if (split >= 0)
+            {
+                if (!String.Equals(
+                    digest.Substring(0, split), "sha256",
                     StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException(
-                    "The update paths did not pass validation.");
+                    return "";
+                digest = digest.Substring(split + 1);
+            }
+            return digest.ToUpperInvariant();
         }
 
-        private static void WaitForParent(int parentId)
+        private static bool HashesEqual(string left, string right)
         {
-            try
-            {
-                Process parent = Process.GetProcessById(parentId);
-                if (!parent.WaitForExit(60000))
-                    throw new TimeoutException(
-                        "Raid Rescue did not close in time.");
-            }
-            catch (ArgumentException)
-            {
-                // The main app already exited.
-            }
-        }
-
-        private static void RestorePreviousExecutable(
-            string backupPath, string targetPath, string expectedDigest)
-        {
-            File.Copy(backupPath, targetPath, true);
-            if (!HashesEqual(
-                expectedDigest, ComputeSha256(targetPath)))
-                throw new IOException(
-                    "The previous executable could not be restored.");
-        }
-
-        private static void ReplaceExecutable(
-            string stagePath, string targetPath)
-        {
-            try
-            {
-                File.Replace(stagePath, targetPath, null, true);
-                return;
-            }
-            catch (PlatformNotSupportedException)
-            {
-                // Portable copies may be launched from a non-NTFS drive.
-            }
-            catch (IOException)
-            {
-                // Some Windows filesystems do not implement File.Replace.
-                // The same-directory move below retains rollback safety.
-            }
-
-            string displaced = Path.Combine(
-                Path.GetDirectoryName(targetPath),
-                StagePrefix + "previous-" +
-                Guid.NewGuid().ToString("N") + ".tmp");
-            File.Move(targetPath, displaced);
-            try
-            {
-                File.Move(stagePath, targetPath);
-                TryDelete(displaced);
-            }
-            catch
-            {
-                try
-                {
-                    if (!File.Exists(targetPath) && File.Exists(displaced))
-                        File.Move(displaced, targetPath);
-                }
-                catch { }
-                throw;
-            }
-        }
-
-        private static void StartUpdatedApplication(string targetPath)
-        {
-            Process process = Process.Start(new ProcessStartInfo
-            {
-                FileName = targetPath,
-                WorkingDirectory = Path.GetDirectoryName(targetPath),
-                UseShellExecute = true
-            });
-            if (process == null)
-                throw new InvalidOperationException(
-                    "Windows could not reopen Raid Rescue.");
-        }
-
-        private static void WriteStartupStatus(
-            bool success, string version, string error)
-        {
-            try
-            {
-                string directory = GetUpdateDataDirectory();
-                Directory.CreateDirectory(directory);
-                File.WriteAllText(
-                    GetStartupStatusPath(),
-                    "Success=" + (success ? "1" : "0") + Environment.NewLine +
-                    "Version=" + (version ?? "") + Environment.NewLine +
-                    "Error=" + EncodeStatusValue(error ?? "") + Environment.NewLine,
-                    new UTF8Encoding(false));
-            }
-            catch { }
-        }
-
-        private static string GetUpdateDataDirectory()
-        {
-            return Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue", "Updates");
-        }
-
-        private static string GetStartupStatusPath()
-        {
-            return Path.Combine(GetUpdateDataDirectory(), "update-status.ini");
-        }
-
-        private static void CleanupStaleFiles()
-        {
-            try
-            {
-                string current = Path.GetFullPath(
-                    Assembly.GetExecutingAssembly().Location);
-                string[] helpers = Directory.GetFiles(
-                    Path.GetTempPath(), HelperPrefix + "*.exe");
-                foreach (string helper in helpers)
-                {
-                    if (!String.Equals(
-                        Path.GetFullPath(helper), current,
-                        StringComparison.OrdinalIgnoreCase))
-                        TryDelete(helper);
-                }
-            }
-            catch { }
-
-            try
-            {
-                string directory = Path.GetDirectoryName(
-                    Assembly.GetExecutingAssembly().Location);
-                string[] stages = Directory.GetFiles(
-                    directory, StagePrefix + "*.tmp");
-                foreach (string stage in stages)
-                {
-                    try
-                    {
-                        if (File.GetLastWriteTimeUtc(stage) <
-                            DateTime.UtcNow.AddDays(-1))
-                            TryDelete(stage);
-                    }
-                    catch { }
-                }
-            }
-            catch { }
+            return String.Equals(
+                left, right, StringComparison.OrdinalIgnoreCase);
         }
 
         private static Version CurrentAssemblyVersion()
@@ -658,8 +533,6 @@ namespace RaidRescue
 
         private static Version NormalizeVersion(Version version)
         {
-            if (version == null)
-                return new Version(0, 0, 0, 0);
             return new Version(
                 Math.Max(0, version.Major),
                 Math.Max(0, version.Minor),
@@ -669,113 +542,74 @@ namespace RaidRescue
 
         private static int CompareVersions(Version left, Version right)
         {
-            return NormalizeVersion(left).CompareTo(NormalizeVersion(right));
+            return NormalizeVersion(left).CompareTo(
+                NormalizeVersion(right));
         }
 
         private static string FormatVersion(Version version)
         {
             Version normalized = NormalizeVersion(version);
-            return normalized.Major + "." + normalized.Minor + "." +
-                normalized.Build;
-        }
-
-        private static bool IsOfficialReleaseUrl(string value)
-        {
-            Uri uri;
-            return Uri.TryCreate(value, UriKind.Absolute, out uri) &&
-                String.Equals(
-                    uri.Scheme, Uri.UriSchemeHttps,
-                    StringComparison.OrdinalIgnoreCase) &&
-                String.Equals(
-                    uri.Host, "github.com",
-                    StringComparison.OrdinalIgnoreCase) &&
-                uri.AbsolutePath.StartsWith(
-                    "/Cooperkit/Raid-Rescue/releases/",
-                    StringComparison.Ordinal);
-        }
-
-        private static bool IsOfficialDownloadUrl(string value)
-        {
-            Uri uri;
-            return Uri.TryCreate(value, UriKind.Absolute, out uri) &&
-                String.Equals(
-                    uri.Scheme, Uri.UriSchemeHttps,
-                    StringComparison.OrdinalIgnoreCase) &&
-                String.Equals(
-                    uri.Host, "github.com",
-                    StringComparison.OrdinalIgnoreCase) &&
-                uri.AbsolutePath.StartsWith(
-                    DownloadPathPrefix, StringComparison.Ordinal) &&
-                uri.AbsolutePath.EndsWith(
-                    "/" + AssetName, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static string NormalizeDigest(string value)
-        {
-            if (String.IsNullOrWhiteSpace(value))
-                return "";
-            string clean = value.Trim();
-            if (clean.StartsWith(
-                "sha256:", StringComparison.OrdinalIgnoreCase))
-                clean = clean.Substring(7);
-            return clean.ToUpperInvariant();
-        }
-
-        private static bool IsSha256(string value)
-        {
-            if (String.IsNullOrEmpty(value) || value.Length != 64)
-                return false;
-            for (int i = 0; i < value.Length; i++)
-            {
-                char c = value[i];
-                if (!((c >= '0' && c <= '9') ||
-                      (c >= 'A' && c <= 'F') ||
-                      (c >= 'a' && c <= 'f')))
-                    return false;
-            }
-            return true;
-        }
-
-        private static string ComputeSha256(string path)
-        {
-            using (SHA256 sha = SHA256.Create())
-            using (FileStream stream = new FileStream(
-                path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                byte[] hash = sha.ComputeHash(stream);
-                StringBuilder text = new StringBuilder(hash.Length * 2);
-                foreach (byte value in hash)
-                    text.Append(value.ToString("X2"));
-                return text.ToString();
-            }
-        }
-
-        private static bool HashesEqual(string left, string right)
-        {
-            if (left == null || right == null || left.Length != right.Length)
-                return false;
-            int different = 0;
-            for (int i = 0; i < left.Length; i++)
-                different |= Char.ToUpperInvariant(left[i]) ^
-                    Char.ToUpperInvariant(right[i]);
-            return different == 0;
+            return normalized.Major + "." +
+                normalized.Minor + "." + normalized.Build;
         }
 
         private static string QuoteArgument(string value)
         {
-            return "\"" + (value ?? "").Replace("\"", "") + "\"";
-        }
-
-        private static string FriendlyMessage(Exception exception)
-        {
-            if (exception == null || String.IsNullOrWhiteSpace(exception.Message))
-                return "Try again in a moment.";
-            return exception.Message.Trim();
+            return "\"" + (value ?? "").Replace("\"", "\\\"") + "\"";
         }
 
         private static void EnableTls12()
         {
-            ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;
+            ServicePointManager.SecurityProtocol |=
+                (SecurityProtocolType)3072;
+        }
+
+        private static string FriendlyMessage(Exception exception)
+        {
+            if (exception == null)
+                return "An unknown error occurred.";
+            WebException web = exception as WebException;
+            if (web != null && web.Response is HttpWebResponse)
+            {
+                return "GitHub returned HTTP " +
+                    ((int)((HttpWebResponse)web.Response).StatusCode) + ".";
+            }
+            return exception.Message;
+        }
+
+        private static string GetStartupStatusPath()
+        {
+            return Path.Combine(
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData),
+                "Raid Rescue", "Updates", "update-status.ini");
+        }
+
+        private static string DecodeStatusValue(string value)
+        {
+            try
+            {
+                return Encoding.UTF8.GetString(
+                    Convert.FromBase64String(value ?? ""));
+            }
+            catch { return ""; }
+        }
+
+        private static void CleanupStaleFiles()
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(
+                    Assembly.GetExecutingAssembly().Location);
+                foreach (string stage in Directory.GetFiles(
+                    directory, StagePrefix + "*.tmp"))
+                {
+                    if (File.GetLastWriteTimeUtc(stage) <
+                        DateTime.UtcNow.AddDays(-1))
+                        TryDelete(stage);
+                }
+            }
+            catch { }
         }
 
         private static void TryDelete(string path)
@@ -786,25 +620,6 @@ namespace RaidRescue
                     File.Delete(path);
             }
             catch { }
-        }
-
-        private static string EncodeStatusValue(string value)
-        {
-            return Convert.ToBase64String(
-                Encoding.UTF8.GetBytes(value ?? ""));
-        }
-
-        private static string DecodeStatusValue(string value)
-        {
-            try
-            {
-                return Encoding.UTF8.GetString(
-                    Convert.FromBase64String(value ?? ""));
-            }
-            catch
-            {
-                return "";
-            }
         }
     }
 }
