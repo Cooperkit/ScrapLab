@@ -7,7 +7,7 @@ namespace RaidRescue
 <head>
 <meta http-equiv=""X-UA-Compatible"" content=""IE=edge"" />
 <meta charset=""utf-8"" />
-<title>Raid Rescue</title>
+<title>ScrapLab</title>
 <style>
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;margin:0;overflow:hidden;font-family:""Inter Medium"",""Segoe UI"",Arial,sans-serif;color:#f5f5f2}
@@ -32,8 +32,9 @@ button{font:inherit}
  background:linear-gradient(145deg,#ffd74f,#efa916);border:2px solid #191b1c;border-radius:4px;
  box-shadow:0 0 0 1px #ffd13b,0 2px 0 #070808}
 .logo-letter{position:absolute;left:0;top:0;width:100%;height:100%;display:block;transform:rotate(-45deg);overflow:visible}
-.logo-letter .logo-letter-highlight{fill:#fff3a2;opacity:.72}
-.logo-letter .logo-letter-face{fill:#272719}
+.logo-letter .logo-world-core{fill:#102f34;stroke:#171b1c;stroke-width:1.2}
+.logo-letter .logo-world-line{fill:none;stroke:#58e4f5;stroke-width:1.25;stroke-linecap:round}
+.logo-letter .logo-world-glint{fill:none;stroke:#d4fbff;stroke-width:.6;stroke-linecap:round;opacity:.82}
 .window-title{min-width:0;color:#f3f3ee;font:11px Shentox,""Arial Black"",sans-serif;letter-spacing:1px;
  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px #000}
 .window-title span{margin-left:9px;color:#8e9495;font:9px ""Inter Medium"",""Segoe UI"",sans-serif;letter-spacing:.5px}
@@ -227,6 +228,94 @@ button{font:inherit}
 .empty p{margin:0;font-size:11px}
 .success-box{padding:16px;background:#202b2f;border:1px solid #3c7581;border-radius:4px 13px 4px 13px}
 .success-box .backup-label{font:10px Shentox,""Arial Narrow"",sans-serif;color:#ffd046;letter-spacing:.8px;margin-bottom:7px}
+.perf-zone{margin-top:14px;padding-top:12px;border-top:1px solid #4a4d4e}
+.perf-shell{overflow:hidden;background:#1c2224;border:1px solid #55747a;border-left:5px solid #ffd046;
+ border-radius:4px 16px 4px 16px;box-shadow:inset 0 1px #344246,0 3px 9px rgba(0,0,0,.35)}
+.perf-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;
+ background:linear-gradient(100deg,#273018,#1d2b2f 55%,#173943);border-bottom:1px solid #0d1112}
+.perf-title b{display:block;color:#ffd046;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.2px}
+.perf-title strong{display:block;margin-top:3px;color:#f5f6f1;font:15px Shentox,""Arial Black"",sans-serif;letter-spacing:.55px}
+.perf-title p{margin:5px 0 0;color:#aab4b4;font-size:10px;line-height:1.45}.perf-head .btn{min-width:170px;margin-left:18px}
+.perf-body{padding:12px 14px 14px}.perf-progress-card{padding:12px;background:#151b1d;border:1px solid #41626a;border-radius:3px 12px 3px 12px}
+.perf-progress-top{display:flex;justify-content:space-between;align-items:flex-start}.perf-progress-copy b{display:block;color:#82dff2;
+ font:11px Shentox,""Arial Black"",sans-serif;letter-spacing:.45px}.perf-progress-copy span{display:block;margin-top:4px;color:#929e9f;font-size:9px}
+.perf-progress-percent{color:#ffd046;font:20px Shentox,""Arial Black"",sans-serif}.perf-track{height:12px;margin-top:10px;padding:2px;
+ background:#090c0d;border:1px solid #34474b;border-radius:4px;overflow:hidden}.perf-fill{height:6px;background:linear-gradient(90deg,#3a8798,#6fd7ed 60%,#ffd046);
+ box-shadow:0 0 8px rgba(105,204,229,.38);transition:width .18s ease-out}
+.perf-stages{display:flex;margin:10px -2px 0}.perf-stage{flex:1;min-width:0;height:25px;margin:0 2px;padding:7px 3px 0;
+ color:#667174;background:#22282a;border:1px solid #343d3f;text-align:center;font:7px Shentox,""Arial Narrow"",sans-serif;
+ letter-spacing:.25px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.perf-stage.done{color:#b7ecf5;border-color:#438797;background:#18343a}
+.perf-stage.current{color:#28220e;border-color:#ffd046;background:#eab82c;box-shadow:0 0 8px rgba(255,208,70,.22)}
+.perf-cancel-row{display:flex;align-items:center;justify-content:space-between;margin-top:11px;color:#899495;font-size:9px}
+.perf-cancel{height:33px;min-width:128px;color:#ffc3b2;border-color:#9d3e2b;background:linear-gradient(#5d261b,#35140f)}
+.perf-summary{display:flex;margin:-4px -4px 9px}.perf-stat{flex:1;min-width:0;margin:4px;padding:9px 8px;background:#172225;
+ border:1px solid #3d646d;border-radius:3px 10px 3px 10px}.perf-stat b{display:block;color:#79d9ee;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.65px}
+.perf-stat strong{display:block;margin-top:4px;color:#fff;font:15px Shentox,""Arial Black"",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.perf-columns{display:flex;margin:0 -5px}.perf-column{width:50%;padding:0 5px}.perf-subtitle{margin:3px 0 7px;color:#ffd046;
+ font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}.perf-world,.perf-category{display:flex;align-items:center;justify-content:space-between;
+ min-height:38px;margin-top:5px;padding:7px 9px;background:#151a1b;border:1px solid #374649;border-radius:2px 8px 2px 8px}
+.perf-world b,.perf-category b{display:block;color:#eef1ed;font:10px Shentox,""Arial Black"",sans-serif}.perf-world span,.perf-category span{display:block;margin-top:2px;color:#7f8c8e;font-size:8px}
+.perf-world strong{color:#75d5ea;font:11px Consolas,monospace}.perf-category-copy{min-width:0;flex:1}.perf-category-value{margin-left:8px;color:#ffd046;font:10px Consolas,monospace}
+.perf-category-bar{height:4px;margin-top:5px;background:#263033}.perf-category-bar i{display:block;height:4px;background:linear-gradient(90deg,#4a9bae,#7ee1f3)}
+.perf-limit{margin-top:10px;padding:9px 10px;color:#a3acad;background:#27271e;border:1px solid #6b5b25;border-radius:3px;font-size:9px;line-height:1.5}
+.perf-message{padding:15px;color:#aeb7b7;background:#151a1b;border:1px solid #3e4b4e;border-radius:3px;font-size:10px;line-height:1.5}
+.perf-message b{display:block;margin-bottom:5px;color:#fff;font:12px Shentox,""Arial Black"",sans-serif}.perf-message.bad{color:#ffab94;border-color:#8f3826}
+.perf-filters{display:flex;align-items:center;margin:11px 0 7px;padding:7px;background:#121718;border:1px solid #354346;
+ border-radius:3px}.perf-filter-label{margin:0 9px 0 3px;color:#798587;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.perf-filter{height:29px;margin-right:5px;padding:0 10px;color:#a9b3b4;background:#202729;border:1px solid #3d4b4e;
+ border-radius:2px 7px 2px 7px;cursor:pointer;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.45px}
+.perf-filter:hover{color:#e9fbff;border-color:#5caabe}.perf-filter.active{color:#171b1c;background:#71d8ed;border-color:#9ceafa;box-shadow:inset 0 1px #d6f9ff}
+.perf-hotspot-list{margin-top:8px}.perf-hotspot-empty{padding:23px 15px;color:#879294;background:#151a1b;border:1px dashed #465356;
+ text-align:center;font-size:10px}.perf-hotspot-empty b{display:block;margin-bottom:5px;color:#dce3e1;font:12px Shentox,""Arial Black"",sans-serif}
+.perf-hotspot{position:relative;margin-top:9px;overflow:hidden;background:linear-gradient(100deg,#1b2224,#202526);
+ border:1px solid #566064;border-left:5px solid #d1a42b;border-radius:4px 15px 4px 15px;
+ box-shadow:inset 0 1px #343b3d,0 3px 8px rgba(0,0,0,.28);animation:perfCardIn .3s ease both}
+.perf-hotspot.heavy{border-left-color:#f0832d}.perf-hotspot.very-heavy{border-left-color:#f04e2b;box-shadow:inset 0 1px #4a3733,0 3px 10px rgba(126,35,20,.28)}
+.perf-hotspot-head{display:flex;align-items:center;padding:10px 12px;background:rgba(8,12,13,.34);border-bottom:1px solid #343e40}
+.perf-rank{display:flex;align-items:center;justify-content:center;flex:0 0 42px;width:42px;height:42px;margin-right:11px;color:#24200f;
+ background:#ffd046;border:2px solid #fff0a0;transform:rotate(45deg);font:13px Shentox,""Arial Black"",sans-serif;box-shadow:0 0 0 2px #151718}
+.perf-rank span{transform:rotate(-45deg)}.perf-hotspot-title{min-width:0;flex:1}.perf-hotspot-title b{display:block;color:#fff;
+ font:13px Shentox,""Arial Black"",sans-serif;letter-spacing:.35px}.perf-hotspot-title span{display:block;margin-top:4px;color:#75d6eb;font-size:9px}
+.perf-severity{min-width:94px;padding:7px 8px;color:#2b220b;background:#d5ab32;border:1px solid #ffe07b;text-align:center;
+ font:9px Shentox,""Arial Black"",sans-serif;letter-spacing:.5px}.perf-severity.heavy{color:#301407;background:#ef8a31;border-color:#ffc078}
+.perf-severity.very-heavy{color:#fff2eb;background:#c94325;border-color:#ff7857;box-shadow:0 0 8px rgba(231,75,39,.32)}
+.perf-confidence{margin-left:7px;padding:6px 7px;color:#8de8f7;background:#15333a;border:1px solid #397886;
+ font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.45px}.perf-hotspot-body{padding:11px 12px 12px}
+.perf-hotspot-metrics{display:flex;margin:0 -3px 9px}.perf-hotspot-metric{flex:1;min-width:0;margin:0 3px;padding:7px 8px;
+ background:#151a1b;border:1px solid #394649;border-radius:2px 8px 2px 8px}.perf-hotspot-metric b{display:block;color:#7d898b;
+ font:7px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}.perf-hotspot-metric strong{display:block;margin-top:3px;color:#f4f5f1;
+ font:11px Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.perf-hotspot-metric.coordinate strong{color:#7bddf0}
+.perf-hotspot-compare{padding:8px 9px;color:#c2cece;background:#19292d;border:1px solid #386875;border-radius:2px;font-size:9px}
+.perf-hotspot-compare b{color:#82e2f4;font-family:Shentox,""Arial Narrow"",sans-serif}.perf-evidence{display:flex;flex-wrap:wrap;margin:6px -3px 0}
+.perf-evidence-item{width:50%;padding:3px}.perf-evidence-item>div{min-height:57px;padding:8px 9px;background:#181c1d;border:1px solid #3b4547;
+ border-left:3px solid #d5aa32;border-radius:2px 8px 2px 8px}.perf-evidence-item b{display:block;color:#f0f2ed;font:9px Shentox,""Arial Black"",sans-serif}
+.perf-evidence-item span{display:block;margin-top:4px;color:#8e999a;font-size:8px;line-height:1.4}
+.perf-evidence-item em{display:block;margin-top:5px;color:#d7b64f;font:normal 7px Consolas,monospace;letter-spacing:.25px}.perf-hotspot-foot{display:flex;align-items:flex-end;
+ justify-content:space-between;margin-top:7px;padding-top:7px;border-top:1px solid #343d3f}.perf-hotspot-category{min-width:260px;max-width:470px;flex:1}
+.perf-hotspot-category b{display:block;color:#9ba5a5;font:8px Shentox,""Arial Narrow"",sans-serif}.perf-hotspot-category span{display:block;margin-top:3px;color:#727e80;font-size:8px}
+.perf-hotspot-category-line{height:5px;margin-top:5px;background:#2a3234}.perf-hotspot-category-line i{display:block;height:5px;background:linear-gradient(90deg,#53aabe,#7de1f3)}
+.perf-copy{height:31px;min-width:150px;margin-left:12px;color:#d6f8ff;border-color:#4c98a9;background:linear-gradient(#28515a,#19343a)}
+.perf-copy.copied{color:#16280e;border-color:#9ccd4b;background:linear-gradient(#c9ed75,#8fbd3e)}
+.perf-report-tools{display:flex;align-items:center;margin:9px 0;padding:9px 10px;background:#151b1d;border:1px solid #3b5960;
+ border-radius:3px 11px 3px 11px}.perf-tool-copy{min-width:0;flex:1}.perf-tool-copy b{display:block;color:#f2f4ef;
+ font:9px Shentox,""Arial Black"",sans-serif;letter-spacing:.5px}.perf-tool-copy span{display:block;margin-top:3px;color:#849193;font-size:8px;line-height:1.4}
+.perf-tool-actions{display:flex;align-items:center;margin-left:12px}.perf-tool-actions .btn{height:31px;min-width:128px;margin-left:6px}
+.perf-export{color:#fff1bd;border-color:#9c7a24;background:linear-gradient(#66501d,#3d2f11)}.perf-explore{color:#cff7ff;border-color:#3f8999;background:linear-gradient(#26515a,#17353b)}
+.perf-tool-status{margin-top:5px;color:#8fe6f5;font-size:8px}.perf-tool-status.bad{color:#ff9d84}
+.perf-explorer{margin:9px 0 11px;overflow:hidden;background:#111719;border:1px solid #4a7882;border-left:4px solid #65cce2;
+ border-radius:3px 12px 3px 12px}.perf-explorer-head{display:flex;align-items:center;justify-content:space-between;padding:10px 11px;
+ background:linear-gradient(90deg,#17343a,#202728);border-bottom:1px solid #35535a}.perf-explorer-head b{display:block;color:#7de0f3;
+ font:10px Shentox,""Arial Black"",sans-serif;letter-spacing:.6px}.perf-explorer-head span{display:block;margin-top:3px;color:#879597;font-size:8px}
+.perf-explorer-worlds{display:flex;flex-wrap:wrap;padding:7px 8px 2px}.perf-explorer-world{height:27px;margin:0 5px 5px 0;padding:0 9px;
+ color:#a6b3b5;background:#202729;border:1px solid #3d5054;cursor:pointer;font:8px Shentox,""Arial Narrow"",sans-serif}
+.perf-explorer-world.active{color:#132226;background:#72d8eb;border-color:#a7effb}.perf-cell-list{padding:3px 8px 7px}
+.perf-cell{display:flex;align-items:center;margin-top:5px;padding:7px 9px;background:#192023;border:1px solid #35474b;border-radius:2px 8px 2px 8px}
+.perf-cell-coordinate{width:145px;flex:0 0 145px}.perf-cell-coordinate b{display:block;color:#80dff1;font:10px Consolas,monospace}
+.perf-cell-coordinate span,.perf-cell-categories span{display:block;margin-top:2px;color:#748184;font-size:7px}.perf-cell-metric{width:112px;flex:0 0 112px}
+.perf-cell-metric b{display:block;color:#f1f3ee;font:10px Consolas,monospace}.perf-cell-metric span{display:block;margin-top:2px;color:#758184;font-size:7px}
+.perf-cell-categories{min-width:0;flex:1}.perf-cell-categories b{display:block;color:#d6dcda;font:8px Shentox,""Arial Narrow"",sans-serif;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.perf-explorer-page{display:flex;align-items:center;justify-content:space-between;padding:8px 9px;
+ color:#839092;background:#171d1f;border-top:1px solid #35464a;font-size:8px}.perf-explorer-page .btn{height:28px;min-width:92px;margin-left:6px}
 .drop-zone{margin-top:14px;border-top:1px solid #4a4d4e;padding-top:12px}
 .drop-zone-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
  background:linear-gradient(100deg,#17333d,#222728 58%,#352c18);border:1px solid #407384;border-left:5px solid #69cce5;
@@ -665,6 +754,7 @@ button{font:inherit}
 @keyframes buttonSweep{0%{left:-45%}100%{left:125%}}
 @keyframes bannerDrop{0%{opacity:0;transform:translateY(-5px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes dataBoot{0%{opacity:0;transform:translateY(7px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes perfCardIn{0%{opacity:0;transform:translateX(-9px)}100%{opacity:1;transform:translateX(0)}}
 @keyframes raidDock{0%{opacity:0;transform:translateX(-12px)}100%{opacity:1;transform:translateX(0)}}
 @keyframes meterCharge{0%{opacity:.1;transform:scaleX(.15)}100%{opacity:1;transform:scaleX(1)}}
 @keyframes stateBlink{0%,78%,100%{border-color:#5c6061;color:#d6d7d4}88%{border-color:#ffd046;color:#fff5bd}}
@@ -709,13 +799,14 @@ button{font:inherit}
 <body onload=""boot()"">
 <div class=""window-bar"">
   <div class=""window-grip"" onmousedown=""beginWindowDrag()"">
-    <div class=""window-emblem secret-trigger"" id=""secretModsTrigger"" aria-label=""Raid Rescue"" onselectstart=""return false"" onmousedown=""return secretTriggerMouseDown(event)"" onclick=""toggleSecretMods(event)""><div class=""window-emblem-mark"">
+    <div class=""window-emblem secret-trigger"" id=""secretModsTrigger"" aria-label=""Open ScrapLab workshop"" onselectstart=""return false"" onmousedown=""return secretTriggerMouseDown(event)"" onclick=""toggleSecretMods(event)""><div class=""window-emblem-mark"">
       <svg class=""logo-letter"" viewBox=""0 0 22 22"" aria-hidden=""true"">
-        <path class=""logo-letter-highlight"" transform=""translate(-.25 1)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
-        <path class=""logo-letter-face"" transform=""translate(-.25 0)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
+        <circle class=""logo-world-core"" cx=""11"" cy=""11"" r=""7.2""></circle>
+        <path class=""logo-world-line"" d=""M4.6 11h12.8M11 3.8v14.4M6.5 6.7c2.6 1.4 6.4 1.4 9 0M6.5 15.3c2.6-1.4 6.4-1.4 9 0M8.4 4.4c-2.2 3.7-2.2 9.5 0 13.2M13.6 4.4c2.2 3.7 2.2 9.5 0 13.2""></path>
+        <path class=""logo-world-glint"" d=""M6.5 6.1c1.1-1.1 2.4-1.7 4-1.9""></path>
       </svg>
     </div></div>
-    <div class=""window-title"">RAID RESCUE <span>SCRAP MECHANIC SAVE RECOVERY</span></div>
+    <div class=""window-title"">SCRAP LAB <span>SURVIVAL WORLD TOOLKIT</span></div>
   </div>
   <div class=""window-controls"">
     <button type=""button"" class=""window-button help"" id=""helpBtn"" title=""Help and tutorial"" aria-label=""Help and tutorial"" onclick=""openHelp()"">
@@ -737,11 +828,12 @@ button{font:inherit}
     <div class=""identity"" id=""identityPanel"">
       <div class=""brand-mark"">
         <svg class=""logo-letter"" viewBox=""0 0 22 22"" aria-hidden=""true"">
-          <path class=""logo-letter-highlight"" transform=""translate(-.25 1)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
-          <path class=""logo-letter-face"" transform=""translate(-.25 0)"" d=""M5.5 16.8V5.2h5.8c3.1 0 5.1 1.7 5.1 4.2 0 1.7-.9 3-2.4 3.7l3 3.7h-3.4l-2.5-3.1H8.3v3.1H5.5zm2.8-5.5h2.7c1.7 0 2.6-.6 2.6-1.8s-.9-1.8-2.6-1.8H8.3v3.6z""></path>
+          <circle class=""logo-world-core"" cx=""11"" cy=""11"" r=""7.2""></circle>
+          <path class=""logo-world-line"" d=""M4.6 11h12.8M11 3.8v14.4M6.5 6.7c2.6 1.4 6.4 1.4 9 0M6.5 15.3c2.6-1.4 6.4-1.4 9 0M8.4 4.4c-2.2 3.7-2.2 9.5 0 13.2M13.6 4.4c2.2 3.7 2.2 9.5 0 13.2""></path>
+          <path class=""logo-world-glint"" d=""M6.5 6.1c1.1-1.1 2.4-1.7 4-1.9""></path>
         </svg>
       </div>
-      <div><h1>RAID RESCUE</h1><p>SURVIVAL SAVE RECOVERY UNIT</p></div>
+      <div><h1>SCRAP LAB</h1><p>INSPECT &middot; REPAIR &middot; TUNE</p></div>
     </div>
     <div class=""local""><b></b>OFFLINE / LOCAL SAVE ACCESS</div>
   </div>
@@ -767,7 +859,7 @@ button{font:inherit}
   </div>
 
   <div class=""panel diagnostics"" id=""diagnosticsPanel"">
-    <div class=""panel-title""><strong>WORLD DIAGNOSTICS</strong><span>RAIDS &middot; LOOSE ITEMS &middot; BACKUP-FIRST RECOVERY</span></div>
+    <div class=""panel-title""><strong>WORLD DIAGNOSTICS</strong><span>PERFORMANCE &middot; RAID RECOVERY &middot; LOOSE ITEMS</span></div>
     <div class=""diagnostic-body"" id=""result"">
       <div class=""empty""><div class=""diamond""><span>?</span></div><h4>NO WORLD ANALYZED</h4><p>Select a Survival world and run the world diagnostic.</p></div>
     </div>
@@ -857,7 +949,7 @@ button{font:inherit}
     </div>
     <div class=""hotfix-body"">
       <div class=""item-confirm-preview"" id=""itemClearPreview""></div>
-      <p class=""hotfix-intro"" id=""itemClearIntro"">Raid Rescue will remove only the selected loose pickup and its matching Lua storage record.</p>
+      <p class=""hotfix-intro"" id=""itemClearIntro"">ScrapLab will remove only the selected loose pickup and its matching Lua storage record.</p>
       <ul class=""hotfix-checks"">
         <li>A timestamped database backup is created and integrity-checked first.</li>
         <li>Player inventories, builds, containers, quests, terrain, and raid storage are left alone.</li>
@@ -905,7 +997,7 @@ button{font:inherit}
       <ul class=""hotfix-checks"">
         <li>Cancel this warning and launch Scrap Mechanic while the mod is still installed.</li>
         <li>Disconnect every Chemical Container wire from every mounted water cannon.</li>
-        <li>Save each affected world, exit to Windows, and wait for Raid Rescue to unlock.</li>
+        <li>Save each affected world, exit to Windows, and wait for ScrapLab to unlock.</li>
       </ul>
       <div class=""hotfix-stop"">DO NOT CONTINUE UNTIL EVERY CHEMICAL CANNON CONNECTION IS REMOVED AND THE WORLD IS SAVED.</div>
       <div class=""cannon-danger-ack"">
@@ -1002,7 +1094,7 @@ button{font:inherit}
       <div>Replay it anytime from Help</div>
     </div>
     <div class=""onboard-actions"">
-      <p><b>Important:</b> Scrap Mechanic must be closed before Raid Rescue opens a world save.</p>
+      <p><b>Important:</b> Scrap Mechanic must be closed before ScrapLab opens a world save.</p>
       <div><button type=""button"" class=""btn"" onclick=""declineTutorial()"">NOT NOW</button><button type=""button"" class=""btn btn-primary"" id=""onboardStart"" onclick=""acceptTutorial()"">START TUTORIAL</button></div>
     </div>
   </div>
@@ -1013,7 +1105,7 @@ button{font:inherit}
     <div class=""help-hazard""></div>
     <div class=""help-head"">
       <div class=""help-emblem"">?</div>
-      <div class=""help-heading""><strong id=""helpTitle"">RAID RESCUE FIELD MANUAL</strong><span>WORLD DIAGNOSTICS &middot; RAIDS &middot; LOOSE ITEMS &middot; GAME PATCHES</span></div>
+      <div class=""help-heading""><strong id=""helpTitle"">SCRAP LAB FIELD MANUAL</strong><span>WORLD INSPECTION &middot; PERFORMANCE &middot; RECOVERY &middot; MOD WORKSHOP</span></div>
       <button type=""button"" class=""help-close"" title=""Close help"" aria-label=""Close help"" onclick=""closeHelp()"">&times;</button>
     </div>
     <div class=""help-body"" id=""helpBody"">
@@ -1027,7 +1119,7 @@ button{font:inherit}
       <div class=""help-section"">
         <div class=""help-section-title"">CHOOSING AND ANALYZING A WORLD</div>
         <div class=""help-grid"">
-          <div class=""help-item""><b>AUTOMATIC SAVE LIST</b><p>Raid Rescue searches every Scrap Mechanic <strong>User_*</strong> Survival folder and puts the newest saves first. Check the world name, date, size, and user folder before continuing.</p></div>
+          <div class=""help-item""><b>AUTOMATIC SAVE LIST</b><p>ScrapLab searches every Scrap Mechanic <strong>User_*</strong> Survival folder and puts the newest saves first. Check the world name, date, size, and user folder before continuing.</p></div>
           <div class=""help-item""><b>BROWSE</b><p>Use Browse only when the save is not listed automatically. Choose the world’s normal <strong>.db</strong> file, not a backup file.</p></div>
           <div class=""help-item""><b>ANALYZE WORLD</b><p>This read-only check validates SQLite health and decodes the raid manager. Loose pickups stay unloaded until you choose <strong>Scan Loose Items</strong>.</p></div>
           <div class=""help-item""><b>LIVE-SAVE SAFETY LOCK</b><p>If Scrap Mechanic is running, world controls lock. A second native check happens immediately before SQLite opens, preventing stale or fast clicks from reaching the live database.</p></div>
@@ -1065,20 +1157,20 @@ button{font:inherit}
           <div class=""help-item""><b>WHAT IT CHANGES</b><p>It first releases the exact growing crops registered to the stored raids, then removes the base-game raid-manager record in the same transaction.</p></div>
           <div class=""help-item""><b>WHAT IT LEAVES ALONE</b><p>Inventories, builds, quests, players, containers, terrain, and unrelated script data are not edited.</p></div>
           <div class=""help-item""><b>BACKUP FIRST</b><p>A timestamped copy is created beside the save and verified before repair. The repaired database must also pass a final integrity check.</p></div>
-          <div class=""help-item""><b>ORPHANED CROPS</b><p>If an older Raid Rescue version removed a raid without releasing its crops, Repair Orphaned Crops safely releases only crops no longer referenced by an active raid.</p></div>
+          <div class=""help-item""><b>ORPHANED CROPS</b><p>If an older Raid Rescue build removed a raid without releasing its crops, Repair Orphaned Crops safely releases only crops no longer referenced by an active raid.</p></div>
         </div>
       </div>
 
       <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; BACKUPS AND REMOVAL</div>
         <div class=""help-grid"">
-          <div class=""help-item""><b>ADAPTIVE GAME UPDATES</b><p>After Steam installs a new build, secret-mod switches turn off until you intentionally re-enable them. If the protected code is still exact, Raid Rescue safely refreshes the generated script cache without rewriting unchanged Lua.</p></div>
+          <div class=""help-item""><b>ADAPTIVE GAME UPDATES</b><p>After Steam installs a new build, secret-mod switches turn off until you intentionally re-enable them. If the protected code is still exact, ScrapLab safely refreshes the generated script cache without rewriting unchanged Lua.</p></div>
           <div class=""help-item""><b>PROTECTED CODE</b><p>Formatting or comments inside required code block the patch. Unrelated updated code elsewhere is preserved. The normal cumulative raid/fertilizer hotfix remains strictly version-locked.</p></div>
-          <div class=""help-item""><b>HYBRID RESTORATION</b><p>Unchanged adaptive installs restore their exact pre-install bytes. If unrelated edits were added later, Raid Rescue removes only its intact snippets. Edited, duplicated, or partial patch snippets block removal safely.</p></div>
+          <div class=""help-item""><b>HYBRID RESTORATION</b><p>Unchanged adaptive installs restore their exact pre-install bytes. If unrelated edits were added later, ScrapLab removes only its intact snippets. Edited, duplicated, or partial patch snippets block removal safely.</p></div>
           <div class=""help-item""><b>HOTFIX INDEPENDENCE</b><p>Chemical Fertilizer removal restores the exact state from before that mod. If the separate cumulative fertilizer hotfix was installed, that normal hotfix remains installed.</p></div>
-          <div class=""help-item""><b>BLOCKED STATES</b><p><strong>Required Code Changed</strong>, <strong>Other Modification Detected</strong>, and <strong>Partial Patch</strong> identify unsafe files without writing. Steam Verify can restore official files, but changed protected features may require a Raid Rescue update.</p></div>
-          <div class=""help-item""><b>BOUNDED RETENTION</b><p>Raid Rescue keeps the two newest verified backups for each install, remove, or configure action. Superseded copies are removed only after a patch and its checksum verification succeed.</p></div>
-          <div class=""help-item""><b>UNKNOWN FOLDERS ARE SAFE</b><p>Backup cleanup recognizes only Raid Rescue's exact timestamped secret-mod folder names. Other folders and manual backups are never removed.</p></div>
+          <div class=""help-item""><b>BLOCKED STATES</b><p><strong>Required Code Changed</strong>, <strong>Other Modification Detected</strong>, and <strong>Partial Patch</strong> identify unsafe files without writing. Steam Verify can restore official files, but changed protected features may require a ScrapLab update.</p></div>
+          <div class=""help-item""><b>BOUNDED RETENTION</b><p>ScrapLab keeps the two newest verified backups for each install, remove, or configure action. Superseded copies are removed only after a patch and its checksum verification succeed.</p></div>
+          <div class=""help-item""><b>UNKNOWN FOLDERS ARE SAFE</b><p>Backup cleanup recognizes only ScrapLab and legacy Raid Rescue timestamped secret-mod folders. Other folders and manual backups are never removed.</p></div>
         </div>
       </div>
 
@@ -1099,9 +1191,9 @@ button{font:inherit}
           <div class=""help-item""><b>HOST ONLY</b><p>The recommended mode registers commands only for the world host. Joined players keep normal Survival controls.</p></div>
           <div class=""help-item""><b>EVERY PLAYER</b><p>Every joined player receives the command list while connected. Use this only with players you completely trust. <strong>/kick</strong> and <strong>/ban</strong> stay host-only.</p></div>
           <div class=""help-item""><b>AVAILABLE TOOLS</b><p>Built-in commands cover items and weapons, god mode, inventory mode, unit spawning, time controls, player values, aggro, raids, starter kits, and unstuck tools.</p></div>
-          <div class=""help-item""><b>NOT SERVER DEV MODE</b><p>Raid Rescue does not enable the server-side <strong>g_survivalDev</strong> mode, so normal world spawn points and progression remain active. Every Player mode sends the client permission needed to register commands and may expose other client-only developer behavior during that session.</p></div>
+          <div class=""help-item""><b>NOT SERVER DEV MODE</b><p>ScrapLab does not enable the server-side <strong>g_survivalDev</strong> mode, so normal world spawn points and progression remain active. Every Player mode sends the client permission needed to register commands and may expose other client-only developer behavior during that session.</p></div>
         </div>
-        <div class=""help-danger""><b>COMMANDS CAN PERMANENTLY CHANGE YOUR WORLD.</b> Back up important saves before experimenting. In Every Player mode, any joined player can make these changes. Raid Rescue verifies and backs up the game script, but it cannot undo effects produced by commands.</div>
+        <div class=""help-danger""><b>COMMANDS CAN PERMANENTLY CHANGE YOUR WORLD.</b> Back up important saves before experimenting. In Every Player mode, any joined player can make these changes. ScrapLab verifies and backs up the game script, but it cannot undo effects produced by commands.</div>
       </div>
 
       <div class=""help-section"">
@@ -1109,17 +1201,17 @@ button{font:inherit}
         <div class=""help-grid"">
           <div class=""help-item""><b>CONNECTING THE CANNON</b><p>Use the Connect Tool to attach one logic source, one Water Container, and one Chemical Container. The three connections may be added in any order.</p></div>
           <div class=""help-item""><b>HOW IT FIRES</b><p>Each OFF-to-ON logic pulse fires every liquid currently available. Water uses the connected container first, then the cannon’s original water-only internal tank.</p></div>
-          <div class=""help-item""><b>FERTILIZER DEPENDENCY</b><p>Dual-Fluid Water Cannon requires <strong>Chemical Fertilizer Splash</strong>. Raid Rescue can install both together and always removes the cannon before removing that dependency.</p></div>
+          <div class=""help-item""><b>FERTILIZER DEPENDENCY</b><p>Dual-Fluid Water Cannon requires <strong>Chemical Fertilizer Splash</strong>. ScrapLab can install both together and always removes the cannon before removing that dependency.</p></div>
           <div class=""help-item""><b>EMPTY CONTAINERS</b><p>An empty liquid does not block the other one. With both supplied, one water and one chemical are consumed and their projectiles leave the same muzzle together.</p></div>
         </div>
         <div class=""help-danger""><b>REMOVE CONNECTIONS BEFORE DISABLING.</b> While the cannon mod is still installed, disconnect every Chemical Container from every mounted water cannon, save each affected world, and close the game. Only then disable the cannon mod. Steam Verify or a game update can also restore the original two-input script, so disconnect and save before using either one.</div>
       </div>
 
       <div class=""help-section"">
-        <div class=""help-section-title"">RAID RESCUE UPDATES</div>
+        <div class=""help-section-title"">SCRAP LAB UPDATES</div>
         <div class=""help-grid"">
-          <div class=""help-item""><b>AUTOMATIC CHECKS</b><p>Raid Rescue checks the official GitHub release shortly after startup and every 30 minutes while the app remains open. Network failures stay quiet so save repair is never interrupted.</p></div>
-          <div class=""help-item""><b>ONE-CLICK UPDATE</b><p>Choose <strong>Update + Restart</strong> to download the official executable, verify GitHubâ€™s SHA-256 digest and version, replace this copy, and reopen automatically.</p></div>
+          <div class=""help-item""><b>AUTOMATIC CHECKS</b><p>ScrapLab checks the official GitHub release shortly after startup and every 30 minutes while the app remains open. Network failures stay quiet so save repair is never interrupted.</p></div>
+          <div class=""help-item""><b>ONE-CLICK UPDATE</b><p>Choose <strong>Update + Restart</strong> to download the official executable, verify GitHub's SHA-256 digest and version, replace this copy, and reopen automatically.</p></div>
           <div class=""help-item""><b>SAFE REPLACEMENT</b><p>The updater keeps one bounded previous-executable backup, verifies the replacement again, and rolls back if installation or relaunch fails.</p></div>
           <div class=""help-item""><b>INSTALLED VERSION</b><p>This copy is <strong id=""helpAppVersion"">loading...</strong>. Use <strong>Check Updates</strong> below whenever you want an immediate check.</p></div>
         </div>
@@ -1131,7 +1223,7 @@ button{font:inherit}
           <div class=""help-item""><b>THE GAME LOOKS CLOSED BUT CONTROLS STAY LOCKED</b><p>Wait a moment for automatic detection. If needed, open Task Manager and confirm ScrapMechanic.exe and ScrapMechanicServer.exe have exited.</p></div>
           <div class=""help-item""><b>MY SAVE IS NOT LISTED</b><p>Confirm it is a Chapter 2 Survival save, then use Browse. Steam Cloud or another Windows account may store the world under a different User_* folder.</p></div>
           <div class=""help-item""><b>ANTIVIRUS WARNING</b><p>Small unsigned portable utilities can trigger reputation or machine-learning warnings. Download only from the official GitHub release and compare its published SHA-256 checksum.</p></div>
-          <div class=""help-item""><b>NEED TO RESTORE</b><p>Close the game, keep the broken file somewhere safe, and copy the timestamped Raid Rescue backup back to the original filename and Survival folder.</p></div>
+          <div class=""help-item""><b>NEED TO RESTORE</b><p>Close the game, keep the broken file somewhere safe, and copy the timestamped ScrapLab backup back to the original filename and Survival folder.</p></div>
         </div>
       </div>
     </div>
@@ -1171,7 +1263,7 @@ button{font:inherit}
             <text class=""tutorial-number-text"" id=""tutorialNumber"" x=""32"" y=""38"">01</text>
           </svg>
         </div>
-        <div><div class=""tutorial-label"" id=""tutorialLabel"">GUIDED RECOVERY TOUR</div><div class=""tutorial-title"" id=""tutorialTitle"">WELCOME TO RAID RESCUE</div></div>
+        <div><div class=""tutorial-label"" id=""tutorialLabel"">GUIDED WORLD TOUR</div><div class=""tutorial-title"" id=""tutorialTitle"">WELCOME TO SCRAP LAB</div></div>
       </div>
       <p class=""tutorial-text"" id=""tutorialText""></p>
       <div class=""tutorial-tip"" id=""tutorialTip""></div>
@@ -1196,25 +1288,25 @@ button{font:inherit}
           <path class=""update-emblem-arrow"" d=""M22 31 L32 41 L42 31 M32 40 L32 19""></path>
         </svg>
       </div>
-      <div class=""update-heading""><strong id=""updateTitle"">NEW RAID RESCUE UNIT AVAILABLE</strong><span>OFFICIAL GITHUB RELEASE &middot; VERIFIED SELF-UPDATE</span></div>
+      <div class=""update-heading""><strong id=""updateTitle"">NEW SCRAP LAB BUILD AVAILABLE</strong><span>OFFICIAL GITHUB RELEASE &middot; VERIFIED SELF-UPDATE</span></div>
     </div>
     <div class=""update-body"">
-      <p class=""update-intro"" id=""updateIntro"">A newer recovery unit is ready. Raid Rescue can install it and reopen automatically.</p>
+      <p class=""update-intro"" id=""updateIntro"">A newer toolkit build is ready. ScrapLab can install it and reopen automatically.</p>
       <div class=""update-version-rail"">
         <div class=""update-version-node""><b>INSTALLED UNIT</b><strong id=""updateCurrentVersion"">0.0.0</strong></div>
         <div class=""update-flow""></div>
         <div class=""update-version-node latest""><b>AVAILABLE UNIT</b><strong id=""updateLatestVersion"">0.0.0</strong></div>
       </div>
       <div class=""update-proof"">
-        <div><b>OFFICIAL SOURCE</b>Only Cooperkit/Raid-Rescue assets are accepted.</div>
-        <div><b>SHA-256 LOCK</b>The download must match GitHubâ€™s published digest.</div>
+        <div><b>OFFICIAL SOURCE</b>Only Cooperkit ScrapLab release assets are accepted.</div>
+        <div><b>SHA-256 LOCK</b>The download must match GitHub's published digest.</div>
         <div><b>SAFE RELAUNCH</b>One previous EXE is kept for automatic rollback.</div>
       </div>
-      <div class=""update-status"" id=""updateStatus"">Ready to download and verify the new recovery unit.</div>
+      <div class=""update-status"" id=""updateStatus"">Ready to download and verify the new toolkit build.</div>
       <div class=""update-progress""><span id=""updateProgressFill""></span></div>
     </div>
     <div class=""update-foot"">
-      <div class=""update-foot-note"">Updating Raid Rescue does not open, modify, or reinstall any Scrap Mechanic save or game patch.</div>
+      <div class=""update-foot-note"">Updating ScrapLab does not open, modify, or reinstall any Scrap Mechanic save or game patch.</div>
       <div class=""update-buttons"">
         <button type=""button"" class=""btn"" id=""updateLaterButton"" onclick=""closeUpdateModal()"">LATER</button>
         <button type=""button"" class=""btn"" id=""updateReleaseButton"" onclick=""openUpdateRelease()"">VIEW RELEASE</button>
@@ -1232,9 +1324,9 @@ button{font:inherit}
       <div class=""hotfix-title""><strong id=""hotfixTitle"">SYSTEM MODIFICATION WARNING</strong><span>CUMULATIVE SCRAP MECHANIC 1.0.2 HOTFIX</span></div>
     </div>
     <div class=""hotfix-body"">
-      <p class=""hotfix-intro"">Raid Rescue is ready to install or update the temporary game hotfix.</p>
+      <p class=""hotfix-intro"">ScrapLab is ready to install or update the temporary game hotfix.</p>
       <ul class=""hotfix-checks"">
-        <li>Only supported original files or verified Raid Rescue versions are accepted.</li>
+        <li>Only supported original files or verified ScrapLab versions are accepted.</li>
         <li>Previously installed raid fixes are preserved when new fixes are added.</li>
         <li>A checksum-verified backup is created before any script is changed.</li>
         <li>The cumulative hotfix repairs stuck raids and fertilizer growth timing.</li>
@@ -1243,7 +1335,7 @@ button{font:inherit}
       <div class=""hotfix-stop"">SCRAP MECHANIC MUST BE COMPLETELY CLOSED BEFORE INSTALLATION.</div>
     </div>
     <div class=""hotfix-foot"">
-      <div class=""hotfix-foot-note"">Windows requests administrator permission once per Raid Rescue session; later patch actions reuse that protected session.</div>
+      <div class=""hotfix-foot-note"">Windows requests administrator permission once per ScrapLab session; later patch actions reuse that protected session.</div>
       <div class=""hotfix-buttons"">
         <button type=""button"" class=""btn"" onclick=""closeHotfixConfirm()"">CANCEL</button>
         <button type=""button"" class=""btn hotfix-confirm"" id=""hotfixConfirmButton"" onclick=""confirmHotfixInstall()""><span>!</span>INSTALL HOTFIX</button>
@@ -1274,6 +1366,20 @@ var smoothScrollTarget=0;
 var smoothScrollPane=null;
 var gameRunning=null;
 var operationBusy=false;
+var performanceOperationId='';
+var performancePollTimer=0;
+var performanceStatus=null;
+var performanceResult=null;
+var performancePath='';
+var performanceActive=false;
+var performanceWorldFilter='all';
+var performanceExplorerOpen=false;
+var performanceExplorerPage=null;
+var performanceExplorerWorldId=null;
+var performanceExplorerOffset=0;
+var performanceExplorerLimit=25;
+var performanceExportMessage='';
+var performanceExportFailed=false;
 var busyProgressValue=0;
 var busyProgressTimer=0;
 var busyHideTimer=0;
@@ -1331,15 +1437,15 @@ var itemSummaryScrollDragY=0;
 var itemSummaryScrollDragTop=0;
 var droppedItemsCollapsed=false;
 var tutorialSteps=[
- {target:'identityPanel',badge:'00',label:'GUIDED RECOVERY TOUR',title:'WELCOME TO RAID RESCUE',
-  text:'Raid Rescue inspects stuck raids and can optionally scan loose world items. Close the game, choose a save, then analyze.',
+ {target:'identityPanel',badge:'00',label:'GUIDED WORLD TOUR',title:'WELCOME TO SCRAP LAB',
+  text:'ScrapLab inspects worlds, finds performance hotspots and loose items, and offers backup-first recovery tools.',
   tip:'This tour only points things out. It changes nothing.'},
  {target:'selectorPanel',badge:'01',label:'STEP 1 — SAFETY FIRST',title:'CLOSE SCRAP MECHANIC',
-  text:'Close Scrap Mechanic before opening a save. Raid Rescue locks world controls while the game is running.',
+  text:'Close Scrap Mechanic before opening a save. ScrapLab locks world controls while the game is running.',
   tip:'The controls unlock automatically when the game closes.'},
  {target:'savePicker',badge:'02',label:'STEP 2 — WORLD SELECTION',title:'CHOOSE THE CORRECT SAVE',
   text:'Choose your world from the list and check its name and date. Use Browse only if it is missing.',
-  tip:'Pick the normal .db file, not a raidrescue-backup file.'},
+  tip:'Pick the normal .db file, not a .scraplab-backup or legacy .raidrescue-backup file.'},
  {target:'analyzeBtn',badge:'03',label:'STEP 3 — READ-ONLY CHECK',title:'ANALYZE BEFORE REPAIRING',
   text:'Analyze World checks database health and stored raids without editing anything.',
   tip:'Loose items are scanned separately only when you request it.'},
@@ -1373,8 +1479,8 @@ function loadAppUpdateState(){
  try{
   var startup=parseResult(window.external.ConsumeUpdateStartupStatus());
   if(startup.HasStatus){
-   if(startup.Success)showUpdateToast('RECOVERY UNIT UPDATED','Raid Rescue '+escPlain(startup.Version)+' installed and reopened successfully.','good',7000);
-   else showUpdateToast('UPDATE ROLLED BACK',startup.Error||'The previous Raid Rescue executable was restored.','bad',9000);
+   if(startup.Success)showUpdateToast('SCRAP LAB UPDATED','ScrapLab '+escPlain(startup.Version)+' installed and reopened successfully.','good',7000);
+   else showUpdateToast('UPDATE ROLLED BACK',startup.Error||'The previous ScrapLab executable was restored.','bad',9000);
   }
  }catch(e){}
 }
@@ -1421,8 +1527,8 @@ function receiveUpdateCheck(text,manual){
  }
  if(!data.UpdateAvailable){
   if(wasManual){
-   setHelpUpdateStatus('RAID RESCUE '+escPlain(data.CurrentVersion)+' IS UP TO DATE.','good');
-   showUpdateToast('RECOVERY UNIT CURRENT','You already have the latest Raid Rescue release.','good',4500);
+   setHelpUpdateStatus('SCRAP LAB '+escPlain(data.CurrentVersion)+' IS UP TO DATE.','good');
+   showUpdateToast('SCRAP LAB CURRENT','You already have the latest ScrapLab release.','good',4500);
   }
   return;
  }
@@ -1451,7 +1557,7 @@ function showUpdateModal(data){
  var status=document.getElementById('updateStatus');
  status.className=data.CanAutoUpdate?'update-status':'update-status bad';
  status.innerText=data.CanAutoUpdate
-  ?'Ready to download, verify, install, and reopen Raid Rescue.'
+  ?'Ready to download, verify, install, and reopen ScrapLab.'
   :(data.Error||'Automatic installation is unavailable for this release.');
  var install=document.getElementById('updateInstallButton');
  install.disabled=!data.CanAutoUpdate;
@@ -1509,7 +1615,7 @@ function installAppUpdate(){
  button.disabled=true;button.innerText='VERIFYING UPDATE...';
  var status=document.getElementById('updateStatus');
  status.className='update-status';
- status.innerText='Downloading the verified app and patch companion, then checking both SHA-256 digests. Raid Rescue will restart when verification finishes.';
+ status.innerText='Downloading the verified app and patch companion, then checking both SHA-256 digests. ScrapLab will restart when verification finishes.';
  startUpdateProgress();
  var started=false;
  try{
@@ -1526,7 +1632,7 @@ function receiveUpdateInstall(text){
  if(data.Success&&data.ReadyToRestart){
   finishUpdateProgress(true);
   status.className='update-status good';
-  status.innerText='UPDATE VERIFIED. Closing this recovery unit and reopening the new version...';
+  status.innerText='UPDATE VERIFIED. Closing ScrapLab and reopening the new version...';
   document.getElementById('updateInstallButton').innerText='RESTARTING...';
   window.setTimeout(function(){window.external.CloseWindow();},850);
   return;
@@ -1689,6 +1795,7 @@ function renderSecretModsState(){
  if(!control||!row||!status)return;
  control.className=secretModsEnabled?'secret-switch on':'secret-switch';
  control.setAttribute('aria-checked',secretModsEnabled?'true':'false');
+ control.disabled=!!operationBusy||!!secretModBusy;
  row.className=secretModsEnabled?'secret-mod-row enabled':'secret-mod-row';
  status.className=secretModsEnabled?'secret-mods-status on':'secret-mods-status';
  status.getElementsByTagName('span')[0].innerText=secretModsEnabled?'SECRET PATCH SYSTEM ARMED':'SECRET PATCH SYSTEM OFFLINE';
@@ -1698,7 +1805,7 @@ function renderSecretModsState(){
  if(locator&&locatorRow&&locatorState){
   locator.className=secretResourceLocatorInstalled?'secret-switch on':'secret-switch';
   locator.setAttribute('aria-checked',secretResourceLocatorInstalled?'true':'false');
-  locator.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!secretResourceLocatorCanApply;
+  locator.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretResourceLocatorCanApply;
   locatorRow.className='secret-mod-row secret-mod-card'+(secretResourceLocatorInstalled?' enabled':'')+((!secretModsEnabled||!secretResourceLocatorCanApply)?' locked':'');
   locatorState.innerText=secretModBusy&&secretModBusyTarget==='resource'?'APPLYING...':(gameRunning?'GAME RUNNING · CLOSE IT FIRST':(secretResourceLocatorNeedsUpdate&&secretResourceLocatorCompatibility!=='COMPATIBLE GAME UPDATE'?'UPDATE READY · DOT VISIBILITY FIX':compatibilityStateLabel(secretResourceLocatorInstalled,secretResourceLocatorCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('resourceLocatorReason',secretResourceLocatorInstalled,secretResourceLocatorCanApply,secretResourceLocatorReason);
@@ -1709,7 +1816,7 @@ function renderSecretModsState(){
  if(revival&&revivalRow&&revivalState){
   revival.className=secretRevivalBuffInstalled?'secret-switch on':'secret-switch';
   revival.setAttribute('aria-checked',secretRevivalBuffInstalled?'true':'false');
-  revival.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!secretRevivalBuffCanApply;
+  revival.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretRevivalBuffCanApply;
   revivalRow.className='secret-mod-row secret-mod-card'+(secretRevivalBuffInstalled?' enabled':'')+((!secretModsEnabled||!secretRevivalBuffCanApply)?' locked':'');
   revivalState.innerText=secretModBusy&&secretModBusyTarget==='revival'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretRevivalBuffInstalled,secretRevivalBuffCompatibility,'NOT INSTALLED'));
   renderCompatibilityReason('revivalBuffReason',secretRevivalBuffInstalled,secretRevivalBuffCanApply,secretRevivalBuffReason);
@@ -1721,8 +1828,8 @@ function renderSecretModsState(){
  if(commands&&commandsRow&&commandsState){
   commands.className=secretDeveloperCommandsInstalled?'secret-switch on':'secret-switch';
   commands.setAttribute('aria-checked',secretDeveloperCommandsInstalled?'true':'false');
-  commands.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
-  if(commandOptions)commandOptions.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
+  commands.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
+  if(commandOptions)commandOptions.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
   commandsRow.className='secret-mod-row secret-mod-card'+(secretDeveloperCommandsInstalled?' enabled':'')+((!secretModsEnabled||secretDeveloperCommandsError||!secretDeveloperCommandsCanApply)?' locked':'');
   commandsState.innerText=secretModBusy&&secretModBusyTarget==='commands'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDeveloperCommandsError?'UNSUPPORTED FILE - NO CHANGES':compatibilityStateLabel(secretDeveloperCommandsInstalled,secretDeveloperCommandsCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('developerCommandsReason',secretDeveloperCommandsInstalled,secretDeveloperCommandsCanApply,secretDeveloperCommandsReason);
@@ -1733,7 +1840,7 @@ function renderSecretModsState(){
  if(chemical&&chemicalRow&&chemicalState){
   chemical.className=secretChemicalFertilizerInstalled?'secret-switch on':'secret-switch';
   chemical.setAttribute('aria-checked',secretChemicalFertilizerInstalled?'true':'false');
-  chemical.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!secretChemicalFertilizerCanApply;
+  chemical.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretChemicalFertilizerCanApply;
   chemicalRow.className='secret-mod-row secret-mod-card'+(secretChemicalFertilizerInstalled?' enabled':'')+((!secretModsEnabled||!secretChemicalFertilizerCanApply)?' locked':'');
   chemicalState.innerText=secretModBusy&&secretModBusyTarget==='chemical'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretChemicalFertilizerInstalled,secretChemicalFertilizerCompatibility,'NOT INSTALLED'));
   renderCompatibilityReason('chemicalFertilizerReason',secretChemicalFertilizerInstalled,secretChemicalFertilizerCanApply,secretChemicalFertilizerReason);
@@ -1744,7 +1851,7 @@ function renderSecretModsState(){
  if(cannon&&cannonRow&&cannonState){
   cannon.className=secretDualFluidCannonInstalled?'secret-switch on':'secret-switch';
   cannon.setAttribute('aria-checked',secretDualFluidCannonInstalled?'true':'false');
-  cannon.disabled=!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDualFluidCannonError||!secretDualFluidCannonCanApply;
+  cannon.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDualFluidCannonError||!secretDualFluidCannonCanApply;
   cannonRow.className='secret-mod-row secret-mod-card'+(secretDualFluidCannonInstalled?' enabled':'')+((!secretModsEnabled||secretDualFluidCannonError||!secretDualFluidCannonCanApply)?' locked':'');
   cannonState.innerText=secretModBusy&&secretModBusyTarget==='cannon'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDualFluidCannonError?'UNSUPPORTED FILE - NO CHANGES':(secretDualFluidCannonInstalled?(secretChemicalFertilizerInstalled?'INSTALLED':'DEPENDENCY MISSING - REPAIR REQUIRED'):compatibilityStateLabel(false,secretDualFluidCannonCompatibility,(secretChemicalFertilizerInstalled?'NOT INSTALLED':'READY - INSTALLS FERTILIZER')))));
   renderCompatibilityReason('dualFluidCannonReason',secretDualFluidCannonInstalled,secretDualFluidCannonCanApply,secretDualFluidCannonReason);
@@ -1800,7 +1907,7 @@ function secretModsBackdropClick(e){
  if((e.target||e.srcElement)===document.getElementById('secretModsLayer'))closeSecretMods();
 }
 function toggleSecretModsEnabled(){
- if(secretModBusy)return;
+ if(operationBusy||secretModBusy)return;
  if(secretModsEnabled&&secretDualFluidCannonInstalled){openCannonDangerConfirm('masterOff');return;}
  if(secretModsEnabled){disableAllSecretModsConfirmed();return;}
  secretModsEnabled=!secretModsEnabled;
@@ -1829,11 +1936,11 @@ function disableAllSecretModsConfirmed(){
  return true;
 }
 function toggleResourceLocatorMod(){
- if(!secretModsEnabled||secretModBusy)return;
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
  setResourceLocatorMod(secretResourceLocatorNeedsUpdate||!secretResourceLocatorInstalled);
 }
 function toggleRevivalBuffMod(){
- if(!secretModsEnabled||secretModBusy)return;
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
  setRevivalBuffMod(!secretRevivalBuffInstalled);
 }
 function setRevivalBuffMod(enabled){
@@ -1904,7 +2011,7 @@ function setResourceLocatorMod(enabled){
  return true;
 }
 function toggleDeveloperCommandsMod(){
- if(!secretModsEnabled||secretModBusy)return;
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
  if(secretDeveloperCommandsInstalled){setDeveloperCommandsMod(false);return;}
  openDeveloperCommandOptions();
 }
@@ -1993,7 +2100,7 @@ function applyDeveloperCommandOptions(){
  setDeveloperCommandsMod(true,mode);
 }
 function toggleChemicalFertilizerMod(){
- if(!secretModsEnabled||secretModBusy)return;
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
  if(secretChemicalFertilizerInstalled&&secretDualFluidCannonInstalled){
   openCannonDangerConfirm('removeBoth');
   return;
@@ -2029,13 +2136,13 @@ function setChemicalFertilizerMod(enabled){
  showSecretModFeedback(
   secretChemicalFertilizerInstalled
    ?'CHEMICAL FERTILIZER SPLASH INSTALLED - chemical hits fertilize directly; red Farmbot pesticide fertilizes a 2.5-block radius.'
-   :'CHEMICAL FERTILIZER SPLASH REMOVED - verified prior scripts were restored without removing other Raid Rescue fixes.',
+   :'CHEMICAL FERTILIZER SPLASH REMOVED - verified prior scripts were restored without removing other ScrapLab fixes.',
   'good');
  applyGameLock(gameRunning);renderSecretModsState();
  return true;
 }
 function toggleDualFluidCannonMod(){
- if(!secretModsEnabled||secretModBusy)return;
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
  if(!secretDualFluidCannonInstalled&&!secretChemicalFertilizerInstalled){
   openDependencyConfirm('installBoth');
   return;
@@ -2088,8 +2195,8 @@ function openDependencyConfirm(action){
  document.getElementById('dependencyTitle').innerText=install?'INSTALL REQUIRED DEPENDENCY':'REMOVE LINKED DEPENDENCY';
  document.getElementById('dependencyKicker').innerText=install?'DUAL-FLUID WATER CANNON STARTUP':'CHEMICAL FERTILIZER SPLASH SHUTDOWN';
  document.getElementById('dependencyIntro').innerText=install
-  ?'Dual-Fluid Water Cannon requires Chemical Fertilizer Splash. Raid Rescue will install both in one protected operation.'
-  :'Dual-Fluid Water Cannon depends on Chemical Fertilizer Splash. Raid Rescue must remove the cannon patch first.';
+  ?'Dual-Fluid Water Cannon requires Chemical Fertilizer Splash. ScrapLab will install both in one protected operation.'
+  :'Dual-Fluid Water Cannon depends on Chemical Fertilizer Splash. ScrapLab must remove the cannon patch first.';
  document.getElementById('dependencyFirstChange').innerText=install
   ?'Install Chemical Fertilizer Splash and verify all four game scripts.'
   :'Remove Dual-Fluid Water Cannon and restore the original cannon script.';
@@ -2197,7 +2304,7 @@ function resetTutorialPrompt(){
  try{window.external.ResetTutorialPrompt();}catch(e){}
  var status=document.getElementById('helpStatus');
  status.className='help-status good';
- status.innerText='FIRST-RUN PROMPT RESET — it will be offered the next time Raid Rescue starts.';
+ status.innerText='FIRST-RUN PROMPT RESET — it will be offered the next time ScrapLab starts.';
 }
 function startTutorial(){
  if(operationBusy)return;
@@ -2225,7 +2332,7 @@ function renderTutorialDiagnostics(){
    Enemies:[{Name:'Haybot',Quantity:4},{Name:'Totebot',Quantity:2},{Name:'Tapebot',Quantity:1}],
    Crops:[{Name:'Tomato',Quantity:31},{Name:'Broccoli',Quantity:22}],
    SavedTick:12454102,LastSpawnTick:12449230,NeedsSpawnPoints:false,PlantingRecords:53,LooksStuck:true,
-   Notes:['This example shows the kind of raid information Raid Rescue reads from a real world.']
+   Notes:['This example shows the kind of raid information ScrapLab reads from a real world.']
   }],
   DroppedItems:[{
    EntityId:4223,WorldId:1,WorldName:'Overworld',CellX:-37,CellY:-42,Uuid:'db66f0b1-0c50-4b74-bdc7-771374204b1f',
@@ -2606,7 +2713,7 @@ function refreshSaves(){
 }
 function renderGameBanner(running){
  document.getElementById('gameBanner').innerHTML=running
-  ?'<div class=""banner banner-error""><b>WORLD ACCESS SAFETY LOCKED.</b> Scrap Mechanic is running, so Raid Rescue will not open any save database. Close the game to unlock the controls automatically.</div>':'';
+  ?'<div class=""banner banner-error""><b>WORLD ACCESS SAFETY LOCKED.</b> Scrap Mechanic is running, so ScrapLab will not open any save database. Close the game to unlock the controls automatically.</div>':'';
  applyGameLock(running);
  updateScrollBar();
 }
@@ -2619,7 +2726,23 @@ function applyGameLock(running){
  if(browse)browse.disabled=locked;
  if(display)display.disabled=locked;
  if(running)closeSaveMenu();
+ refreshWorldActionLocks();
  renderSecretModsState();
+}
+function refreshWorldActionLocks(){
+ var locked=!!gameRunning||!!operationBusy;
+ var scanItems=document.getElementById('scanDroppedItemsBtn');
+ var scanPerformance=document.getElementById('scanPerformanceBtn');
+ var repairCrops=document.getElementById('repairOrphanedCropsBtn');
+ var clearRaids=document.getElementById('clearAllBtn');
+ var clearExpired=document.getElementById('clearExpiredItemsBtn');
+ var clearDropped=document.getElementById('clearDroppedItemsBtn');
+ if(scanItems)scanItems.disabled=locked;
+ if(scanPerformance)scanPerformance.disabled=locked;
+ if(repairCrops)repairCrops.disabled=locked||!lastAnalysis||!lastAnalysis.CanRepairOrphanedCrops;
+ if(clearRaids)clearRaids.disabled=locked||!lastAnalysis||!lastAnalysis.CanClear;
+ if(clearExpired)clearExpired.disabled=locked||!lastAnalysis||!lastAnalysis.CanClearExpiredDroppedItems;
+ if(clearDropped)clearDropped.disabled=locked||!lastAnalysis||!lastAnalysis.CanClearDroppedItems;
 }
 function ensureGameClosed(){
  var running=true;
@@ -2711,6 +2834,7 @@ function upsertSave(item){
 }
 function selectSave(item){
  if(!item)return;
+ if(performancePath&&!samePath(performancePath,item.Path||''))clearPerformanceState(false);
  currentPath=item.Path||'';
  setSaveDisplay(item.Name,saveMeta(item));
  document.getElementById('pathText').innerText=currentPath||'No file selected';
@@ -2726,6 +2850,7 @@ function browseSave(){
 function analyzeSelected(autoRefresh){
  if(!currentPath){showError('Choose a survival world first.');return;}
  if(!ensureGameClosed()||operationBusy)return;
+ clearPerformanceState(false);
  busy(true,autoRefresh?'GAME CLOSED — REFRESHING':'DECODING WORLD STORAGE',
   autoRefresh?'Updating raid diagnostics and safe repair controls.':'Checking database integrity and stored raids. Loose items remain unscanned.');
  window.setTimeout(function(){
@@ -2754,6 +2879,381 @@ function scanDroppedItems(){
   renderAnalysis(data);busy(false);
  },busyLeadDelay());
 }
+function clearPerformanceState(cancelRunning){
+ if(performancePollTimer){window.clearTimeout(performancePollTimer);performancePollTimer=0;}
+ if(cancelRunning&&performanceActive&&performanceOperationId){
+  try{window.external.CancelPerformanceScan(performanceOperationId);}catch(ignore){}
+ }
+ if(performanceActive)operationBusy=false;
+ performanceOperationId='';
+ performanceStatus=null;
+ performanceResult=null;
+ performancePath='';
+ performanceActive=false;
+ performanceWorldFilter='all';
+ performanceExplorerOpen=false;
+ performanceExplorerPage=null;
+ performanceExplorerWorldId=null;
+ performanceExplorerOffset=0;
+ performanceExportMessage='';
+ performanceExportFailed=false;
+ applyGameLock(gameRunning);
+}
+function beginPerformanceScan(){
+ if(!currentPath||!lastAnalysis||!lastAnalysis.Success){
+  showError('Choose and analyze a survival world first.');return;
+ }
+ if(!ensureGameClosed()||operationBusy)return;
+ performancePath=currentPath;
+ performanceActive=true;
+ performanceWorldFilter='all';
+ performanceExplorerOpen=false;
+ performanceExplorerPage=null;
+ performanceExplorerWorldId=null;
+ performanceExplorerOffset=0;
+ performanceExportMessage='';
+ performanceExportFailed=false;
+ operationBusy=true;
+ performanceResult=null;
+ performanceStatus={State:'queued',Terminal:false,CanCancel:true,
+  Progress:{Stage:0,StageCount:6,StageLabel:'Queued',OverallPercent:0,
+   Message:'Waiting for the scanner thread.'}};
+ renderAnalysis(lastAnalysis);
+ applyGameLock(gameRunning);
+ var started;
+ try{started=parseResult(window.external.BeginPerformanceScan(currentPath));}
+ catch(e){started={Success:false,Error:e.message||'The performance scanner did not start.'};}
+ if(!started.Success){
+  performanceActive=false;operationBusy=false;
+  performanceStatus={State:'failed',Terminal:true,CanCancel:false,
+   Error:started.Error||'The performance scanner did not start.',
+   Progress:{Stage:0,StageCount:6,StageLabel:'Could not start',OverallPercent:0,Message:''}};
+  refreshPerformanceSection();applyGameLock(gameRunning);return;
+ }
+ performanceOperationId=started.OperationId||'';
+ pollPerformanceScan();
+}
+function pollPerformanceScan(){
+ if(!performanceActive||!performanceOperationId)return;
+ var status;
+ try{status=parseResult(window.external.GetPerformanceScanStatus(performanceOperationId));}
+ catch(e){status={Success:false,Error:e.message||'The scanner status could not be read.',Terminal:true,State:'failed'};}
+ if(!status.Success){
+  performanceStatus={State:'failed',Terminal:true,CanCancel:false,
+   Error:status.Error||'The scanner operation was lost.',
+   Progress:(performanceStatus&&performanceStatus.Progress)||{Stage:0,StageCount:6,StageLabel:'Stopped',OverallPercent:0,Message:''}};
+  performanceActive=false;operationBusy=false;
+  refreshPerformanceSection();applyGameLock(gameRunning);return;
+ }
+ performanceStatus=status;
+ if(status.Terminal){
+  performanceActive=false;operationBusy=false;
+  performanceResult=status.State==='completed'&&status.Result?status.Result:null;
+  renderAnalysis(lastAnalysis);
+  applyGameLock(gameRunning);
+  return;
+ }
+ refreshPerformanceSection();
+ applyGameLock(gameRunning);
+ performancePollTimer=window.setTimeout(pollPerformanceScan,200);
+}
+function cancelPerformanceScan(){
+ if(!performanceActive||!performanceOperationId)return;
+ try{window.external.CancelPerformanceScan(performanceOperationId);}catch(ignore){}
+ if(performanceStatus){
+  performanceStatus.State='cancelling';
+  performanceStatus.CanCancel=false;
+  if(performanceStatus.Progress)performanceStatus.Progress.Message='Stopping safely after the current read.';
+ }
+ refreshPerformanceSection();
+}
+function refreshPerformanceSection(){
+ var zone=document.getElementById('performanceZone');
+ if(zone)zone.innerHTML=performanceSectionInner();
+ updateScrollBar();
+}
+function performanceSection(data){
+ return '<div class=""perf-zone"" id=""performanceZone"">'+performanceSectionInner(data)+'</div>';
+}
+function performanceSectionInner(){
+ var state=performanceStatus?String(performanceStatus.State||'').toLowerCase():'idle';
+ var body='',button='';
+ if(performanceActive||state==='queued'||state==='running'||state==='cancelling'){
+  var progress=performanceStatus&&performanceStatus.Progress?performanceStatus.Progress:{};
+  var percent=Math.max(0,Math.min(100,Number(progress.OverallPercent)||0));
+  var stage=Number(progress.Stage)||0,stageCount=Number(progress.StageCount)||6,stages='';
+  var names=['LAYOUT','COUNTS','CELLS','WORLDS','RANKING','REPORT'];
+  for(var i=1;i<=stageCount;i++){
+   var cls=i<stage?' done':(i===stage?' current':'');
+   stages+='<span class=""perf-stage'+cls+'"">'+esc(names[i-1]||('STAGE '+i))+'</span>';
+  }
+  body='<div class=""perf-progress-card""><div class=""perf-progress-top""><div class=""perf-progress-copy""><b>'+
+   esc(progress.StageLabel||'Preparing scan')+'</b><span>'+esc(progress.Message||'Reading the selected save.')+'</span></div>'+
+   '<strong class=""perf-progress-percent"">'+esc(percent)+'%</strong></div><div class=""perf-track""><div class=""perf-fill"" style=""width:'+
+   esc(percent)+'%""></div></div><div class=""perf-stages"">'+stages+'</div><div class=""perf-cancel-row""><span>Read-only scan. Your save is never changed.</span>'+
+   '<button type=""button"" class=""btn perf-cancel"" onclick=""cancelPerformanceScan()"" '+(state==='cancelling'||!performanceStatus.CanCancel?'disabled=""disabled""':'')+'>'+
+   (state==='cancelling'?'CANCELLING...':'CANCEL SCAN')+'</button></div></div>';
+ }else if(performanceResult&&performanceResult.Success){
+  body=performanceResultBody(performanceResult);
+  button='<button type=""button"" class=""btn"" id=""scanPerformanceBtn"" onclick=""beginPerformanceScan()"">SCAN AGAIN</button>';
+ }else if(state==='failed'||state==='cancelled'){
+  var title=state==='cancelled'?'SCAN CANCELLED':'SCAN DID NOT FINISH';
+  var message=performanceStatus&&performanceStatus.Error?performanceStatus.Error:
+   (state==='cancelled'?'No report was created. You can start again whenever you are ready.':'The performance report could not be created.');
+  body='<div class=""perf-message '+(state==='failed'?'bad':'')+'""><b>'+esc(title)+'</b>'+esc(message)+'</div>';
+  button='<button type=""button"" class=""btn btn-primary"" id=""scanPerformanceBtn"" onclick=""beginPerformanceScan()"">TRY AGAIN</button>';
+ }else{
+  body='<div class=""perf-message""><b>FIND WHERE THIS WORLD IS HEAVIEST</b>'+
+   'Find unusually crowded 3-by-3 cell areas using supported local save records. Every result includes the evidence behind its severity.</div>';
+  button='<button type=""button"" class=""btn btn-primary"" id=""scanPerformanceBtn"" onclick=""beginPerformanceScan()"" '+(operationBusy||gameRunning?'disabled=""disabled""':'')+'>SCAN PERFORMANCE</button>';
+ }
+ return '<div class=""perf-shell""><div class=""perf-head""><div class=""perf-title""><b>PERFORMANCE SCANNER</b>'+
+  '<strong>WORLD DENSITY REPORT</strong><p>Read-only evidence from the selected survival database.</p></div>'+button+
+  '</div><div class=""perf-body"">'+body+'</div></div>';
+}
+function performanceResultBody(result){
+ var categories=result.Categories||[],worlds=result.Worlds||[],hotspots=result.Hotspots||[],maxCategory=1,html='';
+ for(var i=0;i<categories.length;i++)maxCategory=Math.max(maxCategory,Number(categories[i].RecordCount)||0);
+ html='<div class=""perf-summary"">'+performanceStat('WORLDS',result.WorldsScanned)+
+  performanceStat('RECORDS',formatPerformanceNumber(result.TotalRecords))+
+  performanceStat('POPULATED CELLS',formatPerformanceNumber(result.PopulatedCells))+
+ performanceStat('POTENTIAL HOTSPOTS',formatPerformanceNumber(hotspots.length))+
+ performanceStat('SCAN TIME',formatPerformanceDuration(result.DurationMilliseconds))+'</div>';
+ html+=performanceReportTools();
+ html+=performanceWorldFilters(worlds,hotspots)+performanceHotspotList(hotspots);
+ html+=performanceExplorerPanel(result);
+ html+='<div class=""perf-columns""><div class=""perf-column""><div class=""perf-subtitle"">SUPPORTED RECORD FAMILIES</div>';
+ if(categories.length){
+  for(var c=0;c<categories.length;c++){
+   var category=categories[c],width=Math.max(2,Math.round((Number(category.RecordCount)||0)*100/maxCategory));
+   html+='<div class=""perf-category""><div class=""perf-category-copy""><b>'+esc(category.DisplayName||category.Key||'Records')+
+    '</b><span>'+esc(formatPerformanceBytes(category.PayloadBytes))+' stored</span><div class=""perf-category-bar""><i style=""width:'+
+    esc(width)+'%""></i></div></div><strong class=""perf-category-value"">'+esc(formatPerformanceNumber(category.RecordCount))+'</strong></div>';
+  }
+ }else html+='<div class=""perf-message"">No supported record families were present.</div>';
+ html+='</div><div class=""perf-column""><div class=""perf-subtitle"">WORLD TOTALS</div>';
+ if(worlds.length){
+  for(var w=0;w<worlds.length;w++){
+   var world=worlds[w];
+   html+='<div class=""perf-world""><div><b>'+esc(world.WorldName||('World '+world.WorldId))+'</b><span>'+
+    esc(formatPerformanceNumber(world.PopulatedCells))+' populated cells &middot; '+esc(formatPerformanceBytes(world.TotalPayloadBytes))+
+    '</span></div><strong>'+esc(formatPerformanceNumber(world.TotalRecords))+'</strong></div>';
+  }
+ }else html+='<div class=""perf-message"">No supported world records were present.</div>';
+ html+='</div></div>';
+ if(Number(result.UnsupportedTableCount)>0){
+  var unsupported=result.UnsupportedTables||[],names=[];
+  for(var u=0;u<unsupported.length;u++)names.push(esc(unsupported[u]));
+  html+='<div class=""perf-limit""><b>PARTIAL SCHEMA COVERAGE:</b> '+esc(formatPerformanceNumber(result.UnsupportedTableCount))+
+   ' unrecognized or not-yet-supported table(s) were safely excluded.'+
+   (names.length?' Seen locally: '+names.join(', ')+'.':'')+'</div>';
+ }
+ html+='<div class=""perf-limit""><b>WHAT THIS PROVES:</b> the report measures supported save-record density and payload size. '+
+  'It does not measure FPS, physics time, or guarantee that changing an area will improve performance. Coverage: '+
+  esc(formatPerformancePercent(Number(result.Coverage||0)*100))+' of considered records were decoded by the current allowlist.</div>';
+ return html;
+}
+function performanceReportTools(){
+ var status=performanceExportMessage?'<span class=""perf-tool-status'+(performanceExportFailed?' bad':'')+'"">'+esc(performanceExportMessage)+'</span>':'';
+ return '<div class=""perf-report-tools""><div class=""perf-tool-copy""><b>LOCAL REPORT TOOLS</b>'+
+  '<span>Export a privacy-safe JSON summary or inspect paged aggregate cells. No save path or raw payload is included.</span>'+status+'</div>'+
+  '<div class=""perf-tool-actions""><button type=""button"" class=""btn perf-export"" onclick=""exportPerformanceReport()"">EXPORT JSON</button>'+
+  '<button type=""button"" class=""btn perf-explore"" onclick=""togglePerformanceExplorer()"">'+
+  (performanceExplorerOpen?'CLOSE CELLS':'EXPLORE CELLS')+'</button></div></div>';
+}
+function exportPerformanceReport(){
+ if(!performanceOperationId||!performanceResult)return;
+ var result;
+ try{result=parseResult(window.external.ExportPerformanceReport(performanceOperationId));}
+ catch(e){result={Success:false,Error:e.message||'The report could not be exported.'};}
+ if(result.Cancelled)return;
+ performanceExportFailed=!result.Success;
+ performanceExportMessage=result.Success
+  ?'Saved '+String(result.FileName||'the performance report')+'.'
+  :(result.Error||'The performance report could not be saved.');
+ refreshPerformanceSection();
+}
+function togglePerformanceExplorer(){
+ if(performanceExplorerOpen){
+  performanceExplorerOpen=false;performanceExplorerPage=null;refreshPerformanceSection();return;
+ }
+ if(!performanceResult||!performanceOperationId)return;
+ var worlds=performanceResult.Worlds||[],worldId=null;
+ if(performanceWorldFilter!=='all')worldId=Number(performanceWorldFilter);
+ if(worldId===null||isNaN(worldId)){
+  for(var i=0;i<worlds.length;i++)if(Number(worlds[i].PopulatedCells)>0){worldId=Number(worlds[i].WorldId);break;}
+ }
+ performanceExplorerOpen=true;
+ if(worldId===null||isNaN(worldId)){
+  performanceExplorerPage={Success:false,Error:'No populated supported cells are available.',Cells:[]};
+  refreshPerformanceSection();return;
+ }
+ loadPerformanceCells(worldId,0);
+}
+function loadPerformanceCells(worldId,offset){
+ if(!performanceOperationId)return;
+ performanceExplorerWorldId=Number(worldId);
+ performanceExplorerOffset=Math.max(0,Number(offset)||0);
+ var page;
+ try{
+  page=parseResult(window.external.GetPerformanceWorldCells(
+   performanceOperationId,performanceExplorerWorldId,performanceExplorerOffset,performanceExplorerLimit));
+ }catch(e){page={Success:false,Error:e.message||'The cell page could not be loaded.',Cells:[]};}
+ performanceExplorerPage=page;
+ refreshPerformanceSection();
+}
+function performanceExplorerPanel(result){
+ if(!performanceExplorerOpen)return '';
+ var worlds=result.Worlds||[],page=performanceExplorerPage||{},cells=page.Cells||[],worldButtons='',rows='';
+ for(var i=0;i<worlds.length;i++){
+  if(Number(worlds[i].PopulatedCells)<=0)continue;
+  var worldId=Number(worlds[i].WorldId)||0,active=worldId===Number(performanceExplorerWorldId);
+  worldButtons+='<button type=""button"" class=""perf-explorer-world'+(active?' active':'')+'"" onclick=""loadPerformanceCells('+esc(worldId)+',0)"">'+
+   esc(worlds[i].WorldName||('World '+worldId))+' &middot; '+esc(formatPerformanceNumber(worlds[i].PopulatedCells))+'</button>';
+ }
+ if(!page.Success){
+  rows='<div class=""perf-message bad""><b>CELL DATA UNAVAILABLE</b>'+esc(page.Error||'The aggregated cells could not be loaded.')+'</div>';
+ }else if(!cells.length){
+  rows='<div class=""perf-message""><b>NO CELLS ON THIS PAGE</b>This world has no supported aggregate cells at the requested offset.</div>';
+ }else{
+  for(var c=0;c<cells.length;c++)rows+=performanceCellRow(cells[c]);
+ }
+ var start=Number(page.TotalCells)>0?Number(page.Offset)+1:0,end=Math.min(Number(page.TotalCells)||0,(Number(page.Offset)||0)+cells.length);
+ var previous=Math.max(0,(Number(page.Offset)||0)-(Number(page.Limit)||performanceExplorerLimit));
+ var next=(Number(page.Offset)||0)+(Number(page.Limit)||performanceExplorerLimit);
+ return '<div class=""perf-explorer"" role=""region"" aria-label=""Aggregated world cell explorer""><div class=""perf-explorer-head"">'+
+  '<div><b>AGGREGATED CELL EXPLORER</b><span>Local, read-only pages from scanner version '+esc(result.ScanVersion)+'. Each row combines proven records in one cell.</span></div>'+
+  '<button type=""button"" class=""btn perf-explore"" onclick=""togglePerformanceExplorer()"">CLOSE</button></div>'+
+  '<div class=""perf-explorer-worlds"">'+worldButtons+'</div><div class=""perf-cell-list"">'+rows+'</div>'+
+  '<div class=""perf-explorer-page""><span>SHOWING '+esc(start)+'&ndash;'+esc(end)+' OF '+esc(formatPerformanceNumber(page.TotalCells||0))+
+  ' CELLS &middot; ORDERED BY CELL COORDINATES</span><div><button type=""button"" class=""btn"" onclick=""loadPerformanceCells('+esc(Number(performanceExplorerWorldId)||0)+','+esc(previous)+')"" '+
+  ((Number(page.Offset)||0)<=0?'disabled=""disabled""':'')+'>PREVIOUS</button><button type=""button"" class=""btn"" onclick=""loadPerformanceCells('+
+  esc(Number(performanceExplorerWorldId)||0)+','+esc(next)+')"" '+(!page.HasMore?'disabled=""disabled""':'')+'>NEXT</button></div></div></div>';
+}
+function performanceCellRow(cell){
+ var categories=cell.Categories||[],parts=[];
+ for(var i=0;i<categories.length;i++)parts.push(String(categories[i].DisplayName||categories[i].Key||'Records')+' '+formatPerformanceNumber(categories[i].RecordCount));
+ return '<div class=""perf-cell""><div class=""perf-cell-coordinate""><b>CELL '+esc(cell.CellX)+', '+esc(cell.CellY)+'</b><span>WORLD CENTER X '+
+  esc(Number(cell.ApproximateCenterX||0).toFixed(1))+' &middot; Y '+esc(Number(cell.ApproximateCenterY||0).toFixed(1))+'</span></div>'+
+  '<div class=""perf-cell-metric""><b>'+esc(formatPerformanceNumber(cell.TotalRecords))+'</b><span>SUPPORTED RECORDS</span></div>'+
+  '<div class=""perf-cell-metric""><b>'+esc(formatPerformanceBytes(cell.TotalPayloadBytes))+'</b><span>STORED PAYLOAD</span></div>'+
+  '<div class=""perf-cell-categories""><b>'+esc(parts.join(' / ')||'No decoded categories')+'</b><span>AGGREGATED CATEGORY BREAKDOWN</span></div></div>';
+}
+function performanceWorldFilters(worlds,hotspots){
+ var html='<div class=""perf-filters"" role=""group"" aria-label=""Filter performance hotspots by world""><span class=""perf-filter-label"">SHOW WORLD</span>'+
+  '<button type=""button"" class=""perf-filter'+(performanceWorldFilter==='all'?' active':'')+'"" aria-pressed=""'+
+  (performanceWorldFilter==='all')+'"" onclick=""selectPerformanceWorld(&quot;all&quot;)"">ALL ('+esc(hotspots.length)+')</button>';
+ for(var i=0;i<worlds.length;i++){
+  var world=worlds[i],count=Number(world.HotspotCount)||0;
+  var key=String(world.WorldId),active=performanceWorldFilter===key;
+  html+='<button type=""button"" class=""perf-filter'+(active?' active':'')+'"" aria-pressed=""'+active+
+   '"" onclick=""selectPerformanceWorld('+esc(Number(world.WorldId)||0)+')"">'+
+   esc(world.WorldName||('World '+world.WorldId))+' ('+esc(count)+')</button>';
+ }
+ return html+'</div>';
+}
+function selectPerformanceWorld(worldId){
+ performanceWorldFilter=worldId==='all'?'all':String(worldId);
+ refreshPerformanceSection();
+}
+function performanceHotspotList(hotspots){
+ var html='<div class=""perf-hotspot-list"" role=""region"" aria-label=""Ranked potential performance hotspots"">',shown=0;
+ for(var i=0;i<hotspots.length;i++){
+  var hotspot=hotspots[i];
+  if(performanceWorldFilter!=='all'&&String(hotspot.WorldId)!==performanceWorldFilter)continue;
+  html+=performanceHotspotCard(hotspot);shown++;
+ }
+ if(!shown){
+  html+='<div class=""perf-hotspot-empty""><b>NO UNUSUALLY DENSE SAVED AREAS WERE FOUND</b>'+
+   (performanceWorldFilter==='all'
+    ?'The supported records did not pass the conservative evidence floor.'
+    :'This world has no ranked hotspot in the current report.')+'</div>';
+ }
+ return html+'</div>';
+}
+function performanceHotspotCard(hotspot){
+ var severity=String(hotspot.Severity||'NOTABLE').toUpperCase(),severityClass=severity==='VERY HEAVY'?'very-heavy':(severity==='HEAVY'?'heavy':'notable');
+ var center=hotspot.ApproximateCenter||{},evidence=hotspot.Evidence||[],categories=hotspot.Categories||[],evidenceHtml='',categoryHtml='';
+ for(var i=0;i<evidence.length;i++){
+ evidenceHtml+='<div class=""perf-evidence-item""><div><b>'+esc(evidence[i].Label||'Measured evidence')+
+   '</b><span>'+esc(evidence[i].Explanation||'')+'</span><em>'+esc(performanceEvidenceMeasure(evidence[i]))+'</em></div></div>';
+ }
+ for(var c=0;c<categories.length;c++){
+  var category=categories[c],share=Number(hotspot.TotalRecords)>0?Math.round(Number(category.RecordCount||0)*100/Number(hotspot.TotalRecords)):0;
+  categoryHtml+='<div class=""perf-hotspot-category""><b>'+esc(category.DisplayName||category.Key||'Supported records')+
+   ' &middot; '+esc(formatPerformanceNumber(category.RecordCount))+'</b><span>'+esc(formatPerformanceBytes(category.PayloadBytes))+
+   ' across this neighborhood</span><div class=""perf-hotspot-category-line""><i style=""width:'+esc(Math.max(2,Math.min(100,share)))+'%""></i></div></div>';
+ }
+ var comparison=Math.max(0,Math.min(99.9,(Number(hotspot.Percentile)||0)-0.1));
+ var delay=Math.min(12,Math.max(0,(Number(hotspot.Rank)||1)-1))*35;
+ return '<article class=""perf-hotspot '+severityClass+'"" style=""animation-delay:'+esc(delay)+'ms"">'+
+  '<div class=""perf-hotspot-head""><div class=""perf-rank""><span>#'+esc(hotspot.Rank)+'</span></div>'+
+  '<div class=""perf-hotspot-title""><b>'+esc(hotspot.WorldName||('World '+hotspot.WorldId))+' &middot; CELL '+
+  esc(hotspot.CellX)+', '+esc(hotspot.CellY)+'</b><span>WORLD RANK #'+esc(hotspot.WorldRank)+' &middot; CENTERED 3&times;3 NEIGHBORHOOD</span></div>'+
+  '<span class=""perf-severity '+severityClass+'"">'+esc(severity)+'</span><span class=""perf-confidence"">'+esc(hotspot.Confidence||'RAW DATA ONLY')+' CONFIDENCE</span></div>'+
+  '<div class=""perf-hotspot-body""><div class=""perf-hotspot-metrics"">'+
+  performanceHotspotMetric('NEIGHBORHOOD RECORDS',formatPerformanceNumber(hotspot.NeighborhoodRecords||hotspot.TotalRecords),'')+
+  performanceHotspotMetric('STORED PAYLOAD',formatPerformanceBytes(hotspot.NeighborhoodPayloadBytes||hotspot.TotalPayloadBytes),'')+
+  performanceHotspotMetric('CENTER CELL RECORDS',formatPerformanceNumber(hotspot.CenterRecords),'')+
+  performanceHotspotMetric('CELL COORDINATES',hotspot.CellX+', '+hotspot.CellY,'coordinate')+
+  performanceHotspotMetric('APPROX. WORLD CENTER','X '+Number(center.X||0).toFixed(1)+'  Y '+Number(center.Y||0).toFixed(1),'coordinate')+
+  '</div><div class=""perf-hotspot-compare""><b>WORLD COMPARISON:</b> Heavier than '+esc(comparison.toFixed(1))+
+  '% of populated cells in this world using separately ranked record and byte totals.</div>'+
+  '<div class=""perf-evidence"">'+evidenceHtml+'</div><div class=""perf-hotspot-foot"">'+
+  (categoryHtml||'<div class=""perf-hotspot-category""><b>RAW COUNTS ONLY</b><span>No decoded category breakdown is available.</span></div>')+
+  '<button type=""button"" class=""btn perf-copy"" id=""perfCopy'+esc(hotspot.Rank)+'"" onclick=""copyHotspotCoordinates('+esc(hotspot.Rank)+')"">COPY WORLD CENTER</button>'+
+  '</div></div></article>';
+}
+function performanceEvidenceMeasure(evidence){
+ var key=String(evidence.Key||''),observed=Number(evidence.ObservedValue)||0,threshold=Number(evidence.ComparisonValue)||0;
+ if(key==='world-percentile')return 'MEASURED '+(observed/100).toFixed(1)+'%  /  FLOOR '+(threshold/100).toFixed(1)+'%';
+ if(key==='stored-payload')return 'MEASURED '+formatPerformanceBytes(observed)+'  /  FLOOR '+formatPerformanceBytes(threshold);
+ return 'MEASURED '+formatPerformanceNumber(observed)+'  /  FLOOR '+formatPerformanceNumber(threshold);
+}
+function performanceHotspotMetric(label,value,cls){
+ return '<div class=""perf-hotspot-metric '+esc(cls||'')+'""><b>'+esc(label)+'</b><strong>'+esc(value)+'</strong></div>';
+}
+function copyHotspotCoordinates(rank){
+ if(!performanceResult||!performanceResult.Hotspots)return;
+ var hotspots=performanceResult.Hotspots,hotspot=null;
+ for(var i=0;i<hotspots.length;i++)if(Number(hotspots[i].Rank)===Number(rank)){hotspot=hotspots[i];break;}
+ if(!hotspot||!hotspot.ApproximateCenter)return;
+ var center=hotspot.ApproximateCenter;
+ var text=Number(center.X||0).toFixed(1)+', '+Number(center.Y||0).toFixed(1);
+ var copied=false;
+ try{copied=!!window.external.CopyText(text);}catch(ignore){}
+ var button=document.getElementById('perfCopy'+rank);
+ if(button){
+  button.innerText=copied?'COPIED WORLD CENTER':'COPY FAILED';
+  button.className='btn perf-copy'+(copied?' copied':'');
+  window.setTimeout(function(){
+   var current=document.getElementById('perfCopy'+rank);
+   if(current){current.innerText='COPY WORLD CENTER';current.className='btn perf-copy';}
+  },1600);
+ }
+}
+function formatPerformancePercent(value){
+ var numeric=Number(value)||0;
+ return numeric.toFixed(numeric>=99.95?0:1)+'%';
+}
+function performanceStat(label,value){
+ return '<div class=""perf-stat""><b>'+esc(label)+'</b><strong>'+esc(value===null||typeof value==='undefined'?'0':value)+'</strong></div>';
+}
+function formatPerformanceNumber(value){
+ var numberValue=Number(value)||0;
+ return String(Math.round(numberValue)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+function formatPerformanceBytes(value){
+ var bytes=Number(value)||0;
+ if(bytes>=1073741824)return (bytes/1073741824).toFixed(1)+' GB';
+ if(bytes>=1048576)return (bytes/1048576).toFixed(1)+' MB';
+ if(bytes>=1024)return (bytes/1024).toFixed(1)+' KB';
+ return Math.round(bytes)+' B';
+}
+function formatPerformanceDuration(milliseconds){
+ var seconds=(Number(milliseconds)||0)/1000;
+ return seconds<1?Math.max(1,Math.round(Number(milliseconds)||0))+' MS':seconds.toFixed(seconds<10?1:0)+' S';
+}
 function showError(message){
  document.getElementById('result').innerHTML='<div class=""banner banner-error""><b>DIAGNOSTIC FAILED.</b> '+esc(message)+'</div>';
  updateScrollBar();
@@ -2781,12 +3281,13 @@ function renderAnalysis(data){
   html+='<div class=""empty""><div class=""diamond""><span>&#10003;</span></div><h4>RAID STORAGE CLEAR</h4><p>No persisted raid-manager entries were found in this world.</p></div>';
  }
  html+=droppedItemsSection(data);
+ html+=performanceSection(data);
   var orphaned=Number(data.OrphanedRaidCropCount||0);
-  html+='<div class=""repair-bar"" id=""repairActionsBar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Resolve stored raids without stranding crop growth, or repair crops left waiting by an older clear. Raid Rescue verifies a backup before either repair.</p>'+
+  html+='<div class=""repair-bar"" id=""repairActionsBar""><p><b>BACKUP-FIRST RECOVERY</b><br/>Resolve stored raids without stranding crop growth, or repair crops left waiting by an older clear. ScrapLab verifies a backup before either repair.</p>'+
    '<div class=""repair-actions"">'+
-   '<button class=""btn btn-primary"" id=""repairOrphanedCropsBtn"" '+(data.CanRepairOrphanedCrops?'':'disabled=""disabled""')+
+   '<button class=""btn btn-primary"" id=""repairOrphanedCropsBtn"" '+(data.CanRepairOrphanedCrops&&!operationBusy?'':'disabled=""disabled""')+
    ' onclick=""repairOrphanedCrops()"">REPAIR ORPHANED CROPS'+(orphaned?' ('+esc(orphaned)+')':'')+'</button>'+
-   '<button class=""btn btn-danger"" id=""clearAllBtn"" '+(data.CanClear?'':'disabled=""disabled""')+
+   '<button class=""btn btn-danger"" id=""clearAllBtn"" '+(data.CanClear&&!operationBusy?'':'disabled=""disabled""')+
    ' onclick=""clearRaids()"">RESOLVE &amp; CLEAR RAIDS</button></div></div>';
  document.getElementById('result').innerHTML=html;
  updateScrollBar();
@@ -2798,7 +3299,7 @@ function droppedItemsSection(data){
  if(!data.DroppedItemsScanned){
   return '<div class=""drop-zone"" id=""droppedItemsZone""><div class=""drop-scan-panel"">'+
    '<b>LOOSE ITEMS HAVE NOT BEEN SCANNED</b><p>Scan this world to view dropped-item cards, totals, despawn timers, and safe cleanup options.</p>'+
-   '<button type=""button"" class=""btn btn-primary"" id=""scanDroppedItemsBtn"" onclick=""scanDroppedItems()"">SCAN LOOSE ITEMS</button></div></div>';
+   '<button type=""button"" class=""btn btn-primary"" id=""scanDroppedItemsBtn"" onclick=""scanDroppedItems()"" '+(operationBusy||gameRunning?'disabled=""disabled""':'')+'>SCAN LOOSE ITEMS</button></div></div>';
  }
  var items=data.DroppedItems||[],count=Number(data.DroppedItemCount)||items.length,quantity=Number(data.DroppedItemQuantity)||0;
  var html='<div class=""drop-zone"" id=""droppedItemsZone""><div class=""drop-zone-head""><div class=""drop-zone-title"">'+
@@ -2811,13 +3312,13 @@ function droppedItemsSection(data){
   '<svg viewBox=""0 0 24 24"" aria-hidden=""true""><path d=""M5 15 L12 8 L19 15""></path></svg></button>'+
   '<button type=""button"" class=""btn btn-summary"" id=""itemSummaryBtn"" onclick=""openItemSummary()"" '+(items.length?'':'disabled=""disabled""')+'>ITEM TOTALS</button>'+
   '<button type=""button"" class=""btn btn-expired"" id=""clearExpiredItemsBtn"" onclick=""requestExpiredDroppedItemClear()"" '+
-  (data.CanClearExpiredDroppedItems?'':'disabled=""disabled""')+'>CLEAR EXPIRED ('+esc(data.ExpiredDroppedItemCount||0)+')</button>'+
+  (data.CanClearExpiredDroppedItems&&!operationBusy?'':'disabled=""disabled""')+'>CLEAR EXPIRED ('+esc(data.ExpiredDroppedItemCount||0)+')</button>'+
   '<button type=""button"" class=""btn btn-danger"" id=""clearDroppedItemsBtn"" onclick=""requestDroppedItemClear(0)"" '+
-  (data.CanClearDroppedItems?'':'disabled=""disabled""')+'>CLEAR ALL DROPPED ITEMS</button></div></div>'+
+  (data.CanClearDroppedItems&&!operationBusy?'':'disabled=""disabled""')+'>CLEAR ALL DROPPED ITEMS</button></div></div>'+
   '<div class=""drop-items-body"" id=""droppedItemsBody""'+(droppedItemsCollapsed?' hidden=""hidden""':'')+'>';
  if(items.length){
   html+='<div class=""drop-grid"">';
-  for(var i=0;i<items.length;i++)html+=droppedItemCard(items[i],!!data.CanClearDroppedItems,data.DroppedItemIcons||{});
+  for(var i=0;i<items.length;i++)html+=droppedItemCard(items[i],!!data.CanClearDroppedItems&&!operationBusy,data.DroppedItemIcons||{});
   html+='</div>';
  }else{
   html+='<div class=""drop-empty"">NO LOOSE INVENTORY PICKUPS ARE STORED IN THIS WORLD.</div>';
@@ -3020,9 +3521,9 @@ function requestDroppedItemClear(entityId,expiredOnly){
  document.getElementById('itemClearTitle').innerText=title;
  document.getElementById('itemClearKicker').innerText=kicker;
  document.getElementById('itemClearIntro').innerText=mode==='expired'?
-  'Raid Rescue will remove only loose pickups marked Expired - Pending World Cleanup.':
-  (mode==='all'?'Raid Rescue will remove every safely decoded loose pickup shown in this report.':
-  'Raid Rescue will remove only this loose pickup and its matching Lua storage record.');
+  'ScrapLab will remove only loose pickups marked Expired - Pending World Cleanup.':
+  (mode==='all'?'ScrapLab will remove every safely decoded loose pickup shown in this report.':
+  'ScrapLab will remove only this loose pickup and its matching Lua storage record.');
  document.getElementById('itemClearConfirmButton').innerHTML='<span>!</span>'+
   (mode==='expired'?'CLEAR EXPIRED ITEMS':(mode==='all'?'CLEAR ALL DROPPED ITEMS':'REMOVE THIS DROP'));
  document.getElementById('itemClearPreview').innerHTML=itemClearPreview(mode,items);
@@ -3076,6 +3577,7 @@ function confirmDroppedItemClear(){
    updateScrollBar();return;
   }
   lastBackupPath=data.BackupPath||'';
+  clearPerformanceState(false);
   lastAnalysis=data.After;
   renderAnalysis(lastAnalysis);
   var removedName=targetItem?(targetItem.Name||'Loose pickup'):'Loose world items';
@@ -3098,6 +3600,7 @@ function clearRaids(){
   if(data.Cancelled)return;
   if(!data.Success){showError(data.Error||'The repair did not complete.');return;}
   lastBackupPath=data.BackupPath||'';
+  clearPerformanceState(false);
   lastAnalysis=data.After;
   renderAnalysis(lastAnalysis);
   var cropMessage=Number(data.CropsReleased||0)+' crop'+(Number(data.CropsReleased||0)===1?' was':'s were')+' released';
@@ -3119,6 +3622,7 @@ function repairOrphanedCrops(){
   if(data.Cancelled)return;
   if(!data.Success){showError(data.Error||'The orphaned crop repair did not complete.');return;}
   lastBackupPath=data.BackupPath||'';
+  clearPerformanceState(false);
   lastAnalysis=data.After;
   renderAnalysis(lastAnalysis);
   document.getElementById('result').insertAdjacentHTML('afterbegin',
@@ -3145,7 +3649,7 @@ function closeHotfixConfirm(){
 }
 function confirmHotfixInstall(){
  closeHotfixConfirm();
- busy(true,'VERIFYING GAME FILES','Checking original and previous Raid Rescue states before a cumulative update.');
+ busy(true,'VERIFYING GAME FILES','Checking original and previous ScrapLab states before a cumulative update.');
  window.setTimeout(function(){
   var data=parseResult(window.external.InstallRaidHotfix());busy(false);
   if(data.Cancelled)return;

@@ -21,10 +21,15 @@ New-Item -ItemType Directory -Path $output -Force | Out-Null
 
 $mainSources = @(
     "Program.cs",
+    "ProductPaths.cs",
     "Models.cs",
     "LuaStorage.cs",
     "WorldStorage.cs",
     "SqliteNative.cs",
+    "PerformanceScanner.cs",
+    "PerformanceHotspotRanker.cs",
+    "PerformanceScanOperationManager.cs",
+    "PerformanceReportExporter.cs",
     "ItemCatalog.cs",
     "GameInstallLocator.cs",
     "RaidService.cs",
@@ -42,8 +47,8 @@ $mainSources = @(
     /platform:anycpu `
     /optimize+ `
     "/win32manifest:$source\app.manifest" `
-    "/win32icon:$source\RaidRescue.ico" `
-    "/out:$output\RaidRescue.exe" `
+    "/win32icon:$source\ScrapLab.ico" `
+    "/out:$output\ScrapLab.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
     /reference:System.Web.Extensions.dll `
@@ -51,11 +56,12 @@ $mainSources = @(
     $mainSources
 
 if ($LASTEXITCODE -ne 0) {
-    throw "Raid Rescue did not compile."
+    throw "ScrapLab did not compile."
 }
 
 $patchSources = @(
     "PatchHelperProgram.cs",
+    "ProductPaths.cs",
     "PatchHelperProtocol.cs",
     "CompanionSecurity.cs",
     "Models.cs",
@@ -71,8 +77,8 @@ $patchSources = @(
     /platform:anycpu `
     /optimize+ `
     "/win32manifest:$source\app.manifest" `
-    "/win32icon:$source\RaidRescue.ico" `
-    "/out:$output\RaidRescue.PatchHelper.exe" `
+    "/win32icon:$source\ScrapLab.ico" `
+    "/out:$output\ScrapLab.PatchHelper.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
     /reference:System.Web.Extensions.dll `
@@ -80,11 +86,12 @@ $patchSources = @(
     $patchSources
 
 if ($LASTEXITCODE -ne 0) {
-    throw "The Raid Rescue patch helper did not compile."
+    throw "The ScrapLab patch helper did not compile."
 }
 
 $updaterSources = @(
     "UpdaterProgram.cs",
+    "ProductPaths.cs",
     "CompanionSecurity.cs",
     "UpdaterAssemblyInfo.cs"
 ) | ForEach-Object { Join-Path $source $_ }
@@ -95,26 +102,29 @@ $updaterSources = @(
     /platform:anycpu `
     /optimize+ `
     "/win32manifest:$source\app.manifest" `
-    "/win32icon:$source\RaidRescue.ico" `
-    "/out:$output\RaidRescue.Updater.exe" `
+    "/win32icon:$source\ScrapLab.ico" `
+    "/out:$output\ScrapLab.Updater.exe" `
     /reference:System.Core.dll `
     $updaterSources
 
 if ($LASTEXITCODE -ne 0) {
-    throw "The fixed Raid Rescue updater did not compile."
+    throw "The fixed ScrapLab updater did not compile."
 }
 
 $builtFiles = @(
-    "RaidRescue.exe",
-    "RaidRescue.PatchHelper.exe",
-    "RaidRescue.Updater.exe"
+    "ScrapLab.exe",
+    "ScrapLab.PatchHelper.exe",
+    "ScrapLab.Updater.exe"
 )
 
-$signingThumbprint = $env:RAID_RESCUE_SIGN_CERT_SHA1
+$signingThumbprint = $env:SCRAPLAB_SIGN_CERT_SHA1
+if ([string]::IsNullOrWhiteSpace($signingThumbprint)) {
+    $signingThumbprint = $env:RAID_RESCUE_SIGN_CERT_SHA1
+}
 if (-not [string]::IsNullOrWhiteSpace($signingThumbprint)) {
     $signTool = Get-Command "signtool.exe" -ErrorAction SilentlyContinue
     if (-not $signTool) {
-        throw "RAID_RESCUE_SIGN_CERT_SHA1 is set, but signtool.exe was not found."
+        throw "A ScrapLab signing certificate is configured, but signtool.exe was not found."
     }
     foreach ($name in $builtFiles) {
         & $signTool.Source sign `
@@ -134,9 +144,9 @@ foreach ($name in $builtFiles) {
     Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
 }
 
-$version = "1.16.0"
+$version = "2.0.0"
 $releaseRoot = Join-Path $root "release"
-$bundle = Join-Path $releaseRoot "RaidRescue-$version"
+$bundle = Join-Path $releaseRoot "ScrapLab-$version"
 New-Item -ItemType Directory -Path $bundle -Force | Out-Null
 foreach ($name in $builtFiles) {
     Copy-Item `
@@ -144,7 +154,7 @@ foreach ($name in $builtFiles) {
         -Destination (Join-Path $bundle $name) `
         -Force
 }
-$archive = Join-Path $releaseRoot "RaidRescue-$version.zip"
+$archive = Join-Path $releaseRoot "ScrapLab-$version.zip"
 Compress-Archive `
     -Path (Join-Path $bundle "*") `
     -DestinationPath $archive `

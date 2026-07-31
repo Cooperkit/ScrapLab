@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0
+
+- Rebranded Raid Rescue as **ScrapLab**, a broader Scrap Mechanic Survival
+  world viewer, save-maintenance toolkit, performance scanner, and optional
+  mod workshop. Raid recovery remains available as one focused feature.
+- Renamed the portable programs to `ScrapLab.exe`,
+  `ScrapLab.PatchHelper.exe`, and `ScrapLab.Updater.exe`, refreshed Windows
+  product metadata, and added a new industrial world-inspection application
+  icon and in-app emblem.
+- Added a non-destructive first-start migration from
+  `%LOCALAPPDATA%\Raid Rescue` to `%LOCALAPPDATA%\ScrapLab` for preferences,
+  active patch receipts, and verified game-script backups. Legacy data is not
+  deleted or overwritten.
+- Added the read-only **Performance Hotspot Scanner** with real background
+  progress, cancellation, source fingerprinting, Harvestable and Unit
+  coverage, evidence-backed cell ranking, bounded World Explorer paging, and
+  privacy-safe `ScrapLab-Performance-Report-v3.json` export.
+- Renamed new save backups to `.scraplab-backup-...db`; existing Raid Rescue
+  backups remain valid restore sources.
+- Kept legacy in-game Lua patch identifiers unchanged so already-installed
+  secret mods remain detectable, configurable, and removable after the app
+  rename.
+- Kept update URL validation compatible with both the current
+  `Cooperkit/Raid-Rescue` repository and a future `Cooperkit/ScrapLab` rename.
+  Installing 2.0 from a 1.x build requires the complete ZIP once; automatic
+  updates resume after the transition.
+
 ## 1.16.0
 
 - Split automatic replacement into a fixed `RaidRescue.Updater.exe`

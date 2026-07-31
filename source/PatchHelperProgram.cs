@@ -104,7 +104,7 @@ namespace RaidRescue
             string expected = Path.Combine(
                 Path.GetDirectoryName(
                     Path.GetFullPath(Assembly.GetExecutingAssembly().Location)),
-                "RaidRescue.exe");
+                "ScrapLab.exe");
             if (!String.Equals(
                 parentPath, expected, StringComparison.OrdinalIgnoreCase))
                 throw new UnauthorizedAccessException(

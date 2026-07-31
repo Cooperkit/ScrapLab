@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using System.Text;
 using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
@@ -16,6 +17,8 @@ namespace RaidRescue
         [STAThread]
         private static void Main(string[] args)
         {
+            try { ProductPaths.EnsureLegacyDataMigrated(); }
+            catch { }
             AppUpdateService.ScheduleCleanup();
             ConfigureBrowserMode();
             GameFonts.TryLoad();
@@ -214,10 +217,7 @@ namespace RaidRescue
 
         private static string GetSettingsPath()
         {
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue",
-                "preferences.ini");
+            return ProductPaths.LocalDataPath("preferences.ini");
         }
     }
 
@@ -266,10 +266,7 @@ namespace RaidRescue
 
         private static string GetSettingsPath()
         {
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue",
-                "secret-mods.ini");
+            return ProductPaths.LocalDataPath("secret-mods.ini");
         }
     }
 
@@ -278,6 +275,8 @@ namespace RaidRescue
         private const int WsMaximizeBox = 0x00010000;
         private const int WsThickFrame = 0x00040000;
         private readonly WebBrowser browser;
+        private readonly PerformanceScanOperationManager
+            performanceScans;
         private int updateCheckActive;
         private int updateInstallActive;
 
@@ -294,7 +293,7 @@ namespace RaidRescue
 
         public MainForm(string initialPath)
         {
-            Text = "Raid Rescue for Scrap Mechanic";
+            Text = "ScrapLab - Survival World Toolkit";
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(1080, 760);
@@ -303,6 +302,8 @@ namespace RaidRescue
             MinimizeBox = true;
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Color.FromArgb(9, 14, 28);
+            performanceScans =
+                new PerformanceScanOperationManager();
             try
             {
                 Icon = Icon.ExtractAssociatedIcon(
@@ -346,7 +347,103 @@ namespace RaidRescue
                 e.Cancel = true;
                 return;
             }
+            performanceScans.Dispose();
             base.OnFormClosing(e);
+        }
+
+        internal PerformanceScanStartResult BeginPerformanceScan(
+            string path)
+        {
+            return performanceScans.Begin(path);
+        }
+
+        internal PerformanceScanOperationStatus
+            GetPerformanceScanStatus(string operationId)
+        {
+            return performanceScans.GetStatus(operationId);
+        }
+
+        internal bool CancelPerformanceScan(string operationId)
+        {
+            return performanceScans.Cancel(operationId);
+        }
+
+        internal PerformanceCellPage GetPerformanceWorldCells(
+            string operationId,
+            int worldId,
+            int offset,
+            int limit)
+        {
+            return performanceScans.GetWorldCells(
+                operationId, worldId, offset, limit);
+        }
+
+        internal PerformanceReportExportResult ExportPerformanceReport(
+            string operationId)
+        {
+            PerformanceReportExportPayload payload =
+                performanceScans.CreateExport(
+                    operationId,
+                    AppUpdateService.CurrentVersion,
+                    DateTime.UtcNow);
+            if (!payload.Success)
+            {
+                return new PerformanceReportExportResult
+                {
+                    Error = payload.Error ??
+                        "The performance report is not available.",
+                    FileName = String.Empty
+                };
+            }
+
+            using (SaveFileDialog dialog = new SaveFileDialog
+            {
+                AddExtension = true,
+                AutoUpgradeEnabled = true,
+                CheckPathExists = true,
+                DefaultExt = "json",
+                FileName = payload.SuggestedFileName,
+                Filter = "JSON report (*.json)|*.json",
+                FilterIndex = 1,
+                OverwritePrompt = true,
+                RestoreDirectory = true,
+                Title = "Export Performance Report",
+                ValidateNames = true
+            })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return new PerformanceReportExportResult
+                    {
+                        Cancelled = true,
+                        Error = String.Empty,
+                        FileName = String.Empty
+                    };
+                }
+                try
+                {
+                    File.WriteAllText(
+                        dialog.FileName,
+                        payload.Json,
+                        new UTF8Encoding(false));
+                    return new PerformanceReportExportResult
+                    {
+                        Success = true,
+                        Error = String.Empty,
+                        FileName = Path.GetFileName(dialog.FileName)
+                    };
+                }
+                catch
+                {
+                    return new PerformanceReportExportResult
+                    {
+                        Error = "Windows could not save the report in " +
+                            "that location. Choose another folder and " +
+                            "try again.",
+                        FileName = String.Empty
+                    };
+                }
+            }
         }
 
         internal bool BeginUpdateCheck(bool manual)
@@ -515,6 +612,52 @@ namespace RaidRescue
             return Serialize(RaidService.Analyze(path));
         }
 
+        public string BeginPerformanceScan(string path)
+        {
+            return Serialize(owner.BeginPerformanceScan(path));
+        }
+
+        public string GetPerformanceScanStatus(
+            string operationId)
+        {
+            return Serialize(
+                owner.GetPerformanceScanStatus(operationId));
+        }
+
+        public bool CancelPerformanceScan(string operationId)
+        {
+            return owner.CancelPerformanceScan(operationId);
+        }
+
+        public string GetPerformanceWorldCells(
+            string operationId,
+            int worldId,
+            int offset,
+            int limit)
+        {
+            return Serialize(owner.GetPerformanceWorldCells(
+                operationId, worldId, offset, limit));
+        }
+
+        public string ExportPerformanceReport(string operationId)
+        {
+            return Serialize(
+                owner.ExportPerformanceReport(operationId));
+        }
+
+        public bool CopyText(string value)
+        {
+            try
+            {
+                Clipboard.SetText(value ?? String.Empty);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public bool IsGameRunning()
         {
             return RaidService.IsGameRunning();
@@ -604,7 +747,7 @@ namespace RaidRescue
         {
             DialogResult answer = MessageBox.Show(
                 owner,
-                "Raid Rescue will first create and verify a timestamped backup beside the save.\r\n\r\n" +
+                "ScrapLab will first create and verify a timestamped backup beside the save.\r\n\r\n" +
                 "It will release the exact growing crops registered to these raids, then remove " +
                 "the saved raid-manager state in the same verified transaction.\r\n\r\n" +
                 "Inventories, builds, quests, players, and unrelated world data are not edited.\r\n\r\n" +
@@ -630,7 +773,7 @@ namespace RaidRescue
         {
             DialogResult answer = MessageBox.Show(
                 owner,
-                "Raid Rescue found " +
+                "ScrapLab found " +
                 expectedCount.ToString(
                     System.Globalization.CultureInfo.InvariantCulture) +
                 " growing crop(s) still waiting for a raid that is no longer stored.\r\n\r\n" +

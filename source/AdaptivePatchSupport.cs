@@ -389,7 +389,7 @@ namespace RaidRescue
             }
 
             // The caller invokes this only after proving that every protected
-            // Raid Rescue snippet is absent. At that point a Steam update has
+            // ScrapLab snippet is absent. At that point a Steam update has
             // superseded the installed output and the bounded active receipt
             // is no longer a valid uninstall source.
             DeleteReceipt(modKey);
@@ -645,7 +645,7 @@ namespace RaidRescue
             IEnumerable<AdaptivePatchReceiptFile> files)
         {
             StringBuilder manifest = new StringBuilder();
-            manifest.AppendLine("Raid Rescue adaptive secret-mod backup");
+            manifest.AppendLine("ScrapLab adaptive secret-mod backup");
             manifest.AppendLine("Mod: " + modName);
             manifest.AppendLine("Action: " + action);
             manifest.AppendLine("Game path: " + gamePath);
@@ -702,10 +702,8 @@ namespace RaidRescue
         {
             if (!String.IsNullOrEmpty(PatchStateRootOverride))
                 return Path.GetFullPath(PatchStateRootOverride);
-            return Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue", "Patch State", "Active");
+            return ProductPaths.LocalDataPath(
+                "Patch State", "Active");
         }
 
         private static void ValidateModKey(string modKey)

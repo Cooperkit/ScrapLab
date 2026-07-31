@@ -2,8 +2,28 @@
 
 ## Status
 
-Planned future feature. This document is an implementation specification, not
-an indication that the scanner is currently available.
+Phases 0 through 5 completed on 2026-07-31.
+The scanner is available in the app as a cancellable, read-only world-density
+report with bounded, explainable 3-by-3 hotspot ranking. It ranks only proven
+record families. Phase 4 added the validated persistent-Unit family and
+explicit unknown/modded schema reporting without guessing at Unit subtypes.
+Phase 5 added a versioned privacy-safe JSON export and a local, paginated
+aggregated-cell interface for World Explorer reuse. Scan-to-scan comparison is
+deferred until exported reports have real-world format stability.
+The validated research and allowlists are recorded in
+[PERFORMANCE-HOTSPOT-SCANNER-RESEARCH.md](PERFORMANCE-HOTSPOT-SCANNER-RESEARCH.md).
+The command-level scanner foundation is recorded in
+[PERFORMANCE-HOTSPOT-SCANNER-PHASE1.md](PERFORMANCE-HOTSPOT-SCANNER-PHASE1.md).
+The asynchronous lifecycle and UI integration are recorded in
+[PERFORMANCE-HOTSPOT-SCANNER-PHASE2.md](PERFORMANCE-HOTSPOT-SCANNER-PHASE2.md).
+The calibrated ranking policy and presentation are recorded in
+[PERFORMANCE-HOTSPOT-SCANNER-PHASE3.md](PERFORMANCE-HOTSPOT-SCANNER-PHASE3.md).
+The expanded Unit coverage and safe-degradation behavior are recorded in
+[PERFORMANCE-HOTSPOT-SCANNER-PHASE4.md](PERFORMANCE-HOTSPOT-SCANNER-PHASE4.md).
+The export contract and bounded World Explorer interface are recorded in
+[PERFORMANCE-HOTSPOT-SCANNER-PHASE5.md](PERFORMANCE-HOTSPOT-SCANNER-PHASE5.md).
+
+Before starting any later phase, reread this entire plan from beginning to end.
 
 ## Product Goal
 
@@ -16,7 +36,7 @@ The scanner must answer four questions in plain language:
 1. Which worlds and cells contain the most stored objects?
 2. What kinds of records make each area unusually heavy?
 3. Where should the player investigate in-game?
-4. How confident is Raid Rescue in each finding?
+4. How confident is ScrapLab in each finding?
 
 The scanner must describe results as **potential performance hotspots**. A save
 database can reveal stored density and unusually large records, but it cannot
@@ -120,7 +140,7 @@ explicit developer diagnostic export.
 
 ### Version-one measurements
 
-The first implementation should use data Raid Rescue already understands plus
+The first implementation should use data ScrapLab already understands plus
 safe SQLite metadata:
 
 - Save file size

@@ -13,7 +13,7 @@ namespace RaidRescue
     internal static class PatchHelperProtocol
     {
         internal const int Version = 1;
-        internal const string HelperFileName = "RaidRescue.PatchHelper.exe";
+        internal const string HelperFileName = "ScrapLab.PatchHelper.exe";
         internal const string ElevatedSwitch = "--elevated-session";
         internal const string StatusSwitch = "--status";
 

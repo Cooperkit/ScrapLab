@@ -177,4 +177,179 @@ namespace RaidRescue
 
         internal Dictionary<string, bool> ActivationChanges;
     }
+
+    public sealed class PerformanceScanResult
+    {
+        public bool Success { get; set; }
+        public bool Cancelled { get; set; }
+        public string Error { get; set; }
+        public int ScanVersion { get; set; }
+        public long DurationMilliseconds { get; set; }
+        public long SaveVersion { get; set; }
+        public string DatabaseStatus { get; set; }
+        public long FileSizeBytes { get; set; }
+        public long DatabasePageBytes { get; set; }
+        public long DatabaseAllocatedBytes { get; set; }
+        public long DatabaseFreeBytes { get; set; }
+        public long WorldsScanned { get; set; }
+        public long PopulatedCells { get; set; }
+        public long TotalRecords { get; set; }
+        public long TotalPayloadBytes { get; set; }
+        public double Coverage { get; set; }
+        public long DecodedSupportedRecords { get; set; }
+        public long RecordsConsidered { get; set; }
+        public bool SourceUnchanged { get; set; }
+        public int UnsupportedTableCount { get; set; }
+        public PerformanceSchemaCoverage Schema { get; set; }
+        public List<string> UnsupportedTables { get; set; }
+        public List<PerformanceWorldSummary> Worlds { get; set; }
+        public List<PerformanceCellSummary> Cells { get; set; }
+        public List<PerformanceCategoryMetric> Categories { get; set; }
+        public List<PerformanceLargestRecord> LargestRecords { get; set; }
+        public List<PerformanceCellHotspot> Hotspots { get; set; }
+        public List<string> Warnings { get; set; }
+    }
+
+    public sealed class PerformanceSchemaCoverage
+    {
+        public bool CanReadGame { get; set; }
+        public bool CanReadHarvestableCells { get; set; }
+        public bool CanReadUnitCells { get; set; }
+        public bool UnitTablePresent { get; set; }
+        public bool CanReadWorldMetadata { get; set; }
+        public bool CanReadScriptTotals { get; set; }
+        public string GenericDataLayout { get; set; }
+        public string ScriptDataLayout { get; set; }
+    }
+
+    public sealed class PerformanceWorldSummary
+    {
+        public int WorldId { get; set; }
+        public string WorldName { get; set; }
+        public long PopulatedCells { get; set; }
+        public long TotalRecords { get; set; }
+        public long TotalPayloadBytes { get; set; }
+        public long HotspotCount { get; set; }
+    }
+
+    public sealed class PerformanceCellSummary
+    {
+        public int WorldId { get; set; }
+        public string WorldName { get; set; }
+        public int CellX { get; set; }
+        public int CellY { get; set; }
+        public double ApproximateCenterX { get; set; }
+        public double ApproximateCenterY { get; set; }
+        public long TotalRecords { get; set; }
+        public long TotalPayloadBytes { get; set; }
+        public List<PerformanceCategoryMetric> Categories { get; set; }
+    }
+
+    public sealed class PerformanceCategoryMetric
+    {
+        public string Key { get; set; }
+        public string DisplayName { get; set; }
+        public long RecordCount { get; set; }
+        public long PayloadBytes { get; set; }
+        public long DecodedCount { get; set; }
+        public long UnreadableCount { get; set; }
+    }
+
+    public sealed class PerformanceLargestRecord
+    {
+        public string CategoryKey { get; set; }
+        public int WorldId { get; set; }
+        public string WorldName { get; set; }
+        public int CellX { get; set; }
+        public int CellY { get; set; }
+        public long PayloadBytes { get; set; }
+    }
+
+    public sealed class PerformanceCellHotspot
+    {
+        public int Rank { get; set; }
+        public int WorldRank { get; set; }
+        public int WorldId { get; set; }
+        public string WorldName { get; set; }
+        public int CellX { get; set; }
+        public int CellY { get; set; }
+        public PositionInfo ApproximateCenter { get; set; }
+        public long CenterRecords { get; set; }
+        public long CenterPayloadBytes { get; set; }
+        public long NeighborhoodRecords { get; set; }
+        public long NeighborhoodPayloadBytes { get; set; }
+        public int NeighborhoodPopulatedCells { get; set; }
+        public long TotalRecords { get; set; }
+        public long TotalPayloadBytes { get; set; }
+        public double Percentile { get; set; }
+        public double RecordPercentile { get; set; }
+        public double PayloadPercentile { get; set; }
+        public string Severity { get; set; }
+        public string Confidence { get; set; }
+        public List<PerformanceEvidence> Evidence { get; set; }
+        public List<PerformanceCategoryMetric> Categories { get; set; }
+    }
+
+    public sealed class PerformanceEvidence
+    {
+        public string Key { get; set; }
+        public string Label { get; set; }
+        public string Explanation { get; set; }
+        public long ObservedValue { get; set; }
+        public long ComparisonValue { get; set; }
+    }
+
+    public sealed class PerformanceScanProgress
+    {
+        public int Stage { get; set; }
+        public int StageCount { get; set; }
+        public string StageKey { get; set; }
+        public string StageLabel { get; set; }
+        public long CompletedUnits { get; set; }
+        public long TotalUnits { get; set; }
+        public int OverallPercent { get; set; }
+        public string Message { get; set; }
+    }
+
+    public sealed class PerformanceScanStartResult
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+        public string OperationId { get; set; }
+    }
+
+    public sealed class PerformanceScanOperationStatus
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+        public string OperationId { get; set; }
+        public string State { get; set; }
+        public bool Terminal { get; set; }
+        public bool CanCancel { get; set; }
+        public PerformanceScanProgress Progress { get; set; }
+        public PerformanceScanResult Result { get; set; }
+    }
+
+    public sealed class PerformanceReportExportResult
+    {
+        public bool Success { get; set; }
+        public bool Cancelled { get; set; }
+        public string Error { get; set; }
+        public string FileName { get; set; }
+    }
+
+    public sealed class PerformanceCellPage
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+        public string OperationId { get; set; }
+        public int ScanVersion { get; set; }
+        public int WorldId { get; set; }
+        public string WorldName { get; set; }
+        public int Offset { get; set; }
+        public int Limit { get; set; }
+        public long TotalCells { get; set; }
+        public bool HasMore { get; set; }
+        public List<PerformanceCellSummary> Cells { get; set; }
+    }
 }

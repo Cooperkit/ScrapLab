@@ -9,7 +9,7 @@ namespace RaidRescue
     internal static class UpdaterProgram
     {
         private const string ApplySwitch = "--apply-update";
-        private const string StagePrefix = ".RaidRescue.Update.";
+        private const string StagePrefix = ".ScrapLab.Update.";
 
         private static int Main(string[] args)
         {
@@ -47,10 +47,10 @@ namespace RaidRescue
                 WaitForParent(parentId);
                 VerifyExecutable(
                     stageMain, mainDigest, version,
-                    "Raid Rescue for Scrap Mechanic");
+                    "ScrapLab Survival World Toolkit");
                 VerifyExecutable(
                     stagePatch, patchDigest, version,
-                    "Raid Rescue Patch Helper for Scrap Mechanic");
+                    "ScrapLab Patch Helper for Scrap Mechanic");
                 CompanionSecurity.RequireMatchingSignerWhenSigned(
                     targetMain, stageMain);
                 CompanionSecurity.RequireMatchingSignerWhenSigned(
@@ -128,7 +128,7 @@ namespace RaidRescue
                 System.Reflection.Assembly.GetExecutingAssembly().Location);
             string directory = Path.GetDirectoryName(updater);
             if (!String.Equals(
-                Path.GetFileName(updater), "RaidRescue.Updater.exe",
+                Path.GetFileName(updater), "ScrapLab.Updater.exe",
                 StringComparison.OrdinalIgnoreCase) ||
                 !String.Equals(
                     Path.GetDirectoryName(targetMain), directory,
@@ -143,11 +143,11 @@ namespace RaidRescue
                     Path.GetDirectoryName(stagePatch), directory,
                     StringComparison.OrdinalIgnoreCase) ||
                 !String.Equals(
-                    Path.GetFileName(targetMain), "RaidRescue.exe",
+                    Path.GetFileName(targetMain), "ScrapLab.exe",
                     StringComparison.OrdinalIgnoreCase) ||
                 !String.Equals(
                     Path.GetFileName(targetPatch),
-                    "RaidRescue.PatchHelper.exe",
+                    "ScrapLab.PatchHelper.exe",
                     StringComparison.OrdinalIgnoreCase) ||
                 !Path.GetFileName(stageMain).StartsWith(
                     StagePrefix + "Main.",
@@ -173,7 +173,7 @@ namespace RaidRescue
                         Path.GetDirectoryName(
                             System.Reflection.Assembly
                                 .GetExecutingAssembly().Location),
-                        "RaidRescue.exe");
+                        "ScrapLab.exe");
                     if (!String.Equals(
                         Path.GetFullPath(parent.MainModule.FileName),
                         Path.GetFullPath(expected),
@@ -182,7 +182,7 @@ namespace RaidRescue
                             "The updater rejected an unexpected parent program.");
                     if (!parent.WaitForExit(60000))
                         throw new TimeoutException(
-                            "Raid Rescue did not close in time.");
+                            "ScrapLab did not close in time.");
                 }
             }
             catch (ArgumentException)
@@ -304,7 +304,7 @@ namespace RaidRescue
             });
             if (process == null)
                 throw new InvalidOperationException(
-                    "Windows could not reopen Raid Rescue.");
+                    "Windows could not reopen ScrapLab.");
         }
 
         private static void WriteStatus(
@@ -328,10 +328,7 @@ namespace RaidRescue
 
         private static string GetUpdateDataDirectory()
         {
-            return Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue", "Updates");
+            return ProductPaths.LocalDataPath("Updates");
         }
 
         private static void TryDelete(string path)

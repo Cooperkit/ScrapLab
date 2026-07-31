@@ -11,4 +11,7 @@ STEAM-*
 *.db
 *.db-*
 *.raidrescue-backup-*.db
+*.scraplab-backup-*.db
+__pycache__/
+*.py[cod]
 

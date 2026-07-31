@@ -1,9 +1,9 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$exePath = Join-Path $root "dist\RaidRescue.exe"
-$patchPath = Join-Path $root "dist\RaidRescue.PatchHelper.exe"
-$updaterPath = Join-Path $root "dist\RaidRescue.Updater.exe"
+$exePath = Join-Path $root "dist\ScrapLab.exe"
+$patchPath = Join-Path $root "dist\ScrapLab.PatchHelper.exe"
+$updaterPath = Join-Path $root "dist\ScrapLab.Updater.exe"
 if (-not (Test-Path -LiteralPath $exePath) -or
     -not (Test-Path -LiteralPath $patchPath) -or
     -not (Test-Path -LiteralPath $updaterPath)) {
@@ -51,16 +51,20 @@ Assert-True ($currentVersion -eq $expectedCurrentVersion) `
     "The update service version did not match the executable assembly version."
 
 $officialAsset =
-    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v1.16.1/RaidRescue.exe"
+    "https://github.com/Cooperkit/ScrapLab/releases/download/v2.0.1/ScrapLab.exe"
 $officialPatchAsset =
-    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v1.16.1/RaidRescue.PatchHelper.exe"
+    "https://github.com/Cooperkit/ScrapLab/releases/download/v2.0.1/ScrapLab.PatchHelper.exe"
+$legacyRepositoryAsset =
+    "https://github.com/Cooperkit/Raid-Rescue/releases/download/v2.0.0/ScrapLab.exe"
 $lookalikeAsset =
-    "https://github.com.evil.example/Cooperkit/Raid-Rescue/releases/download/v1.14.1/RaidRescue.exe"
+    "https://github.com.evil.example/Cooperkit/Raid-Rescue/releases/download/v1.14.1/ScrapLab.exe"
 $wrongRepository =
-    "https://github.com/SomeoneElse/Raid-Rescue/releases/download/v1.14.1/RaidRescue.exe"
+    "https://github.com/SomeoneElse/Raid-Rescue/releases/download/v1.14.1/ScrapLab.exe"
 
 Assert-True ([bool](Invoke-UpdateMethod "IsOfficialDownloadUrl" @($officialAsset))) `
     "The official release asset URL was rejected."
+Assert-True ([bool](Invoke-UpdateMethod "IsOfficialDownloadUrl" @($legacyRepositoryAsset))) `
+    "The transition repository release asset URL was rejected."
 Assert-True (-not [bool](Invoke-UpdateMethod "IsOfficialDownloadUrl" @($lookalikeAsset))) `
     "A look-alike GitHub host was accepted."
 Assert-True (-not [bool](Invoke-UpdateMethod "IsOfficialDownloadUrl" @($wrongRepository))) `
@@ -75,16 +79,16 @@ Assert-True (-not [bool](Invoke-UpdateMethod "IsSha256" @("ABC123"))) `
 
 $expected = [Version]$expectedCurrentVersion
 [void](Invoke-UpdateMethod "VerifyDownloadedExecutable" @(
-    $exePath, $digest, $expected, "Raid Rescue for Scrap Mechanic"))
+    $exePath, $digest, $expected, "ScrapLab Survival World Toolkit"))
 [void](Invoke-UpdateMethod "VerifyDownloadedExecutable" @(
     $patchPath, $patchDigest, $expected,
-    "Raid Rescue Patch Helper for Scrap Mechanic"))
+    "ScrapLab Patch Helper for Scrap Mechanic"))
 
 $tamperBlocked = $false
 try {
     [void](Invoke-UpdateMethod "VerifyDownloadedExecutable" @(
         $exePath, ("0" * 64), $expected,
-        "Raid Rescue for Scrap Mechanic"))
+        "ScrapLab Survival World Toolkit"))
 }
 catch {
     $tamperBlocked = $true
@@ -108,11 +112,11 @@ Assert-True ($null -ne $replaceMethod) `
     "The fixed updater replacement method was not found."
 
 $replaceFixture = Join-Path ([IO.Path]::GetTempPath()) (
-    "RaidRescue-Update-Test-" + [Guid]::NewGuid().ToString("N"))
+    "ScrapLab-Update-Test-" + [Guid]::NewGuid().ToString("N"))
 try {
     [IO.Directory]::CreateDirectory($replaceFixture) | Out-Null
-    $target = Join-Path $replaceFixture "RaidRescue.exe"
-    $stage = Join-Path $replaceFixture ".RaidRescue.Update.test.tmp"
+    $target = Join-Path $replaceFixture "ScrapLab.exe"
+    $stage = Join-Path $replaceFixture ".ScrapLab.Update.test.tmp"
     Copy-Item -LiteralPath $exePath -Destination $target
     [IO.File]::AppendAllText($target, "OLD")
     Copy-Item -LiteralPath $exePath -Destination $stage
@@ -143,10 +147,10 @@ Assert-True ($null -eq $assembly.GetType("RaidRescue.ElevatedPatchBroker", $fals
 $patchInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($patchPath)
 $updaterInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($updaterPath)
 Assert-True ($patchInfo.ProductName -eq
-    "Raid Rescue Patch Helper for Scrap Mechanic") `
+    "ScrapLab Patch Helper for Scrap Mechanic") `
     "The patch helper has the wrong product identity."
 Assert-True ($updaterInfo.ProductName -eq
-    "Raid Rescue Updater for Scrap Mechanic") `
+    "ScrapLab Updater for Scrap Mechanic") `
     "The updater has the wrong product identity."
 
 Write-Host "App update regression tests passed."

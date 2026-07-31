@@ -1,5 +1,5 @@
 param(
-    [string]$RaidRescueExe = (Join-Path $PSScriptRoot '..\dist\RaidRescue.PatchHelper.exe')
+    [string]$RaidRescueExe = (Join-Path $PSScriptRoot '..\dist\ScrapLab.PatchHelper.exe')
 )
 
 $ErrorActionPreference = 'Stop'

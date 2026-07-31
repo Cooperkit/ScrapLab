@@ -206,7 +206,7 @@ namespace RaidRescue
             catch (Exception exception)
             {
                 string message =
-                    "Raid Rescue could not finish the patch activation. " +
+                    "ScrapLab could not finish the patch activation. " +
                     "Cache\\Bundle\\core_data.cbo must be reset and the Steam " +
                     "build activation must be recorded before the mod can be shown as active. " +
                     exception.Message;
@@ -264,9 +264,8 @@ namespace RaidRescue
                     "Scrap Mechanic was not found. Install or verify the game through Steam, then try again.");
             }
 
-            string backupRoot = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue", "Game Backups", "Scrap Mechanic");
+            string backupRoot = ProductPaths.LocalDataPath(
+                "Game Backups", "Scrap Mechanic");
             GamePatchResult result =
                 InstallPreservingSecretModsAt(gamePath, backupRoot);
             return GameScriptCacheInvalidator.DeleteAfterChanges(gamePath, result);
@@ -422,7 +421,7 @@ namespace RaidRescue
                         throw new InvalidOperationException(
                             "The installed " + Path.GetFileName(target.RelativePath) +
                             " does not match any verified Scrap Mechanic 1.0.2 or previous " +
-                            "Raid Rescue state. No files were changed. Use Steam's Verify " +
+                            "ScrapLab state. No files were changed. Use Steam's Verify " +
                             "integrity feature if you need to restore the official scripts.");
                     }
                     targetsToPatch.Add(target);
@@ -434,7 +433,7 @@ namespace RaidRescue
                     result.Success = true;
                     result.AlreadyPatched = true;
                     result.Changes.Add(
-                        "The latest cumulative Raid Rescue 1.0.2 hotfix is already installed.");
+                        "The latest cumulative ScrapLab 1.0.2 hotfix is already installed.");
                     return result;
                 }
 
@@ -882,7 +881,7 @@ namespace RaidRescue
             Dictionary<PatchTarget, string> originalHashes)
         {
             StringBuilder manifest = new StringBuilder();
-            manifest.AppendLine("Raid Rescue game-script backup");
+            manifest.AppendLine("ScrapLab game-script backup");
             manifest.AppendLine("Game path: " + gamePath);
             manifest.AppendLine("Game version: " + version);
             manifest.AppendLine("Created: " + DateTime.Now.ToString("O"));
@@ -1132,7 +1131,7 @@ namespace RaidRescue
                     AdaptivePatchSupport.FillResult(
                         result, build,
                         PatchCompatibilityState.KnownInstalled,
-                        false, true, "Verified Raid Rescue file.");
+                        false, true, "Verified ScrapLab file.");
                     return result;
                 }
                 if (HashEquals(hash, HarvestCoreLocatorV1))
@@ -1147,7 +1146,7 @@ namespace RaidRescue
                         AdaptivePatchSupport.GetSteamBuild(
                             gamePath, result.GameVersion),
                         PatchCompatibilityState.KnownInstalled,
-                        false, true, "Verified older Raid Rescue file.");
+                        false, true, "Verified older ScrapLab file.");
                     return result;
                 }
                 if (HashEquals(hash, HarvestCoreOriginal))
@@ -1189,9 +1188,8 @@ namespace RaidRescue
 
             GamePatchResult result = SetEnabledAt(
                 gamePath,
-                Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Raid Rescue", "Game Backups", "Scrap Mechanic", "Secret Mods"),
+                ProductPaths.LocalDataPath(
+                    "Game Backups", "Scrap Mechanic", "Secret Mods"),
                 enabled);
             return GameScriptCacheInvalidator.DeleteAfterChanges(gamePath, result);
         }
@@ -1284,7 +1282,7 @@ namespace RaidRescue
                 else
                 {
                     throw new InvalidOperationException(
-                        "HarvestCore.lua does not match the verified original or Raid Rescue " +
+                        "HarvestCore.lua does not match the verified original or ScrapLab " +
                         "resource-locator version. No files were changed. Use Steam Verify " +
                         "before changing this mod.");
                 }
@@ -1309,7 +1307,7 @@ namespace RaidRescue
                     throw new IOException("The HarvestCore backup failed checksum verification.");
 
                 StringBuilder manifest = new StringBuilder();
-                manifest.AppendLine("Raid Rescue secret-mod backup");
+                manifest.AppendLine("ScrapLab secret-mod backup");
                 manifest.AppendLine("Mod: Resource Locator Dots");
                 manifest.AppendLine("Action: " + (enabled ? "Install" : "Remove"));
                 manifest.AppendLine("Game path: " + gamePath);
@@ -1872,7 +1870,7 @@ namespace RaidRescue
                 ResetBroker();
             }
 
-            brokerPipe = "RaidRescue-" + Guid.NewGuid().ToString("N");
+            brokerPipe = "ScrapLab-" + Guid.NewGuid().ToString("N");
             brokerToken = CreateToken();
             brokerServer = new NamedPipeServerStream(
                 brokerPipe, PipeDirection.InOut, 1,
@@ -2198,7 +2196,7 @@ namespace RaidRescue
         private static string GetResultDirectory()
         {
             return Path.Combine(
-                Path.GetTempPath(), "RaidRescue", "patch-results");
+                Path.GetTempPath(), "ScrapLab", "patch-results");
         }
 
         private static string Quote(string value)
@@ -2347,7 +2345,7 @@ namespace RaidRescue
                         : PatchCompatibilityState.KnownClean,
                     false, true,
                     result.Installed
-                        ? "Verified Raid Rescue files."
+                        ? "Verified ScrapLab files."
                         : "Verified supported base files.");
                 return result;
             }
@@ -2541,9 +2539,8 @@ namespace RaidRescue
 
             GamePatchResult result = SetEnabledAt(
                 gamePath,
-                Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Raid Rescue", "Game Backups", "Scrap Mechanic", "Secret Mods"),
+                ProductPaths.LocalDataPath(
+                    "Game Backups", "Scrap Mechanic", "Secret Mods"),
                 enabled);
             return GameScriptCacheInvalidator.DeleteAfterChanges(gamePath, result);
         }
@@ -2727,7 +2724,7 @@ namespace RaidRescue
                 result.Changes.Add(
                     enabled
                         ? "The patch runs on the authoritative server and keeps existing fertilizer timing fixes."
-                        : "Any installed Raid Rescue raid and fertilizer hotfix was preserved.");
+                        : "Any installed ScrapLab raid and fertilizer hotfix was preserved.");
                 AdaptivePatchSupport.QueueBuildActivation(
                     result, "ChemicalFertilizerSplash", enabled);
                 SecretModBackupRetention.Prune(
@@ -3548,7 +3545,7 @@ namespace RaidRescue
             Dictionary<ChemicalPatchTarget, string> hashes)
         {
             StringBuilder manifest = new StringBuilder();
-            manifest.AppendLine("Raid Rescue secret-mod backup");
+            manifest.AppendLine("ScrapLab secret-mod backup");
             manifest.AppendLine("Mod: Chemical Fertilizer Splash");
             manifest.AppendLine("Action: " + (enabled ? "Install" : "Remove"));
             manifest.AppendLine("Game path: " + gamePath);
@@ -3752,7 +3749,7 @@ namespace RaidRescue
         private static string GetResultDirectory()
         {
             return Path.Combine(
-                Path.GetTempPath(), "RaidRescue", "patch-results");
+                Path.GetTempPath(), "ScrapLab", "patch-results");
         }
 
         private static string Quote(string value)
@@ -3991,7 +3988,7 @@ namespace RaidRescue
                     AdaptivePatchSupport.FillResult(
                         result, build,
                         PatchCompatibilityState.KnownInstalled,
-                        false, true, "Verified Raid Rescue file.");
+                        false, true, "Verified ScrapLab file.");
                     return result;
                 }
                 if (HashEquals(hash, MountedWaterGunOriginal))
@@ -4162,7 +4159,7 @@ namespace RaidRescue
                     transformed = Unpatch(source).Replace("\n", "\r\n");
                 else
                     throw new InvalidOperationException(
-                        "MountedWaterGun.lua does not match a verified original or Raid Rescue " +
+                        "MountedWaterGun.lua does not match a verified original or ScrapLab " +
                         "state. No files were changed. Use Steam Verify if another mod changed it.");
 
                 string generatedHash = Sha256(Encoding.UTF8.GetBytes(transformed));
@@ -4185,7 +4182,7 @@ namespace RaidRescue
                     throw new IOException("The MountedWaterGun backup failed checksum verification.");
 
                 StringBuilder manifest = new StringBuilder();
-                manifest.AppendLine("Raid Rescue secret-mod backup");
+                manifest.AppendLine("ScrapLab secret-mod backup");
                 manifest.AppendLine("Mod: Dual-Fluid Water Cannon");
                 manifest.AppendLine("Action: " + (enabled ? "Install" : "Remove"));
                 manifest.AppendLine("Game path: " + gamePath);
@@ -4343,7 +4340,7 @@ namespace RaidRescue
                     Installed = installed,
                     Reason = clean
                         ? "Every protected cannon target is an exact clean match."
-                        : "Every protected Raid Rescue cannon target is intact."
+                        : "Every protected ScrapLab cannon target is intact."
                 };
             }
 
@@ -4856,9 +4853,8 @@ namespace RaidRescue
 
         private static string GetBackupRoot()
         {
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue", "Game Backups", "Scrap Mechanic", "Secret Mods");
+            return ProductPaths.LocalDataPath(
+                "Game Backups", "Scrap Mechanic", "Secret Mods");
         }
 
         private static GamePatchResult Failure(string message)
@@ -4989,7 +4985,7 @@ namespace RaidRescue
         private static string GetResultDirectory()
         {
             return Path.Combine(
-                Path.GetTempPath(), "RaidRescue", "patch-results");
+                Path.GetTempPath(), "ScrapLab", "patch-results");
         }
 
         private static string Quote(string value)
@@ -5074,7 +5070,7 @@ namespace RaidRescue
                     AdaptivePatchSupport.FillResult(
                         result, build,
                         PatchCompatibilityState.KnownInstalled,
-                        false, true, "Verified Raid Rescue host-only file.");
+                        false, true, "Verified ScrapLab host-only file.");
                     return result;
                 }
                 if (HashEquals(hash, SurvivalGameEveryoneCommands))
@@ -5096,7 +5092,7 @@ namespace RaidRescue
                     AdaptivePatchSupport.FillResult(
                         result, build,
                         PatchCompatibilityState.KnownInstalled,
-                        false, true, "Verified Raid Rescue every-player file.");
+                        false, true, "Verified ScrapLab every-player file.");
                     return result;
                 }
                 if (HashEquals(hash, SurvivalGameOriginal))
@@ -5137,9 +5133,8 @@ namespace RaidRescue
 
             GamePatchResult result = SetEnabledAt(
                 gamePath,
-                Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Raid Rescue", "Game Backups", "Scrap Mechanic", "Secret Mods"),
+                ProductPaths.LocalDataPath(
+                    "Game Backups", "Scrap Mechanic", "Secret Mods"),
                 enabled,
                 mode);
             return GameScriptCacheInvalidator.DeleteAfterChanges(gamePath, result);
@@ -5235,7 +5230,7 @@ namespace RaidRescue
                 else
                 {
                     throw new InvalidOperationException(
-                        "SurvivalGame.lua does not match the verified original or Raid Rescue " +
+                        "SurvivalGame.lua does not match the verified original or ScrapLab " +
                         "developer-command versions. No files were changed. Use Steam Verify " +
                         "before changing this mod.");
                 }
@@ -5278,7 +5273,7 @@ namespace RaidRescue
                     throw new IOException("The SurvivalGame backup failed checksum verification.");
 
                 StringBuilder manifest = new StringBuilder();
-                manifest.AppendLine("Raid Rescue secret-mod backup");
+                manifest.AppendLine("ScrapLab secret-mod backup");
                 manifest.AppendLine("Mod: Developer Commands");
                 manifest.AppendLine("Action: " + (enabled ? "Install" : "Remove"));
                 manifest.AppendLine("Access mode: " +
@@ -5955,7 +5950,7 @@ namespace RaidRescue
         private static string GetResultDirectory()
         {
             return Path.Combine(
-                Path.GetTempPath(), "RaidRescue", "patch-results");
+                Path.GetTempPath(), "ScrapLab", "patch-results");
         }
 
         private static string Quote(string value)
@@ -6064,7 +6059,7 @@ namespace RaidRescue
         private static string GetResultDirectory()
         {
             return Path.Combine(
-                Path.GetTempPath(), "RaidRescue", "patch-results");
+                Path.GetTempPath(), "ScrapLab", "patch-results");
         }
 
         private static string Quote(string value)

@@ -34,6 +34,44 @@ namespace RaidRescue
         public byte[] Data;
     }
 
+    internal sealed class SqliteStorageStatistics
+    {
+        public long PageSizeBytes;
+        public long PageCount;
+        public long FreePageCount;
+    }
+
+    internal sealed class SupportedSchema
+    {
+        public bool CanReadGame;
+        public bool CanReadHarvestableCells;
+        public bool CanReadUnitCells;
+        public bool UnitTablePresent;
+        public bool CanReadWorldMetadata;
+        public bool CanReadScriptTotals;
+        public string GenericDataLayout;
+        public string ScriptDataLayout;
+    }
+
+    internal sealed class UnsupportedTableSummary
+    {
+        public int Count;
+        public List<string> Names;
+    }
+
+    internal sealed class WorldPayloadTotal
+    {
+        public int WorldId;
+        public long RecordCount;
+        public long PayloadBytes;
+    }
+
+    internal enum SupportedTableKind
+    {
+        GenericData,
+        ScriptData
+    }
+
     internal sealed class SqliteException : Exception
     {
         public int ResultCode { get; private set; }
@@ -120,6 +158,215 @@ namespace RaidRescue
                     throw new InvalidDataException("The Game table is empty.");
                 saveVersion = statement.GetInt64(0);
                 gameTick = statement.GetInt64(1);
+            }
+        }
+
+        public SqliteStorageStatistics ReadStorageStatistics()
+        {
+            return new SqliteStorageStatistics
+            {
+                PageSizeBytes = ReadPragmaInt64("PRAGMA page_size"),
+                PageCount = ReadPragmaInt64("PRAGMA page_count"),
+                FreePageCount = ReadPragmaInt64(
+                    "PRAGMA freelist_count")
+            };
+        }
+
+        public SupportedSchema ReadSupportedSchema()
+        {
+            List<SchemaColumn> game =
+                ReadAllowlistedTableColumns("Game");
+            List<SchemaColumn> harvestable =
+                ReadAllowlistedTableColumns("Harvestable");
+            List<SchemaColumn> unit =
+                ReadAllowlistedTableColumns("Unit");
+            List<SchemaColumn> generic =
+                ReadAllowlistedTableColumns("GenericData");
+            List<SchemaColumn> script =
+                ReadAllowlistedTableColumns("ScriptData");
+
+            string genericLayout = RecognizeStorageLayout(generic);
+            string scriptLayout = RecognizeStorageLayout(script);
+            return new SupportedSchema
+            {
+                CanReadGame = HasColumns(
+                    game,
+                    Column("savegameversion", "INTEGER"),
+                    Column("gametick", "INTEGER")),
+                CanReadHarvestableCells = HasColumns(
+                    harvestable,
+                    Column("id", "INTEGER"),
+                    Column("worldId", "INTEGER"),
+                    Column("x", "INTEGER"),
+                    Column("y", "INTEGER"),
+                    Column("size", "INTEGER"),
+                    Column("data", "BLOB")),
+                CanReadUnitCells = HasColumns(
+                    unit,
+                    Column("id", "INTEGER"),
+                    Column("worldId", "INTEGER"),
+                    Column("x", "INTEGER"),
+                    Column("y", "INTEGER"),
+                    Column("data", "BLOB")),
+                UnitTablePresent = unit.Count > 0,
+                CanReadWorldMetadata =
+                    !String.IsNullOrEmpty(genericLayout),
+                CanReadScriptTotals =
+                    !String.IsNullOrEmpty(scriptLayout),
+                GenericDataLayout = genericLayout,
+                ScriptDataLayout = scriptLayout
+            };
+        }
+
+        public UnsupportedTableSummary ReadUnsupportedTables()
+        {
+            HashSet<string> supported = new HashSet<string>(
+                StringComparer.Ordinal)
+            {
+                "Game",
+                "Harvestable",
+                "Unit",
+                "GenericData",
+                "ScriptData"
+            };
+            UnsupportedTableSummary result =
+                new UnsupportedTableSummary
+                {
+                    Names = new List<string>()
+                };
+            using (SqliteStatement statement = Prepare(
+                "SELECT name FROM sqlite_master " +
+                "WHERE type='table' AND name NOT LIKE 'sqlite_%' " +
+                "ORDER BY name COLLATE BINARY"))
+            {
+                while (statement.Read())
+                {
+                    string name = statement.GetString(0);
+                    if (supported.Contains(name))
+                        continue;
+                    result.Count++;
+                    if (result.Names.Count < 32)
+                        result.Names.Add(name);
+                }
+            }
+            return result;
+        }
+
+        public List<WorldPayloadTotal> CountSupportedRows(
+            SupportedTableKind table, CancellationToken cancellation)
+        {
+            string sql;
+            switch (table)
+            {
+                case SupportedTableKind.GenericData:
+                    sql =
+                        "SELECT worldId, COUNT(*), " +
+                        "COALESCE(SUM(length(data)), 0) " +
+                        "FROM GenericData GROUP BY worldId ORDER BY worldId";
+                    break;
+                case SupportedTableKind.ScriptData:
+                    sql =
+                        "SELECT worldId, COUNT(*), " +
+                        "COALESCE(SUM(length(data)), 0) " +
+                        "FROM ScriptData GROUP BY worldId ORDER BY worldId";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("table");
+            }
+
+            List<WorldPayloadTotal> totals =
+                new List<WorldPayloadTotal>();
+            using (SqliteStatement statement = Prepare(sql))
+            {
+                while (statement.Read())
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                    totals.Add(new WorldPayloadTotal
+                    {
+                        WorldId = checked(
+                            (int)statement.GetInt64(0)),
+                        RecordCount = statement.GetInt64(1),
+                        PayloadBytes = statement.GetInt64(2)
+                    });
+                }
+            }
+            return totals;
+        }
+
+        public long CountHarvestableRows(
+            CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            using (SqliteStatement statement = Prepare(
+                "SELECT COUNT(*) FROM Harvestable"))
+            {
+                if (!statement.Read())
+                    throw new InvalidDataException(
+                        "SQLite did not return a Harvestable count.");
+                long count = statement.GetInt64(0);
+                cancellation.ThrowIfCancellationRequested();
+                return count;
+            }
+        }
+
+        public long CountUnitRows(CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            using (SqliteStatement statement = Prepare(
+                "SELECT COUNT(*) FROM Unit"))
+            {
+                if (!statement.Read())
+                    throw new InvalidDataException(
+                        "SQLite did not return a Unit count.");
+                long count = statement.GetInt64(0);
+                cancellation.ThrowIfCancellationRequested();
+                return count;
+            }
+        }
+
+        public void StreamHarvestableCells(
+            Action<int, int, int, long> onRecord,
+            CancellationToken cancellation)
+        {
+            if (onRecord == null)
+                throw new ArgumentNullException("onRecord");
+            using (SqliteStatement statement = Prepare(
+                "SELECT worldId, x, y, COALESCE(length(data), 0) " +
+                "FROM Harvestable ORDER BY id"))
+            {
+                while (statement.Read())
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                    onRecord(
+                        checked((int)statement.GetInt64(0)),
+                        checked((int)statement.GetInt64(1)),
+                        checked((int)statement.GetInt64(2)),
+                        statement.GetInt64(3));
+                }
+            }
+        }
+
+        public void StreamUnitCells(
+            Action<int, int, int, long, byte[]> onRecord,
+            CancellationToken cancellation)
+        {
+            if (onRecord == null)
+                throw new ArgumentNullException("onRecord");
+            using (SqliteStatement statement = Prepare(
+                "SELECT worldId, x, y, " +
+                "COALESCE(length(data), 0), data " +
+                "FROM Unit ORDER BY id"))
+            {
+                while (statement.Read())
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                    onRecord(
+                        checked((int)statement.GetInt64(0)),
+                        checked((int)statement.GetInt64(1)),
+                        checked((int)statement.GetInt64(2)),
+                        statement.GetInt64(3),
+                        statement.GetBlob(4));
+                }
             }
         }
 
@@ -266,10 +513,29 @@ namespace RaidRescue
         {
             List<WorldMetadataRecord> records =
                 new List<WorldMetadataRecord>();
-            const string sql =
-                "SELECT rowid, worldId, data FROM GenericData " +
-                "WHERE uid=x'5297769DF4514E5E9A388B0F95E2EDAD' " +
-                "ORDER BY worldId, rowid";
+            SupportedSchema schema = ReadSupportedSchema();
+            string sql;
+            if (String.Equals(
+                schema.GenericDataLayout,
+                "legacy-v26", StringComparison.Ordinal))
+            {
+                sql =
+                    "SELECT rowid, worldId, data FROM GenericData " +
+                    "WHERE uid=x'5297769DF4514E5E9A388B0F95E2EDAD' " +
+                    "ORDER BY worldId, rowid";
+            }
+            else if (String.Equals(
+                schema.GenericDataLayout,
+                "current-v28", StringComparison.Ordinal))
+            {
+                sql =
+                    "SELECT rowid, worldId, data FROM GenericData " +
+                    "ORDER BY worldId, rowid";
+            }
+            else
+            {
+                return records;
+            }
             using (SqliteStatement statement = Prepare(sql))
             {
                 while (statement.Read())
@@ -283,6 +549,118 @@ namespace RaidRescue
                 }
             }
             return records;
+        }
+
+        private long ReadPragmaInt64(string sql)
+        {
+            using (SqliteStatement statement = Prepare(sql))
+            {
+                if (!statement.Read())
+                    throw new InvalidDataException(
+                        "SQLite did not return a storage statistic.");
+                return statement.GetInt64(0);
+            }
+        }
+
+        private List<SchemaColumn> ReadAllowlistedTableColumns(
+            string table)
+        {
+            string sql;
+            switch (table)
+            {
+                case "Game":
+                    sql = "PRAGMA table_info(Game)";
+                    break;
+                case "Harvestable":
+                    sql = "PRAGMA table_info(Harvestable)";
+                    break;
+                case "Unit":
+                    sql = "PRAGMA table_info(Unit)";
+                    break;
+                case "GenericData":
+                    sql = "PRAGMA table_info(GenericData)";
+                    break;
+                case "ScriptData":
+                    sql = "PRAGMA table_info(ScriptData)";
+                    break;
+                default:
+                    throw new ArgumentException(
+                        "Unsupported schema table.", "table");
+            }
+
+            List<SchemaColumn> columns = new List<SchemaColumn>();
+            using (SqliteStatement statement = Prepare(sql))
+            {
+                while (statement.Read())
+                {
+                    columns.Add(new SchemaColumn
+                    {
+                        Name = statement.GetString(1),
+                        Type = statement.GetString(2)
+                    });
+                }
+            }
+            return columns;
+        }
+
+        private static string RecognizeStorageLayout(
+            IList<SchemaColumn> columns)
+        {
+            if (HasColumns(
+                columns,
+                Column("uid", "BLOB"),
+                Column("key", "BLOB"),
+                Column("worldId", "INTEGER"),
+                Column("flags", "INTEGER"),
+                Column("data", "BLOB")))
+                return "legacy-v26";
+            if (HasColumns(
+                columns,
+                Column("id", "INTEGER"),
+                Column("channel", "INTEGER"),
+                Column("worldId", "INTEGER"),
+                Column("flags", "INTEGER"),
+                Column("data", "BLOB")))
+                return "current-v28";
+            return String.Empty;
+        }
+
+        private static bool HasColumns(
+            IList<SchemaColumn> actual,
+            params SchemaColumn[] required)
+        {
+            foreach (SchemaColumn expected in required)
+            {
+                bool found = false;
+                foreach (SchemaColumn column in actual)
+                {
+                    if (String.Equals(
+                            column.Name, expected.Name,
+                            StringComparison.Ordinal) &&
+                        String.Equals(
+                            column.Type, expected.Type,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    return false;
+            }
+            return true;
+        }
+
+        private static SchemaColumn Column(
+            string name, string type)
+        {
+            return new SchemaColumn { Name = name, Type = type };
+        }
+
+        private sealed class SchemaColumn
+        {
+            public string Name;
+            public string Type;
         }
 
         public int DeleteScriptDataRow(long rowId)

@@ -217,11 +217,8 @@ namespace RaidRescue
             GamePatchResult result =
                 SetEnabledAt(
                     gamePath,
-                    Path.Combine(
-                        Environment.GetFolderPath(
-                            Environment.SpecialFolder.LocalApplicationData),
-                        "Raid Rescue", "Game Backups",
-                        "Scrap Mechanic", "Secret Mods"),
+                    ProductPaths.LocalDataPath(
+                        "Game Backups", "Scrap Mechanic", "Secret Mods"),
                     enabled);
             return GameScriptCacheInvalidator
                 .DeleteAfterChanges(gamePath, result);

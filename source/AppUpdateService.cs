@@ -76,17 +76,23 @@ namespace RaidRescue
     internal static class AppUpdateService
     {
         private const string LatestReleaseApi =
-            "https://api.github.com/repos/Cooperkit/Raid-Rescue/releases/latest";
+            "https://api.github.com/repos/Cooperkit/ScrapLab/releases/latest";
         private const string ReleasePrefix =
-            "https://github.com/Cooperkit/Raid-Rescue/releases/";
-        private const string DownloadPathPrefix =
+            "https://github.com/Cooperkit/ScrapLab/releases/";
+        private const string LegacyDownloadPathPrefix =
             "/Cooperkit/Raid-Rescue/releases/download/";
-        private const string MainAssetName = "RaidRescue.exe";
-        private const string PatchAssetName = "RaidRescue.PatchHelper.exe";
-        private const string UpdaterFileName = "RaidRescue.Updater.exe";
+        private const string ScrapLabDownloadPathPrefix =
+            "/Cooperkit/ScrapLab/releases/download/";
+        private const string LegacyReleasePathPrefix =
+            "/Cooperkit/Raid-Rescue/releases";
+        private const string ScrapLabReleasePathPrefix =
+            "/Cooperkit/ScrapLab/releases";
+        private const string MainAssetName = "ScrapLab.exe";
+        private const string PatchAssetName = "ScrapLab.PatchHelper.exe";
+        private const string UpdaterFileName = "ScrapLab.Updater.exe";
         private const string UpdaterProduct =
-            "Raid Rescue Updater for Scrap Mechanic";
-        private const string StagePrefix = ".RaidRescue.Update.";
+            "ScrapLab Updater for Scrap Mechanic";
+        private const string StagePrefix = ".ScrapLab.Update.";
         private static Timer cleanupTimer;
 
         public static string CurrentVersion
@@ -111,7 +117,7 @@ namespace RaidRescue
                     Serializer().Deserialize<GitHubRelease>(json);
                 if (release == null || release.draft || release.prerelease)
                     throw new InvalidDataException(
-                        "GitHub did not return a stable Raid Rescue release.");
+                        "GitHub did not return a stable ScrapLab release.");
 
                 Version latest;
                 if (!TryParseReleaseVersion(release.tag_name, out latest))
@@ -160,7 +166,7 @@ namespace RaidRescue
                 {
                     result.Error =
                         "This release needs the complete verified Windows bundle. " +
-                        "Open GitHub and keep RaidRescue.exe with both companion programs.";
+                        "Open GitHub and keep ScrapLab.exe with both companion programs.";
                 }
                 return result;
             }
@@ -168,7 +174,7 @@ namespace RaidRescue
             {
                 result.Success = false;
                 result.Error =
-                    "Raid Rescue could not reach GitHub right now. " +
+                    "ScrapLab could not reach GitHub right now. " +
                     FriendlyMessage(exception);
                 return result;
             }
@@ -229,10 +235,10 @@ namespace RaidRescue
                 }
                 VerifyDownloadedExecutable(
                     mainStage, result.AssetDigest, expected,
-                    "Raid Rescue for Scrap Mechanic");
+                    "ScrapLab Survival World Toolkit");
                 VerifyDownloadedExecutable(
                     patchStage, result.PatchAssetDigest, expected,
-                    "Raid Rescue Patch Helper for Scrap Mechanic");
+                    "ScrapLab Patch Helper for Scrap Mechanic");
                 CompanionSecurity.RequireMatchingSignerWhenSigned(
                     targetMain, mainStage);
                 CompanionSecurity.RequireMatchingSignerWhenSigned(
@@ -363,7 +369,7 @@ namespace RaidRescue
         {
             if (!IsOfficialDownloadUrl(url))
                 throw new InvalidDataException(
-                    "The update download is not an official Raid Rescue asset.");
+                    "The update download is not an official ScrapLab asset.");
             if (!IsSha256(digest))
                 throw new InvalidDataException(
                     "GitHub did not provide a valid SHA-256 digest.");
@@ -373,7 +379,7 @@ namespace RaidRescue
         {
             TimedWebClient client = new TimedWebClient();
             client.Headers[HttpRequestHeader.UserAgent] =
-                "RaidRescue/" + CurrentVersion;
+                "ScrapLab/" + CurrentVersion;
             client.Headers[HttpRequestHeader.Accept] =
                 "application/vnd.github+json";
             client.Headers["X-GitHub-Api-Version"] = "2022-11-28";
@@ -444,9 +450,12 @@ namespace RaidRescue
                 String.Equals(
                     uri.Host, "github.com",
                     StringComparison.OrdinalIgnoreCase) &&
-                uri.AbsolutePath.StartsWith(
-                    DownloadPathPrefix,
-                    StringComparison.OrdinalIgnoreCase);
+                (uri.AbsolutePath.StartsWith(
+                    LegacyDownloadPathPrefix,
+                    StringComparison.OrdinalIgnoreCase) ||
+                 uri.AbsolutePath.StartsWith(
+                    ScrapLabDownloadPathPrefix,
+                    StringComparison.OrdinalIgnoreCase));
         }
 
         internal static bool IsOfficialReleaseUrl(string value)
@@ -459,9 +468,12 @@ namespace RaidRescue
                 String.Equals(
                     uri.Host, "github.com",
                     StringComparison.OrdinalIgnoreCase) &&
-                uri.AbsolutePath.StartsWith(
-                    "/Cooperkit/Raid-Rescue/releases",
-                    StringComparison.OrdinalIgnoreCase);
+                (uri.AbsolutePath.StartsWith(
+                    LegacyReleasePathPrefix,
+                    StringComparison.OrdinalIgnoreCase) ||
+                 uri.AbsolutePath.StartsWith(
+                    ScrapLabReleasePathPrefix,
+                    StringComparison.OrdinalIgnoreCase));
         }
 
         internal static bool IsSha256(string value)
@@ -579,10 +591,8 @@ namespace RaidRescue
 
         private static string GetStartupStatusPath()
         {
-            return Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData),
-                "Raid Rescue", "Updates", "update-status.ini");
+            return ProductPaths.LocalDataPath(
+                "Updates", "update-status.ini");
         }
 
         private static string DecodeStatusValue(string value)

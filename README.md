@@ -1,465 +1,285 @@
-# Raid Rescue
+<p align="center">
+  <img src="docs/images/scraplab-logo.png" width="190" alt="ScrapLab industrial globe and wrench emblem">
+</p>
 
-> A small, backup-first world diagnostic and recovery tool for Scrap Mechanic
-> Chapter 2 Survival saves.
+<h1 align="center">ScrapLab</h1>
 
-![Raid Rescue showing a stored tier-four raid](docs/images/02-raid-detected.png)
+<p align="center">
+  <strong>Inspect · Repair · Tune</strong><br>
+  An offline, backup-first world toolkit for Scrap Mechanic Survival.
+</p>
 
-Raid Rescue finds Scrap Mechanic Survival saves, explains every stored raid,
-and lists loose inventory pickups left in the world. It can safely remove one
-dropped pickup, clear only expired pickups pending world cleanup, clear every
-decoded loose pickup, or clear a broken persisted raid after creating a
-verified backup. Its optional Patch Bay also installs carefully guarded
-quality-of-life game-script mods.
+<p align="center">
+  <a href="https://github.com/Cooperkit/ScrapLab/releases/latest"><strong>Download the latest release</strong></a>
+  ·
+  <a href="#quick-start">Quick start</a>
+  ·
+  <a href="#safety">Safety</a>
+  ·
+  <a href="#optional-mod-workshop">Mod workshop</a>
+</p>
 
-It is designed for regular players: no database editor, command prompt,
-installer, or external dependencies are required.
+---
 
-On first launch, Raid Rescue offers an optional interactive tutorial. The
-animated tour explains the safe workflow using the real controls without
-changing a save. The **?** button in the title bar opens a detailed Help menu
-where the tutorial can be replayed or its first-run prompt can be reset.
+ScrapLab turns a Scrap Mechanic Survival save into a readable world report.
+It can inspect database health, locate likely performance hotspots, inventory
+loose pickups, recover persisted raid state, and manage optional guarded game
+patches—all without an installer, command prompt, or external dependencies.
 
-## Important
+ScrapLab is designed for ordinary players as well as technical world owners.
+Read-only tools stay read-only. Every save-editing action creates and verifies
+a complete timestamped backup before the original database is changed.
 
-- Close Scrap Mechanic completely before repairing a save.
-- Keep the automatic backup until the repaired world has loaded and saved
-  successfully.
-- Download Raid Rescue only from this repository's **Releases** page.
-- Raid Rescue is intended for Windows 10 and Windows 11.
+## What ScrapLab can do
+
+| Tool | What it provides |
+| --- | --- |
+| **World Diagnostics** | Database health, save version, game tick, decoded world names, stored raids, and actionable warnings. |
+| **Performance Scanner** | Read-only cell-density analysis, evidence-backed hotspot ranking, coverage reporting, cancellation, World Explorer paging, and privacy-safe JSON export. |
+| **Loose Item Scanner** | Item icons, quantities, values, world names, positions, and despawn state for decoded ground pickups. |
+| **Pickup Cleanup** | Remove one pickup, only expired pickups, or every safely decoded loose pickup after confirmation and backup verification. |
+| **Raid Recovery** | Release crops registered to persisted raids, clear the stored raid schedule, and repair crops stranded by an older clear. |
+| **Mod Workshop** | Install or remove optional quality-of-life Lua patches with exact-code guards, verified backups, rollback, and Steam-update detection. |
+
+ScrapLab deliberately leaves player inventories, containers, quests, terrain,
+creations, buildings, and unrelated world objects alone.
 
 ## Download
 
-1. Open the repository's [latest release](../../releases/latest).
-2. Download `RaidRescue-1.16.0.zip`.
-3. Extract all three files into one folder.
-4. Double-click `RaidRescue.exe`.
+1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
+2. Download `ScrapLab-2.0.0.zip` or the newest complete ZIP.
+3. Extract the ZIP into its own folder.
+4. Keep these three files together:
+   - `ScrapLab.exe`
+   - `ScrapLab.PatchHelper.exe`
+   - `ScrapLab.Updater.exe`
+5. Run `ScrapLab.exe`.
 
-The app is portable and does not need to be installed. Keep
-`RaidRescue.exe`, `RaidRescue.PatchHelper.exe`, and
-`RaidRescue.Updater.exe` together. Clearing a save does not need
-administrator access. The first secret-mod change in an app session asks for
-Windows administrator approval because Steam normally stores the game under
-Program Files. Later patch actions reuse the restricted helper session without
-asking again.
+ScrapLab is portable and supports Windows 10 and Windows 11. Save inspection
+and repair do not require administrator access. Windows asks for administrator
+approval only when the optional Mod Workshop needs to change Steam game files.
+One approved helper session is reused until ScrapLab closes.
 
-Whenever a secret-mod action changes game Lua files or reactivates an intact
-mod after a Steam update, Raid Rescue
-deletes Scrap Mechanic's generated `Cache\Bundle\core_data.cbo` script cache.
-The game rebuilds it automatically on the next normal launch, which may take a
-little longer. The `-dev` Steam launch option is not required.
-
-Windows may show a SmartScreen message because independently distributed tools
-are not always code-signed. Verify that the download came from this repository
-before choosing **More info -> Run anyway**. Do not bypass a warning for a copy
-downloaded from somewhere else.
-
-## Automatic app updates
-
-Raid Rescue checks this repository's latest stable GitHub release shortly after
-startup and every 30 minutes while the app remains open. Checks run in the
-background and network failures stay quiet, so save analysis and repair remain
-responsive and usable offline. Open the **?** Field Manual and choose
-**Check Updates** to run an immediate check.
-
-When a newer complete release is available, the in-app update console offers:
-
-- **Later**, which dismisses that version for the current app session;
-- **View Release**, which opens the official GitHub release;
-- **Update + Restart**, which downloads, verifies, installs, and reopens the
-  app automatically.
-
-One-click installation accepts only HTTPS assets from
-`Cooperkit/Raid-Rescue`, requires GitHub's published SHA-256 asset digests, and
-checks the product identity and version of both the main app and patch helper.
-The fixed `RaidRescue.Updater.exe` companion waits for the running app to
-close, replaces only its two known sibling components, verifies them again,
-and reopens the app. Bounded previous-component backups are retained under:
-
-```text
-%LOCALAPPDATA%\Raid Rescue\Updates\previous-main.exe
-%LOCALAPPDATA%\Raid Rescue\Updates\previous-patch-helper.exe
-```
-
-If either replacement or relaunch fails, the updater restores both verified
-previous components. Updating Raid Rescue does not open or alter a save and
-does not reinstall secret mods.
-
-Version 1.16.0 is the one-time transition from the old single-file layout.
-Install its complete ZIP manually. Future complete releases can use the new
-fixed updater.
+> **Upgrading from Raid Rescue 1.x?** Install the ScrapLab 2.0 complete ZIP
+> manually once because the old updater cannot safely rename all three
+> programs. ScrapLab then migrates compatible settings and patch state, and
+> normal one-click updates resume from 2.x onward.
 
 ## Quick start
 
 ### 1. Close Scrap Mechanic
 
-Exit the game completely. Raid Rescue locks world selection, Browse, Analyze,
-and repair access while the game is running so it never opens the live world
-database.
+Exit the game completely before opening a save. ScrapLab automatically locks
+world controls whenever `ScrapMechanic.exe` or `ScrapMechanicServer.exe` is
+running, and unlocks them when the process exits.
 
-### 2. Choose your world
+### 2. Choose a Survival world
 
-Raid Rescue automatically looks in the normal Scrap Mechanic Survival save
-folders. Select the world from the list. If it is not listed, click **Browse**
-and choose its `.db` file.
+ScrapLab searches every normal Scrap Mechanic `User_*` Survival folder and
+puts the newest saves first. Use **Browse** only when the save is not listed.
 
-![World selector and Analyze World button](docs/images/01-select-and-analyze.png)
-
-The usual save folder is:
+The default location is:
 
 ```text
-%appdata%\Axolot Games\Scrap Mechanic\User\User_<SteamID>\Save\Survival
+%APPDATA%\Axolot Games\Scrap Mechanic\User\User_<SteamID>\Save\Survival
 ```
 
-You can paste that path into File Explorer's address bar.
+Choose the normal `.db` file—not a `.scraplab-backup` or legacy
+`.raidrescue-backup` file.
 
-### 3. Analyze the world
+### 3. Analyze World
 
-Close Scrap Mechanic, then click **Analyze World**. This step is read-only: it
-does not change the save. Raid Rescue safety-locks world selection, Browse, and
-Analyze while the game process is running so the live database is never opened.
-The controls unlock and the selected world refreshes automatically after the
-game closes.
+**Analyze World** is read-only. It checks SQLite integrity and builds the main
+world report without loading the more expensive loose-pickup inventory.
 
-The tool shows raid level, state, threat, planned enemies, crop triggers,
-coordinates, timing values, and signs that a raid is stuck. It also shows
-loose world pickups with their real game icons, stack sizes, exact positions,
-decoded world names, recovery values, and remaining despawn time.
+### 4. Run only the tools you need
 
-![Raid diagnostic results](docs/images/02-raid-detected.png)
+- Choose **Scan Performance** for hotspot analysis.
+- Choose **Scan Loose Items** for pickup cards and cleanup controls.
+- Review **Raid Recovery** only when the world contains persisted raid state
+  or orphaned raid crops.
 
-### 4. Review or clear dropped world items
+### 5. Read every confirmation
 
-The **Dropped Items** section lists ordinary loose pickups created when
-inventory items are dropped into the world. It does not treat placed blocks,
-vehicle parts, player inventories, containers, or quest reward objects as
-ordinary drops.
+Cleanup and recovery dialogs identify the exact world and planned change.
+Keep Scrap Mechanic closed until ScrapLab reports that verification finished.
 
-- The normal raid analysis does not load loose items. Click **Scan Loose
-  Items** when you want this optional report.
-- Items are ordered by recovery value, with progression currencies such as
-  Component Kits near the top. Crafted objects use the installed game's
-  recipe ingredients, while every other game or modded item receives a
-  stable category fallback.
-- **Remove Item** creates and verifies a backup, then removes only that
-  pickup's Harvestable entity and matching Lua-storage record.
-- **Clear Expired** removes only pickups marked **Pending World Cleanup**,
-  leaving active dropped items untouched.
-- **Item Totals** opens a combined inventory-style report showing the total
-  quantity and stack count for every decoded item type.
-- **Clear All Dropped Items** removes every safely decoded loose pickup shown
-  in the report.
-- Unreadable or ambiguous records are skipped and reported; Raid Rescue never
-  guesses which database row belongs to an item.
+## Performance scanner
 
-Normal loose loot lasts one in-game hour. The displayed countdown is based on
-the saved game tick and advances only while the world is running.
+The performance scanner streams supported world records on a background
+thread. It currently measures proven, cell-located `Harvestable` and `Unit`
+records rather than guessing about unsupported database tables.
 
-### 5. Choose a raid repair
+Each result includes:
 
-Scroll to the bottom of the diagnostic:
+- world and cell coordinates;
+- record counts and stored payload bytes;
+- category totals;
+- measured 3-by-3 neighborhood evidence;
+- deterministic severity and confidence explanations;
+- coverage and unsupported-schema warnings;
+- the largest supported records encountered;
+- a bounded, paged World Explorer.
 
-- **Resolve & Clear Raids** releases the growing crops registered to every
-  stored raid and then removes the stored raid schedule.
-- **Repair Orphaned Crops** appears when Raid Rescue finds crops that are still
-  waiting for a raid even though no active raid references them. This repairs
-  crops stranded by an older clear.
+The scanner fingerprints the source before and after scanning. If the save
+changes or Scrap Mechanic starts, ScrapLab rejects the stale result. Exported
+`ScrapLab-Performance-Report-v3.json` files omit the local save path, raw Lua
+payloads, Steam IDs, and player-identifying data.
 
-The old cumulative hotfix button is hidden because Scrap Mechanic now includes
-an official raid correction. **Resolve & Clear Raids** remains useful for a
-save that already contains unwanted persisted raid state. Close Scrap Mechanic
-before repairing a save.
+Hotspot results are leads for investigation, not promises of FPS improvement.
+A dense cell can be legitimate, and unsupported record types may still affect
+performance.
 
-![Warnings and raid recovery controls](docs/images/03-review-and-clear.png)
+## Loose items
 
-Read the confirmation and choose **Yes**. Raid Rescue then:
+Loose pickups do not load during the normal world analysis. Choose
+**Scan Loose Items** when you want the inventory report.
 
-1. checks the save database;
-2. creates a complete timestamped backup beside the save;
-3. verifies the backup;
-4. validates every live crop registered to the stored raids;
-5. changes only those crops' `hasSurvivedRaid` flag to `true`;
-6. clears the exact base-game raid-manager record in the same transaction;
-7. verifies the rewritten crop storage and checks the repaired save again.
+- Items are sorted by recovery value, with progression resources near the top.
+- Installed game recipes are used when ScrapLab can prove an item's material
+  value; unknown or modded items receive a stable category fallback.
+- **Remove Item** changes only the selected decoded pickup and its matching
+  Lua-storage record.
+- **Clear Expired** removes only pickups already marked pending world cleanup.
+- **Clear All Dropped Items** removes every safely decoded pickup in the report.
+- Ambiguous or unreadable records are skipped instead of guessed.
 
-Missing crop references are treated as stale and skipped. If a referenced live
-crop or its Lua storage cannot be decoded exactly, Raid Rescue disables the
-clear action instead of guessing.
+Placed blocks, creations, player inventories, containers, quests, and ordinary
+world structures are not treated as loose pickups.
 
-## Tutorial and Help
+## Raid recovery
 
-- The first-run prompt offers a guided tour and can be declined safely.
-- The tour spotlights the real interface and explains world selection,
-  read-only analysis, raid cards, loose-item cards, backups, and save cleanup.
-- Open the **?** button at any time for the full field manual.
-- **Replay Tutorial** starts the tour immediately.
-- **Reset First-Run Prompt** makes the welcome question appear the next time
-  Raid Rescue starts.
+Scrap Mechanic has officially corrected the original permanent-raid bug, so
+ScrapLab no longer presents the old game hotfix button. Offline recovery tools
+remain for worlds that already contain unwanted persisted state:
 
-The tutorial preference is a tiny local file stored under:
+- **Resolve & Clear Raids** releases every verified registered crop and then
+  removes the base-game raid-manager record.
+- **Repair Orphaned Crops** repairs growing crops still waiting for a raid when
+  no active stored raid references them.
+
+Already-spawned robot units are left in the world. Automatically deleting
+arbitrary offline units could remove unrelated robots.
+
+## Safety
+
+ScrapLab follows a fail-closed workflow:
+
+1. Confirm Scrap Mechanic is closed.
+2. Integrity-check the selected SQLite database.
+3. Create a full timestamped backup beside the save.
+4. Verify the backup before writing.
+5. Re-read the affected records immediately before the change.
+6. Make only the selected edit in a transaction.
+7. Integrity-check and re-analyze the result.
+
+New backups look like:
 
 ```text
-%LOCALAPPDATA%\Raid Rescue\preferences.ini
+MySurvivalWorld.scraplab-backup-20260731-143522-184.db
 ```
 
-It contains only the tutorial version and no save data or personal information.
+To restore one, close the game, preserve the repaired file somewhere else,
+copy the backup, and rename the copy to the world's original `.db` filename.
+Legacy `.raidrescue-backup` files remain valid restore sources.
 
-### 6. Test the repaired world
+## Optional Mod Workshop
 
-Open Scrap Mechanic, load the world, and confirm that the permanent raid is
-gone. Play briefly and save normally. Keep the backup until you are confident
-the world is working.
+Click the small ScrapLab emblem at the far left of the title bar to open the
+hidden workshop. These patches change installed Scrap Mechanic Lua files, not
+the selected save database.
 
-## What Raid Rescue changes
+| Mod | Effect |
+| --- | --- |
+| **Developer Commands** | Unlocks the game's Survival chat commands with configurable Host Only or Every Player access. |
+| **Resource Locator Dots** | Makes refineable resource cores and haybot spines visible with the Connect Tool. |
+| **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
+| **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
+| **Dual-Fluid Water Cannon** | Accepts logic, water, and chemical inputs and fires every available liquid on one OFF-to-ON pulse. |
 
-Raid Rescue can release the exact growing crops registered to saved raids and
-remove the base-game raid-manager record that schedules and tracks those raids.
-It can also repair a growing crop with `hasSurvivedRaid = false` when no active
-raid references that crop. When the user chooses a dropped-item action, it can
-remove the explicitly selected loose loot harvestable and its matching Lua
-storage record, or every safely decoded loose pickup shown in the report.
+Every workshop action preflights all targets before writing, creates
+SHA-256-verified backups, replaces files atomically, verifies the outputs, and
+rolls the entire operation back if one target fails. Backup retention is
+bounded rather than growing forever.
 
-It does **not** edit:
+After Steam installs a new game build, installed-state receipts are compared
+with the actual Lua files. Compatible updated scripts may be patched only when
+every protected snippet and structural guard remains exact. Changed protected
+code, partial patches, duplicate targets, and unrelated modifications on a
+known build are blocked without writing.
 
-- player inventories;
-- creations or buildings;
-- quests;
-- containers;
-- player records;
-- unrelated world objects.
+> **Dual-Fluid Water Cannon warning:** disconnect Chemical Containers from
+> mounted water cannons and save each affected world before disabling the mod,
+> running Steam Verify, or allowing a game update to restore the original
+> two-input script.
 
-If raid robots have already spawned into the world, their world-unit records
-are intentionally left alone. Automatically deleting arbitrary units offline
-could remove unrelated robots. The raid schedule itself is still cleared.
+Developer commands and optional mods can permanently change gameplay. Back up
+important worlds and use Every Player command access only with trusted players.
 
-## Automatic backup
+## Updates and migration
 
-The verified backup is placed beside the selected save and looks like:
+ScrapLab checks the latest stable GitHub release shortly after startup and
+every 30 minutes while open. Network failures remain quiet and every offline
+tool continues working.
+
+One-click update accepts only official HTTPS assets, requires GitHub's
+published SHA-256 digests, verifies product names and versions, and uses the
+fixed updater companion for bounded rollback. Updating the application does
+not open a save or reinstall optional mods.
+
+On first start, ScrapLab copies missing compatible data from:
 
 ```text
-MySurvivalWorld.raidrescue-backup-20260728-161319-395.db
+%LOCALAPPDATA%\Raid Rescue
 ```
 
-### Restore a backup
+to:
 
-1. Close Scrap Mechanic.
-2. Open the world's `Survival` save folder.
-3. Move the repaired `.db` file somewhere safe.
-4. Copy the `raidrescue-backup` file.
-5. Rename the copy to the original world's exact `.db` filename.
-6. Start Scrap Mechanic and load the world.
+```text
+%LOCALAPPDATA%\ScrapLab
+```
 
-## Super Secret Mods
-
-Click the small Raid Rescue emblem at the far left of the title bar to open the
-hidden patch bay. Turn on the master switch, then install any optional mod:
-
-- **Resource Locator Dots** reveals haybot spines and refineable wood, stone,
-  and metal cores while the Connect Tool is equipped. The game requires one
-  output slot before it will draw the dot, so the patch exposes one inactive
-  logic output. It never sends an ON signal.
-- **Revival Buff Recovery** records the exact set of pizza and veggie-burger
-  buffs a player has when knocked out, then restores all of them if that player
-  is revived with a real Revival Baguette. Normal respawns and forced revivals
-  still clear the snapshot and buffs normally. A downed player's snapshot is
-  stored independently by the host, so reconnecting before the baguette revive
-  does not lose it.
-- **Developer Commands** unlocks Scrap Mechanic's existing Survival developer
-  chat commands. Its **Host Only** option is recommended and grants them only
-  to the player hosting the world. **Every Player** gives the command list to
-  every joined player while connected; `/kick` and `/ban` remain host-only.
-  Available tools include `/unlimited`, `/limited`, `/god`, `/spawn`, item and
-  weapon grants, time controls, player utilities, aggro controls, and raid
-  commands. Neither option enables the server's full `g_survivalDev` mode.
-- **Chemical Fertilizer Splash** makes a player chemical projectile fertilize
-  the exact normal-soil plot, growing crop, or growbed it hits. A red Farmbot's
-  pesticide projectile fertilizes supported plots in a 2.5-block radius around
-  its impact.
-- **Dual-Fluid Water Cannon** lets a mounted water cannon accept one Water
-  Container and one Chemical Container. Each OFF-to-ON logic pulse consumes
-  one of every available liquid and fires both projectiles along the same
-  muzzle path. Its built-in tank remains water-only.
-
-These mods are independent from save repair. Scrap Mechanic must be closed
-before changing them. On the known game build,
-each operation still accepts only verified whole-file checksums. On a later
-verified Steam build, Raid Rescue can adapt when every protected code snippet
-and required callback is still an exact match. Formatting or comments inside a
-protected snippet count as a change and block the operation; unrelated changes
-elsewhere in the file are preserved.
-
-Before writing, Raid Rescue reads Steam's manifest, verifies file timestamps,
-preflights every target, creates every output in memory, and makes
-checksum-verified backups. Multi-file mods and dependencies remain
-all-or-nothing and roll back together if any final hash fails. Removing
-Chemical Fertilizer Splash restores whichever verified state existed before
-installation. Dual-Fluid Water Cannon requires Chemical Fertilizer Splash;
-Raid Rescue automatically
-installs the dependency and removes the cannon first if the fertilizer mod is
-removed.
-
-Adaptive installations keep one bounded active receipt under
-`%LOCALAPPDATA%\Raid Rescue\Patch State\Active`. If the installed files are
-unchanged, removal restores the exact pre-install bytes. If unrelated edits
-were made afterward but all Raid Rescue snippets remain intact, removal
-surgically reverses only those snippets. A partial, duplicated, or edited Raid
-Rescue snippet blocks removal without writing.
-
-After a Steam update, secret mods are never reinstalled automatically. Their
-switches turn off and show **Game Updated - Re-enable** when the protected
-files remain safe. Re-enabling an intact patch refreshes the generated bundle
-without needlessly rewriting unchanged Lua. **Game Update Changed
-Required Code**, **Other Modification Detected**, or **Partial Patch - Repair
-Required** means Raid Rescue refused to guess.
-
-Secret-mod backups use bounded retention. Raid Rescue keeps the two newest
-verified folders for each install, remove, or configure action and removes older
-superseded copies only after a change succeeds and its final checksums pass.
-Cleanup matches only exact Raid Rescue timestamped folder names; unknown folders
-and manual backups are left untouched.
-
-> [!WARNING]
-> Developer commands can permanently change the active world. Installing
-> Developer Commands does not edit a save, but Raid Rescue cannot undo items,
-> units, raid state, time changes, or other effects produced by commands.
-> **Every Player** should be used only with people you completely trust because
-> any joined player can run world-changing commands. Back up important worlds
-> before experimenting.
-
-> [!CAUTION]
-> Before disabling Dual-Fluid Water Cannon, disconnect every Chemical Container
-> from every mounted water cannon while the mod is still installed, save every
-> affected world, and close the game. Restoring the original two-input cannon
-> script while those third connections remain can prevent a creation or world
-> from loading correctly. Steam Verify and game updates can also restore the
-> original script, so perform the same cleanup before either one.
-
-## What the diagnostic shows
-
-- SQLite integrity and repair readiness
-- Save version, game tick, and file size
-- Raid tier, state, threat value, decoded world name, and coordinates
-- Planned robot total, spawn groups, and robot composition
-- Crops and planting records that triggered the raid
-- Missing crop references that can indicate a permanent raid
-- Orphaned crop-growth flags left behind by an older raid clear
-- Stored timing and spawn-point state
-
-## Frequently asked questions
-
-### My world is not in the list
-
-Click **Browse** and select the `.db` file manually. The standard folder is
-shown above. Make sure you choose a Survival save, not a backup from a different
-world.
-
-### The Resolve & Clear Raids button is disabled
-
-Close Scrap Mechanic completely, including any game process still stopping in
-the background. Reopen Raid Rescue and analyze the world again. If the game is
-already closed, review the warning above the raid cards: the action also stays
-locked when a live registered crop cannot be decoded and released safely.
-
-### My crops stopped growing after I cleared a raid with an older version
-
-Close Scrap Mechanic and analyze the affected world. Raid Rescue identifies
-growing crops whose raid-survival flag is still false but which are not
-referenced by any active raid. Select **Repair Orphaned Crops** to create a
-verified backup and release only those proven orphaned crops.
-
-### Patch Bay says Compatible Game Update
-
-Steam installed a different build, but the exact code protected by that secret
-mod is unchanged. Close the game and toggle the mod normally. Raid Rescue
-resets the generated script bundle, preserves unrelated updated code, and
-records the build activation.
-
-### Patch Bay says required code changed or another modification was detected
-
-Do not force the patch. The game update, another mod, or a manual edit changed
-something Raid Rescue must understand exactly. **Verify integrity of game
-files** can restore official files, but a newly changed protected feature may
-need a Raid Rescue update first.
-
-### It says there are no raids
-
-The selected save does not currently contain a stored base-game raid-manager
-record. Confirm that you selected the correct world. Modded raid systems may
-store their data differently and are not automatically removed.
-
-### Will this delete my builds or inventory?
-
-No. Raid repair targets one exact base-game raid-manager record. Loose-item
-cleanup targets only the pickups shown in its confirmation; it does not edit
-player inventories, containers, placed blocks, or creations. A complete
-verified backup is made first.
-
-### Some raid robots are still standing in the world
-
-Raid Rescue clears the raid schedule, but deliberately does not delete spawned
-world units. Remove remaining robots normally in-game.
-
-### Does it upload my save?
-
-No. Raid Rescue never uploads a save. Save analysis and repair work locally and
-offline. The only normal internet request is the background version check
-against the official GitHub Releases API; selecting **Update + Restart** also
-downloads the official release executable.
-
-### Automatic update could not replace the EXE
-
-Keep the app in a folder where your Windows account can write files, close any
-antivirus window that is holding the EXE, and try again. A failed preparation
-does not close or change the running copy. A failure after restart triggers the
-verified previous-executable rollback.
-
-## Compatibility
-
-- Windows 10 or Windows 11
-- Scrap Mechanic Chapter 2 Survival database format
-- No installer or external dependency downloads
-- Background app-update checks use the official GitHub Releases API; the
-  one-click updater verifies GitHub's SHA-256 digest and the downloaded
-  executable version before replacement.
-- Save repair requires no administrator rights
-- Windows requests administrator confirmation once per Raid Rescue session;
-  subsequent supported secret-mod actions reuse that protected session.
-- Super Secret Mods recognize known build `24417028` / `1.0.2.870` by verified
-  hashes and can adapt to a different valid Steam build only when every
-  protected snippet and structural guard remains exact.
-
-Legacy pre-Chapter-2 saves are detected and left unchanged.
+Preferences, active patch receipts, and verified game-script backups are
+migrated without deleting or overwriting the legacy originals. Legacy in-game
+Lua identifiers intentionally remain unchanged so installed Raid Rescue
+patches can still be detected, configured, and removed safely.
 
 ## Build from source
 
-The source is in [`source`](source). On Windows, run:
+On Windows, run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-The three compiled programs are written to `dist`, and the complete portable
-ZIP is written to `release\RaidRescue-1.16.0.zip`. The build uses the .NET
-Framework compiler included with Windows and links only Windows framework
-assemblies.
+The build uses the .NET Framework compiler included with Windows and produces:
 
-Release builds are Authenticode-signing ready. Set
-`RAID_RESCUE_SIGN_CERT_SHA1` to the code-signing certificate thumbprint and
-make `signtool.exe` available before running the build; all three programs are
-then signed with the same certificate and timestamped. At runtime, a signed
-main app refuses companions or updates signed by a different publisher.
+```text
+dist\ScrapLab.exe
+dist\ScrapLab.PatchHelper.exe
+dist\ScrapLab.Updater.exe
+release\ScrapLab-2.0.0.zip
+```
 
-## Privacy and game assets
+No runtime dependency download is required. To Authenticode-sign a release,
+set `SCRAPLAB_SIGN_CERT_SHA1` to the certificate thumbprint and make
+`signtool.exe` available. The legacy `RAID_RESCUE_SIGN_CERT_SHA1` variable is
+also accepted for existing build machines.
 
-Raid Rescue reads only the local save chosen by the user. When Scrap Mechanic
-is installed, the app privately loads the game's Shentox and Inter fonts at
-runtime to match the game's interface. Those fonts are not copied into or
-redistributed with Raid Rescue.
+Regression coverage includes database integrity, Lua-storage rewrites,
+dropped-item safety, adaptive patch transactions, companion boundaries,
+update validation, product migration, performance aggregation and ranking,
+operation cancellation, World Explorer paging, and privacy-safe export.
 
-For smoother rendering, the app creates two per-user Windows feature-control
-values for `RaidRescue.exe`: IE11 standards mode and GPU rendering. These
-settings apply only to Raid Rescue, require no administrator access, and do not
-send any information over the internet.
+## Privacy
 
-Raid Rescue is an unofficial community tool and is not affiliated with or
-endorsed by Axolot Games.
+Save inspection and repair happen locally. ScrapLab never uploads a world.
+The only routine network request is the GitHub release check. Installed Scrap
+Mechanic fonts and item icons are read locally at runtime and are not bundled
+with this repository.
+
+## Disclaimer
+
+ScrapLab is an unofficial community project and is not affiliated with or
+endorsed by Axolot Games. Keep backups and test repaired worlds before deleting
+their recovery copies.

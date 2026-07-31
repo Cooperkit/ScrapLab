@@ -15,7 +15,7 @@ namespace RaidRescue
     internal static class PatchHelperClient
     {
         private const string HelperProduct =
-            "Raid Rescue Patch Helper for Scrap Mechanic";
+            "ScrapLab Patch Helper for Scrap Mechanic";
         private static readonly object Sync = new object();
         private static Process brokerProcess;
         private static NamedPipeServerStream brokerServer;
@@ -134,7 +134,7 @@ namespace RaidRescue
             }
 
             string helper = GetValidatedHelper();
-            string pipeName = "RaidRescue-Patch-" +
+            string pipeName = "ScrapLab-Patch-" +
                 Guid.NewGuid().ToString("N");
             brokerServer = CreateCurrentUserPipe(pipeName);
             ProcessStartInfo start = new ProcessStartInfo

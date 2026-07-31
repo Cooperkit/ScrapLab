@@ -1,9 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$mainPath = Join-Path $root 'dist\RaidRescue.exe'
-$patchPath = Join-Path $root 'dist\RaidRescue.PatchHelper.exe'
-$updaterPath = Join-Path $root 'dist\RaidRescue.Updater.exe'
+$mainPath = Join-Path $root 'dist\ScrapLab.exe'
+$patchPath = Join-Path $root 'dist\ScrapLab.PatchHelper.exe'
+$updaterPath = Join-Path $root 'dist\ScrapLab.Updater.exe'
 
 function Assert-True([bool]$Condition, [string]$Message) {
     if (-not $Condition) {

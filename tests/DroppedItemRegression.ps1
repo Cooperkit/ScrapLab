@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if ([String]::IsNullOrWhiteSpace($RaidRescueExe)) {
-    $RaidRescueExe = Join-Path $PSScriptRoot '..\dist\RaidRescue.exe'
+    $RaidRescueExe = Join-Path $PSScriptRoot '..\dist\ScrapLab.exe'
 }
 
 function Assert-True {

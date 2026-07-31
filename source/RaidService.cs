@@ -165,7 +165,7 @@ namespace RaidRescue
                     result.Success = false;
                     result.CanClear = false;
                     result.Error =
-                        "Safety lock: Scrap Mechanic is running. Raid Rescue did not open the save database. " +
+                        "Safety lock: Scrap Mechanic is running. ScrapLab did not open the save database. " +
                         "Close the game completely and try again.";
                     result.Warnings.Add(
                         "World analysis is locked while Scrap Mechanic is running.");
@@ -188,7 +188,7 @@ namespace RaidRescue
                     result.CanClear = false;
                     result.Error =
                         "Safety lock: Scrap Mechanic started before analysis. " +
-                        "Raid Rescue did not open the save database.";
+                        "ScrapLab did not open the save database.";
                     result.Warnings.Add(
                         "Close Scrap Mechanic completely before analyzing a world.");
                     return result;
@@ -200,7 +200,7 @@ namespace RaidRescue
                     if (!String.Equals(result.DatabaseStatus, "ok", StringComparison.OrdinalIgnoreCase))
                     {
                         result.Warnings.Add(
-                            "SQLite reported database damage. Raid Rescue will not edit this file.");
+                            "SQLite reported database damage. ScrapLab will not edit this file.");
                     }
 
                     long saveVersion;
@@ -214,7 +214,7 @@ namespace RaidRescue
                     {
                         throw new InvalidDataException(
                             "This save uses Scrap Mechanic's legacy pre-Chapter-2 database format. " +
-                            "Raid Rescue did not change it.");
+                            "ScrapLab did not change it.");
                     }
 
                     long rowId;
@@ -1697,13 +1697,13 @@ namespace RaidRescue
             string extension = Path.GetExtension(path);
             string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture);
             string candidate = Path.Combine(
-                directory, name + ".raidrescue-backup-" + stamp + extension);
+                directory, name + ".scraplab-backup-" + stamp + extension);
             int suffix = 2;
             while (File.Exists(candidate))
             {
                 candidate = Path.Combine(
                     directory,
-                    name + ".raidrescue-backup-" + stamp + "-" +
+                    name + ".scraplab-backup-" + stamp + "-" +
                     suffix.ToString(CultureInfo.InvariantCulture) + extension);
                 suffix++;
             }

@@ -21,7 +21,7 @@ namespace RaidRescue
         {
             if (String.IsNullOrEmpty(path) || !File.Exists(path))
                 throw new FileNotFoundException(
-                    "A required Raid Rescue companion is missing.", path);
+                    "A required ScrapLab companion is missing.", path);
 
             string currentDirectory = Path.GetDirectoryName(Path.GetFullPath(
                 Assembly.GetExecutingAssembly().Location));
@@ -31,7 +31,7 @@ namespace RaidRescue
                 currentDirectory, companionDirectory,
                 StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException(
-                    "A companion program must be beside RaidRescue.exe.");
+                    "A companion program must be beside ScrapLab.exe.");
 
             FileVersionInfo info = FileVersionInfo.GetVersionInfo(path);
             if (!String.Equals(
@@ -49,7 +49,7 @@ namespace RaidRescue
                     companion.Minor != current.Minor ||
                     companion.Build != current.Build)
                     throw new InvalidDataException(
-                        "The patch helper does not match this Raid Rescue version. " +
+                        "The patch helper does not match this ScrapLab version. " +
                         "Install the complete release bundle.");
             }
 
@@ -65,7 +65,7 @@ namespace RaidRescue
                 return;
             if (!HasValidAuthenticodeSignature(trustedPath))
                 throw new InvalidDataException(
-                    "The trusted Raid Rescue program has an invalid Authenticode signature.");
+                    "The trusted ScrapLab program has an invalid Authenticode signature.");
             X509Certificate2 candidate = TryGetSigner(candidatePath);
             if (candidate == null ||
                 !HasValidAuthenticodeSignature(candidatePath) ||
