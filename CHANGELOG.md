@@ -1,5 +1,42 @@
 # Changelog
 
+## Unreleased
+
+## 2.4.0 - 2026-08-03
+
+- Added the save-sensitive **Raid Detector** Super Secret Mod with permanent
+  UUID `a638a8aa-6f4f-41c2-9e31-702687066092`. The beacon-housed part checks
+  its current world every ten fixed ticks and outputs logic while a scheduled
+  or active raid is within a 256-meter 3D sphere.
+- Added a repeatable Hideout Trader purchase costing four Caged Farmers,
+  default-unlocked trade registration, isolated ScrapLab part script and shape
+  set, and localized inventory descriptions for all 11 shipped languages.
+- Added the shared, versioned **ScrapLab Icon Pack** coordinator. Installing the
+  first custom-part mod writes every currently shipped ScrapLab icon in one
+  pass; later mod toggles change only their XML registrations. Cells are chosen
+  from the verified transparent bottom-right of the atlas upward to reduce
+  collisions with future official icons. The PNG changes again only for a
+  catalog expansion or final custom-part removal, and one bounded baseline and
+  catalog receipt avoids duplicating the 11 MB atlas per mod.
+- Added atomic 19-target preflight, verified backups, rollback, exact/surgical
+  removal, adaptive update handling, cache invalidation, Patch Bay status and
+  filtering, Help guidance, and a save-sensitive removal confirmation.
+- Added Raid Detector transaction regression coverage, including restart
+  detection, owned-file tamper blocking, shared-atlas retention, and byte-exact
+  restoration.
+- Replaced the Raid Detector's opaque blue icon background with true alpha
+  transparency. Existing verified installations expose a one-click icon update
+  that changes only the managed 96x96 atlas tile and preserves their original
+  clean uninstall backups.
+- Fixed the Raid Detector's server-side world lookup. Definition 2 now obtains
+  the world through the interactable body, allowing its output to remain on
+  throughout both the scheduled countdown and active raid instead of every scan
+  failing on Scrap Mechanic's unsupported `Shape.getWorld` member.
+- Added a safe definition-1 migration that can install the raid-logic and
+  transparent-icon fixes together, changes only verified legacy assets, keeps
+  existing detector UUIDs registered, and preserves the original uninstall
+  receipt and backups.
+
 ## 2.3.0
 
 - Added the independent **Better Freezer & Beehive** Patch Bay mod. Freezers

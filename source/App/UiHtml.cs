@@ -896,7 +896,7 @@ button{font:inherit}
         </svg>
       </div>
       <div class=""secret-mods-heading""><strong id=""secretModsTitle"">SUPER SECRET MODS</strong><span>EXPERIMENTAL PATCH BAY · AUTHORIZED MECHANICS ONLY</span></div>
-      <div class=""secret-head-count"" id=""secretModHeadCount"">0 ACTIVE / 8 AVAILABLE</div>
+      <div class=""secret-head-count"" id=""secretModHeadCount"">0 ACTIVE / 10 AVAILABLE</div>
       <button type=""button"" class=""secret-mods-close"" aria-label=""Return to World Lab"" onclick=""closeSecretMods()"">WORLD LAB</button>
     </div>
     <div class=""secret-mods-body"">
@@ -918,6 +918,7 @@ button{font:inherit}
             <button type=""button"" class=""secret-category"" data-category=""machinery"" onclick=""setSecretCategory('machinery',this)"">MACHINERY</button>
             <button type=""button"" class=""secret-category"" data-category=""mining"" onclick=""setSecretCategory('mining',this)"">MINING</button>
             <button type=""button"" class=""secret-category"" data-category=""farming"" onclick=""setSecretCategory('farming',this)"">FARMING</button>
+            <button type=""button"" class=""secret-category"" data-category=""raids"" onclick=""setSecretCategory('raids',this)"">RAID LOGIC</button>
             <button type=""button"" class=""secret-category"" data-category=""survival"" onclick=""setSecretCategory('survival',this)"">SURVIVAL</button>
           </nav>
           <div class=""secret-side-spacer""></div>
@@ -926,7 +927,7 @@ button{font:inherit}
         </aside>
         <section class=""secret-catalog"">
       <div class=""secret-mods-catalog-head"">
-        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 9 AVAILABLE</span></div>
+        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 10 AVAILABLE</span></div>
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""SEARCH PATCH CATALOG..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
@@ -968,6 +969,15 @@ button{font:inherit}
           <div class=""secret-mod-actions"">
             <button type=""button"" class=""secret-mod-options"" id=""betterPlasmaDrillsUpdate"" aria-label=""Update Better Plasma Drills damage"" onclick=""updateBetterPlasmaDrillsMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-switch"" id=""betterPlasmaDrillsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Plasma Drills"" onclick=""toggleBetterPlasmaDrillsMod()"" disabled=""disabled"">
+              <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+            </button>
+          </div>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""raidDetectorRow"" data-category=""raids automation"" data-search=""raid detector sensor beacon logic scheduled active 256 meter trader caged farmer automation save sensitive"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">RAIDS &middot; LOGIC AUTOMATION &middot; SAVE-SENSITIVE</span><strong>RAID DETECTOR</strong><span>Output a logic signal while a scheduled or active raid is within 256 meters.</span><em id=""raidDetectorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""raidDetectorReason""></span></div>
+          <div class=""secret-mod-actions"">
+            <button type=""button"" class=""secret-mod-options"" id=""raidDetectorUpdate"" aria-label=""Update Raid Detector"" onclick=""updateRaidDetectorMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-switch"" id=""raidDetectorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Raid Detector"" onclick=""toggleRaidDetectorMod()"" disabled=""disabled"">
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
           </div>
@@ -1042,6 +1052,20 @@ button{font:inherit}
       <div class=""hotfix-foot-note"">Counts include only decoded loose pickups, not containers, player inventories, or placed creations.</div>
       <div class=""hotfix-buttons""><button type=""button"" class=""btn btn-primary"" onclick=""closeItemSummary()"">CLOSE REPORT</button></div>
     </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal cannon-danger-modal"" id=""raidDetectorDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""raidDetectorDangerTitle"" onclick=""raidDetectorDangerBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""raidDetectorDangerTitle"">SAVE PART COMPATIBILITY DANGER</strong><span>RAID DETECTOR REMOVAL</span></div></div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"">Removing this mod unregisters the permanent Raid Detector UUID. A world that still contains the part may lose it or fail to load correctly.</p>
+      <ul class=""hotfix-checks""><li>Cancel and launch Scrap Mechanic while Raid Detector is still installed.</li><li>Remove every detector from worlds, inventories, containers, and lifts.</li><li>Save every affected world, exit completely, and wait for ScrapLab to unlock.</li></ul>
+      <div class=""hotfix-stop"">DO NOT CONTINUE WHILE A RAID DETECTOR STILL EXISTS IN ANY SAVE.</div>
+      <div class=""cannon-danger-ack""><label><input type=""checkbox"" id=""raidDetectorDangerAck"" onchange=""updateRaidDetectorDangerConfirm()"" /><span class=""cannon-danger-box""></span><span>I removed every Raid Detector and saved all affected worlds.</span></label></div>
+    </div>
+    <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Cancel is the safe choice if you are not completely sure.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" id=""raidDetectorDangerCancel"" onclick=""closeRaidDetectorDangerConfirm()"">CANCEL</button><button type=""button"" class=""btn hotfix-confirm"" id=""raidDetectorDangerConfirmButton"" onclick=""confirmRaidDetectorDangerChange()"" disabled=""disabled""><span>!</span>I REMOVED EVERY RAID DETECTOR - DISABLE</button></div></div>
   </div>
 </div>
 
@@ -1279,6 +1303,21 @@ button{font:inherit}
           <div class=""help-item""><b>LARGER OUTPUT BUFFER</b><p>Finished storage increases to 2,500 ice and 100 beeswax. Finished items remain in the original floating pickup output rather than occupying input slots.</p></div>
           <div class=""help-item""><b>SAFE REMOVAL</b><p>No UUIDs change. Five-slot containers created by the mod remain five slots in that save after removal, and output above vanilla limits remains collectable before vanilla production resumes.</p></div>
         </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; RAID DETECTOR</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>HOW TO GET IT</b><p>Buy Raid Detectors repeatedly from the unlocked Hideout Trader. Each detector costs four Caged Farmers taken through the Hideout vacuum system.</p></div>
+          <div class=""help-item""><b>256-METER RAID SCAN</b><p>The detector checks a true 3D sphere around itself. Its logic output stays on whenever a scheduled or active raid in the same world has a center within 256 meters.</p></div>
+          <div class=""help-item""><b>LOGIC AUTOMATION</b><p>Connect the detector output to lights, alarms, doors, defenses, or controllers. It refreshes every ten fixed ticks, so state changes appear within about 0.25 seconds.</p></div>
+          <div class=""help-item""><b>BEACON HOUSING</b><p>The part reuses Scrap Mechanic's official beacon model without creating a map marker, opening the beacon menu, or playing its alarm sound. The beacon UV animation runs only while a raid is detected.</p></div>
+          <div class=""help-item""><b>TRANSPARENT ICON UPDATE</b><p>Older verified installations may show an Update action. It safely replaces only the managed 96x96 atlas tile to remove the old blue background; it does not unregister the detector.</p></div>
+          <div class=""help-item""><b>RAID LOGIC FIX</b><p>The definition-2 update repairs the detector's server-side world lookup. Existing detectors then stay on through the scheduled countdown and active attack without being removed or replaced.</p></div>
+          <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Remove every Raid Detector from worlds, inventories, containers, and lifts, then save and close the game before disabling the mod.</p></div>
+          <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes any registration, ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>. Reinstall before opening a world that may contain a detector.</p></div>
+        </div>
+        <div class=""help-danger""><b>CUSTOM PART UUID.</b> Disabling the mod while a Raid Detector still exists can remove the part or prevent an affected world from loading correctly.</div>
       </div>
 
       <div class=""help-section"">
@@ -1542,6 +1581,11 @@ var secretBetterPlasmaDrillsNeedsUpdate=false;
 var secretBetterPlasmaDrillsCompatibility='';
 var secretBetterPlasmaDrillsCanApply=true;
 var secretBetterPlasmaDrillsReason='';
+var secretRaidDetectorInstalled=false;
+var secretRaidDetectorNeedsUpdate=false;
+var secretRaidDetectorCompatibility='';
+var secretRaidDetectorCanApply=true;
+var secretRaidDetectorReason='';
 var secretDeveloperCommandsInstalled=false;
 var secretDeveloperCommandsError='';
 var secretDeveloperCommandsCompatibility='';
@@ -1560,6 +1604,7 @@ var secretDualFluidCannonCanApply=true;
 var secretDualFluidCannonReason='';
 var secretModBusy=false;
 var secretModBusyTarget='';
+var secretRaidDetectorDangerAction='';
 var secretPlasmaDangerAction='';
 var secretDependencyAction='';
 var secretCannonDangerAction='';
@@ -1631,7 +1676,7 @@ function loadAppUpdateState(){
 function escPlain(value){return value===null||typeof value==='undefined'?'':String(value);}
 function updateUiBlocked(){
  if(operationBusy||tutorialActive||updateInstallBusy)return true;
- var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','cannonDangerModal','secretModsLayer'];
+ var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','secretModsLayer'];
  for(var i=0;i<ids.length;i++){
   var node=document.getElementById(ids[i]);
   if(node&&String(node.className).indexOf('show')>=0)return true;
@@ -1839,9 +1884,13 @@ function captureSecretCompatibility(kind,data){
    secretBetterFreezerBeehiveCanApply=canApply;
    secretBetterFreezerBeehiveReason=reason;
   }else if(kind==='plasma'){
-  secretBetterPlasmaDrillsCompatibility=state;
-  secretBetterPlasmaDrillsCanApply=canApply;
-  secretBetterPlasmaDrillsReason=reason;
+   secretBetterPlasmaDrillsCompatibility=state;
+   secretBetterPlasmaDrillsCanApply=canApply;
+   secretBetterPlasmaDrillsReason=reason;
+  }else if(kind==='detector'){
+   secretRaidDetectorCompatibility=state;
+   secretRaidDetectorCanApply=canApply;
+   secretRaidDetectorReason=reason;
  }else if(kind==='commands'){
   secretDeveloperCommandsCompatibility=state;
   secretDeveloperCommandsCanApply=canApply;
@@ -1859,7 +1908,7 @@ function captureSecretCompatibility(kind,data){
 function compatibilityStateLabel(installed,state,fallback){
  if(installed)return 'INSTALLED';
  if(state==='COMPATIBLE GAME UPDATE')return 'GAME UPDATED - RE-ENABLE';
- if(state==='REINSTALL REQUIRED - SAVE PARTS AT RISK')return 'REINSTALL REQUIRED - SAVE PARTS AT RISK';
+ if(state==='REINSTALL REQUIRED - SAVE PARTS AT RISK'||state==='REINSTALL REQUIRED - SAVE PART AT RISK')return 'REINSTALL REQUIRED - SAVE PART AT RISK';
  if(state==='GAME UPDATE CHANGED REQUIRED CODE')return 'GAME UPDATE CHANGED REQUIRED CODE';
  if(state==='OTHER MODIFICATION DETECTED')return 'OTHER MODIFICATION DETECTED';
  if(state==='PARTIAL PATCH - REPAIR REQUIRED')return 'PARTIAL PATCH \u2014 REPAIR REQUIRED';
@@ -1960,13 +2009,30 @@ function loadSecretModsState(){
    secretBetterPlasmaDrillsReason=plasmaData.Error||'Could not read the Better Plasma Drills state.';
    showSecretModFeedback(secretBetterPlasmaDrillsReason,'bad');
   }
- }catch(e){
-  secretBetterPlasmaDrillsCanApply=false;
-  secretBetterPlasmaDrillsReason='Could not read the Better Plasma Drills state.';
-  showSecretModFeedback(secretBetterPlasmaDrillsReason,'bad');
- }
- try{
-  var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
+  }catch(e){
+   secretBetterPlasmaDrillsCanApply=false;
+   secretBetterPlasmaDrillsReason='Could not read the Better Plasma Drills state.';
+   showSecretModFeedback(secretBetterPlasmaDrillsReason,'bad');
+  }
+  try{
+   var detectorData=parseResult(window.external.GetRaidDetectorModStatus());
+    if(detectorData.Success){
+     secretRaidDetectorInstalled=!!detectorData.Installed;
+     secretRaidDetectorNeedsUpdate=!!detectorData.NeedsUpdate;
+     captureSecretCompatibility('detector',detectorData);
+    installedSecretMod=installedSecretMod||secretRaidDetectorInstalled;
+   }else{
+    secretRaidDetectorCanApply=false;
+    secretRaidDetectorReason=detectorData.Error||'Could not read the Raid Detector state.';
+    showSecretModFeedback(secretRaidDetectorReason,'bad');
+   }
+  }catch(e){
+   secretRaidDetectorCanApply=false;
+   secretRaidDetectorReason='Could not read the Raid Detector state.';
+   showSecretModFeedback(secretRaidDetectorReason,'bad');
+  }
+  try{
+   var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
   if(commandData.Success){
    secretDeveloperCommandsInstalled=!!commandData.Installed;
    secretDeveloperCommandsMode=commandData.Mode==='everyone'?'everyone':'host';
@@ -2083,6 +2149,20 @@ function renderSecretModsState(){
   renderCompatibilityReason('betterPlasmaDrillsReason',secretBetterPlasmaDrillsInstalled,secretBetterPlasmaDrillsCanApply,secretBetterPlasmaDrillsReason);
   if(secretBetterPlasmaDrillsNeedsUpdate){var plasmaReason=document.getElementById('betterPlasmaDrillsReason');plasmaReason.className='secret-compat-reason show';plasmaReason.innerText=secretBetterPlasmaDrillsReason||'A verified unit-damage update is ready.';}
  }
+  var detector=document.getElementById('raidDetectorSwitch');
+  var detectorUpdate=document.getElementById('raidDetectorUpdate');
+  var detectorRow=document.getElementById('raidDetectorRow');
+ var detectorState=document.getElementById('raidDetectorState');
+ if(detector&&detectorRow&&detectorState){
+  detector.className=secretRaidDetectorInstalled?'secret-switch on':'secret-switch';
+   detector.setAttribute('aria-checked',secretRaidDetectorInstalled?'true':'false');
+   detector.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretRaidDetectorCanApply;
+   if(detectorUpdate){detectorUpdate.style.display=secretRaidDetectorNeedsUpdate?'block':'none';detectorUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretRaidDetectorCanApply;}
+   detectorRow.className='secret-mod-row secret-mod-card'+(secretRaidDetectorInstalled?' enabled':'')+((!secretModsEnabled||!secretRaidDetectorCanApply)?' locked':'');
+   detectorState.innerText=secretModBusy&&secretModBusyTarget==='detector'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretRaidDetectorNeedsUpdate?'DETECTOR UPDATE AVAILABLE':compatibilityStateLabel(secretRaidDetectorInstalled,secretRaidDetectorCompatibility,'NOT INSTALLED')));
+   renderCompatibilityReason('raidDetectorReason',secretRaidDetectorInstalled,secretRaidDetectorCanApply,secretRaidDetectorReason);
+   if(secretRaidDetectorNeedsUpdate){var detectorReason=document.getElementById('raidDetectorReason');detectorReason.className='secret-compat-reason show';detectorReason.innerText=secretRaidDetectorReason||'A verified Raid Detector update is ready.';}
+ }
  var revival=document.getElementById('revivalBuffSwitch');
  var revivalRow=document.getElementById('revivalBuffRow');
  var revivalState=document.getElementById('revivalBuffState');
@@ -2132,9 +2212,9 @@ function renderSecretModsState(){
  var count=document.getElementById('secretModCount');
  var headCount=document.getElementById('secretModHeadCount');
  if(count){
-  var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
-  count.innerText=active+' ACTIVE \u00b7 9 AVAILABLE';
-  if(headCount)headCount.innerText=active+' ACTIVE / 9 AVAILABLE';
+  var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+  count.innerText=active+' ACTIVE \u00b7 10 AVAILABLE';
+  if(headCount)headCount.innerText=active+' ACTIVE / 10 AVAILABLE';
  }
  filterSecretMods();
 }
@@ -2192,6 +2272,7 @@ function secretModsBackdropClick(e){
 }
 function toggleSecretModsEnabled(){
  if(operationBusy||secretModBusy)return;
+ if(secretModsEnabled&&secretRaidDetectorInstalled){openRaidDetectorDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretBetterPlasmaDrillsInstalled){openPlasmaDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretDualFluidCannonInstalled){openCannonDangerConfirm('masterOff');return;}
  if(secretModsEnabled){disableAllSecretModsConfirmed();return;}
@@ -2205,6 +2286,7 @@ function toggleSecretModsEnabled(){
  renderSecretModsState();
 }
 function disableAllSecretModsConfirmed(){
+ if(secretRaidDetectorInstalled&&!setRaidDetectorMod(false))return false;
  if(secretBetterPlasmaDrillsInstalled&&!setBetterPlasmaDrillsMod(false))return false;
  if(secretDualFluidCannonInstalled&&secretChemicalFertilizerInstalled){
   if(!setChemicalFertilizerMod(false))return false;
@@ -2248,6 +2330,34 @@ function toggleBetterPlasmaDrillsMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy)return;
  if(secretBetterPlasmaDrillsInstalled){openPlasmaDangerConfirm('plasmaOnly');return;}
  setBetterPlasmaDrillsMod(true);
+}
+function toggleRaidDetectorMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ if(secretRaidDetectorNeedsUpdate){setRaidDetectorMod(true);return;}
+ if(secretRaidDetectorInstalled){openRaidDetectorDangerConfirm('detectorOnly');return;}
+ setRaidDetectorMod(true);
+}
+function updateRaidDetectorMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretRaidDetectorNeedsUpdate)return;
+ setRaidDetectorMod(true);
+}
+function setRaidDetectorMod(enabled){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Raid Detector.','bad');return false;}
+ var wasDetectorUpdate=enabled&&secretRaidDetectorInstalled&&secretRaidDetectorNeedsUpdate;
+ secretModBusy=true;secretModBusyTarget='detector';operationBusy=true;
+ showSecretModFeedback(wasDetectorUpdate?'UPDATING RAID DETECTOR...':(enabled?'CALIBRATING RAID DETECTOR...':'REMOVING RAID DETECTOR REGISTRATIONS...'),'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetRaidDetectorMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The Raid Detector installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ if(!data.Success){showSecretModFeedback(data.Error||'Raid Detector could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ secretRaidDetectorInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(wasDetectorUpdate?'RAID DETECTOR UPDATED - countdown and active-raid logic are repaired.':(secretRaidDetectorInstalled?'RAID DETECTOR INSTALLED - the trader part and 256-meter logic sensor are ready.':'RAID DETECTOR REMOVED - its registrations, script, trade, and icon were restored.'),'good');
+ applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function updateBetterPlasmaDrillsMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy||!secretBetterPlasmaDrillsNeedsUpdate)return;
@@ -2644,6 +2754,36 @@ function confirmDependencyChange(){
  closeDependencyConfirm();
  if(action==='installBoth')setDualFluidCannonMod(true);
  else if(action==='removeBoth')openCannonDangerConfirm('removeBoth');
+}
+function openRaidDetectorDangerConfirm(action){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Raid Detector.','bad');return;}
+ secretRaidDetectorDangerAction=action;
+ var ack=document.getElementById('raidDetectorDangerAck');
+ ack.checked=false;
+ document.getElementById('raidDetectorDangerConfirmButton').disabled=true;
+ document.getElementById('raidDetectorDangerModal').className='hotfix-modal cannon-danger-modal show';
+ window.setTimeout(function(){document.getElementById('raidDetectorDangerCancel').focus();},30);
+}
+function updateRaidDetectorDangerConfirm(){
+ document.getElementById('raidDetectorDangerConfirmButton').disabled=!document.getElementById('raidDetectorDangerAck').checked;
+}
+function closeRaidDetectorDangerConfirm(){
+ document.getElementById('raidDetectorDangerModal').className='hotfix-modal cannon-danger-modal';
+ document.getElementById('raidDetectorDangerAck').checked=false;
+ secretRaidDetectorDangerAction='';
+}
+function raidDetectorDangerBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('raidDetectorDangerModal'))closeRaidDetectorDangerConfirm();
+}
+function confirmRaidDetectorDangerChange(){
+ if(!document.getElementById('raidDetectorDangerAck').checked)return;
+ var action=secretRaidDetectorDangerAction;
+ closeRaidDetectorDangerConfirm();
+ if(action==='masterOff'&&secretBetterPlasmaDrillsInstalled)openPlasmaDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretDualFluidCannonInstalled)openCannonDangerConfirm('masterOff');
+ else if(action==='masterOff')disableAllSecretModsConfirmed();
+ else setRaidDetectorMod(false);
 }
 function openPlasmaDangerConfirm(action){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Better Plasma Drills.','bad');return;}
@@ -3124,6 +3264,7 @@ function boot(){
   if(key===27&&document.getElementById('itemClearModal').className.indexOf('show')>=0){closeItemClearConfirm();return false;}
   if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
   if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
+   if(key===27&&document.getElementById('raidDetectorDangerModal').className.indexOf('show')>=0){closeRaidDetectorDangerConfirm();return false;}
    if(key===27&&document.getElementById('plasmaDangerModal').className.indexOf('show')>=0){closePlasmaDangerConfirm();return false;}
    if(key===27&&document.getElementById('cannonDangerModal').className.indexOf('show')>=0){closeCannonDangerConfirm();return false;}
    if(key===27&&document.getElementById('developerCommandModal').className.indexOf('show')>=0){closeDeveloperCommandConfirm();return false;}

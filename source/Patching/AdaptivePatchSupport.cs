@@ -375,6 +375,16 @@ namespace RaidRescue
             catch { }
         }
 
+        internal static string GetSharedStatePath(string fileName)
+        {
+            if (String.IsNullOrEmpty(fileName) ||
+                Path.GetFileName(fileName) != fileName ||
+                fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                throw new InvalidOperationException(
+                    "The shared patch-state file name is invalid.");
+            return Path.Combine(GetPatchStateRoot(), fileName);
+        }
+
         internal static void DiscardReceiptIfSuperseded(
             string modKey, string gamePath)
         {

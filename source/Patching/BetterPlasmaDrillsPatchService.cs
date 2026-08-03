@@ -352,6 +352,45 @@ namespace RaidRescue
             catch (InvalidDataException) { return false; }
         }
 
+        internal static bool HasIntactItemsPatch(string text)
+        {
+            return HasIntactComposablePatch(
+                text, Level4Uuid, Level5Uuid,
+                UnpatchItemsText, PatchItemsText);
+        }
+
+        internal static bool HasIntactIconsPatch(string text)
+        {
+            return HasIntactComposablePatch(
+                text, Level4Uuid, Level5Uuid,
+                UnpatchIconsText, PatchIconsText);
+        }
+
+        internal static bool HasIntactLanguagePatch(string text)
+        {
+            return HasIntactComposablePatch(
+                text, Level4Uuid, Level5Uuid,
+                UnpatchLanguageText, PatchLanguageText);
+        }
+
+        private static bool HasIntactComposablePatch(
+            string text, string firstMarker, string secondMarker,
+            Func<string, string> unpatch, Func<string, string> patch)
+        {
+            if (AdaptivePatchSupport.Count(text, firstMarker) != 1 ||
+                AdaptivePatchSupport.Count(text, secondMarker) != 1)
+                return false;
+            try
+            {
+                string clean = unpatch(text);
+                return AdaptivePatchSupport.Count(clean, firstMarker) == 0 &&
+                    AdaptivePatchSupport.Count(clean, secondMarker) == 0 &&
+                    String.Equals(patch(clean), text,
+                        StringComparison.Ordinal);
+            }
+            catch (InvalidDataException) { return false; }
+        }
+
         private static void GuardPlasma(string text)
         {
             AdaptivePatchSupport.RequireUnique(text, "PlasmaDrill = class( nil )", "Plasma Drill class");

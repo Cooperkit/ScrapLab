@@ -888,6 +888,18 @@ namespace RaidRescue
                 PatchHelperProtocol.BetterPlasmaDrills, enabled, ""));
         }
 
+        public string GetRaidDetectorModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.RaidDetector));
+        }
+
+        public string SetRaidDetectorMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.RaidDetector, enabled, ""));
+        }
+
         public string GetChemicalFertilizerModStatus()
         {
             return Serialize(PatchHelperClient.GetStatus(

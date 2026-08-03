@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.3.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.4.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -197,6 +197,7 @@ the selected save database.
 | **Better Engines** | Gives every Electric Engine gear 10,000 power and raises level-5 Electric/Gas efficiency to 40,250 points per battery or fuel item. |
 | **Better Freezer & Beehive** | Adds direct Freezer water-container input, 4x production, five input slots for newly placed machines, and larger finished-item buffers. |
 | **Better Plasma Drills** | Adds level-4 and level-5 upgrades, greater speed, battery capacity, range, beam radii up to 10, and 20–300 unit damage per second. |
+| **Raid Detector** | Adds a beacon-housed logic sensor sold by the Hideout Trader that stays on for scheduled or active raids within 256 meters. |
 | **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
 | **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
 | **Dual-Fluid Water Cannon** | Accepts logic, water, and chemical inputs and fires every available liquid on one OFF-to-ON pulse. |
@@ -205,6 +206,34 @@ Every workshop action preflights all targets before writing, creates
 SHA-256-verified backups, replaces files atomically, verifies the outputs, and
 rolls the entire operation back if one target fails. Backup retention is
 bounded rather than growing forever.
+
+**Raid Detector** is a custom, save-sensitive part with permanent UUID
+`a638a8aa-6f4f-41c2-9e31-702687066092`. Buy one repeatedly from the unlocked
+Hideout Trader for four Caged Farmers. It scans a 256-meter 3D sphere in its
+current world every ten fixed ticks and keeps one normal fan-out logic output
+on from raid scheduling through the active attack. The part reuses the vanilla
+beacon housing, animates only while detecting, and creates no map marker, menu,
+or sound. Its concept #1 artwork is part of the shared **ScrapLab Icon Pack**.
+Definition 2 uses the interactable body's world reference so the server scan
+works correctly during the complete countdown and active-attack sequence.
+When the first custom-part mod is installed, ScrapLab writes every icon shipped
+with that app version into verified transparent cells, allocating from the
+bottom-right of the atlas upward so normal game additions can continue growing
+from the top. Individual mod toggles then change only their icon's XML
+registration; the PNG is rewritten only when the pack is first installed,
+expanded by an app update, or removed with the final custom-part mod. Decoded
+pixels outside all managed cells must remain identical. One bounded baseline
+and catalog receipt is shared instead of copying the 11 MB atlas per mod.
+Custom icons use true alpha transparency. If an older verified Raid Detector
+installation still contains the opaque blue-background artwork, its Patch Bay
+card offers a safe **Update** action that replaces only that managed icon tile.
+The same Update action migrates verified definition-1 detector scripts without
+unregistering the custom part or requiring detectors to be removed from saves.
+
+> **Raid Detector save warning:** remove every detector from worlds,
+> inventories, containers, and lifts, save the affected worlds, and close the
+> game before disabling the mod. If Steam removes its registrations, reinstall
+> it before opening a world that may still contain the custom part.
 
 After Steam installs a new game build, installed-state receipts are compared
 with the actual Lua files. Compatible updated scripts may be patched only when
@@ -311,7 +340,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.3.0.zip
+release\ScrapLab-2.4.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,
@@ -320,9 +349,10 @@ set `SCRAPLAB_SIGN_CERT_SHA1` to the certificate thumbprint and make
 also accepted for existing build machines.
 
 Regression coverage includes database integrity, Lua-storage rewrites,
-dropped-item safety, adaptive patch transactions, companion boundaries,
-update validation, product migration, performance aggregation and ranking,
-operation cancellation, World Explorer paging, and privacy-safe export.
+dropped-item safety, adaptive patch transactions, companion boundaries, Raid
+Detector atlas pixel isolation and byte-exact restoration, update validation,
+product migration, performance aggregation and ranking, operation
+cancellation, World Explorer paging, and privacy-safe export.
 
 ## Privacy
 

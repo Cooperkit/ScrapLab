@@ -55,6 +55,13 @@ $freezerBeehiveParsed = $freezerBeehiveStatus | ConvertFrom-Json
 Assert-True ($null -ne $freezerBeehiveParsed.Success) `
     'The Better Freezer & Beehive helper did not return its typed result.'
 
+$raidDetectorStatus = & $patchPath --status raid-detector
+Assert-True ($LASTEXITCODE -eq 0) `
+    'The Raid Detector helper status action failed.'
+$raidDetectorParsed = $raidDetectorStatus | ConvertFrom-Json
+Assert-True ($null -ne $raidDetectorParsed.Success) `
+    'The Raid Detector helper did not return its typed result.'
+
 & $patchPath --status definitely-not-an-action 2>$null
 Assert-True ($LASTEXITCODE -eq 2) 'The helper accepted an unknown status action.'
 

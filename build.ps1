@@ -28,6 +28,18 @@ if (-not $compiler) {
     throw "The .NET Framework C# compiler was not found."
 }
 
+Add-Type -AssemblyName PresentationCore
+Add-Type -AssemblyName WindowsBase
+$presentationCore = [AppDomain]::CurrentDomain.GetAssemblies() |
+    Where-Object { $_.GetName().Name -eq 'PresentationCore' } |
+    Select-Object -First 1 -ExpandProperty Location
+$windowsBase = [AppDomain]::CurrentDomain.GetAssemblies() |
+    Where-Object { $_.GetName().Name -eq 'WindowsBase' } |
+    Select-Object -First 1 -ExpandProperty Location
+if (-not $presentationCore -or -not $windowsBase) {
+    throw "The Windows PNG codec assemblies were not found."
+}
+
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 
 $mainSources = @(
@@ -85,11 +97,18 @@ $patchSources = @(
     "Patching\BetterEnginesPatchService.cs",
     "Patching\BetterFreezerBeehivePatchService.cs",
     "Patching\BetterPlasmaDrillsPatchService.cs",
+    "Patching\ScrapLabIconAtlasCoordinator.cs",
+    "Patching\RaidDetectorPatchService.cs",
     "Patching\AdaptivePatchSupport.cs"
 ) | ForEach-Object { Get-SourcePath $_ }
 
 $noclipModule = Get-SourcePath "Patching\Scripts\ScrapLabNoclip.lua"
 $noclipInputTool = Get-SourcePath "Patching\Scripts\ScrapLabNoclipInputTool.lua"
+$raidDetectorScript = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetector.lua"
+$raidDetectorLegacyScript = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetectorLegacyV1.lua"
+$raidDetectorShape = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetector.shapeset"
+$raidDetectorIcon = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetectorIcon.png"
+$raidDetectorLegacyIcon = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetectorIconLegacyOpaque.png"
 
 & $compiler `
     /nologo `
@@ -100,9 +119,17 @@ $noclipInputTool = Get-SourcePath "Patching\Scripts\ScrapLabNoclipInputTool.lua"
     "/win32icon:$icon" `
     "/resource:$noclipModule,RaidRescue.ScrapLabNoclip.lua" `
     "/resource:$noclipInputTool,RaidRescue.ScrapLabNoclipInputTool.lua" `
+    "/resource:$raidDetectorScript,RaidRescue.Parts.RaidDetector.RaidDetector.lua" `
+    "/resource:$raidDetectorLegacyScript,RaidRescue.Parts.RaidDetector.RaidDetectorLegacyV1.lua" `
+    "/resource:$raidDetectorShape,RaidRescue.Parts.RaidDetector.RaidDetector.shapeset" `
+    "/resource:$raidDetectorIcon,RaidRescue.Parts.RaidDetector.RaidDetectorIcon.png" `
+    "/resource:$raidDetectorLegacyIcon,RaidRescue.Parts.RaidDetector.RaidDetectorIconLegacyOpaque.png" `
     "/out:$output\ScrapLab.PatchHelper.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
+    "/reference:$presentationCore" `
+    "/reference:$windowsBase" `
+    /reference:System.Xaml.dll `
     /reference:System.Web.Extensions.dll `
     /reference:System.Core.dll `
     $patchSources
@@ -166,7 +193,7 @@ foreach ($name in $builtFiles) {
     Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
 }
 
-$version = "2.3.0"
+$version = "2.4.0"
 $releaseRoot = Join-Path $root "release"
 $bundle = Join-Path $releaseRoot "ScrapLab-$version"
 New-Item -ItemType Directory -Path $bundle -Force | Out-Null

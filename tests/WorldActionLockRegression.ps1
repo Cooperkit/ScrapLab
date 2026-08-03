@@ -32,7 +32,15 @@ foreach ($requiredUi in @(
     'function toggleBetterFreezerBeehiveMod()',
     'GetBetterFreezerBeehiveModStatus',
     'SetBetterFreezerBeehiveMod',
-    '9 AVAILABLE'
+    'id="raidDetectorSwitch"',
+    'id="raidDetectorUpdate"',
+    'DETECTOR UPDATE AVAILABLE',
+    'function updateRaidDetectorMod()',
+    'function toggleRaidDetectorMod()',
+    'GetRaidDetectorModStatus',
+    'SetRaidDetectorMod',
+    'I REMOVED EVERY RAID DETECTOR - DISABLE',
+    '10 AVAILABLE'
 )) {
     if (-not $html.Contains($requiredUi)) {
         throw "The Better Plasma Drills update UI is missing: $requiredUi"
