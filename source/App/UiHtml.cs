@@ -599,23 +599,18 @@ button{font:inherit}
 .help-foot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 17px 15px;background:#25292a;border-top:1px solid #4a4e4f}
 .help-status{max-width:255px;color:#8da4aa;font-size:10px;line-height:1.4}.help-status.good{color:#8bd8c6}.help-buttons{display:flex}.help-buttons .btn+.btn{margin-left:8px}
 
-.secret-mods-layer{display:none;position:fixed;z-index:99;left:0;right:0;top:38px;bottom:0;
- background:radial-gradient(circle at 126px 0,rgba(255,208,70,.17),transparent 310px),rgba(4,6,7,.72)}
-.secret-mods-layer.show{display:block;animation:secretBackdropWake .22s ease-out both}
-.secret-mods-panel{position:absolute;left:12px;top:9px;width:650px;height:calc(100% - 18px);max-width:calc(100% - 24px);max-height:690px;overflow:hidden;
- display:flex;flex-direction:column;
- color:#f4f4ef;background:#222628;border:2px solid #e5ad22;border-radius:5px 18px 5px 18px;
- box-shadow:inset 0 0 0 2px #58440f,0 18px 55px rgba(0,0,0,.82),0 0 24px rgba(255,193,35,.18);
- transform-origin:26px -19px;animation:secretPanelDeploy .44s cubic-bezier(.13,.86,.27,1) both}
-.secret-mods-panel:before,.secret-mods-panel:after{content:'';position:absolute;z-index:4;width:7px;height:7px;border-radius:50%;
- background:#777b7c;border:2px solid #101112;box-shadow:inset 0 1px #c5c7c7}
-.secret-mods-panel:before{left:7px;top:19px}.secret-mods-panel:after{right:7px;bottom:7px}
+.secret-mods-layer{display:none;position:fixed;z-index:99;left:0;right:0;top:38px;bottom:0;overflow:hidden;
+ color:#f4f4ef;background:#111516;
+ background-image:linear-gradient(rgba(69,141,160,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(69,141,160,.045) 1px,transparent 1px),radial-gradient(circle at 76% -40px,rgba(40,119,140,.22),transparent 460px);
+ background-size:30px 30px,30px 30px,auto}
+.secret-mods-layer.show{display:block;animation:patchBayPageIn .24s cubic-bezier(.18,.82,.3,1) both}
+.secret-mods-panel{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden;display:flex;flex-direction:column;color:#f4f4ef;background:transparent}
 .secret-mods-hazard{position:relative;height:11px;flex:0 0 11px;overflow:hidden;border-bottom:2px solid #080909;background:#1a1c1d}
 .secret-mods-hazard:before{content:'';position:absolute;left:-72px;top:0;width:calc(100% + 144px);height:11px;
  background-size:42px 42px;background-image:repeating-linear-gradient(135deg,#ffd046 0,#ffd046 15px,#1a1c1d 15px,#1a1c1d 30px);
  animation:secretHazardFlow 1.2s steps(24,end) infinite}
-.secret-mods-head{display:flex;flex:0 0 auto;align-items:center;padding:13px 18px 12px;background:linear-gradient(100deg,#2d2a1d,#242829 58%,#18333c);
- border-bottom:1px solid #080909}
+.secret-mods-head{display:flex;flex:0 0 72px;align-items:center;padding:10px 22px;background:linear-gradient(100deg,#2d2a1d,#242829 50%,#16323b);
+ border-bottom:1px solid #080909;box-shadow:0 5px 18px rgba(0,0,0,.48)}
 .secret-mods-mark{position:relative;width:46px;height:46px;flex:0 0 46px;margin-right:14px}
 .secret-mods-mark svg{display:block;width:46px;height:46px;overflow:visible;transform-origin:50% 50%;
  animation:secretMarkSignal 2.2s ease-in-out infinite}
@@ -625,19 +620,25 @@ button{font:inherit}
 .secret-mods-letter-highlight{fill:#fff3a2;opacity:.65}
 .secret-mods-letter-face{fill:#252719}
 .secret-mods-heading{flex:1;min-width:0}.secret-mods-heading strong{display:block;color:#fff;
- font:17px Shentox,""Arial Black"",sans-serif;letter-spacing:.8px}
+ font:19px Shentox,""Arial Black"",sans-serif;letter-spacing:1px}
 .secret-mods-heading span{display:block;margin-top:3px;color:#79cfe6;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1.25px}
-.secret-mods-close{width:34px;height:34px;padding:0;color:#9fa5a5;background:#202324;border:1px solid #575c5d;
- border-radius:4px 10px 4px 10px;cursor:pointer;font:bold 17px Arial}
-.secret-mods-close:hover{color:#fff;background:#a93624;border-color:#ff7654}
-.secret-mods-body{display:flex;flex:1;min-height:0;flex-direction:column;padding:11px 14px 13px;background:linear-gradient(180deg,#1b1e1f,#17191a)}
-.secret-mods-warning{position:relative;flex:0 0 auto;margin-bottom:8px;padding:7px 10px 7px 34px;color:#d5bf77;background:#302b1e;
+.secret-head-count{margin-right:14px;padding:8px 11px;color:#d3e6e9;background:#192224;border:1px solid #45616a;border-radius:3px 10px 3px 10px;
+ font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.75px;white-space:nowrap}
+.secret-mods-close{height:34px;padding:0 13px;color:#c7d0d1;background:#202526;border:1px solid #5c6769;
+ border-radius:4px 10px 4px 10px;cursor:pointer;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
+.secret-mods-close:before{content:'\2190';margin-right:7px;color:#ffd046;font:bold 13px Arial}
+.secret-mods-close:hover{color:#fff;background:#304249;border-color:#72cce5}
+.secret-mods-body{display:flex;flex:1;min-height:0;flex-direction:column;padding:12px 18px 14px;background:linear-gradient(180deg,rgba(27,30,31,.93),rgba(17,20,21,.97))}
+.secret-mods-warning{position:relative;flex:0 0 auto;margin-bottom:10px;padding:8px 12px 8px 36px;color:#d5bf77;background:#302b1e;
  border:1px solid #75601e;border-radius:3px;font-size:10px;line-height:1.45}
 .secret-mods-warning:before{content:'!';position:absolute;left:10px;top:7px;width:15px;height:15px;color:#28220e;
  background:#ffd046;border-radius:50%;font:bold 11px/15px Arial;text-align:center}
-.secret-mod-row{display:flex;align-items:center;min-height:66px;padding:10px 11px;background:#22282a;border:1px solid #4a5558;
+.secret-workspace{display:flex;flex:1;min-height:0}
+.secret-sidebar{display:flex;width:218px;flex:0 0 218px;min-height:0;flex-direction:column;margin-right:12px;padding:11px;background:#181c1d;border:1px solid #3d484a;
+ border-radius:4px 14px 4px 14px;box-shadow:inset 0 1px #2d3334}
+.secret-side-label{margin:2px 2px 7px;color:#6fcbe3;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1px}
+.secret-mod-row{display:flex;align-items:center;min-height:82px;padding:11px 12px;background:#22282a;border:1px solid #4a5558;
  border-radius:4px 13px 4px 13px;box-shadow:inset 0 1px #333a3c;transition:border-color .2s,background .2s}
-.secret-mod-row+.secret-mod-row{margin-top:7px}
 .secret-mod-row.enabled{border-color:#b88a1c;background:linear-gradient(90deg,#302b1d,#22282a 70%)}
 .secret-mod-row.locked{opacity:.48}
 .secret-mod-copy{flex:1;min-width:0;padding-right:13px}.secret-mod-copy strong{display:block;color:#f4f4ef;
@@ -653,24 +654,35 @@ button{font:inherit}
 .secret-mod-options{box-sizing:border-box;width:68px;min-width:68px;max-width:68px;height:23px;margin-bottom:6px;padding:0;color:#84cfe2;background:#182125;border:1px solid #47636a;border-radius:3px 8px 3px 8px;
  cursor:pointer;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
 .secret-mod-options:hover{color:#e8f9fd;background:#24404a;border-color:#73cde5}.secret-mod-options:disabled{cursor:not-allowed;opacity:.45}
-.secret-master-row{flex:0 0 auto;min-height:58px}
-.secret-mods-catalog-head{display:flex;flex:0 0 auto;align-items:flex-end;justify-content:space-between;margin-top:9px;padding:0 2px 7px;border-bottom:1px solid #3b4446}
+.secret-master-row{flex:0 0 auto;min-height:82px;margin-bottom:11px;padding:10px;background:#25291f;border-color:#75601e}
+.secret-master-row .secret-mod-copy{padding-right:7px}.secret-master-row .secret-mod-copy span{font-size:9px}
+.secret-category-nav{display:flex;flex-direction:column}.secret-category+.secret-category{margin-top:5px}
+.secret-category{position:relative;height:31px;padding:0 10px 0 27px;text-align:left;color:#9ea8a9;background:#202526;border:1px solid #394446;border-radius:3px 9px 3px 9px;
+ cursor:pointer;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.secret-category:before{content:'';position:absolute;left:10px;top:11px;width:7px;height:7px;transform:rotate(45deg);background:#596466;border:1px solid #111}
+.secret-category:hover{color:#fff;border-color:#5f7b82;background:#273134}.secret-category.active{color:#202316;border-color:#ffdd69;background:linear-gradient(#ffe478,#f0b51e)}
+.secret-category.active:before{background:#283236;border-color:#111}
+.secret-side-spacer{flex:1;min-height:8px}
+.secret-side-note{padding:9px 10px;color:#789197;background:#192124;border:1px dashed #45575d;border-radius:3px;font-size:9px;line-height:1.45}
+.secret-side-note b{display:block;margin-bottom:4px;color:#72cce5;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.secret-catalog{display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;padding:11px 12px;background:#181c1d;border:1px solid #3d484a;border-radius:4px 14px 4px 14px;box-shadow:inset 0 1px #2d3334}
+.secret-mods-catalog-head{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;padding:0 1px 9px;border-bottom:1px solid #3b4446}
 .secret-mods-catalog-label b{display:block;color:#73cee6;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.9px}
 .secret-mods-catalog-label span{display:block;margin-top:3px;color:#858f91;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.65px}
-.secret-mod-search{position:relative;width:245px;height:31px;background:#111415;border:1px solid #4c5b5f;border-radius:3px 9px 3px 9px;box-shadow:inset 0 2px 5px #050606}
+.secret-mod-search{position:relative;width:285px;height:33px;background:#111415;border:1px solid #4c5b5f;border-radius:3px 9px 3px 9px;box-shadow:inset 0 2px 5px #050606}
 .secret-mod-search:before{content:'';position:absolute;left:10px;top:8px;width:9px;height:9px;border:2px solid #76cde4;border-radius:50%}
 .secret-mod-search:after{content:'';position:absolute;left:20px;top:18px;width:6px;height:2px;background:#76cde4;transform:rotate(45deg)}
 .secret-mod-search input{position:absolute;left:32px;right:8px;top:1px;width:calc(100% - 40px);height:27px;padding:0;color:#eef3f2;background:transparent;border:0;outline:0;
  font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
 .secret-mod-search input::placeholder{color:#657174}
-.secret-mods-list{position:relative;flex:1;min-height:125px;margin-top:7px;padding:1px 8px 3px 1px;overflow-x:hidden;overflow-y:auto;
+.secret-mods-list{position:relative;display:flex;flex-wrap:wrap;align-content:flex-start;flex:1;min-height:125px;margin-top:8px;padding:1px 9px 4px 1px;overflow-x:hidden;overflow-y:auto;
  scrollbar-face-color:#45575b;scrollbar-track-color:#101314;scrollbar-arrow-color:#8fddf0;scrollbar-shadow-color:#0b0d0e;scrollbar-highlight-color:#657b80}
 .secret-mods-list::-webkit-scrollbar{width:11px}.secret-mods-list::-webkit-scrollbar-track{background:#101314;border:1px solid #050606}
 .secret-mods-list::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#33454a,#587078);border:2px solid #101314;border-radius:5px}
 .secret-mods-list::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#45616a,#70a5b4)}
-.secret-mod-card{animation:secretCardDock .26s ease-out both}.secret-mod-card:nth-child(2){animation-delay:.035s}.secret-mod-card:nth-child(3){animation-delay:.07s}.secret-mod-card:nth-child(4){animation-delay:.105s}.secret-mod-card:nth-child(5){animation-delay:.14s}
+.secret-mod-card{width:calc(50% - 8px);flex:0 0 calc(50% - 8px);margin:0 8px 8px 0;animation:secretCardDock .26s ease-out both}.secret-mod-card:nth-child(2){animation-delay:.025s}.secret-mod-card:nth-child(3){animation-delay:.05s}.secret-mod-card:nth-child(4){animation-delay:.075s}.secret-mod-card:nth-child(5){animation-delay:.1s}
 .secret-mod-tag{display:inline-block;margin:0 0 5px!important;color:#6fcbe3!important;font:8px Shentox,""Arial Narrow"",sans-serif!important;letter-spacing:.8px!important}
-.secret-mods-empty{display:none;margin:18px 5px;padding:18px;text-align:center;color:#758184;background:#15191a;border:1px dashed #415054;border-radius:4px;
+.secret-mods-empty{display:none;width:calc(100% - 10px);flex:0 0 calc(100% - 10px);margin:18px 5px;padding:28px;text-align:center;color:#758184;background:#15191a;border:1px dashed #415054;border-radius:4px;
  font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
 .secret-switch{position:relative;box-sizing:border-box;width:68px;min-width:68px;max-width:68px;height:34px;min-height:34px;max-height:34px;flex:0 0 68px;padding:0;cursor:pointer;outline:none;
  background:#151718;border:2px solid #565b5c;border-radius:7px;box-shadow:inset 0 3px 7px #060707,0 2px #080909}
@@ -683,18 +695,19 @@ button{font:inherit}
 .secret-switch.on{border-color:#c08e18}.secret-switch.on .secret-switch-track{background:#d69c15;box-shadow:0 0 8px rgba(255,208,70,.45)}
 .secret-switch.on .secret-switch-knob{left:38px;background:linear-gradient(#fff29a,#ffd046 55%,#d68c0d);
  box-shadow:inset 0 1px #fff9cb,0 0 10px rgba(255,208,70,.6)}
-.secret-mods-slots{flex:0 0 auto;margin-top:8px;padding:7px 10px;border:1px dashed #45575d;background:#192124;border-radius:3px;
- color:#78919a;font-size:9px;line-height:1.45;letter-spacing:.35px;white-space:nowrap}
+.secret-mods-slots{flex:0 0 auto;margin-top:7px;padding:7px 10px;border:1px dashed #45575d;background:#192124;border-radius:3px;
+ color:#78919a;font-size:9px;line-height:1.45;letter-spacing:.35px}
 .secret-mods-slots b{display:inline;margin-right:7px;color:#72cce5;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
-.secret-mods-feedback{display:none;flex:0 0 auto;margin-top:8px;padding:7px 10px;border:1px solid #566062;background:#202426;border-radius:3px;
+.secret-mods-feedback{display:none;flex:0 0 auto;margin-top:7px;padding:7px 10px;border:1px solid #566062;background:#202426;border-radius:3px;
  color:#aeb5b5;font-size:9px;line-height:1.45}
 .secret-mods-feedback.show{display:block}.secret-mods-feedback.good{display:block;color:#a9dfd3;border-color:#3f8273;background:#1b302c}
 .secret-mods-feedback.bad{display:block;color:#ffad96;border-color:#9e3e29;background:#361a15}
 .secret-mods-feedback.working{display:block;color:#ffe17b;border-color:#96701a;background:#302817;animation:warningBlink 1.2s ease-in-out infinite}
-.secret-mods-status{display:flex;flex:0 0 auto;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #383d3e;
+.secret-mods-status{display:flex;flex:0 0 auto;align-items:center;margin-top:9px;padding:9px 3px 2px;border-top:1px solid #383d3e;
  color:#838a8a;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.75px}
 .secret-mods-status i{width:7px;height:7px;margin-right:7px;background:#656b6b;border-radius:50%;box-shadow:0 0 0 2px #151718}
 .secret-mods-status.on{color:#e2c15f}.secret-mods-status.on i{background:#ffd046;box-shadow:0 0 8px #ffd046}
+@media(max-width:820px){.secret-sidebar{width:188px;flex-basis:188px}.secret-mod-card{width:100%;flex-basis:100%;margin-right:0}.secret-head-count{display:none}.secret-mod-search{width:230px}}
 
 .tutorial{display:none;position:fixed;z-index:160;left:0;right:0;top:0;bottom:0;overflow:hidden}
 .tutorial.show{display:block}.tutorial-shade{position:fixed;z-index:0;background:rgba(4,6,7,.82);pointer-events:none;
@@ -869,8 +882,8 @@ button{font:inherit}
 </div>
 <div class=""scroll-track"" id=""scrollTrack""><div class=""scroll-thumb"" id=""scrollThumb""></div></div>
 
-<div class=""secret-mods-layer"" id=""secretModsLayer"" onclick=""secretModsBackdropClick(event)"">
-  <div class=""secret-mods-panel"" role=""dialog"" aria-modal=""true"" aria-labelledby=""secretModsTitle"">
+<div class=""secret-mods-layer"" id=""secretModsLayer"">
+  <main class=""secret-mods-panel"" aria-labelledby=""secretModsTitle"">
     <div class=""secret-mods-hazard""></div>
     <div class=""secret-mods-head"">
       <div class=""secret-mods-mark"">
@@ -883,22 +896,41 @@ button{font:inherit}
         </svg>
       </div>
       <div class=""secret-mods-heading""><strong id=""secretModsTitle"">SUPER SECRET MODS</strong><span>EXPERIMENTAL PATCH BAY · AUTHORIZED MECHANICS ONLY</span></div>
-      <button type=""button"" class=""secret-mods-close"" aria-label=""Close secret mods"" onclick=""closeSecretMods()"">&times;</button>
+      <div class=""secret-head-count"" id=""secretModHeadCount"">0 ACTIVE / 8 AVAILABLE</div>
+      <button type=""button"" class=""secret-mods-close"" aria-label=""Return to World Lab"" onclick=""closeSecretMods()"">WORLD LAB</button>
     </div>
     <div class=""secret-mods-body"">
       <div class=""secret-mods-warning"">Optional game patches. Save repair stays separate; verified backups rotate automatically.</div>
-      <div class=""secret-mod-row secret-master-row"" id=""secretModsMasterRow"">
-        <div class=""secret-mod-copy""><strong>SUPER SECRET MODS</strong><span>Master switch for experimental patches added to this hidden patch bay.</span></div>
-        <button type=""button"" class=""secret-switch"" id=""secretModsMaster"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Super Secret Mods"" onclick=""toggleSecretModsEnabled()"">
-          <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-        </button>
-      </div>
+      <div class=""secret-workspace"">
+        <aside class=""secret-sidebar"">
+          <div class=""secret-side-label"">PATCH CONTROL</div>
+          <div class=""secret-mod-row secret-master-row"" id=""secretModsMasterRow"">
+            <div class=""secret-mod-copy""><strong>MASTER SYSTEM</strong><span>Arm or safely remove the full patch catalog.</span></div>
+            <button type=""button"" class=""secret-switch"" id=""secretModsMaster"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Super Secret Mods"" onclick=""toggleSecretModsEnabled()"">
+              <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+            </button>
+          </div>
+          <div class=""secret-side-label"">CATEGORIES</div>
+          <nav class=""secret-category-nav"" aria-label=""Patch categories"">
+            <button type=""button"" class=""secret-category active"" data-category=""all"" onclick=""setSecretCategory('all',this)"">ALL PATCHES</button>
+            <button type=""button"" class=""secret-category"" data-category=""commands"" onclick=""setSecretCategory('commands',this)"">COMMAND TOOLS</button>
+            <button type=""button"" class=""secret-category"" data-category=""movement"" onclick=""setSecretCategory('movement',this)"">MOVEMENT</button>
+            <button type=""button"" class=""secret-category"" data-category=""machinery"" onclick=""setSecretCategory('machinery',this)"">MACHINERY</button>
+            <button type=""button"" class=""secret-category"" data-category=""mining"" onclick=""setSecretCategory('mining',this)"">MINING</button>
+            <button type=""button"" class=""secret-category"" data-category=""farming"" onclick=""setSecretCategory('farming',this)"">FARMING</button>
+            <button type=""button"" class=""secret-category"" data-category=""survival"" onclick=""setSecretCategory('survival',this)"">SURVIVAL</button>
+          </nav>
+          <div class=""secret-side-spacer""></div>
+          <div class=""secret-side-note""><b>BACKUP-FIRST PATCHING</b>Every change is verified. Save-sensitive patches require a danger confirmation before removal.</div>
+          <div class=""secret-mods-status"" id=""secretModsStatus""><i></i><span>SECRET PATCH SYSTEM OFFLINE</span></div>
+        </aside>
+        <section class=""secret-catalog"">
       <div class=""secret-mods-catalog-head"">
         <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 7 AVAILABLE</span></div>
-        <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""FILTER MODS..."" onkeyup=""filterSecretMods()"" /></div>
+        <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""SEARCH PATCH CATALOG..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
-        <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-search=""developer dev commands cheats unlimited god noclip fly flight collision spawn time raid host chat utility"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-category=""commands"" data-search=""developer dev commands cheats unlimited god noclip fly flight collision spawn time raid host chat utility"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock Survival developer tools plus /fly collision-free flight, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
           <div class=""secret-mod-actions"">
             <button type=""button"" class=""secret-mod-options"" id=""developerCommandsOptions"" aria-label=""Open Developer Commands options"" onclick=""openDeveloperCommandOptions()"" disabled=""disabled"">OPTIONS</button>
@@ -907,43 +939,43 @@ button{font:inherit}
             </button>
           </div>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-category=""mining"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">UTILITY &middot; CONNECT TOOL</span><strong>RESOURCE LOCATOR DOTS</strong><span id=""resourceLocatorDescription"">Reveal haybot spines and refineable resource cores with an inactive Connect Tool output.</span><em id=""resourceLocatorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""resourceLocatorReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""fullSpeedCarryingRow"" data-search=""full speed carrying carry sprint walking lift creation warehouse crate resource movement quality of life"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""fullSpeedCarryingRow"" data-category=""movement"" data-search=""full speed carrying carry sprint walking lift creation warehouse crate resource movement quality of life"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MOVEMENT &middot; QUALITY OF LIFE</span><strong>FULL-SPEED CARRYING</strong><span>Walk normally and sprint while hand-carrying objects or moving creations with the Lift.</span><em id=""fullSpeedCarryingState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""fullSpeedCarryingReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""fullSpeedCarryingSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Full-Speed Carrying"" onclick=""toggleFullSpeedCarryingMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""betterEnginesRow"" data-search=""better engines electric gas power torque battery fuel efficiency vehicle machinery"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""betterEnginesRow"" data-category=""machinery"" data-search=""better engines electric gas power torque battery fuel efficiency vehicle machinery"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MACHINERY &middot; POWERTRAIN</span><strong>BETTER ENGINES</strong><span>Give Electric Engines 10,000 gear power and make level-5 Electric and Gas Engines more efficient.</span><em id=""betterEnginesState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterEnginesReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""betterEnginesSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Engines"" onclick=""toggleBetterEnginesMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""betterPlasmaDrillsRow"" data-search=""better plasma drills mining power tool level 4 level 5 range radius battery speed save dangerous"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""betterPlasmaDrillsRow"" data-category=""mining"" data-search=""better plasma drills mining power tool level 4 level 5 range radius battery speed save dangerous"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MINING &middot; SAVE-SENSITIVE</span><strong>BETTER PLASMA DRILLS</strong><span>Add powerful level-4 and level-5 upgrades with faster drilling, longer range, and beam radii up to 10.</span><em id=""betterPlasmaDrillsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterPlasmaDrillsReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""betterPlasmaDrillsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Plasma Drills"" onclick=""toggleBetterPlasmaDrillsMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""revivalBuffRow"" data-search=""revival baguette buffs pizza veggie burger perk knockout death revive multiplayer survival"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""revivalBuffRow"" data-category=""survival"" data-search=""revival baguette buffs pizza veggie burger perk knockout death revive multiplayer survival"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">SURVIVAL &middot; REVIVAL</span><strong>REVIVAL BUFF RECOVERY</strong><span>Revival Baguettes restore every pizza and veggie-burger buff held when the player was knocked out.</span><em id=""revivalBuffState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""revivalBuffReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""revivalBuffSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Revival Buff Recovery"" onclick=""toggleRevivalBuffMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""chemicalFertilizerRow"" data-search=""chemical fertilizer splash farm plot grow bed red farmbot projectile farming dependency"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""chemicalFertilizerRow"" data-category=""farming"" data-search=""chemical fertilizer splash farm plot grow bed red farmbot projectile farming dependency"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">FARMING &middot; PROJECTILES</span><strong>CHEMICAL FERTILIZER SPLASH</strong><span>Chemical shots fertilize plots; Red Farmbot pesticide fertilizes a 2.5-block radius.</span><em id=""chemicalFertilizerState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""chemicalFertilizerReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""chemicalFertilizerSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Chemical Fertilizer Splash"" onclick=""toggleChemicalFertilizerMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""dualFluidCannonRow"" data-search=""dual fluid water cannon chemical container logic projectile farming dependency dangerous save"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""dualFluidCannonRow"" data-category=""machinery farming"" data-search=""dual fluid water cannon chemical container logic projectile farming dependency dangerous save"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MACHINERY &middot; SAVE-SENSITIVE</span><strong>DUAL-FLUID WATER CANNON</strong><span>Connect Water and Chemical Containers; each logic pulse fires every available liquid.</span><em id=""dualFluidCannonState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""dualFluidCannonReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""dualFluidCannonSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Dual-Fluid Water Cannon"" onclick=""toggleDualFluidCannonMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
@@ -953,9 +985,10 @@ button{font:inherit}
       </div>
       <div class=""secret-mods-feedback"" id=""secretModsFeedback""></div>
       <div class=""secret-mods-slots""><b>DEPENDENCY-SAFE CATALOG</b>Linked patches install and roll back together; risky removals require confirmation.</div>
-      <div class=""secret-mods-status"" id=""secretModsStatus""><i></i><span>SECRET PATCH SYSTEM OFFLINE</span></div>
+        </section>
+      </div>
     </div>
-  </div>
+  </main>
 </div>
 
 <div class=""hotfix-modal item-clear-modal"" id=""itemClearModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""itemClearTitle"" onclick=""itemClearBackdropClick(event)"">
@@ -1460,6 +1493,7 @@ var tutorialStartScroll=0;
 var tutorialResultHtml='';
 var tutorialOfferChecks=0;
 var secretModsEnabled=false;
+var secretModCategory='all';
 var secretResourceLocatorInstalled=false;
 var secretResourceLocatorNeedsUpdate=false;
 var secretResourceLocatorCompatibility='';
@@ -1940,7 +1974,7 @@ function renderSecretModsState(){
  control.className=secretModsEnabled?'secret-switch on':'secret-switch';
  control.setAttribute('aria-checked',secretModsEnabled?'true':'false');
  control.disabled=!!operationBusy||!!secretModBusy;
- row.className=secretModsEnabled?'secret-mod-row enabled':'secret-mod-row';
+ row.className='secret-mod-row secret-master-row'+(secretModsEnabled?' enabled':'');
  status.className=secretModsEnabled?'secret-mods-status on':'secret-mods-status';
  status.getElementsByTagName('span')[0].innerText=secretModsEnabled?'SECRET PATCH SYSTEM ARMED':'SECRET PATCH SYSTEM OFFLINE';
  var locator=document.getElementById('resourceLocatorSwitch');
@@ -2034,10 +2068,18 @@ function renderSecretModsState(){
   renderCompatibilityReason('dualFluidCannonReason',secretDualFluidCannonInstalled,secretDualFluidCannonCanApply,secretDualFluidCannonReason);
  }
  var count=document.getElementById('secretModCount');
+ var headCount=document.getElementById('secretModHeadCount');
  if(count){
   var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
   count.innerText=active+' ACTIVE \u00b7 8 AVAILABLE';
+  if(headCount)headCount.innerText=active+' ACTIVE / 8 AVAILABLE';
  }
+ filterSecretMods();
+}
+function setSecretCategory(category,button){
+ secretModCategory=category||'all';
+ var buttons=document.getElementsByClassName('secret-category');
+ for(var i=0;i<buttons.length;i++)buttons[i].className='secret-category'+(buttons[i]===button?' active':'');
  filterSecretMods();
 }
 function filterSecretMods(){
@@ -2052,7 +2094,9 @@ function filterSecretMods(){
   var row=rows[i];
   if((' '+row.className+' ').indexOf(' secret-mod-card ')<0)continue;
   var haystack=String(row.getAttribute('data-search')||'').toLowerCase();
-  var visible=!query||haystack.indexOf(query)>=0;
+  var categories=' '+String(row.getAttribute('data-category')||'')+' ';
+  var categoryMatch=secretModCategory==='all'||categories.indexOf(' '+secretModCategory+' ')>=0;
+  var visible=categoryMatch&&(!query||haystack.indexOf(query)>=0);
   row.style.display=visible?'flex':'none';
   if(visible)shown++;
  }
@@ -2073,6 +2117,7 @@ function toggleSecretMods(e){
  closeSaveMenu();closeHotfixConfirm();
  document.getElementById('secretModsTrigger').className='window-emblem secret-trigger armed';
  layer.className='secret-mods-layer show';
+ window.setTimeout(function(){var search=document.getElementById('secretModSearch');if(search)search.focus();},170);
  return false;
 }
 function closeSecretMods(){

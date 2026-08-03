@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.2.0
+
+- Redesigned **Super Secret Mods** as a dedicated full-window Patch Bay rather
+  than a small overlay menu.
+- Added a Scrap Mechanic-styled workspace header, World Lab return control,
+  master patch rail, active-mod counter, catalog search, and filters for
+  command, movement, machinery, mining, farming, and survival patches.
+- Expanded the catalog into a responsive two-column layout with its own custom
+  scrollbar, persistent safety guidance, dependency information, and operation
+  feedback while preserving every existing patch, option, confirmation, and
+  rollback workflow.
+- Kept the redesigned page compatible with ScrapLab's embedded Windows browser
+  and high-DPI scaling, including smooth low-cost page and card transitions.
+
 ## 2.1.0
 
 - Added the optional, save-sensitive **Better Plasma Drills** workshop mod.
