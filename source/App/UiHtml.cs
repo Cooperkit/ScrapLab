@@ -894,7 +894,7 @@ button{font:inherit}
         </button>
       </div>
       <div class=""secret-mods-catalog-head"">
-        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 5 AVAILABLE</span></div>
+        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 7 AVAILABLE</span></div>
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""FILTER MODS..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
@@ -910,6 +910,24 @@ button{font:inherit}
         <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">UTILITY &middot; CONNECT TOOL</span><strong>RESOURCE LOCATOR DOTS</strong><span id=""resourceLocatorDescription"">Reveal haybot spines and refineable resource cores with an inactive Connect Tool output.</span><em id=""resourceLocatorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""resourceLocatorReason""></span></div>
           <button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""fullSpeedCarryingRow"" data-search=""full speed carrying carry sprint walking lift creation warehouse crate resource movement quality of life"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MOVEMENT &middot; QUALITY OF LIFE</span><strong>FULL-SPEED CARRYING</strong><span>Walk normally and sprint while hand-carrying objects or moving creations with the Lift.</span><em id=""fullSpeedCarryingState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""fullSpeedCarryingReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""fullSpeedCarryingSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Full-Speed Carrying"" onclick=""toggleFullSpeedCarryingMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""betterEnginesRow"" data-search=""better engines electric gas power torque battery fuel efficiency vehicle machinery"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MACHINERY &middot; POWERTRAIN</span><strong>BETTER ENGINES</strong><span>Give Electric Engines 10,000 gear power and make level-5 Electric and Gas Engines more efficient.</span><em id=""betterEnginesState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterEnginesReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""betterEnginesSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Engines"" onclick=""toggleBetterEnginesMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""betterPlasmaDrillsRow"" data-search=""better plasma drills mining power tool level 4 level 5 range radius battery speed save dangerous"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MINING &middot; SAVE-SENSITIVE</span><strong>BETTER PLASMA DRILLS</strong><span>Add powerful level-4 and level-5 upgrades with faster drilling, longer range, and beam radii up to 10.</span><em id=""betterPlasmaDrillsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterPlasmaDrillsReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""betterPlasmaDrillsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Plasma Drills"" onclick=""toggleBetterPlasmaDrillsMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
@@ -982,6 +1000,20 @@ button{font:inherit}
       <div class=""hotfix-foot-note"">Counts include only decoded loose pickups, not containers, player inventories, or placed creations.</div>
       <div class=""hotfix-buttons""><button type=""button"" class=""btn btn-primary"" onclick=""closeItemSummary()"">CLOSE REPORT</button></div>
     </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal cannon-danger-modal"" id=""plasmaDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""plasmaDangerTitle"" onclick=""plasmaDangerBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""plasmaDangerTitle"">SAVE COMPATIBILITY DANGER</strong><span>BETTER PLASMA DRILLS REMOVAL</span></div></div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"">Removing this mod unregisters the permanent level-4 and level-5 drill UUIDs. Worlds that still contain those parts may lose them or fail to load correctly.</p>
+      <ul class=""hotfix-checks""><li>Cancel and launch Scrap Mechanic while Better Plasma Drills is still installed.</li><li>Downgrade or remove every level-4 and level-5 drill from worlds, inventories, containers, and lifts.</li><li>Save every affected world, exit completely, and wait for ScrapLab to unlock.</li></ul>
+      <div class=""hotfix-stop"">DO NOT CONTINUE WHILE ANY ADVANCED PLASMA DRILL STILL EXISTS IN A SAVE.</div>
+      <div class=""cannon-danger-ack""><label><input type=""checkbox"" id=""plasmaDangerAck"" onchange=""updatePlasmaDangerConfirm()"" /><span class=""cannon-danger-box""></span><span>I removed every level-4 and level-5 drill and saved all affected worlds.</span></label></div>
+    </div>
+    <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Cancel is the safe choice if you are not completely sure.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" id=""plasmaDangerCancel"" onclick=""closePlasmaDangerConfirm()"">CANCEL</button><button type=""button"" class=""btn hotfix-confirm"" id=""plasmaDangerConfirmButton"" onclick=""confirmPlasmaDangerChange()"" disabled=""disabled""><span>!</span>I REMOVED THE ADVANCED DRILLS - DISABLE</button></div></div>
   </div>
 </div>
 
@@ -1172,6 +1204,38 @@ button{font:inherit}
           <div class=""help-item""><b>BLOCKED STATES</b><p><strong>Required Code Changed</strong>, <strong>Other Modification Detected</strong>, and <strong>Partial Patch</strong> identify unsafe files without writing. Steam Verify can restore official files, but changed protected features may require a ScrapLab update.</p></div>
           <div class=""help-item""><b>BOUNDED RETENTION</b><p>ScrapLab keeps the two newest verified backups for each install, remove, or configure action. Superseded copies are removed only after a patch and its checksum verification succeed.</p></div>
           <div class=""help-item""><b>UNKNOWN FOLDERS ARE SAFE</b><p>Backup cleanup recognizes only ScrapLab and legacy Raid Rescue timestamped secret-mod folders. Other folders and manual backups are never removed.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; FULL-SPEED CARRYING</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>HAND-CARRIED OBJECTS</b><p>Crates, resource pieces, warehouse objects, and other carry items no longer force walking speed. Hold the normal Sprint key to run while carrying them.</p></div>
+          <div class=""help-item""><b>LIFT-HELD CREATIONS</b><p>Selecting a creation with the Lift no longer blocks sprinting. Lift placement, rotation, and every original safety rule remain unchanged.</p></div>
+          <div class=""help-item""><b>NATIVE ANIMATIONS</b><p>ScrapLab activates Scrap Mechanic's built-in first- and third-person carry sprint animations for each carry pose instead of replacing the player controller.</p></div>
+          <div class=""help-item""><b>OTHER SLOWDOWNS STAY</b><p>Crouching, water, chemical goop, damage states, and any other non-carry movement rules still work normally. The mod changes only the two carry sprint blocks.</p></div>
+          <div class=""help-item""><b>MULTIPLAYER</b><p>The sprint restriction is client-side, so each player who wants Full-Speed Carrying must enable the mod in their own Scrap Mechanic installation.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; BETTER ENGINES</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>ELECTRIC POWER</b><p>Every active Electric Engine gear uses 10,000 power instead of 1,000. The original 13-step speed curve and each engine level's available gear count stay unchanged.</p></div>
+          <div class=""help-item""><b>LEVEL-5 EFFICIENCY</b><p>Level-5 Electric Engines receive 40,250 points per battery. Level-5 Gas Engines receive the equivalent 40,250 points per fuel item.</p></div>
+          <div class=""help-item""><b>WHAT STAYS ORIGINAL</b><p>Gas-engine power, lower-level fuel efficiency, bearing limits, upgrades, controls, and saved engine settings are not changed.</p></div>
+          <div class=""help-item""><b>GAME UPDATES</b><p>Both engine tables must pass exact protected-code checks. If Steam changes either required table, ScrapLab blocks the operation before writing either file.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; BETTER PLASMA DRILLS</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>TWO ADVANCED LEVELS</b><p>Upgrade level 3 to level 4 for 25 Component Kits, then level 4 to level 5 for 50. Level 4 has 5 speed, 40 range, and 6,000 battery points; level 5 has 10 speed, 75 range, and 12,000 points.</p></div>
+          <div class=""help-item""><b>LARGER TUNNELS</b><p>Level 4 unlocks radius settings 5, 6, and 7. Level 5 unlocks 8, 9, and 10. Terrain updates run every three ticks at level 4 and every two ticks at level 5.</p></div>
+          <div class=""help-item""><b>MATERIAL COMPATIBILITY</b><p>Both advanced drills retain level-3 material capability, avoiding unsupported Mining Manager levels while improving actual excavation speed.</p></div>
+          <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Remove or downgrade every advanced drill and save each world before disabling this mod or verifying game files.</p></div>
+          <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>Reinstall the mod before loading a world that may contain advanced drills whenever ScrapLab reports <strong>Reinstall Required - Save Parts at Risk</strong>.</p></div>
         </div>
       </div>
 
@@ -1405,6 +1469,18 @@ var secretRevivalBuffInstalled=false;
 var secretRevivalBuffCompatibility='';
 var secretRevivalBuffCanApply=true;
 var secretRevivalBuffReason='';
+var secretFullSpeedCarryingInstalled=false;
+var secretFullSpeedCarryingCompatibility='';
+var secretFullSpeedCarryingCanApply=true;
+var secretFullSpeedCarryingReason='';
+var secretBetterEnginesInstalled=false;
+var secretBetterEnginesCompatibility='';
+var secretBetterEnginesCanApply=true;
+var secretBetterEnginesReason='';
+var secretBetterPlasmaDrillsInstalled=false;
+var secretBetterPlasmaDrillsCompatibility='';
+var secretBetterPlasmaDrillsCanApply=true;
+var secretBetterPlasmaDrillsReason='';
 var secretDeveloperCommandsInstalled=false;
 var secretDeveloperCommandsError='';
 var secretDeveloperCommandsCompatibility='';
@@ -1423,6 +1499,7 @@ var secretDualFluidCannonCanApply=true;
 var secretDualFluidCannonReason='';
 var secretModBusy=false;
 var secretModBusyTarget='';
+var secretPlasmaDangerAction='';
 var secretDependencyAction='';
 var secretCannonDangerAction='';
 var appVersion='';
@@ -1688,6 +1765,18 @@ function captureSecretCompatibility(kind,data){
   secretRevivalBuffCompatibility=state;
   secretRevivalBuffCanApply=canApply;
   secretRevivalBuffReason=reason;
+ }else if(kind==='carrying'){
+  secretFullSpeedCarryingCompatibility=state;
+  secretFullSpeedCarryingCanApply=canApply;
+  secretFullSpeedCarryingReason=reason;
+ }else if(kind==='engines'){
+  secretBetterEnginesCompatibility=state;
+  secretBetterEnginesCanApply=canApply;
+  secretBetterEnginesReason=reason;
+ }else if(kind==='plasma'){
+  secretBetterPlasmaDrillsCompatibility=state;
+  secretBetterPlasmaDrillsCanApply=canApply;
+  secretBetterPlasmaDrillsReason=reason;
  }else if(kind==='commands'){
   secretDeveloperCommandsCompatibility=state;
   secretDeveloperCommandsCanApply=canApply;
@@ -1705,6 +1794,7 @@ function captureSecretCompatibility(kind,data){
 function compatibilityStateLabel(installed,state,fallback){
  if(installed)return 'INSTALLED';
  if(state==='COMPATIBLE GAME UPDATE')return 'GAME UPDATED - RE-ENABLE';
+ if(state==='REINSTALL REQUIRED - SAVE PARTS AT RISK')return 'REINSTALL REQUIRED - SAVE PARTS AT RISK';
  if(state==='GAME UPDATE CHANGED REQUIRED CODE')return 'GAME UPDATE CHANGED REQUIRED CODE';
  if(state==='OTHER MODIFICATION DETECTED')return 'OTHER MODIFICATION DETECTED';
  if(state==='PARTIAL PATCH - REPAIR REQUIRED')return 'PARTIAL PATCH \u2014 REPAIR REQUIRED';
@@ -1713,7 +1803,7 @@ function compatibilityStateLabel(installed,state,fallback){
 function renderCompatibilityReason(id,installed,canApply,reason){
  var node=document.getElementById(id);
  if(!node)return;
- var show=!installed&&!canApply&&!!reason;
+ var show=!installed&&!!reason&&(!canApply||id==='betterPlasmaDrillsReason');
  node.className=show?'secret-compat-reason show':'secret-compat-reason';
  node.innerText=show?reason:'';
 }
@@ -1744,6 +1834,54 @@ function loadSecretModsState(){
   }
  }catch(e){
   showSecretModFeedback('Could not read the installed revival-buff state.','bad');
+ }
+ try{
+  var carryingData=parseResult(window.external.GetFullSpeedCarryingModStatus());
+  if(carryingData.Success){
+   secretFullSpeedCarryingInstalled=!!carryingData.Installed;
+   captureSecretCompatibility('carrying',carryingData);
+   installedSecretMod=installedSecretMod||secretFullSpeedCarryingInstalled;
+  }else{
+   secretFullSpeedCarryingCanApply=false;
+   secretFullSpeedCarryingReason=carryingData.Error||'Could not read the Full-Speed Carrying state.';
+   showSecretModFeedback(secretFullSpeedCarryingReason,'bad');
+  }
+ }catch(e){
+  secretFullSpeedCarryingCanApply=false;
+  secretFullSpeedCarryingReason='Could not read the Full-Speed Carrying state.';
+  showSecretModFeedback(secretFullSpeedCarryingReason,'bad');
+ }
+ try{
+  var enginesData=parseResult(window.external.GetBetterEnginesModStatus());
+  if(enginesData.Success){
+   secretBetterEnginesInstalled=!!enginesData.Installed;
+   captureSecretCompatibility('engines',enginesData);
+   installedSecretMod=installedSecretMod||secretBetterEnginesInstalled;
+  }else{
+   secretBetterEnginesCanApply=false;
+   secretBetterEnginesReason=enginesData.Error||'Could not read the Better Engines state.';
+   showSecretModFeedback(secretBetterEnginesReason,'bad');
+  }
+ }catch(e){
+  secretBetterEnginesCanApply=false;
+  secretBetterEnginesReason='Could not read the Better Engines state.';
+  showSecretModFeedback(secretBetterEnginesReason,'bad');
+ }
+ try{
+  var plasmaData=parseResult(window.external.GetBetterPlasmaDrillsModStatus());
+  if(plasmaData.Success){
+   secretBetterPlasmaDrillsInstalled=!!plasmaData.Installed;
+   captureSecretCompatibility('plasma',plasmaData);
+   installedSecretMod=installedSecretMod||secretBetterPlasmaDrillsInstalled;
+  }else{
+   secretBetterPlasmaDrillsCanApply=false;
+   secretBetterPlasmaDrillsReason=plasmaData.Error||'Could not read the Better Plasma Drills state.';
+   showSecretModFeedback(secretBetterPlasmaDrillsReason,'bad');
+  }
+ }catch(e){
+  secretBetterPlasmaDrillsCanApply=false;
+  secretBetterPlasmaDrillsReason='Could not read the Better Plasma Drills state.';
+  showSecretModFeedback(secretBetterPlasmaDrillsReason,'bad');
  }
  try{
   var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
@@ -1816,6 +1954,39 @@ function renderSecretModsState(){
   locatorState.innerText=secretModBusy&&secretModBusyTarget==='resource'?'APPLYING...':(gameRunning?'GAME RUNNING · CLOSE IT FIRST':(secretResourceLocatorNeedsUpdate&&secretResourceLocatorCompatibility!=='COMPATIBLE GAME UPDATE'?'UPDATE READY · DOT VISIBILITY FIX':compatibilityStateLabel(secretResourceLocatorInstalled,secretResourceLocatorCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('resourceLocatorReason',secretResourceLocatorInstalled,secretResourceLocatorCanApply,secretResourceLocatorReason);
  }
+ var carrying=document.getElementById('fullSpeedCarryingSwitch');
+ var carryingRow=document.getElementById('fullSpeedCarryingRow');
+ var carryingState=document.getElementById('fullSpeedCarryingState');
+ if(carrying&&carryingRow&&carryingState){
+  carrying.className=secretFullSpeedCarryingInstalled?'secret-switch on':'secret-switch';
+  carrying.setAttribute('aria-checked',secretFullSpeedCarryingInstalled?'true':'false');
+  carrying.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretFullSpeedCarryingCanApply;
+  carryingRow.className='secret-mod-row secret-mod-card'+(secretFullSpeedCarryingInstalled?' enabled':'')+((!secretModsEnabled||!secretFullSpeedCarryingCanApply)?' locked':'');
+  carryingState.innerText=secretModBusy&&secretModBusyTarget==='carrying'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretFullSpeedCarryingInstalled,secretFullSpeedCarryingCompatibility,'NOT INSTALLED'));
+  renderCompatibilityReason('fullSpeedCarryingReason',secretFullSpeedCarryingInstalled,secretFullSpeedCarryingCanApply,secretFullSpeedCarryingReason);
+ }
+ var engines=document.getElementById('betterEnginesSwitch');
+ var enginesRow=document.getElementById('betterEnginesRow');
+ var enginesState=document.getElementById('betterEnginesState');
+ if(engines&&enginesRow&&enginesState){
+  engines.className=secretBetterEnginesInstalled?'secret-switch on':'secret-switch';
+  engines.setAttribute('aria-checked',secretBetterEnginesInstalled?'true':'false');
+  engines.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterEnginesCanApply;
+  enginesRow.className='secret-mod-row secret-mod-card'+(secretBetterEnginesInstalled?' enabled':'')+((!secretModsEnabled||!secretBetterEnginesCanApply)?' locked':'');
+  enginesState.innerText=secretModBusy&&secretModBusyTarget==='engines'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretBetterEnginesInstalled,secretBetterEnginesCompatibility,'NOT INSTALLED'));
+  renderCompatibilityReason('betterEnginesReason',secretBetterEnginesInstalled,secretBetterEnginesCanApply,secretBetterEnginesReason);
+ }
+ var plasma=document.getElementById('betterPlasmaDrillsSwitch');
+ var plasmaRow=document.getElementById('betterPlasmaDrillsRow');
+ var plasmaState=document.getElementById('betterPlasmaDrillsState');
+ if(plasma&&plasmaRow&&plasmaState){
+  plasma.className=secretBetterPlasmaDrillsInstalled?'secret-switch on':'secret-switch';
+  plasma.setAttribute('aria-checked',secretBetterPlasmaDrillsInstalled?'true':'false');
+  plasma.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterPlasmaDrillsCanApply;
+  plasmaRow.className='secret-mod-row secret-mod-card'+(secretBetterPlasmaDrillsInstalled?' enabled':'')+((!secretModsEnabled||!secretBetterPlasmaDrillsCanApply)?' locked':'');
+  plasmaState.innerText=secretModBusy&&secretModBusyTarget==='plasma'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretBetterPlasmaDrillsInstalled,secretBetterPlasmaDrillsCompatibility,'NOT INSTALLED'));
+  renderCompatibilityReason('betterPlasmaDrillsReason',secretBetterPlasmaDrillsInstalled,secretBetterPlasmaDrillsCanApply,secretBetterPlasmaDrillsReason);
+ }
  var revival=document.getElementById('revivalBuffSwitch');
  var revivalRow=document.getElementById('revivalBuffRow');
  var revivalState=document.getElementById('revivalBuffState');
@@ -1864,8 +2035,8 @@ function renderSecretModsState(){
  }
  var count=document.getElementById('secretModCount');
  if(count){
-  var active=(secretResourceLocatorInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
-  count.innerText=active+' ACTIVE \u00b7 5 AVAILABLE';
+  var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+  count.innerText=active+' ACTIVE \u00b7 8 AVAILABLE';
  }
  filterSecretMods();
 }
@@ -1914,6 +2085,7 @@ function secretModsBackdropClick(e){
 }
 function toggleSecretModsEnabled(){
  if(operationBusy||secretModBusy)return;
+ if(secretModsEnabled&&secretBetterPlasmaDrillsInstalled){openPlasmaDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretDualFluidCannonInstalled){openCannonDangerConfirm('masterOff');return;}
  if(secretModsEnabled){disableAllSecretModsConfirmed();return;}
  secretModsEnabled=!secretModsEnabled;
@@ -1926,6 +2098,7 @@ function toggleSecretModsEnabled(){
  renderSecretModsState();
 }
 function disableAllSecretModsConfirmed(){
+ if(secretBetterPlasmaDrillsInstalled&&!setBetterPlasmaDrillsMod(false))return false;
  if(secretDualFluidCannonInstalled&&secretChemicalFertilizerInstalled){
   if(!setChemicalFertilizerMod(false))return false;
  }else{
@@ -1933,6 +2106,8 @@ function disableAllSecretModsConfirmed(){
   if(secretChemicalFertilizerInstalled&&!setChemicalFertilizerMod(false))return false;
  }
  if(secretRevivalBuffInstalled&&!setRevivalBuffMod(false))return false;
+ if(secretFullSpeedCarryingInstalled&&!setFullSpeedCarryingMod(false))return false;
+ if(secretBetterEnginesInstalled&&!setBetterEnginesMod(false))return false;
  if(secretDeveloperCommandsInstalled&&!setDeveloperCommandsMod(false))return false;
  if(secretResourceLocatorInstalled&&!setResourceLocatorMod(false))return false;
  secretModsEnabled=false;
@@ -1948,6 +2123,102 @@ function toggleResourceLocatorMod(){
 function toggleRevivalBuffMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy)return;
  setRevivalBuffMod(!secretRevivalBuffInstalled);
+}
+function toggleFullSpeedCarryingMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ setFullSpeedCarryingMod(!secretFullSpeedCarryingInstalled);
+}
+function toggleBetterEnginesMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ setBetterEnginesMod(!secretBetterEnginesInstalled);
+}
+function toggleBetterPlasmaDrillsMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ if(secretBetterPlasmaDrillsInstalled){openPlasmaDangerConfirm('plasmaOnly');return;}
+ setBetterPlasmaDrillsMod(true);
+}
+function setBetterPlasmaDrillsMod(enabled){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Better Plasma Drills.','bad');return false;}
+ secretModBusy=true;secretModBusyTarget='plasma';operationBusy=true;
+ showSecretModFeedback(enabled?'FORGING ADVANCED PLASMA DRILLS...':'REMOVING ADVANCED PLASMA DRILLS...','working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetBetterPlasmaDrillsMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The Better Plasma Drills installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ if(!data.Success){showSecretModFeedback(data.Error||'Better Plasma Drills could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ secretBetterPlasmaDrillsInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(secretBetterPlasmaDrillsInstalled?'BETTER PLASMA DRILLS INSTALLED - levels 4 and 5 are ready.':'BETTER PLASMA DRILLS REMOVED - the original three-level chain was restored.','good');
+ applyGameLock(gameRunning);renderSecretModsState();return true;
+}
+function setBetterEnginesMod(enabled){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Better Engines.','bad');
+  return false;
+ }
+ secretModBusy=true;secretModBusyTarget='engines';operationBusy=true;
+ showSecretModFeedback(
+  enabled?'TUNING BETTER ENGINES...':'RESTORING ORIGINAL ENGINES...',
+  'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetBetterEnginesMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The Better Engines installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Better Engines could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretBetterEnginesInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(
+  secretBetterEnginesInstalled
+   ?'BETTER ENGINES INSTALLED - Electric power and level-5 Electric/Gas efficiency increased.'
+   :'BETTER ENGINES REMOVED - the original engine tables were restored.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();
+ return true;
+}
+function setFullSpeedCarryingMod(enabled){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Full-Speed Carrying.','bad');
+  return false;
+ }
+ secretModBusy=true;secretModBusyTarget='carrying';operationBusy=true;
+ showSecretModFeedback(
+  enabled?'PREPARING FULL-SPEED CARRYING...':'REMOVING FULL-SPEED CARRYING...',
+  'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetFullSpeedCarryingMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The Full-Speed Carrying installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Full-Speed Carrying could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretFullSpeedCarryingInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(
+  secretFullSpeedCarryingInstalled
+   ?'FULL-SPEED CARRYING INSTALLED - hand-carried objects and Lift-held creations now allow sprinting.'
+   :'FULL-SPEED CARRYING REMOVED - the original carry restrictions were restored.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();
+ return true;
 }
 function setRevivalBuffMod(enabled){
  if(gameRunning){
@@ -2227,6 +2498,35 @@ function confirmDependencyChange(){
  closeDependencyConfirm();
  if(action==='installBoth')setDualFluidCannonMod(true);
  else if(action==='removeBoth')openCannonDangerConfirm('removeBoth');
+}
+function openPlasmaDangerConfirm(action){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Better Plasma Drills.','bad');return;}
+ secretPlasmaDangerAction=action;
+ var ack=document.getElementById('plasmaDangerAck');
+ ack.checked=false;
+ document.getElementById('plasmaDangerConfirmButton').disabled=true;
+ document.getElementById('plasmaDangerModal').className='hotfix-modal cannon-danger-modal show';
+ window.setTimeout(function(){document.getElementById('plasmaDangerCancel').focus();},30);
+}
+function updatePlasmaDangerConfirm(){
+ document.getElementById('plasmaDangerConfirmButton').disabled=!document.getElementById('plasmaDangerAck').checked;
+}
+function closePlasmaDangerConfirm(){
+ document.getElementById('plasmaDangerModal').className='hotfix-modal cannon-danger-modal';
+ document.getElementById('plasmaDangerAck').checked=false;
+ secretPlasmaDangerAction='';
+}
+function plasmaDangerBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('plasmaDangerModal'))closePlasmaDangerConfirm();
+}
+function confirmPlasmaDangerChange(){
+ if(!document.getElementById('plasmaDangerAck').checked)return;
+ var action=secretPlasmaDangerAction;
+ closePlasmaDangerConfirm();
+ if(action==='masterOff'&&secretDualFluidCannonInstalled)openCannonDangerConfirm('masterOff');
+ else if(action==='masterOff')disableAllSecretModsConfirmed();
+ else setBetterPlasmaDrillsMod(false);
 }
 function openCannonDangerConfirm(action){
  if(gameRunning){
@@ -2678,6 +2978,7 @@ function boot(){
   if(key===27&&document.getElementById('itemClearModal').className.indexOf('show')>=0){closeItemClearConfirm();return false;}
   if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
   if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
+   if(key===27&&document.getElementById('plasmaDangerModal').className.indexOf('show')>=0){closePlasmaDangerConfirm();return false;}
    if(key===27&&document.getElementById('cannonDangerModal').className.indexOf('show')>=0){closeCannonDangerConfirm();return false;}
    if(key===27&&document.getElementById('developerCommandModal').className.indexOf('show')>=0){closeDeveloperCommandConfirm();return false;}
    if(key===27&&document.getElementById('dependencyModal').className.indexOf('show')>=0){closeDependencyConfirm();return false;}

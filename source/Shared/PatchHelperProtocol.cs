@@ -20,6 +20,9 @@ namespace RaidRescue
         internal const string Hotfix = "hotfix";
         internal const string ResourceLocator = "resource-locator";
         internal const string RevivalBuffs = "revival-buffs";
+        internal const string FullSpeedCarrying = "full-speed-carrying";
+        internal const string BetterEngines = "better-engines";
+        internal const string BetterPlasmaDrills = "better-plasma-drills";
         internal const string ChemicalFertilizer = "chemical-fertilizer";
         internal const string DualFluidCannon = "dual-fluid-cannon";
         internal const string DeveloperCommands = "developer-commands";
@@ -29,6 +32,9 @@ namespace RaidRescue
             return String.Equals(action, Hotfix, StringComparison.Ordinal) ||
                 String.Equals(action, ResourceLocator, StringComparison.Ordinal) ||
                 String.Equals(action, RevivalBuffs, StringComparison.Ordinal) ||
+                String.Equals(action, FullSpeedCarrying, StringComparison.Ordinal) ||
+                String.Equals(action, BetterEngines, StringComparison.Ordinal) ||
+                String.Equals(action, BetterPlasmaDrills, StringComparison.Ordinal) ||
                 String.Equals(action, ChemicalFertilizer, StringComparison.Ordinal) ||
                 String.Equals(action, DualFluidCannon, StringComparison.Ordinal) ||
                 String.Equals(action, DeveloperCommands, StringComparison.Ordinal);

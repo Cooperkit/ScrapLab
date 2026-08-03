@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.1.0
+
+- Added the optional, save-sensitive **Better Plasma Drills** workshop mod.
+  Plasma Drills now upgrade through levels 4 and 5 with permanent UUIDs,
+  stronger speed and battery capacity, 40/75 range, faster voxel updates, and
+  beam-radius settings up to 10.
+- Added atomic 17-file registration for advanced drills across Lua, shape data,
+  casing insertion, icons, and all 11 shipped languages, plus explicit removal
+  warnings and Steam-update reinstall detection.
+
+- Added the optional **Better Engines** workshop mod. All 13 Electric Engine
+  gears use 10,000 power, while normal and built-in creative level-5 Electric
+  and Gas engines use 40,250 battery/fuel points.
+- Added a reusable adaptive multi-file mod transaction engine with complete
+  preflight, dynamic output checksums, verified backups, atomic replacement,
+  rollback, active receipts, exact restoration, and safe surgical removal.
+- Added the optional **Full-Speed Carrying** workshop mod. Hand-carried
+  objects and Lift-held creations no longer block sprinting, and CarryTool now
+  uses Scrap Mechanic's native first- and third-person carry sprint animations.
+- Added two-file adaptive preflight, SHA-256-verified backups, atomic writes,
+  rollback, exact/surgical removal, build-refresh tracking, and Patch Bay/help
+  integration for Full-Speed Carrying.
+
 ## 2.0.1
 
 - Added `/fly` to Developer Commands with smooth camera-directed flight,

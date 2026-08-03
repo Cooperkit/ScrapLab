@@ -840,6 +840,42 @@ namespace RaidRescue
                 PatchHelperProtocol.RevivalBuffs, enabled, ""));
         }
 
+        public string GetFullSpeedCarryingModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.FullSpeedCarrying));
+        }
+
+        public string SetFullSpeedCarryingMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.FullSpeedCarrying, enabled, ""));
+        }
+
+        public string GetBetterEnginesModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.BetterEngines));
+        }
+
+        public string SetBetterEnginesMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.BetterEngines, enabled, ""));
+        }
+
+        public string GetBetterPlasmaDrillsModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.BetterPlasmaDrills));
+        }
+
+        public string SetBetterPlasmaDrillsMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.BetterPlasmaDrills, enabled, ""));
+        }
+
         public string GetChemicalFertilizerModStatus()
         {
             return Serialize(PatchHelperClient.GetStatus(

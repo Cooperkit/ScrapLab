@@ -133,6 +133,12 @@ namespace RaidRescue
                     return SecretModPatchService.SetEnabled(request.Enabled);
                 case PatchHelperProtocol.RevivalBuffs:
                     return RevivalBuffPatchService.SetEnabled(request.Enabled);
+                case PatchHelperProtocol.FullSpeedCarrying:
+                    return CarrySprintPatchService.SetEnabled(request.Enabled);
+                case PatchHelperProtocol.BetterEngines:
+                    return BetterEnginesPatchService.SetEnabled(request.Enabled);
+                case PatchHelperProtocol.BetterPlasmaDrills:
+                    return BetterPlasmaDrillsPatchService.SetEnabled(request.Enabled);
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return DualFluidCannonPatchCoordinator.SetChemicalEnabled(
                         request.Enabled);
@@ -155,6 +161,12 @@ namespace RaidRescue
                     return SecretModPatchService.GetStatus();
                 case PatchHelperProtocol.RevivalBuffs:
                     return RevivalBuffPatchService.GetStatus();
+                case PatchHelperProtocol.FullSpeedCarrying:
+                    return CarrySprintPatchService.GetStatus();
+                case PatchHelperProtocol.BetterEngines:
+                    return BetterEnginesPatchService.GetStatus();
+                case PatchHelperProtocol.BetterPlasmaDrills:
+                    return BetterPlasmaDrillsPatchService.GetStatus();
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return ChemicalFertilizerPatchService.GetStatus();
                 case PatchHelperProtocol.DualFluidCannon:

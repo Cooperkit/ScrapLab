@@ -103,6 +103,9 @@ $coordinatorType = $assembly.GetType('RaidRescue.DualFluidCannonPatchCoordinator
 $commandsType = $assembly.GetType('RaidRescue.DeveloperCommandsPatchService', $true)
 $noclipAssetsType = $assembly.GetType('RaidRescue.NoclipAssetSupport', $true)
 $revivalType = $assembly.GetType('RaidRescue.RevivalBuffPatchService', $true)
+$carryType = $assembly.GetType('RaidRescue.CarrySprintPatchService', $true)
+$enginesType = $assembly.GetType('RaidRescue.BetterEnginesPatchService', $true)
+$plasmaType = $assembly.GetType('RaidRescue.BetterPlasmaDrillsPatchService', $true)
 
 $liveGame = Invoke-Static $gameService 'FindGameInstall'
 Assert-True (-not [String]::IsNullOrWhiteSpace($liveGame)) 'Scrap Mechanic install was not found.'
@@ -211,6 +214,75 @@ try {
     }
     $revivalFixturePath = Join-Path $fakeGame $revivalRelative
 
+    $carryRelative = Get-StaticField $carryType 'CarryToolRelativePath'
+    $liftRelative = Get-StaticField $carryType 'SurvivalLiftRelativePath'
+    $carryMarker = Get-StaticField $carryType 'CarryPatchMarker'
+    $liftMarker = Get-StaticField $carryType 'LiftPatchMarker'
+    Copy-CleanFixture $carryRelative {
+        param($text, $source)
+        if ($text.Contains($carryMarker)) {
+            return Invoke-Static $carryType 'UnpatchCarryText' $text
+        }
+        return $text
+    }
+    Copy-CleanFixture $liftRelative {
+        param($text, $source)
+        if ($text.Contains($liftMarker)) {
+            return Invoke-Static $carryType 'UnpatchLiftText' $text
+        }
+        return $text
+    }
+    $carryFixturePath = Join-Path $fakeGame $carryRelative
+    $liftFixturePath = Join-Path $fakeGame $liftRelative
+
+    $electricRelative = Get-StaticField $enginesType 'ElectricEngineRelativePath'
+    $gasRelative = Get-StaticField $enginesType 'GasEngineRelativePath'
+    $electricMarker = Get-StaticField $enginesType 'ElectricMarker'
+    $gasMarker = Get-StaticField $enginesType 'GasMarker'
+    Copy-CleanFixture $electricRelative {
+        param($text, $source)
+        if ($text.Contains($electricMarker)) {
+            return Invoke-Static $enginesType 'UnpatchElectricText' $text
+        }
+        return $text
+    }
+    Copy-CleanFixture $gasRelative {
+        param($text, $source)
+        if ($text.Contains($gasMarker)) {
+            return Invoke-Static $enginesType 'UnpatchGasText' $text
+        }
+        return $text
+    }
+    $electricFixturePath = Join-Path $fakeGame $electricRelative
+    $gasFixturePath = Join-Path $fakeGame $gasRelative
+
+    $plasmaDefinition = Invoke-Static $plasmaType 'GetDefinition'
+    $plasmaTargets = $plasmaDefinition.GetType().GetField(
+        'Files', $binding).GetValue($plasmaDefinition)
+    $plasmaRelatives = @()
+    foreach ($target in $plasmaTargets) {
+        $targetType = $target.GetType()
+        $relative = [string]$targetType.GetField(
+            'RelativePath', $binding).GetValue($target)
+        $marker = [string]$targetType.GetField(
+            'Marker', $binding).GetValue($target)
+        $unpatch = $targetType.GetField(
+            'Unpatch', $binding).GetValue($target)
+        $isCarryTarget = $relative -eq $carryRelative
+        $plasmaRelatives += $relative
+        Copy-CleanFixture $relative {
+            param($text, $source)
+            $clean = $text
+            if ($clean.Contains($marker)) {
+                $clean = $unpatch.DynamicInvoke($clean)
+            }
+            if ($isCarryTarget -and $clean.Contains($carryMarker)) {
+                $clean = Invoke-Static $carryType 'UnpatchCarryText' $clean
+            }
+            return $clean
+        }
+    }
+
     $chemicalTargets = Invoke-Static $chemicalType 'GetTargets'
     foreach ($target in $chemicalTargets) {
         $targetType = $target.GetType()
@@ -247,6 +319,12 @@ try {
     Get-ChildItem -LiteralPath $fakeGame -Recurse -Filter '*.lua' | ForEach-Object {
         $relative = $_.FullName.Substring($fakeGame.Length + 1)
         $baseline[$relative] = [IO.File]::ReadAllBytes($_.FullName)
+    }
+    foreach ($relative in $plasmaRelatives) {
+        if (-not $baseline.ContainsKey($relative)) {
+            $baseline[$relative] = [IO.File]::ReadAllBytes(
+                (Join-Path $fakeGame $relative))
+        }
     }
 
     $resourceInstall = Invoke-Static $resourceType 'SetEnabledAt' `
@@ -715,6 +793,292 @@ try {
         $revivalFixturePath,
         [byte[]]$baseline[$revivalRelative])
     Invoke-Static $supportType 'DeleteReceipt' 'RevivalBuffRecovery'
+
+    $carryInstall = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $carryInstall.Success (
+        'Full-Speed Carrying adaptive install failed: ' + $carryInstall.Error)
+    Assert-True ($carryInstall.FilesPatched -eq 2) `
+        'Full-Speed Carrying did not patch both carrying scripts.'
+    $carryText = [IO.File]::ReadAllText($carryFixturePath)
+    $liftText = [IO.File]::ReadAllText($liftFixturePath)
+    Assert-True $carryText.Contains($carryMarker) `
+        'CarryTool patch marker was not installed.'
+    Assert-True $carryText.Contains('local sprintPrefix = prefix') `
+        'Each carry type is not using its own native sprint animation prefix.'
+    Assert-True $carryText.Contains(
+        'sprintLeft = sprintPrefix == "bucket" and "bucket_sprint_left" or sprintMovement') `
+        'Native third-person carry sprint animations were not wired.'
+    Assert-True $carryText.Contains(
+        'swapFpAnimation( self.cl.fpAnimations, "sprintExit", "sprintInto", 0.0 )') `
+        'Native first-person carry sprint transitions were not wired.'
+    Assert-True $carryText.Contains(
+        'self.tool:setBlockSprint( false )') `
+        'Hand-carry sprint was not unblocked.'
+    Assert-True $liftText.Contains($liftMarker) `
+        'Survival Lift patch marker was not installed.'
+    Assert-True $liftText.Contains(
+        "`t`tself.tool:setBlockSprint( false )") `
+        'Lift-carry sprint was not unblocked.'
+
+    $carryRemove = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $carryRemove.Success (
+        'Full-Speed Carrying exact removal failed: ' + $carryRemove.Error)
+    Assert-True (
+        [Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$carryRelative],
+            [byte[]][IO.File]::ReadAllBytes($carryFixturePath))) `
+        'CarryTool exact restore failed.'
+    Assert-True (
+        [Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$liftRelative],
+            [byte[]][IO.File]::ReadAllBytes($liftFixturePath))) `
+        'SurvivalLift exact restore failed.'
+
+    $carrySurgicalInstall = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $carrySurgicalInstall.Success `
+        'Full-Speed Carrying surgical-removal setup failed.'
+    [IO.File]::AppendAllText(
+        $carryFixturePath,
+        "-- POST-INSTALL UNRELATED CARRY EDIT`n",
+        [Text.UTF8Encoding]::new($false))
+    $carrySurgicalRemove = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $carrySurgicalRemove.Success (
+        'Full-Speed Carrying surgical removal failed: ' +
+        $carrySurgicalRemove.Error)
+    $carryAfterSurgery = [IO.File]::ReadAllText($carryFixturePath)
+    Assert-True $carryAfterSurgery.Contains(
+        '-- POST-INSTALL UNRELATED CARRY EDIT') `
+        'Full-Speed Carrying removal discarded an unrelated later edit.'
+    Assert-True (-not $carryAfterSurgery.Contains($carryMarker)) `
+        'Full-Speed Carrying removal left its CarryTool marker behind.'
+    [IO.File]::WriteAllBytes(
+        $carryFixturePath, [byte[]]$baseline[$carryRelative])
+    [IO.File]::WriteAllBytes(
+        $liftFixturePath, [byte[]]$baseline[$liftRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'FullSpeedCarrying'
+
+    $carryTamperInstall = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $carryTamperInstall.Success `
+        'Full-Speed Carrying tamper-test setup failed.'
+    $carryTamperedText = [IO.File]::ReadAllText($carryFixturePath).Replace(
+        'local sprinting = self.tool:isSprinting()',
+        'local sprinting = false')
+    Write-Utf8NoBom $carryFixturePath $carryTamperedText
+    $carryTamperedHash = Get-Sha256 $carryFixturePath
+    $liftBeforeRejectedRemove = Get-Sha256 $liftFixturePath
+    $carryTamperedRemove = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True (-not $carryTamperedRemove.Success) `
+        'Full-Speed Carrying removal accepted edited protected animation code.'
+    Assert-True ((Get-Sha256 $carryFixturePath) -eq $carryTamperedHash) `
+        'Rejected Full-Speed Carrying removal still wrote CarryTool.lua.'
+    Assert-True ((Get-Sha256 $liftFixturePath) -eq $liftBeforeRejectedRemove) `
+        'Rejected Full-Speed Carrying removal still wrote SurvivalLift.lua.'
+    [IO.File]::WriteAllBytes(
+        $carryFixturePath, [byte[]]$baseline[$carryRelative])
+    [IO.File]::WriteAllBytes(
+        $liftFixturePath, [byte[]]$baseline[$liftRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'FullSpeedCarrying'
+
+    $carryProtectedEdit = [IO.File]::ReadAllText($carryFixturePath).Replace(
+        'self.tool:setBlockSprint( true )',
+        'self.tool:setBlockSprint(true)')
+    Write-Utf8NoBom $carryFixturePath $carryProtectedEdit
+    $carryProtectedHash = Get-Sha256 $carryFixturePath
+    $liftProtectedHash = Get-Sha256 $liftFixturePath
+    $carryBlockedInstall = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True (-not $carryBlockedInstall.Success) `
+        'Full-Speed Carrying accepted a changed protected sprint block.'
+    Assert-True ((Get-Sha256 $carryFixturePath) -eq $carryProtectedHash) `
+        'Rejected Full-Speed Carrying install still wrote CarryTool.lua.'
+    Assert-True ((Get-Sha256 $liftFixturePath) -eq $liftProtectedHash) `
+        'Rejected Full-Speed Carrying install still wrote SurvivalLift.lua.'
+    [IO.File]::WriteAllBytes(
+        $carryFixturePath, [byte[]]$baseline[$carryRelative])
+
+    $enginesInstall = Invoke-Static $enginesType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $enginesInstall.Success (
+        'Better Engines adaptive install failed: ' + $enginesInstall.Error)
+    Assert-True ($enginesInstall.FilesPatched -eq 2) `
+        'Better Engines did not patch both engine scripts.'
+    $electricText = [IO.File]::ReadAllText($electricFixturePath)
+    $gasText = [IO.File]::ReadAllText($gasFixturePath)
+    Assert-True $electricText.Contains($electricMarker) `
+        'Better Engines electric marker was not installed.'
+    Assert-True $gasText.Contains($gasMarker) `
+        'Better Engines gas marker was not installed.'
+    Assert-True (([regex]::Matches(
+        $electricText, 'power = 10000, velocity =')).Count -eq 13) `
+        'Better Engines did not set all 13 Electric Engine gears to 10,000 power.'
+    Assert-True (([regex]::Matches(
+        $electricText, 'pointsPerBattery = 40250')).Count -eq 2) `
+        'Better Engines did not update both level-5 Electric Engine records.'
+    Assert-True (([regex]::Matches(
+        $gasText, 'pointsPerFuel = 40250')).Count -eq 2) `
+        'Better Engines did not update both level-5 Gas Engine records.'
+    Assert-True $gasText.Contains('pointsPerFuel = 13500') `
+        'Better Engines unexpectedly changed lower-level Gas Engine efficiency.'
+
+    $enginesRemove = Invoke-Static $enginesType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $enginesRemove.Success (
+        'Better Engines exact removal failed: ' + $enginesRemove.Error)
+    Assert-True (
+        [Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$electricRelative],
+            [byte[]][IO.File]::ReadAllBytes($electricFixturePath))) `
+        'Better Engines exact ElectricEngine restore failed.'
+    Assert-True (
+        [Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$gasRelative],
+            [byte[]][IO.File]::ReadAllBytes($gasFixturePath))) `
+        'Better Engines exact GasEngine restore failed.'
+
+    $enginesSurgicalInstall = Invoke-Static $enginesType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $enginesSurgicalInstall.Success `
+        'Better Engines surgical-removal setup failed.'
+    [IO.File]::AppendAllText(
+        $gasFixturePath,
+        "-- POST-INSTALL UNRELATED GAS ENGINE EDIT`n",
+        [Text.UTF8Encoding]::new($false))
+    $enginesSurgicalRemove = Invoke-Static $enginesType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $enginesSurgicalRemove.Success (
+        'Better Engines surgical removal failed: ' +
+        $enginesSurgicalRemove.Error)
+    Assert-True ([IO.File]::ReadAllText($gasFixturePath).Contains(
+        '-- POST-INSTALL UNRELATED GAS ENGINE EDIT')) `
+        'Better Engines removal discarded an unrelated later edit.'
+    [IO.File]::WriteAllBytes(
+        $electricFixturePath, [byte[]]$baseline[$electricRelative])
+    [IO.File]::WriteAllBytes(
+        $gasFixturePath, [byte[]]$baseline[$gasRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'BetterEngines'
+
+    $plasmaInstall = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaInstall.Success (
+        'Better Plasma Drills install failed: ' + $plasmaInstall.Error)
+    Assert-True ($plasmaInstall.FilesPatched -eq 17) `
+        'Better Plasma Drills did not patch all 17 protected files.'
+    $plasmaScript = [IO.File]::ReadAllText((Join-Path $fakeGame `
+        'Survival\Scripts\game\interactables\PlasmaDrill.lua'))
+    Assert-True $plasmaScript.Contains('pointsPerBattery = 12000') `
+        'Plasma Drill level 5 battery capacity is missing.'
+    Assert-True $plasmaScript.Contains('radius = 10') `
+        'Plasma Drill radius 10 setting is missing.'
+    Assert-True $plasmaScript.Contains('voxelDrillIntervalTicks = 2') `
+        'Plasma Drill level 5 voxel interval is missing.'
+
+    $plasmaRemove = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $plasmaRemove.Success (
+        'Better Plasma Drills removal failed: ' + $plasmaRemove.Error)
+    foreach ($relative in $plasmaRelatives) {
+        Assert-True ([Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$relative],
+            [byte[]][IO.File]::ReadAllBytes((Join-Path $fakeGame $relative)))) `
+            "Better Plasma Drills exact restore failed for $relative."
+    }
+
+    $plasmaFirst = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaFirst.Success 'Plasma-first shared CarryTool install failed.'
+    $carryAfterPlasma = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $carryAfterPlasma.Success (
+        'Full-Speed Carrying rejected intact Plasma Drill registrations: ' +
+        $carryAfterPlasma.Error)
+    $carryRemoveAfterPlasma = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $carryRemoveAfterPlasma.Success `
+        'Full-Speed Carrying removal damaged Plasma Drill composition.'
+    Assert-True ([IO.File]::ReadAllText($carryFixturePath).Contains(
+        'obj_interactive_plasmadrill_lvl4')) `
+        'Full-Speed Carrying removal discarded Plasma Drill registrations.'
+    $plasmaFinalRemove = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $plasmaFinalRemove.Success `
+        'Plasma Drill removal after shared-file composition failed.'
+
+    $carryFirst = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $carryFirst.Success 'Carry-first shared CarryTool install failed.'
+    $plasmaAfterCarry = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaAfterCarry.Success (
+        'Better Plasma Drills rejected intact Full-Speed Carrying code: ' +
+        $plasmaAfterCarry.Error)
+    $plasmaRemoveAfterCarry = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $plasmaRemoveAfterCarry.Success `
+        'Plasma Drill removal damaged Full-Speed Carrying composition.'
+    Assert-True ([IO.File]::ReadAllText($carryFixturePath).Contains($carryMarker)) `
+        'Plasma Drill removal discarded Full-Speed Carrying code.'
+    $carryFinalRemove = Invoke-Static $carryType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $carryFinalRemove.Success `
+        'Final Full-Speed Carrying removal failed.'
+
+    $plasmaTamperInstall = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaTamperInstall.Success `
+        'Better Plasma Drills tamper-test setup failed.'
+    $plasmaScriptPath = Join-Path $fakeGame `
+        'Survival\Scripts\game\interactables\PlasmaDrill.lua'
+    $tamperedPlasma = [IO.File]::ReadAllText($plasmaScriptPath).Replace(
+        'pointsPerBattery = 12000', 'pointsPerBattery = 11999')
+    Write-Utf8NoBom $plasmaScriptPath $tamperedPlasma
+    $tamperedPlasmaHash = Get-Sha256 $plasmaScriptPath
+    $shapePath = Join-Path $fakeGame `
+        'Survival\Objects\Database\ShapeSets\powertools.shapeset'
+    $shapeBeforeRejectedRemove = Get-Sha256 $shapePath
+    $plasmaTamperedRemove = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True (-not $plasmaTamperedRemove.Success) `
+        'Better Plasma Drills removal accepted edited protected level data.'
+    Assert-True ((Get-Sha256 $plasmaScriptPath) -eq $tamperedPlasmaHash) `
+        'Rejected Plasma Drill removal still wrote PlasmaDrill.lua.'
+    Assert-True ((Get-Sha256 $shapePath) -eq $shapeBeforeRejectedRemove) `
+        'Rejected Plasma Drill removal still wrote the shape set.'
+    foreach ($relative in $plasmaRelatives) {
+        [IO.File]::WriteAllBytes((Join-Path $fakeGame $relative),
+            [byte[]]$baseline[$relative])
+    }
+    Invoke-Static $supportType 'DeleteReceipt' 'BetterPlasmaDrills'
+
+    $enginesTamperInstall = Invoke-Static $enginesType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $enginesTamperInstall.Success `
+        'Better Engines tamper-test setup failed.'
+    $electricTamperedText = [IO.File]::ReadAllText(
+        $electricFixturePath).Replace(
+            'power = 10000, velocity = math.rad( 0 )',
+            'power = 9999, velocity = math.rad( 0 )')
+    Write-Utf8NoBom $electricFixturePath $electricTamperedText
+    $electricTamperedHash = Get-Sha256 $electricFixturePath
+    $gasBeforeRejectedRemove = Get-Sha256 $gasFixturePath
+    $enginesTamperedRemove = Invoke-Static $enginesType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True (-not $enginesTamperedRemove.Success) `
+        'Better Engines removal accepted an edited protected gear table.'
+    Assert-True ((Get-Sha256 $electricFixturePath) -eq $electricTamperedHash) `
+        'Rejected Better Engines removal still wrote ElectricEngine.lua.'
+    Assert-True ((Get-Sha256 $gasFixturePath) -eq $gasBeforeRejectedRemove) `
+        'Rejected Better Engines removal still wrote GasEngine.lua.'
+    [IO.File]::WriteAllBytes(
+        $electricFixturePath, [byte[]]$baseline[$electricRelative])
+    [IO.File]::WriteAllBytes(
+        $gasFixturePath, [byte[]]$baseline[$gasRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'BetterEngines'
 
     $chemicalInstall = Invoke-Static $chemicalType 'SetEnabledAt' `
         $fakeGame $backupRoot $true

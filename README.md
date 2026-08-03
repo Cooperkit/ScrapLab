@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.0.1.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.1.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -193,6 +193,9 @@ the selected save database.
 | --- | --- |
 | **Developer Commands** | Unlocks Survival chat commands plus `/fly` collision-free flight, with configurable Host Only or Every Player access. |
 | **Resource Locator Dots** | Makes refineable resource cores and haybot spines visible with the Connect Tool. |
+| **Full-Speed Carrying** | Restores normal walking and sprinting for hand-carried objects and Lift-held creations, using the game's native carry sprint animations. |
+| **Better Engines** | Gives every Electric Engine gear 10,000 power and raises level-5 Electric/Gas efficiency to 40,250 points per battery or fuel item. |
+| **Better Plasma Drills** | Adds level-4 and level-5 Plasma Drill upgrades with greater speed, battery capacity, range, and beam radii up to 10. |
 | **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
 | **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
 | **Dual-Fluid Water Cannon** | Accepts logic, water, and chemical inputs and fires every available liquid on one OFF-to-ON pulse. |
@@ -212,6 +215,28 @@ known build are blocked without writing.
 > mounted water cannons and save each affected world before disabling the mod,
 > running Steam Verify, or allowing a game update to restore the original
 > two-input script.
+
+**Full-Speed Carrying** changes only the carry tools' sprint restrictions and
+animation slots. Crouching, water and chemical-goop movement, damage states,
+Lift placement, and save data remain untouched. Because the restriction is
+client-side, each multiplayer participant who wants the effect must enable it
+in their own game installation.
+
+**Better Engines** keeps the original speed curves, gear counts, bearing
+limits, upgrade paths, saved settings, and Gas Engine power. It changes only
+the Electric Engine gear-power table and the normal/creative level-5
+efficiency records in the Electric and Gas engine scripts.
+
+**Better Plasma Drills** upgrades level 3 to level 4 for 25 Component Kits and
+level 4 to level 5 for 50. Level 4 uses 5 speed, 6,000 battery points, 40 range,
+and radius settings 5–7; level 5 uses 10 speed, 12,000 points, 75 range, and
+radius settings 8–10. Both retain level-3 material capability while updating
+voxel terrain every three or two ticks respectively.
+
+> **Save warning:** Levels 4 and 5 use permanent ScrapLab UUIDs. Downgrade or
+> remove every advanced drill from worlds, inventories, containers, and lifts
+> before disabling the mod or verifying game files. If Steam replaces the mod,
+> reinstall it before loading affected worlds.
 
 Developer commands and optional mods can permanently change gameplay. Back up
 important worlds and use Every Player command access only with trusted players.
@@ -268,7 +293,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.0.1.zip
+release\ScrapLab-2.1.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,
