@@ -7,7 +7,7 @@ namespace RaidRescue
     internal static class BetterPlasmaDrillsPatchService
     {
         private const string ModKey = "BetterPlasmaDrills";
-        private const string DefinitionVersion = "1";
+        private const string DefinitionVersion = "2";
         internal const string VerifiedSteamBuildId = "24499589";
         internal const string VerifiedGameVersion = "1.0.4.874";
         internal const string Level4Uuid =
@@ -77,9 +77,21 @@ namespace RaidRescue
                 GetDefinition(), gamePath, backupRoot, enabled);
         }
 
+        internal static GamePatchResult GetStatusAt(string gamePath)
+        {
+            return AdaptiveMultiFileModService.GetStatusAt(
+                GetDefinition(), gamePath);
+        }
+
         internal static string PatchPlasmaText(string text)
         {
-            string value = ReplaceUnique(text, Level1Cost,
+            string value = ReplaceUnique(text,
+                OriginalLevel1Damage, PatchedLevel1Damage,
+                "level-1 unit damage");
+            value = ReplaceUnique(value,
+                OriginalLevel2Damage, PatchedLevel2Damage,
+                "level-2 unit damage");
+            value = ReplaceUnique(value, Level1Cost,
                 Level1Cost + "\n\t\tupgradeInfo = { Speed = \"+50%\", Range = \"+50%\", Settings = 3 },",
                 "level-1 upgrade data");
             value = ReplaceUnique(value, Level2Cost,
@@ -91,26 +103,36 @@ namespace RaidRescue
                 "drill radius settings");
             value = ReplaceUnique(value, OriginalInteractUpgradeInfo,
                 PatchedInteractUpgradeInfo, "open-GUI upgrade information");
-            return ReplaceUnique(value, OriginalRefreshUpgradeInfo,
+            value = ReplaceUnique(value, OriginalRefreshUpgradeInfo,
                 PatchedRefreshUpgradeInfo, "post-upgrade GUI information");
+            return ReplaceUnique(value, OriginalUnitDamageFormula,
+                PatchedUnitDamageFormula, "unit-damage calculation");
         }
 
         internal static string UnpatchPlasmaText(string text)
         {
-            string value = ReplaceUnique(text, PatchedRefreshUpgradeInfo,
+            string value = UnpatchOptionalUpgrade(text,
+                PatchedUnitDamageFormula, OriginalUnitDamageFormula,
+                "unit-damage calculation");
+            value = ReplaceUnique(value, PatchedRefreshUpgradeInfo,
                 OriginalRefreshUpgradeInfo, "post-upgrade GUI information");
             value = ReplaceUnique(value, PatchedInteractUpgradeInfo,
                 OriginalInteractUpgradeInfo, "open-GUI upgrade information");
             value = ReplaceUnique(value, PatchedRadiusEnd, OriginalRadiusEnd,
                 "drill radius settings");
-            value = ReplaceUnique(value, PatchedLevel3, OriginalLevel3,
-                "level-3 drill record");
+            value = UnpatchLevelRecords(value);
             value = ReplaceUnique(value,
                 Level2Cost + "\n\t\tupgradeInfo = { Speed = \"+50%\", Range = \"+50%\", Settings = 3 },",
                 Level2Cost, "level-2 upgrade data");
-            return ReplaceUnique(value,
+            value = UnpatchOptionalUpgrade(value,
+                PatchedLevel2Damage, OriginalLevel2Damage,
+                "level-2 unit damage");
+            value = ReplaceUnique(value,
                 Level1Cost + "\n\t\tupgradeInfo = { Speed = \"+50%\", Range = \"+50%\", Settings = 3 },",
                 Level1Cost, "level-1 upgrade data");
+            return UnpatchOptionalUpgrade(value,
+                PatchedLevel1Damage, OriginalLevel1Damage,
+                "level-1 unit damage");
         }
 
         internal static string PatchItemsText(string text)
@@ -278,13 +300,20 @@ namespace RaidRescue
                 ModKey = ModKey,
                 DisplayName = "Better Plasma Drills",
                 DefinitionVersion = DefinitionVersion,
-                InstalledReason = "Added verified Plasma Drill levels 4 and 5.",
+                InstalledReason = "Added verified Plasma Drill levels 4 and 5 with increased unit damage.",
                 RemovedReason = "Removed the advanced drill registrations and restored the original upgrade chain.",
                 InstallChanges = new List<string>
                 {
                     "Added Plasma Drill levels 4 and 5 with permanent UUIDs.",
                     "Added six larger beam settings, faster voxel updates, longer range, and improved battery capacity.",
+                    "Set level-based unit damage to 20, 30, 50, 100, and 300 damage per second.",
                     "Registered advanced drills for placement, inventory icons, casing insertion, and all shipped languages."
+                },
+                UpgradeChanges = new List<string>
+                {
+                    "Upgraded Better Plasma Drills to patch definition 2.",
+                    "Set level-based unit damage to 20, 30, 50, 100, and 300 damage per second.",
+                    "Preserved the advanced drill UUID registrations and verified uninstall bases."
                 },
                 RemoveChanges = new List<string>
                 {
@@ -328,6 +357,12 @@ namespace RaidRescue
             AdaptivePatchSupport.RequireUnique(text, "PlasmaDrill = class( nil )", "Plasma Drill class");
             AdaptivePatchSupport.RequireUnique(text, "function PlasmaDrill.sv_n_tryUpgrade( self, _, player )", "Plasma Drill upgrade callback");
             AdaptivePatchSupport.RequireUnique(text, "function PlasmaDrill.sv_drillVoxels( self, drillSettings, range, direction, point )", "Plasma Drill voxel callback");
+            int damageFormulas =
+                AdaptivePatchSupport.Count(text, OriginalUnitDamageFormula) +
+                AdaptivePatchSupport.Count(text, PatchedUnitDamageFormula);
+            if (damageFormulas != 1)
+                throw new InvalidDataException(
+                    "The Plasma Drill unit-damage calculation is missing, duplicated, or edited.");
         }
 
         private static void GuardItems(string text) { AdaptivePatchSupport.RequireUnique(text, Level3Uuid, "level-3 Plasma Drill UUID"); }
@@ -432,14 +467,59 @@ namespace RaidRescue
             return text.Substring(0, first) + newText + text.Substring(first + oldText.Length);
         }
 
+        private static string UnpatchOptionalUpgrade(
+            string text, string patchedText,
+            string cleanText, string description)
+        {
+            int patchedCount = AdaptivePatchSupport.Count(
+                text, patchedText);
+            int cleanCount = AdaptivePatchSupport.Count(
+                text, cleanText);
+            if (patchedCount == 1 && cleanCount == 0)
+                return ReplaceUnique(
+                    text, patchedText, cleanText,
+                    description);
+            if (patchedCount == 0 && cleanCount == 1)
+                return text;
+            throw new InvalidDataException(
+                "The installed " + description +
+                " is missing, duplicated, or partially edited.");
+        }
+
+        private static string UnpatchLevelRecords(string text)
+        {
+            int currentCount = AdaptivePatchSupport.Count(
+                text, PatchedLevel3);
+            int legacyCount = AdaptivePatchSupport.Count(
+                text, LegacyPatchedLevel3);
+            if (currentCount == 1 && legacyCount == 0)
+                return ReplaceUnique(
+                    text, PatchedLevel3, OriginalLevel3,
+                    "level-3 drill record");
+            if (currentCount == 0 && legacyCount == 1)
+                return ReplaceUnique(
+                    text, LegacyPatchedLevel3, OriginalLevel3,
+                    "legacy level-3 drill record");
+            throw new InvalidDataException(
+                "The installed Plasma Drill level records are missing, duplicated, or partially edited.");
+        }
+
         private const string Level1Cost = "\t\tcost = 5,";
         private const string Level2Cost = "\t\tcost = 20,";
+        private const string OriginalLevel1Damage =
+            "\t\tdrillSpeed = 1,\n\t\tvoxelDrillIntervalTicks = 4,";
+        private const string PatchedLevel1Damage =
+            "\t\tdrillSpeed = 1,\n\t\tunitDamagePerSecond = 20,\n\t\tvoxelDrillIntervalTicks = 4,";
+        private const string OriginalLevel2Damage =
+            "\t\tdrillSpeed = 1.5,\n\t\tvoxelDrillIntervalTicks = 4,";
+        private const string PatchedLevel2Damage =
+            "\t\tdrillSpeed = 1.5,\n\t\tunitDamagePerSecond = 30,\n\t\tvoxelDrillIntervalTicks = 4,";
         private const string OriginalLevel3 =
             "\t[tostring( ITEMS.obj_interactive_plasmadrill_lvl3 )] = {\n" +
             "\t\ttitle = \"#{LEVEL} 3\",\n\t\tdrillSpeed = 2.25,\n" +
             "\t\tvoxelDrillIntervalTicks = 4,\n\t\tpointsPerBattery = 2400,\n" +
             "\t\tlevel = 3,\n\t\tmaxSetting = 9,\n\t\trange = 22.5,\n\t}";
-        private const string PatchedLevel3 =
+        private const string LegacyPatchedLevel3 =
             "\t[tostring( ITEMS.obj_interactive_plasmadrill_lvl3 )] = {\n" +
             "\t\ttitle = \"#{LEVEL} 3\",\n\t\tupgrade = tostring( ITEMS.obj_interactive_plasmadrill_lvl4 ),\n" +
             "\t\tdrillSpeed = 2.25,\n\t\tvoxelDrillIntervalTicks = 4,\n\t\tpointsPerBattery = 2400,\n" +
@@ -453,6 +533,21 @@ namespace RaidRescue
             "\t\tupgradeInfo = { Speed = \"+100%\", Range = \"+88%\", Settings = 3 },\n\t},\n" +
             "\t[tostring( ITEMS.obj_interactive_plasmadrill_lvl5 )] = {\n\t\ttitle = \"#{LEVEL} 5\",\n" +
             "\t\tdrillSpeed = 10,\n\t\tvoxelDrillIntervalTicks = 2,\n\t\tpointsPerBattery = 12000,\n" +
+            "\t\tlevel = 3,\n\t\tmaxSetting = 15,\n\t\trange = 75,\n\t}";
+        private const string PatchedLevel3 =
+            "\t[tostring( ITEMS.obj_interactive_plasmadrill_lvl3 )] = {\n" +
+            "\t\ttitle = \"#{LEVEL} 3\",\n\t\tupgrade = tostring( ITEMS.obj_interactive_plasmadrill_lvl4 ),\n" +
+            "\t\tdrillSpeed = 2.25,\n\t\tunitDamagePerSecond = 50,\n\t\tvoxelDrillIntervalTicks = 4,\n\t\tpointsPerBattery = 2400,\n" +
+            "\t\tlevel = 3,\n\t\tmaxSetting = 9,\n\t\trange = 22.5,\n\t\tcost = 25,\n" +
+            "\t\tupgradeInfo = { Speed = \"+122%\", Range = \"+78%\", Settings = 3 },\n\t},\n" +
+            "\t-- SCRAPLAB SECRET MOD: Better Plasma Drills levels 4 and 5.\n" +
+            "\t[tostring( ITEMS.obj_interactive_plasmadrill_lvl4 )] = {\n\t\ttitle = \"#{LEVEL} 4\",\n" +
+            "\t\tupgrade = tostring( ITEMS.obj_interactive_plasmadrill_lvl5 ),\n\t\tdrillSpeed = 5,\n" +
+            "\t\tunitDamagePerSecond = 100,\n\t\tvoxelDrillIntervalTicks = 3,\n\t\tpointsPerBattery = 6000,\n\t\tlevel = 3,\n" +
+            "\t\tmaxSetting = 12,\n\t\trange = 40,\n\t\tcost = 50,\n" +
+            "\t\tupgradeInfo = { Speed = \"+100%\", Range = \"+88%\", Settings = 3 },\n\t},\n" +
+            "\t[tostring( ITEMS.obj_interactive_plasmadrill_lvl5 )] = {\n\t\ttitle = \"#{LEVEL} 5\",\n" +
+            "\t\tdrillSpeed = 10,\n\t\tunitDamagePerSecond = 300,\n\t\tvoxelDrillIntervalTicks = 2,\n\t\tpointsPerBattery = 12000,\n" +
             "\t\tlevel = 3,\n\t\tmaxSetting = 15,\n\t\trange = 75,\n\t}";
         private const string OriginalRadiusEnd = "\t[9] = {\n\t\tradius = 4,\n\t}\n}";
         private const string PatchedRadiusEnd =
@@ -468,5 +563,9 @@ namespace RaidRescue
             "\t\t\tself.gui:setData( \"UpgradeInfo\", { Speed = \"+50%\", Range = \"+50%\", Settings = 3 } )";
         private const string PatchedRefreshUpgradeInfo =
             "\t\t\tself.gui:setData( \"UpgradeInfo\", nextLevel.upgradeInfo )";
+        private const string OriginalUnitDamageFormula =
+            "\t\t\t\t\tlocal damage = 10 * timeStep * self.sv.drillLevel.drillSpeed";
+        private const string PatchedUnitDamageFormula =
+            "\t\t\t\t\tlocal damage = self.sv.drillLevel.unitDamagePerSecond * timeStep";
     }
 }

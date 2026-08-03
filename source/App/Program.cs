@@ -864,6 +864,18 @@ namespace RaidRescue
                 PatchHelperProtocol.BetterEngines, enabled, ""));
         }
 
+        public string GetBetterFreezerBeehiveModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.BetterFreezerBeehive));
+        }
+
+        public string SetBetterFreezerBeehiveMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.BetterFreezerBeehive, enabled, ""));
+        }
+
         public string GetBetterPlasmaDrillsModStatus()
         {
             return Serialize(PatchHelperClient.GetStatus(

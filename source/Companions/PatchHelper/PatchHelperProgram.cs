@@ -137,6 +137,8 @@ namespace RaidRescue
                     return CarrySprintPatchService.SetEnabled(request.Enabled);
                 case PatchHelperProtocol.BetterEngines:
                     return BetterEnginesPatchService.SetEnabled(request.Enabled);
+                case PatchHelperProtocol.BetterFreezerBeehive:
+                    return BetterFreezerBeehivePatchService.SetEnabled(request.Enabled);
                 case PatchHelperProtocol.BetterPlasmaDrills:
                     return BetterPlasmaDrillsPatchService.SetEnabled(request.Enabled);
                 case PatchHelperProtocol.ChemicalFertilizer:
@@ -165,6 +167,8 @@ namespace RaidRescue
                     return CarrySprintPatchService.GetStatus();
                 case PatchHelperProtocol.BetterEngines:
                     return BetterEnginesPatchService.GetStatus();
+                case PatchHelperProtocol.BetterFreezerBeehive:
+                    return BetterFreezerBeehivePatchService.GetStatus();
                 case PatchHelperProtocol.BetterPlasmaDrills:
                     return BetterPlasmaDrillsPatchService.GetStatus();
                 case PatchHelperProtocol.ChemicalFertilizer:

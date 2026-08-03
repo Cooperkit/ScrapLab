@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.2.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.3.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -195,7 +195,8 @@ the selected save database.
 | **Resource Locator Dots** | Makes refineable resource cores and haybot spines visible with the Connect Tool. |
 | **Full-Speed Carrying** | Restores normal walking and sprinting for hand-carried objects and Lift-held creations, using the game's native carry sprint animations. |
 | **Better Engines** | Gives every Electric Engine gear 10,000 power and raises level-5 Electric/Gas efficiency to 40,250 points per battery or fuel item. |
-| **Better Plasma Drills** | Adds level-4 and level-5 Plasma Drill upgrades with greater speed, battery capacity, range, and beam radii up to 10. |
+| **Better Freezer & Beehive** | Adds direct Freezer water-container input, 4x production, five input slots for newly placed machines, and larger finished-item buffers. |
+| **Better Plasma Drills** | Adds level-4 and level-5 upgrades, greater speed, battery capacity, range, beam radii up to 10, and 20–300 unit damage per second. |
 | **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
 | **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
 | **Dual-Fluid Water Cannon** | Accepts logic, water, and chemical inputs and fires every available liquid on one OFF-to-ON pulse. |
@@ -227,11 +228,28 @@ limits, upgrade paths, saved settings, and Gas Engine power. It changes only
 the Electric Engine gear-power table and the normal/creative level-5
 efficiency records in the Electric and Gas engine scripts.
 
+**Better Freezer & Beehive** lets one directly connected Water Container feed
+a Freezer, with connected water preferred before its internal supply. Freezers
+produce 20 ice every 21.6 seconds and store up to 2,500 finished ice; Beehives
+produce one beeswax every 43.2 seconds and store up to 100. Newly placed
+machines receive five filtered 20-item input slots. Existing machines keep
+their current slot count, and five-slot containers created by the mod remain
+save-persistent after removal without changing either machine UUID.
+
 **Better Plasma Drills** upgrades level 3 to level 4 for 25 Component Kits and
 level 4 to level 5 for 50. Level 4 uses 5 speed, 6,000 battery points, 40 range,
 and radius settings 5–7; level 5 uses 10 speed, 12,000 points, 75 range, and
 radius settings 8–10. Both retain level-3 material capability while updating
-voxel terrain every three or two ticks respectively.
+voxel terrain every three or two ticks respectively. Levels 1–5 deal 20, 30,
+50, 100, and 300 unit damage per second. This remains continuous beam damage
+against every unit-backed creature the vanilla raycast can hit; player
+characters, voxel behavior, battery use, impact force, and part destruction
+are unchanged.
+
+An intact older Better Plasma Drills installation appears as **Damage Update
+Available**. Its Patch Bay **Update** action migrates the protected Lua and
+receipt atomically without temporarily removing the level-4/5 UUIDs. Original
+uninstall bases and unrelated later edits are preserved.
 
 > **Save warning:** Levels 4 and 5 use permanent ScrapLab UUIDs. Downgrade or
 > remove every advanced drill from worlds, inventories, containers, and lifts
@@ -244,12 +262,12 @@ important worlds and use Every Player command access only with trusted players.
 `Survival/Scripts/ScrapLab`. Smooth impulse flight handles open space, while
 short capsule-checked position steps cross solid geometry. Scrap Mechanic's
 normal camera and mouse controls remain untouched, falling and ragdolling are
-suppressed during flight, god mode stays active, and noclip refuses to exit
-inside solid geometry. The world-bound player script performs flight physics;
-the command script only coordinates permissions, input, and multiplayer state.
-Because Scrap Mechanic's god-mode flag is global, one noclipping player temporarily
-protects every player in that hosted world; the previous god-mode state is
-restored after the last noclipping player exits.
+suppressed during flight, personal damage protection stays active, and noclip
+refuses to exit inside solid geometry. The world-bound player script performs
+flight physics; the command script only coordinates permissions, input, and
+multiplayer state. Flight protection is keyed to the requesting player and does
+not change Scrap Mechanic's separate global `/god` setting or protect other
+players in the hosted world.
 
 ## Updates and migration
 
@@ -293,7 +311,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.2.0.zip
+release\ScrapLab-2.3.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

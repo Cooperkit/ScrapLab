@@ -14,6 +14,7 @@ namespace RaidRescue
         internal const string KnownInstalled = "KNOWN INSTALLED";
         internal const string CompatibleUpdate = "COMPATIBLE GAME UPDATE";
         internal const string AdaptiveInstalled = "ADAPTIVE INSTALLED";
+        internal const string DefinitionUpdate = "PATCH DEFINITION UPDATE";
         internal const string PartialConflict = "PARTIAL PATCH - REPAIR REQUIRED";
         internal const string UnsupportedCode = "GAME UPDATE CHANGED REQUIRED CODE";
         internal const string OtherModification = "OTHER MODIFICATION DETECTED";
@@ -100,6 +101,8 @@ namespace RaidRescue
 
     internal static class AdaptivePatchSupport
     {
+        internal static Action<string, string>
+            ReplaceFileCompletedForTest = null;
         internal const string KnownBuildId = "24417028";
         internal const string KnownGameVersion = "1.0.2.870";
         internal static string PatchStateRootOverride = null;
@@ -291,6 +294,10 @@ namespace RaidRescue
             {
                 File.WriteAllBytes(temporary, bytes);
                 File.Replace(temporary, path, null, true);
+                Action<string, string> completed =
+                    ReplaceFileCompletedForTest;
+                if (completed != null)
+                    completed(path, operation);
             }
             finally
             {
@@ -606,6 +613,50 @@ namespace RaidRescue
                 try { File.Delete(path); } catch { }
                 throw new IOException(
                     "The active adaptive base backup failed checksum verification.");
+            }
+            return path;
+        }
+
+        internal static string CaptureVersionedBaseBackup(
+            string modKey, string relativePath,
+            byte[] bytes, string expectedHash)
+        {
+            if (bytes == null || !String.Equals(
+                Sha256(bytes), expectedHash,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                throw new IOException(
+                    "The adaptive definition-update base has an unexpected checksum.");
+            }
+            string directory = GetReceiptFileDirectory(modKey);
+            Directory.CreateDirectory(directory);
+            string identity = Sha256(
+                new UTF8Encoding(false).GetBytes(
+                    relativePath.ToUpperInvariant())).Substring(0, 12);
+            string path = Path.Combine(
+                directory,
+                Path.GetFileName(relativePath) + "." +
+                identity + "." +
+                expectedHash.Substring(0, 12) + ".base");
+            if (File.Exists(path))
+            {
+                if (!String.Equals(
+                    Sha256(path), expectedHash,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new IOException(
+                        "The versioned adaptive base backup has an unexpected checksum.");
+                }
+                return path;
+            }
+            File.WriteAllBytes(path, bytes);
+            if (!String.Equals(
+                Sha256(path), expectedHash,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                try { File.Delete(path); } catch { }
+                throw new IOException(
+                    "The versioned adaptive base backup failed checksum verification.");
             }
             return path;
         }

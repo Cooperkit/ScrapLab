@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.3.0
+
+- Added the independent **Better Freezer & Beehive** Patch Bay mod. Freezers
+  accept one direct Water Container with external-first consumption, both
+  machines produce four times faster, newly placed machines receive five
+  filtered input slots, and finished storage increases to 2,500 ice and 100
+  beeswax.
+- Added atomic two-script adaptive preflight, verified backups, rollback,
+  bounded receipts, exact/surgical removal, update compatibility states, game
+  cache invalidation, and persistent-container guidance for the new mod.
+- Fixed `/fly` in multiplayer so damage protection, flight movement, and
+  anti-ragdoll state apply only to the requesting player. Flight no longer
+  changes Scrap Mechanic's global god-mode flag or protects everyone in the
+  hosted world, and verified noclip v7 installations upgrade safely to v8.
+- Added explicit Better Plasma Drill unit damage of 20, 30, 50, 100, and 300
+  damage per second for levels 1-5 while preserving the vanilla unit targeting,
+  beam impact, battery use, and mining behavior.
+- Added atomic patch-definition upgrades. Intact version-1 Better Plasma Drills
+  installations now show **Damage Update Available** and migrate to definition
+  2 without removing advanced UUID registrations or losing their original
+  uninstall bases.
+- Added a dedicated Patch Bay **Update** action plus damage and migration
+  guidance in the card, Help page, and README.
+
 ## 2.2.0
 
 - Redesigned **Super Secret Mods** as a dedicated full-window Patch Bay rather

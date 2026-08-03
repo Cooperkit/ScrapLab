@@ -926,7 +926,7 @@ button{font:inherit}
         </aside>
         <section class=""secret-catalog"">
       <div class=""secret-mods-catalog-head"">
-        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 7 AVAILABLE</span></div>
+        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 9 AVAILABLE</span></div>
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""SEARCH PATCH CATALOG..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
@@ -957,11 +957,20 @@ button{font:inherit}
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
         </div>
-        <div class=""secret-mod-row secret-mod-card locked"" id=""betterPlasmaDrillsRow"" data-category=""mining"" data-search=""better plasma drills mining power tool level 4 level 5 range radius battery speed save dangerous"">
-          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MINING &middot; SAVE-SENSITIVE</span><strong>BETTER PLASMA DRILLS</strong><span>Add powerful level-4 and level-5 upgrades with faster drilling, longer range, and beam radii up to 10.</span><em id=""betterPlasmaDrillsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterPlasmaDrillsReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""betterPlasmaDrillsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Plasma Drills"" onclick=""toggleBetterPlasmaDrillsMod()"" disabled=""disabled"">
+        <div class=""secret-mod-row secret-mod-card locked"" id=""betterFreezerBeehiveRow"" data-category=""farming machinery"" data-search=""better freezer beehive water container ice beeswax pigment flower production storage farming machinery automation"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">FARMING &middot; MACHINERY &middot; AUTOMATION</span><strong>BETTER FREEZER &amp; BEEHIVE</strong><span>Connect Freezers to Water Containers, produce 4x faster, and give newly placed machines five input slots.</span><em id=""betterFreezerBeehiveState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterFreezerBeehiveReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""betterFreezerBeehiveSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Freezer and Beehive"" onclick=""toggleBetterFreezerBeehiveMod()"" disabled=""disabled"">
             <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
           </button>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""betterPlasmaDrillsRow"" data-category=""mining"" data-search=""better plasma drills mining power tool level 4 level 5 range radius battery speed save dangerous"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MINING &middot; COMBAT &middot; SAVE-SENSITIVE</span><strong>BETTER PLASMA DRILLS</strong><span>Add level-4/5 upgrades, larger beams, and level-based unit damage up to 300 per second.</span><em id=""betterPlasmaDrillsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterPlasmaDrillsReason""></span></div>
+          <div class=""secret-mod-actions"">
+            <button type=""button"" class=""secret-mod-options"" id=""betterPlasmaDrillsUpdate"" aria-label=""Update Better Plasma Drills damage"" onclick=""updateBetterPlasmaDrillsMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-switch"" id=""betterPlasmaDrillsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Plasma Drills"" onclick=""toggleBetterPlasmaDrillsMod()"" disabled=""disabled"">
+              <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+            </button>
+          </div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""revivalBuffRow"" data-category=""survival"" data-search=""revival baguette buffs pizza veggie burger perk knockout death revive multiplayer survival"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">SURVIVAL &middot; REVIVAL</span><strong>REVIVAL BUFF RECOVERY</strong><span>Revival Baguettes restore every pizza and veggie-burger buff held when the player was knocked out.</span><em id=""revivalBuffState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""revivalBuffReason""></span></div>
@@ -1098,7 +1107,7 @@ button{font:inherit}
       </div>
       <ul class=""hotfix-checks"">
         <li>Includes /unlimited, /god, /fly, /spawn, time controls, item commands, and raid utilities.</li>
-        <li>/fly follows your view direction, passes through collisions, and keeps god mode active until you leave flight.</li>
+        <li>/fly follows your view direction, passes through collisions, and protects only the flying player from damage.</li>
         <li>/kick and /ban remain restricted to the host in both access modes.</li>
         <li>Installing or changing access edits no save data; commands players run can permanently change the world.</li>
       </ul>
@@ -1262,11 +1271,24 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; BETTER FREEZER &amp; BEEHIVE</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>WATER CONTAINER INPUT</b><p>Connect one Water Container directly to a Freezer with the Connect Tool. Connected water is consumed first; water placed inside the Freezer remains the fallback supply.</p></div>
+          <div class=""help-item""><b>FOUR TIMES FASTER</b><p>Freezers complete a 20-ice batch every 21.6 seconds. Beehives produce one beeswax every 43.2 seconds. Ingredient costs remain one water or one pigment flower.</p></div>
+          <div class=""help-item""><b>FIVE INPUT SLOTS</b><p>Freezers and Beehives placed after installation receive five filtered 20-item input slots. Already-placed machines keep their existing one-slot container.</p></div>
+          <div class=""help-item""><b>LARGER OUTPUT BUFFER</b><p>Finished storage increases to 2,500 ice and 100 beeswax. Finished items remain in the original floating pickup output rather than occupying input slots.</p></div>
+          <div class=""help-item""><b>SAFE REMOVAL</b><p>No UUIDs change. Five-slot containers created by the mod remain five slots in that save after removal, and output above vanilla limits remains collectable before vanilla production resumes.</p></div>
+        </div>
+      </div>
+
+      <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; BETTER PLASMA DRILLS</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>TWO ADVANCED LEVELS</b><p>Upgrade level 3 to level 4 for 25 Component Kits, then level 4 to level 5 for 50. Level 4 has 5 speed, 40 range, and 6,000 battery points; level 5 has 10 speed, 75 range, and 12,000 points.</p></div>
           <div class=""help-item""><b>LARGER TUNNELS</b><p>Level 4 unlocks radius settings 5, 6, and 7. Level 5 unlocks 8, 9, and 10. Terrain updates run every three ticks at level 4 and every two ticks at level 5.</p></div>
           <div class=""help-item""><b>MATERIAL COMPATIBILITY</b><p>Both advanced drills retain level-3 material capability, avoiding unsupported Mining Manager levels while improving actual excavation speed.</p></div>
+          <div class=""help-item""><b>UNIT DAMAGE</b><p>Levels 1 through 5 deal 20, 30, 50, 100, and 300 damage per second while the powered beam directly touches any unit-backed creature.</p></div>
+          <div class=""help-item""><b>DAMAGE UPDATES</b><p>If an older installation is intact, use <strong>Update</strong> in the Patch Bay. ScrapLab upgrades it atomically without removing the advanced drill UUIDs.</p></div>
           <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Remove or downgrade every advanced drill and save each world before disabling this mod or verifying game files.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>Reinstall the mod before loading a world that may contain advanced drills whenever ScrapLab reports <strong>Reinstall Required - Save Parts at Risk</strong>.</p></div>
         </div>
@@ -1290,7 +1312,7 @@ button{font:inherit}
           <div class=""help-item""><b>NATIVE CONTROLS</b><p>Noclip reads movement through ScrapLab's hidden input tool and never replaces Scrap Mechanic's camera. Mouse sensitivity and inverted-look preferences stay under the game's control.</p></div>
           <div class=""help-item""><b>SMOOTH, STABLE FLIGHT</b><p>The world-bound player controller uses smooth velocity control instead of constant teleporting. Falling and ragdolling are suppressed while noclip is active; short position steps occur only when crossing solid geometry.</p></div>
           <div class=""help-item""><b>SAFE EXIT</b><p>Noclip refuses to turn off while your exit position overlaps solid terrain, harvestables, or creations. Move into open space and try again so your character cannot be trapped inside geometry.</p></div>
-          <div class=""help-item""><b>TEMPORARY GOD MODE</b><p>Noclip keeps god mode active until the last flying player exits, then restores the previous god-mode state. Scrap Mechanic's god flag is global, so multiplayer noclip temporarily protects every player in that hosted world.</p></div>
+          <div class=""help-item""><b>PERSONAL FLIGHT PROTECTION</b><p>While /fly is active, only that flying player is protected from damage. Other players remain vulnerable, and Scrap Mechanic's separate global /god setting is left unchanged.</p></div>
           <div class=""help-item""><b>HOST ONLY</b><p>The recommended mode registers commands only for the world host. Joined players keep normal Survival controls.</p></div>
           <div class=""help-item""><b>EVERY PLAYER</b><p>Every joined player receives the command list while connected. Use this only with players you completely trust. <strong>/kick</strong> and <strong>/ban</strong> stay host-only.</p></div>
           <div class=""help-item""><b>AVAILABLE TOOLS</b><p>Commands cover items and weapons, god mode, collision-free flight, inventory mode, unit spawning, time controls, player values, aggro, raids, starter kits, and unstuck tools.</p></div>
@@ -1511,7 +1533,12 @@ var secretBetterEnginesInstalled=false;
 var secretBetterEnginesCompatibility='';
 var secretBetterEnginesCanApply=true;
 var secretBetterEnginesReason='';
+var secretBetterFreezerBeehiveInstalled=false;
+var secretBetterFreezerBeehiveCompatibility='';
+var secretBetterFreezerBeehiveCanApply=true;
+var secretBetterFreezerBeehiveReason='';
 var secretBetterPlasmaDrillsInstalled=false;
+var secretBetterPlasmaDrillsNeedsUpdate=false;
 var secretBetterPlasmaDrillsCompatibility='';
 var secretBetterPlasmaDrillsCanApply=true;
 var secretBetterPlasmaDrillsReason='';
@@ -1803,11 +1830,15 @@ function captureSecretCompatibility(kind,data){
   secretFullSpeedCarryingCompatibility=state;
   secretFullSpeedCarryingCanApply=canApply;
   secretFullSpeedCarryingReason=reason;
- }else if(kind==='engines'){
-  secretBetterEnginesCompatibility=state;
-  secretBetterEnginesCanApply=canApply;
-  secretBetterEnginesReason=reason;
- }else if(kind==='plasma'){
+  }else if(kind==='engines'){
+   secretBetterEnginesCompatibility=state;
+   secretBetterEnginesCanApply=canApply;
+   secretBetterEnginesReason=reason;
+  }else if(kind==='freezerBeehive'){
+   secretBetterFreezerBeehiveCompatibility=state;
+   secretBetterFreezerBeehiveCanApply=canApply;
+   secretBetterFreezerBeehiveReason=reason;
+  }else if(kind==='plasma'){
   secretBetterPlasmaDrillsCompatibility=state;
   secretBetterPlasmaDrillsCanApply=canApply;
   secretBetterPlasmaDrillsReason=reason;
@@ -1901,10 +1932,27 @@ function loadSecretModsState(){
   secretBetterEnginesReason='Could not read the Better Engines state.';
   showSecretModFeedback(secretBetterEnginesReason,'bad');
  }
- try{
-  var plasmaData=parseResult(window.external.GetBetterPlasmaDrillsModStatus());
+  try{
+   var freezerBeehiveData=parseResult(window.external.GetBetterFreezerBeehiveModStatus());
+   if(freezerBeehiveData.Success){
+    secretBetterFreezerBeehiveInstalled=!!freezerBeehiveData.Installed;
+    captureSecretCompatibility('freezerBeehive',freezerBeehiveData);
+    installedSecretMod=installedSecretMod||secretBetterFreezerBeehiveInstalled;
+   }else{
+    secretBetterFreezerBeehiveCanApply=false;
+    secretBetterFreezerBeehiveReason=freezerBeehiveData.Error||'Could not read the Better Freezer & Beehive state.';
+    showSecretModFeedback(secretBetterFreezerBeehiveReason,'bad');
+   }
+  }catch(e){
+   secretBetterFreezerBeehiveCanApply=false;
+   secretBetterFreezerBeehiveReason='Could not read the Better Freezer & Beehive state.';
+   showSecretModFeedback(secretBetterFreezerBeehiveReason,'bad');
+  }
+  try{
+   var plasmaData=parseResult(window.external.GetBetterPlasmaDrillsModStatus());
   if(plasmaData.Success){
    secretBetterPlasmaDrillsInstalled=!!plasmaData.Installed;
+   secretBetterPlasmaDrillsNeedsUpdate=!!plasmaData.NeedsUpdate;
    captureSecretCompatibility('plasma',plasmaData);
    installedSecretMod=installedSecretMod||secretBetterPlasmaDrillsInstalled;
   }else{
@@ -2010,16 +2058,30 @@ function renderSecretModsState(){
   enginesState.innerText=secretModBusy&&secretModBusyTarget==='engines'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretBetterEnginesInstalled,secretBetterEnginesCompatibility,'NOT INSTALLED'));
   renderCompatibilityReason('betterEnginesReason',secretBetterEnginesInstalled,secretBetterEnginesCanApply,secretBetterEnginesReason);
  }
+ var freezerBeehive=document.getElementById('betterFreezerBeehiveSwitch');
+ var freezerBeehiveRow=document.getElementById('betterFreezerBeehiveRow');
+ var freezerBeehiveState=document.getElementById('betterFreezerBeehiveState');
+ if(freezerBeehive&&freezerBeehiveRow&&freezerBeehiveState){
+  freezerBeehive.className=secretBetterFreezerBeehiveInstalled?'secret-switch on':'secret-switch';
+  freezerBeehive.setAttribute('aria-checked',secretBetterFreezerBeehiveInstalled?'true':'false');
+  freezerBeehive.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterFreezerBeehiveCanApply;
+  freezerBeehiveRow.className='secret-mod-row secret-mod-card'+(secretBetterFreezerBeehiveInstalled?' enabled':'')+((!secretModsEnabled||!secretBetterFreezerBeehiveCanApply)?' locked':'');
+  freezerBeehiveState.innerText=secretModBusy&&secretModBusyTarget==='freezerBeehive'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretBetterFreezerBeehiveInstalled,secretBetterFreezerBeehiveCompatibility,'NOT INSTALLED'));
+  renderCompatibilityReason('betterFreezerBeehiveReason',secretBetterFreezerBeehiveInstalled,secretBetterFreezerBeehiveCanApply,secretBetterFreezerBeehiveReason);
+ }
  var plasma=document.getElementById('betterPlasmaDrillsSwitch');
+ var plasmaUpdate=document.getElementById('betterPlasmaDrillsUpdate');
  var plasmaRow=document.getElementById('betterPlasmaDrillsRow');
  var plasmaState=document.getElementById('betterPlasmaDrillsState');
  if(plasma&&plasmaRow&&plasmaState){
   plasma.className=secretBetterPlasmaDrillsInstalled?'secret-switch on':'secret-switch';
   plasma.setAttribute('aria-checked',secretBetterPlasmaDrillsInstalled?'true':'false');
   plasma.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterPlasmaDrillsCanApply;
+  if(plasmaUpdate){plasmaUpdate.style.display=secretBetterPlasmaDrillsNeedsUpdate?'block':'none';plasmaUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterPlasmaDrillsCanApply;}
   plasmaRow.className='secret-mod-row secret-mod-card'+(secretBetterPlasmaDrillsInstalled?' enabled':'')+((!secretModsEnabled||!secretBetterPlasmaDrillsCanApply)?' locked':'');
-  plasmaState.innerText=secretModBusy&&secretModBusyTarget==='plasma'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretBetterPlasmaDrillsInstalled,secretBetterPlasmaDrillsCompatibility,'NOT INSTALLED'));
+  plasmaState.innerText=secretModBusy&&secretModBusyTarget==='plasma'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretBetterPlasmaDrillsNeedsUpdate?'DAMAGE UPDATE AVAILABLE':compatibilityStateLabel(secretBetterPlasmaDrillsInstalled,secretBetterPlasmaDrillsCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('betterPlasmaDrillsReason',secretBetterPlasmaDrillsInstalled,secretBetterPlasmaDrillsCanApply,secretBetterPlasmaDrillsReason);
+  if(secretBetterPlasmaDrillsNeedsUpdate){var plasmaReason=document.getElementById('betterPlasmaDrillsReason');plasmaReason.className='secret-compat-reason show';plasmaReason.innerText=secretBetterPlasmaDrillsReason||'A verified unit-damage update is ready.';}
  }
  var revival=document.getElementById('revivalBuffSwitch');
  var revivalRow=document.getElementById('revivalBuffRow');
@@ -2070,9 +2132,9 @@ function renderSecretModsState(){
  var count=document.getElementById('secretModCount');
  var headCount=document.getElementById('secretModHeadCount');
  if(count){
-  var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
-  count.innerText=active+' ACTIVE \u00b7 8 AVAILABLE';
-  if(headCount)headCount.innerText=active+' ACTIVE / 8 AVAILABLE';
+  var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+  count.innerText=active+' ACTIVE \u00b7 9 AVAILABLE';
+  if(headCount)headCount.innerText=active+' ACTIVE / 9 AVAILABLE';
  }
  filterSecretMods();
 }
@@ -2151,8 +2213,9 @@ function disableAllSecretModsConfirmed(){
   if(secretChemicalFertilizerInstalled&&!setChemicalFertilizerMod(false))return false;
  }
  if(secretRevivalBuffInstalled&&!setRevivalBuffMod(false))return false;
- if(secretFullSpeedCarryingInstalled&&!setFullSpeedCarryingMod(false))return false;
- if(secretBetterEnginesInstalled&&!setBetterEnginesMod(false))return false;
+  if(secretFullSpeedCarryingInstalled&&!setFullSpeedCarryingMod(false))return false;
+  if(secretBetterFreezerBeehiveInstalled&&!setBetterFreezerBeehiveMod(false))return false;
+  if(secretBetterEnginesInstalled&&!setBetterEnginesMod(false))return false;
  if(secretDeveloperCommandsInstalled&&!setDeveloperCommandsMod(false))return false;
  if(secretResourceLocatorInstalled&&!setResourceLocatorMod(false))return false;
  secretModsEnabled=false;
@@ -2177,15 +2240,53 @@ function toggleBetterEnginesMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy)return;
  setBetterEnginesMod(!secretBetterEnginesInstalled);
 }
+function toggleBetterFreezerBeehiveMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ setBetterFreezerBeehiveMod(!secretBetterFreezerBeehiveInstalled);
+}
 function toggleBetterPlasmaDrillsMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy)return;
  if(secretBetterPlasmaDrillsInstalled){openPlasmaDangerConfirm('plasmaOnly');return;}
  setBetterPlasmaDrillsMod(true);
 }
+function updateBetterPlasmaDrillsMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretBetterPlasmaDrillsNeedsUpdate)return;
+ setBetterPlasmaDrillsMod(true);
+}
+function setBetterFreezerBeehiveMod(enabled){
+ if(gameRunning){
+  showSecretModFeedback('Close Scrap Mechanic completely before changing Better Freezer & Beehive.','bad');
+  return false;
+ }
+ secretModBusy=true;secretModBusyTarget='freezerBeehive';operationBusy=true;
+ showSecretModFeedback(enabled?'UPGRADING FREEZER & BEEHIVE PRODUCTION...':'RESTORING ORIGINAL FREEZER & BEEHIVE...','working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetBetterFreezerBeehiveMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The Better Freezer & Beehive installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){
+  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ if(!data.Success){
+  showSecretModFeedback(data.Error||'Better Freezer & Beehive could not be changed.','bad');
+  applyGameLock(gameRunning);renderSecretModsState();return false;
+ }
+ secretBetterFreezerBeehiveInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(secretBetterFreezerBeehiveInstalled
+  ?'BETTER FREEZER & BEEHIVE INSTALLED - water automation, five-slot new machines, and 4x production are ready.'
+  :'BETTER FREEZER & BEEHIVE REMOVED - vanilla scripts restored; existing five-slot containers remain safe.',
+  'good');
+ applyGameLock(gameRunning);renderSecretModsState();return true;
+}
 function setBetterPlasmaDrillsMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Better Plasma Drills.','bad');return false;}
+ var wasDamageUpdate=enabled&&secretBetterPlasmaDrillsInstalled&&secretBetterPlasmaDrillsNeedsUpdate;
  secretModBusy=true;secretModBusyTarget='plasma';operationBusy=true;
- showSecretModFeedback(enabled?'FORGING ADVANCED PLASMA DRILLS...':'REMOVING ADVANCED PLASMA DRILLS...','working');
+ showSecretModFeedback(wasDamageUpdate?'UPGRADING PLASMA DRILL UNIT DAMAGE...':(enabled?'FORGING ADVANCED PLASMA DRILLS...':'REMOVING ADVANCED PLASMA DRILLS...'),'working');
  renderSecretModsState();applyGameLock(gameRunning);
  var data;
  try{data=parseResult(window.external.SetBetterPlasmaDrillsMod(enabled));}
@@ -2196,7 +2297,7 @@ function setBetterPlasmaDrillsMod(enabled){
  secretBetterPlasmaDrillsInstalled=!!data.Installed;
  if(data.BackupPath)lastGameBackupPath=data.BackupPath;
  loadSecretModsState();
- showSecretModFeedback(secretBetterPlasmaDrillsInstalled?'BETTER PLASMA DRILLS INSTALLED - levels 4 and 5 are ready.':'BETTER PLASMA DRILLS REMOVED - the original three-level chain was restored.','good');
+ showSecretModFeedback(secretBetterPlasmaDrillsInstalled?(wasDamageUpdate?'BETTER PLASMA DRILLS UPDATED - unit damage now scales from 20 to 300 per second.':'BETTER PLASMA DRILLS INSTALLED - levels 4 and 5 and increased unit damage are ready.'):'BETTER PLASMA DRILLS REMOVED - the original three-level chain was restored.','good');
  applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function setBetterEnginesMod(enabled){

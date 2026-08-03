@@ -78,6 +78,33 @@ function Write-Utf8NoBom([string]$Path, [string]$Text) {
     [IO.File]::WriteAllText($Path, $Text, [Text.UTF8Encoding]::new($false))
 }
 
+function Convert-PlasmaInstallToDefinition1(
+    [string]$PlasmaPath,
+    [string]$ReceiptRoot
+) {
+    $text = Normalize-Lua ([IO.File]::ReadAllText($PlasmaPath))
+    foreach ($damage in @(20, 30, 50, 100, 300)) {
+        $text = $text.Replace(
+            "`t`tunitDamagePerSecond = $damage,`n", '')
+    }
+    $text = $text.Replace(
+        'local damage = self.sv.drillLevel.unitDamagePerSecond * timeStep',
+        'local damage = 10 * timeStep * self.sv.drillLevel.drillSpeed')
+    Write-Utf8NoBom $PlasmaPath $text
+
+    $receiptPath = Join-Path $ReceiptRoot 'BetterPlasmaDrills.json'
+    $receipt = Get-Content -LiteralPath $receiptPath -Raw -Encoding UTF8 |
+        ConvertFrom-Json
+    $receipt.DefinitionVersion = '1'
+    $plasmaFile = $receipt.Files | Where-Object {
+        $_.RelativePath -eq 'Survival\Scripts\game\interactables\PlasmaDrill.lua'
+    }
+    $plasmaFile.OutputHash = Get-Sha256 $PlasmaPath
+    Write-Utf8NoBom $receiptPath (
+        $receipt | ConvertTo-Json -Depth 12 -Compress)
+    return $receiptPath
+}
+
 function Copy-CleanFixture(
     [string]$RelativePath,
     [scriptblock]$CleanTransform
@@ -95,6 +122,7 @@ function Copy-CleanFixture(
 $exePath = (Resolve-Path -LiteralPath $RaidRescueExe).Path
 $assembly = [Reflection.Assembly]::LoadFrom($exePath)
 $gameService = $assembly.GetType('RaidRescue.GamePatchService', $true)
+$cacheType = $assembly.GetType('RaidRescue.GameScriptCacheInvalidator', $true)
 $supportType = $assembly.GetType('RaidRescue.AdaptivePatchSupport', $true)
 $resourceType = $assembly.GetType('RaidRescue.SecretModPatchService', $true)
 $chemicalType = $assembly.GetType('RaidRescue.ChemicalFertilizerPatchService', $true)
@@ -105,6 +133,8 @@ $noclipAssetsType = $assembly.GetType('RaidRescue.NoclipAssetSupport', $true)
 $revivalType = $assembly.GetType('RaidRescue.RevivalBuffPatchService', $true)
 $carryType = $assembly.GetType('RaidRescue.CarrySprintPatchService', $true)
 $enginesType = $assembly.GetType('RaidRescue.BetterEnginesPatchService', $true)
+$freezerBeehiveType = $assembly.GetType(
+    'RaidRescue.BetterFreezerBeehivePatchService', $true)
 $plasmaType = $assembly.GetType('RaidRescue.BetterPlasmaDrillsPatchService', $true)
 
 $liveGame = Invoke-Static $gameService 'FindGameInstall'
@@ -255,6 +285,27 @@ try {
     }
     $electricFixturePath = Join-Path $fakeGame $electricRelative
     $gasFixturePath = Join-Path $fakeGame $gasRelative
+
+    $freezerRelative = Get-StaticField $freezerBeehiveType 'FreezerRelativePath'
+    $beehiveRelative = Get-StaticField $freezerBeehiveType 'BeehiveRelativePath'
+    $freezerMarker = Get-StaticField $freezerBeehiveType 'FreezerMarker'
+    $beehiveMarker = Get-StaticField $freezerBeehiveType 'BeehiveMarker'
+    Copy-CleanFixture $freezerRelative {
+        param($text, $source)
+        if ($text.Contains($freezerMarker)) {
+            return Invoke-Static $freezerBeehiveType 'UnpatchFreezerText' $text
+        }
+        return $text
+    }
+    Copy-CleanFixture $beehiveRelative {
+        param($text, $source)
+        if ($text.Contains($beehiveMarker)) {
+            return Invoke-Static $freezerBeehiveType 'UnpatchBeehiveText' $text
+        }
+        return $text
+    }
+    $freezerFixturePath = Join-Path $fakeGame $freezerRelative
+    $beehiveFixturePath = Join-Path $fakeGame $beehiveRelative
 
     $plasmaDefinition = Invoke-Static $plasmaType 'GetDefinition'
     $plasmaTargets = $plasmaDefinition.GetType().GetField(
@@ -449,6 +500,16 @@ try {
         'character:setTumbling( false )')) `
         'Developer Commands noclip does not prevent ragdoll state.'
     Assert-True ($noclipModuleText.Contains(
+        'function SurvivalPlayer.sv_takeDamage')) `
+        'Developer Commands flight does not install per-player damage protection.'
+    Assert-True ($noclipModuleText.Contains(
+        'g_scrapLabNoclipActivePlayers[self.player.id]')) `
+        'Developer Commands damage protection is not keyed to the requesting player.'
+    Assert-True (-not $noclipModuleText.Contains('g_godMode')) `
+        'Developer Commands flight still mutates Scrap Mechanic''s global god-mode state.'
+    Assert-True (-not $noclipModuleText.Contains('sendToClients')) `
+        'Developer Commands flight still broadcasts player-only state to every client.'
+    Assert-True ($noclipModuleText.Contains(
         'sm.physics.applyImpulse')) `
         'Developer Commands noclip does not use smooth free-space flight.'
     Assert-True ($noclipModuleText.Contains(
@@ -549,7 +610,8 @@ try {
         $knownLegacyModuleHashes = @(
             (Get-StaticField $noclipAssetsType 'LegacyV4ModuleHash'),
             (Get-StaticField $noclipAssetsType 'LegacyV5ModuleHash'),
-            (Get-StaticField $noclipAssetsType 'LegacyV6ModuleHash')
+            (Get-StaticField $noclipAssetsType 'LegacyV6ModuleHash'),
+            (Get-StaticField $noclipAssetsType 'LegacyV7ModuleHash')
         )
         if ($knownLegacyModuleHashes -contains $legacyModuleHash) {
             $legacyAssetInstall = Invoke-Static $commandsType 'SetEnabledAt' `
@@ -568,8 +630,8 @@ try {
                 'Developer Commands did not accept the verified legacy module upgrade.'
             Assert-True ([IO.File]::ReadAllText(
                 (Join-Path $fakeGame $noclipModuleRelative)).Contains(
-                    'NOCLIP MODULE v7')) `
-                'Developer Commands did not replace the legacy module with v7.'
+                    'NOCLIP MODULE v8')) `
+                'Developer Commands did not replace the legacy module with v8.'
             Assert-True ([IO.File]::ReadAllText(
                 (Join-Path $fakeGame $noclipInputRelative)).Contains(
                     'isSprinting()')) `
@@ -577,7 +639,7 @@ try {
             $legacyAssetRemove = Invoke-Static $commandsType 'SetEnabledAt' `
                 $fakeGame $backupRoot $false 'host'
             Assert-True $legacyAssetRemove.Success `
-                'Developer Commands v7 migration cleanup failed.'
+                'Developer Commands v8 migration cleanup failed.'
         }
     }
 
@@ -963,6 +1025,116 @@ try {
         $gasFixturePath, [byte[]]$baseline[$gasRelative])
     Invoke-Static $supportType 'DeleteReceipt' 'BetterEngines'
 
+    Assert-True (
+        (Get-StaticField $freezerBeehiveType 'VerifiedSteamBuildId') -eq
+            '24529696') `
+        'Better Freezer & Beehive has the wrong verified Steam build.'
+    Assert-True (
+        (Get-StaticField $freezerBeehiveType 'VerifiedGameVersion') -eq
+            '1.0.5.876') `
+        'Better Freezer & Beehive has the wrong verified game version.'
+
+    $freezerBeehiveInstall = Invoke-Static $freezerBeehiveType `
+        'SetEnabledAt' $fakeGame $backupRoot $true
+    Assert-True $freezerBeehiveInstall.Success (
+        'Better Freezer & Beehive install failed: ' +
+        $freezerBeehiveInstall.Error)
+    Assert-True ($freezerBeehiveInstall.FilesPatched -eq 2) `
+        'Better Freezer & Beehive did not patch both scripts atomically.'
+    $freezerText = [IO.File]::ReadAllText($freezerFixturePath)
+    $beehiveText = [IO.File]::ReadAllText($beehiveFixturePath)
+    foreach ($required in @(
+        $freezerMarker,
+        'Freezer.maxParentCount = 1',
+        'Freezer.connectionInput = sm.interactable.connectionType.water',
+        'Freezer.connectIcon = "water"',
+        'DAYCYCLE_TIME_TICKS * 0.015',
+        'local MaximumStored = 2500',
+        'addContainer( 0, 5, 20 )',
+        'function Freezer.sv_getConnectedWaterContainer( self )',
+        'sm.container.spend( waterSource, obj_consumable_water, NumConsumed, true )',
+        'function Freezer.client_getAvailableParentConnectionCount')) {
+        Assert-True $freezerText.Contains($required) `
+            "Better Freezer is missing protected behavior: $required"
+    }
+    Assert-True (
+        $freezerText.IndexOf(
+            'local connected = self:sv_getConnectedWaterContainer()') -lt
+        $freezerText.IndexOf(
+            'if self.sv.container and self.sv.container:canSpend')) `
+        'The Freezer does not prefer connected water before internal water.'
+    Assert-True (-not $freezerText.Contains('removeContainer')) `
+        'Better Freezer unexpectedly resizes existing saved containers.'
+    foreach ($required in @(
+        $beehiveMarker,
+        'DAYCYCLE_TIME_TICKS * 0.03',
+        'local MaximumStored = 100',
+        'addContainer( 0, 5, 20 )')) {
+        Assert-True $beehiveText.Contains($required) `
+            "Better Beehive is missing protected behavior: $required"
+    }
+    Assert-True (-not $beehiveText.Contains('removeContainer')) `
+        'Better Beehive unexpectedly resizes existing saved containers.'
+
+    $freezerBeehiveRemove = Invoke-Static $freezerBeehiveType `
+        'SetEnabledAt' $fakeGame $backupRoot $false
+    Assert-True $freezerBeehiveRemove.Success (
+        'Better Freezer & Beehive exact removal failed: ' +
+        $freezerBeehiveRemove.Error)
+    foreach ($relative in @($freezerRelative, $beehiveRelative)) {
+        Assert-True ([Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$relative],
+            [byte[]][IO.File]::ReadAllBytes((Join-Path $fakeGame $relative)))) `
+            "Better Freezer & Beehive exact restore failed for $relative."
+    }
+
+    $freezerBeehiveSurgicalInstall = Invoke-Static $freezerBeehiveType `
+        'SetEnabledAt' $fakeGame $backupRoot $true
+    Assert-True $freezerBeehiveSurgicalInstall.Success `
+        'Better Freezer & Beehive surgical-removal setup failed.'
+    [IO.File]::AppendAllText(
+        $beehiveFixturePath,
+        "-- POST-INSTALL UNRELATED BEEHIVE EDIT`n",
+        [Text.UTF8Encoding]::new($false))
+    $freezerBeehiveSurgicalRemove = Invoke-Static $freezerBeehiveType `
+        'SetEnabledAt' $fakeGame $backupRoot $false
+    Assert-True $freezerBeehiveSurgicalRemove.Success (
+        'Better Freezer & Beehive surgical removal failed: ' +
+        $freezerBeehiveSurgicalRemove.Error)
+    Assert-True ([IO.File]::ReadAllText($beehiveFixturePath).Contains(
+        '-- POST-INSTALL UNRELATED BEEHIVE EDIT')) `
+        'Better Beehive removal discarded an unrelated later edit.'
+    [IO.File]::WriteAllBytes(
+        $freezerFixturePath, [byte[]]$baseline[$freezerRelative])
+    [IO.File]::WriteAllBytes(
+        $beehiveFixturePath, [byte[]]$baseline[$beehiveRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'BetterFreezerBeehive'
+
+    $freezerBeehiveTamperInstall = Invoke-Static $freezerBeehiveType `
+        'SetEnabledAt' $fakeGame $backupRoot $true
+    Assert-True $freezerBeehiveTamperInstall.Success `
+        'Better Freezer & Beehive tamper-removal setup failed.'
+    $tamperedFreezer = [IO.File]::ReadAllText($freezerFixturePath).Replace(
+        'local MaximumStored = 2500', 'local MaximumStored = 2499')
+    Write-Utf8NoBom $freezerFixturePath $tamperedFreezer
+    $tamperedFreezerHash = Get-Sha256 $freezerFixturePath
+    $beehiveBeforeRejectedRemove = Get-Sha256 $beehiveFixturePath
+    $freezerBeehiveRejectedRemove = Invoke-Static $freezerBeehiveType `
+        'SetEnabledAt' $fakeGame $backupRoot $false
+    Assert-True (-not $freezerBeehiveRejectedRemove.Success) `
+        'Better Freezer & Beehive accepted an edited protected snippet.'
+    Assert-True ((Get-Sha256 $freezerFixturePath) -eq $tamperedFreezerHash) `
+        'Rejected Better Freezer removal still wrote Freezer.lua.'
+    Assert-True (
+        (Get-Sha256 $beehiveFixturePath) -eq
+        $beehiveBeforeRejectedRemove) `
+        'Rejected Better Freezer removal still wrote InteractableBeehive.lua.'
+    [IO.File]::WriteAllBytes(
+        $freezerFixturePath, [byte[]]$baseline[$freezerRelative])
+    [IO.File]::WriteAllBytes(
+        $beehiveFixturePath, [byte[]]$baseline[$beehiveRelative])
+    Invoke-Static $supportType 'DeleteReceipt' 'BetterFreezerBeehive'
+
     $plasmaInstall = Invoke-Static $plasmaType 'SetEnabledAt' `
         $fakeGame $backupRoot $true
     Assert-True $plasmaInstall.Success (
@@ -977,6 +1149,17 @@ try {
         'Plasma Drill radius 10 setting is missing.'
     Assert-True $plasmaScript.Contains('voxelDrillIntervalTicks = 2') `
         'Plasma Drill level 5 voxel interval is missing.'
+    foreach ($damage in @(20, 30, 50, 100, 300)) {
+        Assert-True $plasmaScript.Contains(
+            "unitDamagePerSecond = $damage") `
+            "Plasma Drill unit damage $damage is missing."
+    }
+    Assert-True $plasmaScript.Contains(
+        'local damage = self.sv.drillLevel.unitDamagePerSecond * timeStep') `
+        'Plasma Drill damage is not time-step independent.'
+    Assert-True (-not $plasmaScript.Contains(
+        'local damage = 10 * timeStep * self.sv.drillLevel.drillSpeed')) `
+        'The speed-derived vanilla Plasma Drill damage formula remains installed.'
 
     $plasmaRemove = Invoke-Static $plasmaType 'SetEnabledAt' `
         $fakeGame $backupRoot $false
@@ -988,6 +1171,161 @@ try {
             [byte[]][IO.File]::ReadAllBytes((Join-Path $fakeGame $relative)))) `
             "Better Plasma Drills exact restore failed for $relative."
     }
+
+    $plasmaScriptPath = Join-Path $fakeGame `
+        'Survival\Scripts\game\interactables\PlasmaDrill.lua'
+    $plasmaV1Setup = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaV1Setup.Success `
+        'Plasma definition-1 migration setup failed.'
+    $plasmaReceiptPath = Convert-PlasmaInstallToDefinition1 `
+        $plasmaScriptPath $receiptRoot
+    $v1Receipt = Get-Content -LiteralPath $plasmaReceiptPath `
+        -Raw -Encoding UTF8 | ConvertFrom-Json
+    $v1PlasmaReceipt = $v1Receipt.Files | Where-Object {
+        $_.RelativePath -eq `
+            'Survival\Scripts\game\interactables\PlasmaDrill.lua'
+    }
+    $v1SourceHash = [string]$v1PlasmaReceipt.SourceHash
+    $v1BackupPath = [string]$v1PlasmaReceipt.BackupPath
+
+    $plasmaV1Status = Invoke-Static $plasmaType 'GetStatusAt' $fakeGame
+    Assert-True $plasmaV1Status.Success `
+        'Definition-1 Plasma Drill status failed.'
+    Assert-True $plasmaV1Status.Installed `
+        'Definition-1 Plasma Drills were shown as uninstalled.'
+    Assert-True $plasmaV1Status.NeedsUpdate `
+        'Definition-1 Plasma Drills did not request a damage update.'
+    Assert-True ($plasmaV1Status.CompatibilityState -eq `
+        'PATCH DEFINITION UPDATE') `
+        'Definition-1 Plasma Drills returned the wrong compatibility state.'
+
+    $v1PlasmaHashBeforeFailure = Get-Sha256 $plasmaScriptPath
+    $v1ReceiptBeforeFailure = Get-Content -LiteralPath `
+        $plasmaReceiptPath -Raw -Encoding UTF8
+    $replaceHookField = $supportType.GetField(
+        'ReplaceFileCompletedForTest', $binding)
+    $replaceFailure = [Action[string,string]]{
+        param($path, $operation)
+        if ($operation.Contains('definition-update')) {
+            throw 'Injected definition-update write failure.'
+        }
+    }
+    $replaceHookField.SetValue($null, $replaceFailure)
+    try {
+        $plasmaFailedUpgrade = Invoke-Static $plasmaType 'SetEnabledAt' `
+            $fakeGame $backupRoot $true
+    }
+    finally {
+        $replaceHookField.SetValue($null, $null)
+    }
+    Assert-True (-not $plasmaFailedUpgrade.Success) `
+        'Injected Plasma Drill definition-update failure was accepted.'
+    Assert-True ((Get-Sha256 $plasmaScriptPath) -eq `
+        $v1PlasmaHashBeforeFailure) `
+        'Failed definition migration did not restore the version-1 Lua.'
+    Assert-True ((Get-Content -LiteralPath $plasmaReceiptPath `
+        -Raw -Encoding UTF8) -eq $v1ReceiptBeforeFailure) `
+        'Failed definition migration changed the version-1 receipt.'
+
+    $plasmaV1Upgrade = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaV1Upgrade.Success (
+        'Definition-1 Plasma Drill upgrade failed: ' +
+        $plasmaV1Upgrade.Error)
+    Assert-True ($plasmaV1Upgrade.FilesPatched -eq 1) `
+        'The damage migration rewrote files whose desired output was unchanged.'
+    $fakeCachePath = Join-Path $fakeGame 'Cache\Bundle\core_data.cbo'
+    Write-Utf8NoBom $fakeCachePath 'definition-upgrade-cache'
+    $cacheResult = Invoke-Static $cacheType 'DeleteAfterChangesForTest' `
+        $fakeGame $plasmaV1Upgrade
+    Assert-True $cacheResult.Success `
+        'Damage migration cache invalidation reported failure.'
+    Assert-True (-not (Test-Path -LiteralPath $fakeCachePath)) `
+        'Damage migration did not delete core_data.cbo after a verified write.'
+    $upgradedPlasma = [IO.File]::ReadAllText($plasmaScriptPath)
+    Assert-True $upgradedPlasma.Contains(
+        'unitDamagePerSecond = 300') `
+        'Definition-1 migration did not install level-5 unit damage.'
+    $v2Receipt = Get-Content -LiteralPath $plasmaReceiptPath `
+        -Raw -Encoding UTF8 | ConvertFrom-Json
+    Assert-True ($v2Receipt.DefinitionVersion -eq '2') `
+        'Definition-1 migration did not update the active receipt.'
+    $v2PlasmaReceipt = $v2Receipt.Files | Where-Object {
+        $_.RelativePath -eq `
+            'Survival\Scripts\game\interactables\PlasmaDrill.lua'
+    }
+    Assert-True (
+        $v2PlasmaReceipt.SourceHash -eq $v1SourceHash -and
+        $v2PlasmaReceipt.BackupPath -eq $v1BackupPath) `
+        'Definition migration discarded the verified original uninstall base.'
+
+    $plasmaMigratedRemove = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $plasmaMigratedRemove.Success `
+        'Migrated Better Plasma Drills could not be removed.'
+    foreach ($relative in $plasmaRelatives) {
+        Assert-True ([Linq.Enumerable]::SequenceEqual(
+            [byte[]]$baseline[$relative],
+            [byte[]][IO.File]::ReadAllBytes((Join-Path $fakeGame $relative)))) `
+            "Migrated Plasma Drill restore failed for $relative."
+    }
+
+    $plasmaEditedSetup = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaEditedSetup.Success `
+        'Edited definition-1 migration setup failed.'
+    Convert-PlasmaInstallToDefinition1 `
+        $plasmaScriptPath $receiptRoot | Out-Null
+    [IO.File]::AppendAllText(
+        $plasmaScriptPath,
+        "-- POST-INSTALL UNRELATED PLASMA EDIT`n",
+        [Text.UTF8Encoding]::new($false))
+    $plasmaEditedUpgrade = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaEditedUpgrade.Success (
+        'Definition migration rejected an unrelated edit: ' +
+        $plasmaEditedUpgrade.Error)
+    Assert-True ([IO.File]::ReadAllText($plasmaScriptPath).Contains(
+        '-- POST-INSTALL UNRELATED PLASMA EDIT')) `
+        'Definition migration discarded an unrelated edit.'
+    $plasmaEditedRemove = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $false
+    Assert-True $plasmaEditedRemove.Success `
+        'Updated Plasma Drills with an unrelated edit could not be removed.'
+    $editedCleanPlasma = [IO.File]::ReadAllText($plasmaScriptPath)
+    Assert-True $editedCleanPlasma.Contains(
+        '-- POST-INSTALL UNRELATED PLASMA EDIT') `
+        'Exact removal after migration discarded the unrelated edit.'
+    Assert-True (-not $editedCleanPlasma.Contains(
+        'obj_interactive_plasmadrill_lvl4')) `
+        'Removal after migration left advanced Plasma Drill code installed.'
+    [IO.File]::WriteAllBytes(
+        $plasmaScriptPath,
+        [byte[]]$baseline['Survival\Scripts\game\interactables\PlasmaDrill.lua'])
+
+    $plasmaDamageTamperSetup = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True $plasmaDamageTamperSetup.Success `
+        'Damage-tamper migration setup failed.'
+    Convert-PlasmaInstallToDefinition1 `
+        $plasmaScriptPath $receiptRoot | Out-Null
+    $tamperedDamageText = [IO.File]::ReadAllText($plasmaScriptPath).Replace(
+        'local damage = 10 * timeStep * self.sv.drillLevel.drillSpeed',
+        'local damage = 11 * timeStep * self.sv.drillLevel.drillSpeed')
+    Write-Utf8NoBom $plasmaScriptPath $tamperedDamageText
+    $tamperedDamageHash = Get-Sha256 $plasmaScriptPath
+    $plasmaDamageTamperUpgrade = Invoke-Static $plasmaType 'SetEnabledAt' `
+        $fakeGame $backupRoot $true
+    Assert-True (-not $plasmaDamageTamperUpgrade.Success) `
+        'An edited legacy Plasma Drill damage formula was upgraded.'
+    Assert-True ((Get-Sha256 $plasmaScriptPath) -eq $tamperedDamageHash) `
+        'Rejected damage migration still wrote PlasmaDrill.lua.'
+    foreach ($relative in $plasmaRelatives) {
+        [IO.File]::WriteAllBytes((Join-Path $fakeGame $relative),
+            [byte[]]$baseline[$relative])
+    }
+    Invoke-Static $supportType 'DeleteReceipt' 'BetterPlasmaDrills'
 
     $plasmaFirst = Invoke-Static $plasmaType 'SetEnabledAt' `
         $fakeGame $backupRoot $true

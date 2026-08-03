@@ -23,6 +23,8 @@ namespace RaidRescue
             "770484BCB555F17748E98E2F3EF85D1D987F3987466C8245ED7FDD86621A7E00";
         private const string LegacyV6ModuleHash =
             "AA1E06A6FF92A1AC773230C5CB094318F4C33DC7D19059467A5B0DCBCF27B9AC";
+        private const string LegacyV7ModuleHash =
+            "D51C93B16B77A4F927B97FA0A65BD86976EA15438E9564E4AE984CCBC66E9C13";
         private const string LegacyInputToolHash =
             "92B9D5559244E5DF68A690EFC7B6D5BA0BC3266410BA253ABA1BDBD3979D9795";
         private const string CleanTail =
@@ -177,7 +179,8 @@ namespace RaidRescue
                     (moduleExists &&
                         (HashEquals(moduleBytes, LegacyV4ModuleHash) ||
                          HashEquals(moduleBytes, LegacyV5ModuleHash) ||
-                         HashEquals(moduleBytes, LegacyV6ModuleHash))),
+                         HashEquals(moduleBytes, LegacyV6ModuleHash) ||
+                         HashEquals(moduleBytes, LegacyV7ModuleHash))),
                 InputToolPath = inputPath,
                 InputToolExists = inputExists,
                 InputToolBytes = inputBytes,

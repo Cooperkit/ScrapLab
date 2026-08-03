@@ -1,4 +1,4 @@
--- SCRAPLAB DEVELOPER COMMANDS NOCLIP MODULE v7
+-- SCRAPLAB DEVELOPER COMMANDS NOCLIP MODULE v8
 -- Damped flight with capsule-swept collision bypass.
 
 local ScrapLabNoclipUp = sm.vec3.new( 0, 0, 1 )
@@ -70,6 +70,20 @@ local function scrapLabInstallTumbleGuard()
 	return true
 end
 
+local function scrapLabInstallDamageGuard()
+	if SurvivalPlayer == nil or SurvivalPlayer.sv_takeDamage == nil then return false end
+	if g_scrapLabOriginalTakeDamage then return true end
+
+	g_scrapLabOriginalTakeDamage = SurvivalPlayer.sv_takeDamage
+	function SurvivalPlayer.sv_takeDamage( self, damage, source, typeUuid )
+		if self.player and g_scrapLabNoclipActivePlayers[self.player.id] then
+			return
+		end
+		return g_scrapLabOriginalTakeDamage( self, damage, source, typeUuid )
+	end
+	return true
+end
+
 -- Physics impulses must run from a world-bound script. SurvivalGame is a
 -- GameClass ("no world"), while BasePlayer is the PlayerClass that owns the
 -- character and is therefore allowed to drive its physics.
@@ -130,8 +144,8 @@ function SurvivalGame.server_onCreate( self )
 	ScrapLabOriginalServerOnCreate( self )
 	g_scrapLabNoclipEntries = {}
 	self.sv.scrapLabNoclipPlayers = g_scrapLabNoclipEntries
-	self.sv.scrapLabNoclipGodBase = nil
 	scrapLabInstallTumbleGuard()
+	scrapLabInstallDamageGuard()
 end
 
 local ScrapLabOriginalClientOnCreate = SurvivalGame.client_onCreate
@@ -145,7 +159,7 @@ local ScrapLabOriginalBindChatCommands = SurvivalGame.bindChatCommands
 function SurvivalGame.bindChatCommands( self )
 	ScrapLabOriginalBindChatCommands( self )
 	if sm.isHost or g_survivalDev then
-		sm.game.bindChatCommand( "/fly", {}, "cl_onChatCommand", "Toggle collision-free flight and temporary god mode" )
+		sm.game.bindChatCommand( "/fly", {}, "cl_onChatCommand", "Toggle collision-free flight and personal damage protection" )
 	end
 end
 
@@ -156,15 +170,6 @@ function SurvivalGame.cl_onChatCommand( self, params )
 		return
 	end
 	ScrapLabOriginalClientChatCommand( self, params )
-end
-
-function SurvivalGame.sv_scrapLabRestoreGodMode( self )
-	if not scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) then
-		if self.sv.scrapLabNoclipGodBase ~= nil then
-			g_godMode = self.sv.scrapLabNoclipGodBase
-		end
-		self.sv.scrapLabNoclipGodBase = nil
-	end
 end
 
 function SurvivalGame.sv_scrapLabStopNoclip( self, player, notifyClient )
@@ -178,7 +183,6 @@ function SurvivalGame.sv_scrapLabStopNoclip( self, player, notifyClient )
 	end
 	g_scrapLabNoclipActivePlayers[player.id] = nil
 	entries[player.id] = nil
-	self:sv_scrapLabRestoreGodMode()
 	if notifyClient then
 		self.network:sendToClient( player, "cl_scrapLabNoclipState", false )
 	end
@@ -214,10 +218,6 @@ function SurvivalGame.sv_scrapLabToggleNoclip( self, _, player )
 		self.network:sendToClient( player, "client_showMessage", "FLIGHT: Leave the seat or revive before enabling" )
 		return
 	end
-	if not scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) then
-		self.sv.scrapLabNoclipGodBase = g_godMode == true
-	end
-	g_godMode = true
 	if character:isTumbling() then character:setTumbling( false ) end
 	g_scrapLabNoclipActivePlayers[player.id] = true
 	self.sv.scrapLabNoclipPlayers[player.id] = {
@@ -244,8 +244,8 @@ end
 function SurvivalGame.sv_scrapLabUpdateNoclip( self, timeStep )
 	local entries = self.sv.scrapLabNoclipPlayers
 	if not scrapLabHasNoclipPlayers( entries ) then return end
-	g_godMode = true
 	scrapLabInstallTumbleGuard()
+	scrapLabInstallDamageGuard()
 	local stopped = {}
 
 	for _, entry in pairs( entries ) do
@@ -329,9 +329,6 @@ local ScrapLabOriginalServerOnDestroy = SurvivalGame.server_onDestroy
 function SurvivalGame.server_onDestroy( self )
 	for playerId, _ in pairs( self.sv.scrapLabNoclipPlayers or {} ) do
 		g_scrapLabNoclipActivePlayers[playerId] = nil
-	end
-	if scrapLabHasNoclipPlayers( self.sv.scrapLabNoclipPlayers ) and self.sv.scrapLabNoclipGodBase ~= nil then
-		g_godMode = self.sv.scrapLabNoclipGodBase
 	end
 	ScrapLabOriginalServerOnDestroy( self )
 end

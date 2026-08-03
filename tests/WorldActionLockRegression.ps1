@@ -23,6 +23,21 @@ $matches = [regex]::Matches(
 if ($matches.Count -ne 1) {
     throw "Expected one embedded application script."
 }
+foreach ($requiredUi in @(
+    'id="betterPlasmaDrillsUpdate"',
+    'DAMAGE UPDATE AVAILABLE',
+    'function updateBetterPlasmaDrillsMod()',
+    'unit damage now scales from 20 to 300 per second',
+    'id="betterFreezerBeehiveSwitch"',
+    'function toggleBetterFreezerBeehiveMod()',
+    'GetBetterFreezerBeehiveModStatus',
+    'SetBetterFreezerBeehiveMod',
+    '9 AVAILABLE'
+)) {
+    if (-not $html.Contains($requiredUi)) {
+        throw "The Better Plasma Drills update UI is missing: $requiredUi"
+    }
+}
 
 $harness = @'
 var nodes={

@@ -153,6 +153,21 @@ namespace RaidRescue
         public static GamePatchResult DeleteAfterChanges(
             string gamePath, GamePatchResult result)
         {
+            return DeleteAfterChangesCore(
+                gamePath, result, true);
+        }
+
+        internal static GamePatchResult DeleteAfterChangesForTest(
+            string gamePath, GamePatchResult result)
+        {
+            return DeleteAfterChangesCore(
+                gamePath, result, false);
+        }
+
+        private static GamePatchResult DeleteAfterChangesCore(
+            string gamePath, GamePatchResult result,
+            bool requireGameClosed)
+        {
             if (result == null || result.FilesPatched <= 0)
                 return result;
 
@@ -161,7 +176,8 @@ namespace RaidRescue
                 if (String.IsNullOrEmpty(gamePath))
                     throw new InvalidOperationException(
                         "The Scrap Mechanic install path is unavailable.");
-                if (GamePatchService.IsGameRunning())
+                if (requireGameClosed &&
+                    GamePatchService.IsGameRunning())
                     throw new InvalidOperationException(
                         "Scrap Mechanic started before its script cache could be reset. " +
                         "Close the game and apply the patch change again.");

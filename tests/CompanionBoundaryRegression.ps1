@@ -48,6 +48,13 @@ Assert-True ($LASTEXITCODE -eq 0) 'A valid read-only helper status failed.'
 $parsed = $status | ConvertFrom-Json
 Assert-True ($null -ne $parsed.Success) 'The helper did not return its typed result.'
 
+$freezerBeehiveStatus = & $patchPath --status better-freezer-beehive
+Assert-True ($LASTEXITCODE -eq 0) `
+    'The Better Freezer & Beehive helper status action failed.'
+$freezerBeehiveParsed = $freezerBeehiveStatus | ConvertFrom-Json
+Assert-True ($null -ne $freezerBeehiveParsed.Success) `
+    'The Better Freezer & Beehive helper did not return its typed result.'
+
 & $patchPath --status definitely-not-an-action 2>$null
 Assert-True ($LASTEXITCODE -eq 2) 'The helper accepted an unknown status action.'
 

@@ -25,6 +25,7 @@ namespace RaidRescue
         public string InstalledReason;
         public string RemovedReason;
         public List<string> InstallChanges;
+        public List<string> UpgradeChanges;
         public List<string> RemoveChanges;
         public List<AdaptiveModFileDefinition> Files;
     }
@@ -39,6 +40,7 @@ namespace RaidRescue
             public string CurrentHash;
             public bool Clean;
             public bool Installed;
+            public bool NeedsUpgrade;
             public string PatchedText;
             public string CleanText;
             public byte[] OutputBytes;
@@ -75,6 +77,40 @@ namespace RaidRescue
                     definition, gamePath, false);
                 return FillStatus(
                     definition, result, gamePath, build, states);
+            }
+            catch (Exception exception)
+            {
+                result.Success = false;
+                result.Error = exception.Message;
+                return result;
+            }
+        }
+
+        internal static GamePatchResult GetStatusAt(
+            AdaptiveMultiFileModDefinition definition,
+            string gamePath)
+        {
+            GamePatchResult result = new GamePatchResult
+            {
+                GamePath = gamePath,
+                Changes = new List<string>()
+            };
+            try
+            {
+                RequireDefinition(definition);
+                string executable = Path.Combine(
+                    gamePath, "Release", "ScrapMechanic.exe");
+                if (!File.Exists(executable))
+                    throw new FileNotFoundException(
+                        "ScrapMechanic.exe was not found.", executable);
+                result.GameVersion = FileVersionInfo.GetVersionInfo(
+                    executable).FileVersion;
+                SteamBuildInfo build =
+                    AdaptivePatchSupport.GetSteamBuild(
+                        gamePath, result.GameVersion);
+                return FillStatus(
+                    definition, result, gamePath, build,
+                    Probe(definition, gamePath, false));
             }
             catch (Exception exception)
             {
@@ -136,6 +172,12 @@ namespace RaidRescue
 
                 if (enabled && installedCount == states.Count)
                 {
+                    if (NeedsDefinitionUpgrade(states))
+                    {
+                        return ApplyDefinitionUpgrade(
+                            definition, result, gamePath,
+                            backupRoot, build, states);
+                    }
                     if (AdaptivePatchSupport.RequiresBuildRefresh(
                         definition.ModKey, build))
                     {
@@ -423,6 +465,197 @@ namespace RaidRescue
             }
         }
 
+        private static GamePatchResult ApplyDefinitionUpgrade(
+            AdaptiveMultiFileModDefinition definition,
+            GamePatchResult result, string gamePath,
+            string backupRoot, SteamBuildInfo build,
+            List<FileState> states)
+        {
+            string stamp = DateTime.Now.ToString(
+                "yyyyMMdd-HHmmss-fff");
+            string backupPath = Path.Combine(
+                backupRoot, "Update-" +
+                definition.ModKey + "-" + stamp);
+            Directory.CreateDirectory(backupPath);
+            result.BackupPath = backupPath;
+
+            AdaptivePatchReceipt previous =
+                AdaptivePatchSupport.LoadReceipt(
+                    definition.ModKey);
+            AdaptivePatchReceipt updated =
+                new AdaptivePatchReceipt
+                {
+                    ModKey = definition.ModKey,
+                    DefinitionVersion =
+                        definition.DefinitionVersion,
+                    SteamBuildId = build.BuildId,
+                    GameVersion = result.GameVersion,
+                    CreatedUtc = DateTime.UtcNow.ToString("O"),
+                    Files = new List<AdaptivePatchReceiptFile>()
+                };
+            List<AdaptivePatchReceiptFile> manifestFiles =
+                new List<AdaptivePatchReceiptFile>();
+
+            foreach (FileState state in states)
+            {
+                state.OutputBytes = state.Document.Render(
+                    state.PatchedText);
+                state.OutputHash = AdaptivePatchSupport.Sha256(
+                    state.OutputBytes);
+                state.BackupFile = Path.Combine(
+                    backupPath,
+                    state.Definition.RelativePath);
+                Directory.CreateDirectory(
+                    Path.GetDirectoryName(state.BackupFile));
+                File.Copy(state.Path, state.BackupFile, false);
+                if (!HashEquals(
+                    AdaptivePatchSupport.Sha256(
+                        state.BackupFile),
+                    state.CurrentHash))
+                {
+                    throw new IOException(
+                        state.Definition.DisplayName +
+                        " update backup failed checksum verification.");
+                }
+
+                AdaptivePatchReceiptFile priorFile =
+                    AdaptivePatchSupport.FindReceiptFile(
+                        previous,
+                        state.Definition.RelativePath);
+                bool preservePriorBase =
+                    priorFile != null &&
+                    HashEquals(
+                        state.CurrentHash,
+                        priorFile.OutputHash) &&
+                    File.Exists(priorFile.BackupPath) &&
+                    HashEquals(
+                        AdaptivePatchSupport.Sha256(
+                            priorFile.BackupPath),
+                        priorFile.SourceHash);
+
+                string sourceHash;
+                string sourceBackup;
+                if (preservePriorBase)
+                {
+                    sourceHash = priorFile.SourceHash;
+                    sourceBackup = priorFile.BackupPath;
+                }
+                else
+                {
+                    byte[] cleanBytes = state.Document.Render(
+                        state.CleanText);
+                    sourceHash = AdaptivePatchSupport.Sha256(
+                        cleanBytes);
+                    sourceBackup =
+                        AdaptivePatchSupport.CaptureVersionedBaseBackup(
+                            definition.ModKey,
+                            state.Definition.RelativePath,
+                            cleanBytes, sourceHash);
+                }
+
+                updated.Files.Add(
+                    new AdaptivePatchReceiptFile
+                    {
+                        RelativePath =
+                            state.Definition.RelativePath,
+                        SourceHash = sourceHash,
+                        OutputHash = state.OutputHash,
+                        BackupPath = sourceBackup,
+                        Newline = state.Document.Newline == "\r\n"
+                            ? "CRLF" : "LF",
+                        HasBom = state.Document.HasBom
+                    });
+                manifestFiles.Add(
+                    new AdaptivePatchReceiptFile
+                    {
+                        RelativePath =
+                            state.Definition.RelativePath,
+                        SourceHash = state.CurrentHash,
+                        OutputHash = state.OutputHash,
+                        Newline = state.Document.Newline == "\r\n"
+                            ? "CRLF" : "LF",
+                        HasBom = state.Document.HasBom
+                    });
+            }
+
+            AdaptivePatchSupport.WriteBackupManifest(
+                backupPath, definition.DisplayName,
+                "Definition update", gamePath, build,
+                definition.DefinitionVersion,
+                manifestFiles);
+
+            List<FileState> replaced = new List<FileState>();
+            try
+            {
+                foreach (FileState state in states)
+                {
+                    if (HashEquals(
+                        state.CurrentHash,
+                        state.OutputHash))
+                        continue;
+                    replaced.Add(state);
+                    AdaptivePatchSupport.ReplaceFile(
+                        state.Path, state.OutputBytes,
+                        definition.ModKey +
+                        "-definition-update");
+                    if (!HashEquals(
+                        AdaptivePatchSupport.Sha256(
+                            state.Path),
+                        state.OutputHash))
+                    {
+                        throw new IOException(
+                            state.Definition.DisplayName +
+                            " failed definition-update verification.");
+                    }
+                }
+                AdaptivePatchSupport.SaveReceipt(
+                    definition.ModKey, updated);
+            }
+            catch
+            {
+                foreach (FileState state in replaced)
+                    File.Copy(
+                        state.BackupFile,
+                        state.Path, true);
+                foreach (FileState state in replaced)
+                {
+                    if (!HashEquals(
+                        AdaptivePatchSupport.Sha256(
+                            state.Path),
+                        state.CurrentHash))
+                    {
+                        throw new IOException(
+                            definition.DisplayName +
+                            " definition-update rollback could not restore " +
+                            state.Definition.DisplayName + ".");
+                    }
+                }
+                throw;
+            }
+
+            result.Success = true;
+            result.Installed = true;
+            result.NeedsUpdate = false;
+            result.AlreadyPatched = false;
+            result.FilesPatched = replaced.Count;
+            AdaptivePatchSupport.FillResult(
+                result, build,
+                PatchCompatibilityState.AdaptiveInstalled,
+                true, true,
+                definition.DisplayName +
+                " was updated to patch definition " +
+                definition.DefinitionVersion + ".");
+            AddChanges(result,
+                definition.UpgradeChanges ??
+                definition.InstallChanges);
+            AdaptivePatchSupport.QueueBuildActivation(
+                result, definition.ModKey, true);
+            SecretModBackupRetention.Prune(
+                backupRoot, definition.ModKey,
+                backupPath, result);
+            return result;
+        }
+
         private static GamePatchResult FillStatus(
             AdaptiveMultiFileModDefinition definition,
             GamePatchResult result, string gamePath,
@@ -449,6 +682,19 @@ namespace RaidRescue
             result.Success = true;
             if (installed == states.Count)
             {
+                if (NeedsDefinitionUpgrade(states))
+                {
+                    result.Installed = true;
+                    result.NeedsUpdate = true;
+                    result.AlreadyPatched = false;
+                    AdaptivePatchSupport.FillResult(
+                        result, build,
+                        PatchCompatibilityState.DefinitionUpdate,
+                        true, true,
+                        definition.DisplayName +
+                        " is installed, but a newer verified patch definition is available.");
+                    return result;
+                }
                 if (AdaptivePatchSupport.RequiresBuildRefresh(
                     definition.ModKey, build))
                 {
@@ -561,6 +807,7 @@ namespace RaidRescue
                     {
                         unpatched = file.Unpatch(
                             document.NormalizedText);
+                        patched = file.Patch(unpatched);
                         installed = true;
                     }
                     catch (InvalidDataException) { }
@@ -574,6 +821,9 @@ namespace RaidRescue
                     CurrentHash = document.OriginalHash,
                     Clean = clean,
                     Installed = installed,
+                    NeedsUpgrade = installed && !String.Equals(
+                        patched, document.NormalizedText,
+                        StringComparison.Ordinal),
                     PatchedText = patched,
                     CleanText = unpatched
                 });
@@ -620,6 +870,14 @@ namespace RaidRescue
             foreach (FileState state in states)
                 if (state.Installed) count++;
             return count;
+        }
+
+        private static bool NeedsDefinitionUpgrade(
+            List<FileState> states)
+        {
+            foreach (FileState state in states)
+                if (state.NeedsUpgrade) return true;
+            return false;
         }
 
         private static void AddChanges(
