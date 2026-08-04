@@ -97,8 +97,10 @@ $patchSources = @(
     "Patching\BetterEnginesPatchService.cs",
     "Patching\BetterFreezerBeehivePatchService.cs",
     "Patching\BetterPlasmaDrillsPatchService.cs",
+    "Patching\AtomicCustomPartPatchSupport.cs",
     "Patching\ScrapLabIconAtlasCoordinator.cs",
     "Patching\RaidDetectorPatchService.cs",
+    "Patching\WirelessVacuumPipePatchService.cs",
     "Patching\AdaptivePatchSupport.cs"
 ) | ForEach-Object { Get-SourcePath $_ }
 
@@ -109,6 +111,13 @@ $raidDetectorLegacyScript = Get-SourcePath "Patching\Parts\RaidDetector\RaidDete
 $raidDetectorShape = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetector.shapeset"
 $raidDetectorIcon = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetectorIcon.png"
 $raidDetectorLegacyIcon = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetectorIconLegacyOpaque.png"
+$wirelessPipeManager = Get-SourcePath "Patching\Scripts\ScrapLab\PipeSystem\WirelessPipeManager.lua"
+$wirelessPipeGraph = Get-SourcePath "Patching\Scripts\ScrapLab\PipeSystem\ScrapLabPipeGraph.lua"
+$wirelessPipeTransfer = Get-SourcePath "Patching\Scripts\ScrapLab\PipeSystem\WirelessPipeTransfer.lua"
+$wirelessPipeScript = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVacuumPipe.lua"
+$wirelessPipeShape = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVacuumPipe.shapeset"
+$wirelessPipeLayout = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVacuumPipe.layout"
+$wirelessPipeIcon = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVacuumPipeIcon.png"
 
 & $compiler `
     /nologo `
@@ -124,6 +133,13 @@ $raidDetectorLegacyIcon = Get-SourcePath "Patching\Parts\RaidDetector\RaidDetect
     "/resource:$raidDetectorShape,RaidRescue.Parts.RaidDetector.RaidDetector.shapeset" `
     "/resource:$raidDetectorIcon,RaidRescue.Parts.RaidDetector.RaidDetectorIcon.png" `
     "/resource:$raidDetectorLegacyIcon,RaidRescue.Parts.RaidDetector.RaidDetectorIconLegacyOpaque.png" `
+    "/resource:$wirelessPipeManager,RaidRescue.Parts.WirelessVacuumPipe.WirelessPipeManager.lua" `
+    "/resource:$wirelessPipeGraph,RaidRescue.Parts.WirelessVacuumPipe.ScrapLabPipeGraph.lua" `
+    "/resource:$wirelessPipeTransfer,RaidRescue.Parts.WirelessVacuumPipe.WirelessPipeTransfer.lua" `
+    "/resource:$wirelessPipeScript,RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipe.lua" `
+    "/resource:$wirelessPipeShape,RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipe.shapeset" `
+    "/resource:$wirelessPipeLayout,RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipe.layout" `
+    "/resource:$wirelessPipeIcon,RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipeIcon.png" `
     "/out:$output\ScrapLab.PatchHelper.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
@@ -193,7 +209,7 @@ foreach ($name in $builtFiles) {
     Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
 }
 
-$version = "2.4.0"
+$version = "2.5.0"
 $releaseRoot = Join-Path $root "release"
 $bundle = Join-Path $releaseRoot "ScrapLab-$version"
 New-Item -ItemType Directory -Path $bundle -Force | Out-Null

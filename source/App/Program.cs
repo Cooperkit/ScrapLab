@@ -900,6 +900,18 @@ namespace RaidRescue
                 PatchHelperProtocol.RaidDetector, enabled, ""));
         }
 
+        public string GetWirelessVacuumPipeModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.WirelessVacuumPipe));
+        }
+
+        public string SetWirelessVacuumPipeMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.WirelessVacuumPipe, enabled, ""));
+        }
+
         public string GetChemicalFertilizerModStatus()
         {
             return Serialize(PatchHelperClient.GetStatus(

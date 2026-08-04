@@ -381,22 +381,12 @@ namespace RaidRescue
             for (int index = 0; index < Languages.GetLength(0); index++)
             {
                 string language = Languages[index, 0];
-                state.Texts.Add(ReadText(gamePath,
+                state.Texts.Add(ReadLanguage(gamePath,
                     Path.Combine("Survival", "Gui", "Language", language,
                         "inventoryDescriptions.json"),
                     language + " inventory descriptions",
-                    Languages[index, 1], PartUuid,
-                    delegate(string text)
-                    {
-                        return PatchLanguage(text,
-                            Languages[index, 2], Languages[index, 3]);
-                    },
-                    delegate(string text)
-                    {
-                        return UnpatchLanguage(text,
-                            Languages[index, 2], Languages[index, 3]);
-                    },
-                    BetterPlasmaDrillsPatchService.HasIntactLanguagePatch));
+                    Languages[index, 1], Languages[index, 2],
+                    Languages[index, 3]));
             }
 
             TextState iconXml = FindText(state.Texts, IconXmlRelative);
@@ -541,6 +531,49 @@ namespace RaidRescue
                 state.PatchedText = patch(state.CleanText);
                 state.Installed = String.Equals(state.PatchedText,
                     document.NormalizedText, StringComparison.Ordinal);
+            }
+            return state;
+        }
+
+        private static TextState ReadLanguage(
+            string gamePath, string relative, string display,
+            string knownHash, string title, string description)
+        {
+            string path = Path.Combine(gamePath, relative);
+            if (!File.Exists(path))
+                throw new FileNotFoundException(display + " was not found.", path);
+            LuaTextDocument document = AdaptivePatchSupport.ReadLua(path);
+            AdaptivePatchSupport.RequireAdaptiveFormat(document, display);
+            string text = document.NormalizedText;
+            int markerCount = AdaptivePatchSupport.Count(text, PartUuid);
+            string exactEntry = LanguageEntry(title, description);
+            TextState state = new TextState
+            {
+                RelativePath = relative,
+                DisplayName = display,
+                KnownHash = knownHash,
+                Path = path,
+                Document = document,
+                Known = String.Equals(document.OriginalHash, knownHash,
+                    StringComparison.OrdinalIgnoreCase) ||
+                    BetterPlasmaDrillsPatchService.HasIntactLanguagePatch(text)
+            };
+
+            if (markerCount == 0)
+            {
+                state.PatchedText = PatchLanguage(text, title, description);
+                state.Clean = true;
+            }
+            else if (markerCount == 1 &&
+                AdaptivePatchSupport.Count(text, exactEntry) == 1)
+            {
+                // Shared localization files can contain later ScrapLab entries.
+                // The exact entry and its uniqueness are the protected contract;
+                // its position in the JSON object is deliberately irrelevant.
+                state.CleanText = UnpatchLanguage(text, title, description);
+                state.PatchedText = text;
+                state.Installed =
+                    AdaptivePatchSupport.Count(state.CleanText, PartUuid) == 0;
             }
             return state;
         }

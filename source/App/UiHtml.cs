@@ -634,7 +634,7 @@ button{font:inherit}
 .secret-mods-warning:before{content:'!';position:absolute;left:10px;top:7px;width:15px;height:15px;color:#28220e;
  background:#ffd046;border-radius:50%;font:bold 11px/15px Arial;text-align:center}
 .secret-workspace{display:flex;flex:1;min-height:0}
-.secret-sidebar{display:flex;width:218px;flex:0 0 218px;min-height:0;flex-direction:column;margin-right:12px;padding:11px;background:#181c1d;border:1px solid #3d484a;
+.secret-sidebar{display:flex;width:218px;flex:0 0 218px;min-height:0;flex-direction:column;margin-right:12px;padding:10px;background:#181c1d;border:1px solid #3d484a;
  border-radius:4px 14px 4px 14px;box-shadow:inset 0 1px #2d3334}
 .secret-side-label{margin:2px 2px 7px;color:#6fcbe3;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:1px}
 .secret-mod-row{display:flex;align-items:center;min-height:82px;padding:11px 12px;background:#22282a;border:1px solid #4a5558;
@@ -654,17 +654,26 @@ button{font:inherit}
 .secret-mod-options{box-sizing:border-box;width:68px;min-width:68px;max-width:68px;height:23px;margin-bottom:6px;padding:0;color:#84cfe2;background:#182125;border:1px solid #47636a;border-radius:3px 8px 3px 8px;
  cursor:pointer;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
 .secret-mod-options:hover{color:#e8f9fd;background:#24404a;border-color:#73cde5}.secret-mod-options:disabled{cursor:not-allowed;opacity:.45}
-.secret-master-row{flex:0 0 auto;min-height:82px;margin-bottom:11px;padding:10px;background:#25291f;border-color:#75601e}
+.secret-master-row{flex:0 0 auto;min-height:72px;margin-bottom:9px;padding:9px 10px;background:#25291f;border-color:#75601e}
 .secret-master-row .secret-mod-copy{padding-right:7px}.secret-master-row .secret-mod-copy span{font-size:9px}
-.secret-category-nav{display:flex;flex-direction:column}.secret-category+.secret-category{margin-top:5px}
-.secret-category{position:relative;height:31px;padding:0 10px 0 27px;text-align:left;color:#9ea8a9;background:#202526;border:1px solid #394446;border-radius:3px 9px 3px 9px;
- cursor:pointer;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
-.secret-category:before{content:'';position:absolute;left:10px;top:11px;width:7px;height:7px;transform:rotate(45deg);background:#596466;border:1px solid #111}
-.secret-category:hover{color:#fff;border-color:#5f7b82;background:#273134}.secret-category.active{color:#202316;border-color:#ffdd69;background:linear-gradient(#ffe478,#f0b51e)}
+.secret-category-nav{position:relative;display:flex;min-height:94px;flex:1 1 auto;flex-direction:column;overflow-x:hidden;overflow-y:auto;
+ padding:1px 4px 2px 1px;scrollbar-face-color:#45575b;scrollbar-track-color:#101314;scrollbar-arrow-color:#8fddf0}
+.secret-category-nav::-webkit-scrollbar{width:7px}.secret-category-nav::-webkit-scrollbar-track{background:#101314;border:1px solid #050606}
+.secret-category-nav::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#33454a,#587078);border:1px solid #101314;border-radius:4px}
+.secret-category-nav::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#45616a,#70a5b4)}
+.secret-category+.secret-category{margin-top:3px}
+.secret-category{position:relative;min-width:0;height:29px;min-height:29px;flex:0 0 29px;padding:0 9px 0 27px;text-align:left;white-space:nowrap;color:#9ea8a9;background:linear-gradient(90deg,#202526,#1c2122);border:1px solid #394446;border-radius:3px 8px 3px 8px;
+ cursor:pointer;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.6px;transition:color .14s,border-color .14s,background .14s,transform .14s}
+.secret-category:first-child{margin-bottom:3px;border-color:#536063;background:linear-gradient(90deg,#263033,#202627)}
+.secret-category:before{content:'';position:absolute;left:10px;top:9px;width:7px;height:7px;transform:rotate(45deg);background:#596466;border:1px solid #111}
+.secret-category:after{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:transparent;box-shadow:none}
+.secret-category:hover{color:#fff;border-color:#5f7b82;background:linear-gradient(90deg,#2a3538,#222a2c);transform:translateX(1px)}.secret-category.active{color:#202316;border-color:#ffdd69;background:linear-gradient(#ffe478,#f0b51e)}
+.secret-category.active:after{background:#fff1a2;box-shadow:0 0 7px #ffd046}
 .secret-category.active:before{background:#283236;border-color:#111}
-.secret-side-spacer{flex:1;min-height:8px}
-.secret-side-note{padding:9px 10px;color:#789197;background:#192124;border:1px dashed #45575d;border-radius:3px;font-size:9px;line-height:1.45}
-.secret-side-note b{display:block;margin-bottom:4px;color:#72cce5;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.secret-side-spacer{flex:0 0 7px;min-height:7px}
+.secret-side-note{display:flex;flex:0 0 auto;align-items:center;padding:7px 8px;color:#789197;background:#192124;border:1px solid #45575d;border-radius:3px 9px 3px 9px;font-size:8px;line-height:1.3}
+.secret-side-note:before{content:'';width:9px;height:9px;flex:0 0 9px;margin:0 9px 0 2px;transform:rotate(45deg);background:#ffd046;border:2px solid #171a1b;box-shadow:0 0 0 1px #8a6817}
+.secret-side-note b{display:block;margin:0 0 2px;color:#72cce5;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.65px}.secret-side-note span{display:block;color:#81969b;white-space:nowrap}
 .secret-catalog{display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;padding:11px 12px;background:#181c1d;border:1px solid #3d484a;border-radius:4px 14px 4px 14px;box-shadow:inset 0 1px #2d3334}
 .secret-mods-catalog-head{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;padding:0 1px 9px;border-bottom:1px solid #3b4446}
 .secret-mods-catalog-label b{display:block;color:#73cee6;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.9px}
@@ -703,7 +712,7 @@ button{font:inherit}
 .secret-mods-feedback.show{display:block}.secret-mods-feedback.good{display:block;color:#a9dfd3;border-color:#3f8273;background:#1b302c}
 .secret-mods-feedback.bad{display:block;color:#ffad96;border-color:#9e3e29;background:#361a15}
 .secret-mods-feedback.working{display:block;color:#ffe17b;border-color:#96701a;background:#302817;animation:warningBlink 1.2s ease-in-out infinite}
-.secret-mods-status{display:flex;flex:0 0 auto;align-items:center;margin-top:9px;padding:9px 3px 2px;border-top:1px solid #383d3e;
+.secret-mods-status{display:flex;flex:0 0 auto;align-items:center;margin-top:7px;padding:7px 3px 1px;border-top:1px solid #383d3e;
  color:#838a8a;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.75px}
 .secret-mods-status i{width:7px;height:7px;margin-right:7px;background:#656b6b;border-radius:50%;box-shadow:0 0 0 2px #151718}
 .secret-mods-status.on{color:#e2c15f}.secret-mods-status.on i{background:#ffd046;box-shadow:0 0 8px #ffd046}
@@ -896,7 +905,7 @@ button{font:inherit}
         </svg>
       </div>
       <div class=""secret-mods-heading""><strong id=""secretModsTitle"">SUPER SECRET MODS</strong><span>EXPERIMENTAL PATCH BAY · AUTHORIZED MECHANICS ONLY</span></div>
-      <div class=""secret-head-count"" id=""secretModHeadCount"">0 ACTIVE / 10 AVAILABLE</div>
+      <div class=""secret-head-count"" id=""secretModHeadCount"">0 ACTIVE / 11 AVAILABLE</div>
       <button type=""button"" class=""secret-mods-close"" aria-label=""Return to World Lab"" onclick=""closeSecretMods()"">WORLD LAB</button>
     </div>
     <div class=""secret-mods-body"">
@@ -916,18 +925,19 @@ button{font:inherit}
             <button type=""button"" class=""secret-category"" data-category=""commands"" onclick=""setSecretCategory('commands',this)"">COMMAND TOOLS</button>
             <button type=""button"" class=""secret-category"" data-category=""movement"" onclick=""setSecretCategory('movement',this)"">MOVEMENT</button>
             <button type=""button"" class=""secret-category"" data-category=""machinery"" onclick=""setSecretCategory('machinery',this)"">MACHINERY</button>
+            <button type=""button"" class=""secret-category"" data-category=""logistics"" onclick=""setSecretCategory('logistics',this)"">LOGISTICS</button>
             <button type=""button"" class=""secret-category"" data-category=""mining"" onclick=""setSecretCategory('mining',this)"">MINING</button>
             <button type=""button"" class=""secret-category"" data-category=""farming"" onclick=""setSecretCategory('farming',this)"">FARMING</button>
             <button type=""button"" class=""secret-category"" data-category=""raids"" onclick=""setSecretCategory('raids',this)"">RAID LOGIC</button>
             <button type=""button"" class=""secret-category"" data-category=""survival"" onclick=""setSecretCategory('survival',this)"">SURVIVAL</button>
           </nav>
           <div class=""secret-side-spacer""></div>
-          <div class=""secret-side-note""><b>BACKUP-FIRST PATCHING</b>Every change is verified. Save-sensitive patches require a danger confirmation before removal.</div>
+          <div class=""secret-side-note""><div><b>PATCH SAFETY ACTIVE</b><span>VERIFIED BACKUPS &middot; GUARDED REMOVAL</span></div></div>
           <div class=""secret-mods-status"" id=""secretModsStatus""><i></i><span>SECRET PATCH SYSTEM OFFLINE</span></div>
         </aside>
         <section class=""secret-catalog"">
       <div class=""secret-mods-catalog-head"">
-        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 10 AVAILABLE</span></div>
+        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 11 AVAILABLE</span></div>
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""SEARCH PATCH CATALOG..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
@@ -978,6 +988,15 @@ button{font:inherit}
           <div class=""secret-mod-actions"">
             <button type=""button"" class=""secret-mod-options"" id=""raidDetectorUpdate"" aria-label=""Update Raid Detector"" onclick=""updateRaidDetectorMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-switch"" id=""raidDetectorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Raid Detector"" onclick=""toggleRaidDetectorMod()"" disabled=""disabled"">
+              <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+            </button>
+          </div>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""wirelessVacuumPipeRow"" data-category=""logistics automation machinery"" data-search=""wireless vacuum pipe logistics automation link send receive cross world overworld underground paint color channel craftbot save sensitive"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; PIPE AUTOMATION &middot; SAVE-SENSITIVE</span><strong>WIRELESS VACUUM PIPE</strong><span>Link painted networks, let Receive-side machines pull from Send sources, or actively transfer items with safe container scope.</span><em id=""wirelessVacuumPipeState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""wirelessVacuumPipeReason""></span></div>
+          <div class=""secret-mod-actions"">
+            <button type=""button"" class=""secret-mod-options"" id=""wirelessVacuumPipeUpdate"" aria-label=""Update Wireless Vacuum Pipe routing"" onclick=""updateWirelessVacuumPipeMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-switch"" id=""wirelessVacuumPipeSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Wireless Vacuum Pipe"" onclick=""toggleWirelessVacuumPipeMod()"" disabled=""disabled"">
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
           </div>
@@ -1052,6 +1071,20 @@ button{font:inherit}
       <div class=""hotfix-foot-note"">Counts include only decoded loose pickups, not containers, player inventories, or placed creations.</div>
       <div class=""hotfix-buttons""><button type=""button"" class=""btn btn-primary"" onclick=""closeItemSummary()"">CLOSE REPORT</button></div>
     </div>
+  </div>
+</div>
+
+<div class=""hotfix-modal cannon-danger-modal"" id=""wirelessVacuumPipeDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""wirelessVacuumPipeDangerTitle"" onclick=""wirelessVacuumPipeDangerBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""wirelessVacuumPipeDangerTitle"">SAVE PART COMPATIBILITY DANGER</strong><span>WIRELESS VACUUM PIPE REMOVAL</span></div></div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"">Removing this mod unregisters the permanent Wireless Vacuum Pipe UUID. A save that still contains the part may lose it or fail to load correctly.</p>
+      <ul class=""hotfix-checks""><li>Cancel and launch Scrap Mechanic while Wireless Vacuum Pipe is still installed.</li><li>Remove every pipe from placed worlds, including every underground world.</li><li>Clear every player inventory, hotbar, container, Lift, and saved creation that contains the part.</li><li>Save every affected world, exit completely, and wait for ScrapLab to unlock.</li></ul>
+      <div class=""hotfix-stop"">DO NOT CONTINUE WHILE A WIRELESS VACUUM PIPE STILL EXISTS IN ANY SAVE OR CREATION.</div>
+      <div class=""cannon-danger-ack""><label><input type=""checkbox"" id=""wirelessVacuumPipeDangerAck"" onchange=""updateWirelessVacuumPipeDangerConfirm()"" /><span class=""cannon-danger-box""></span><span>I removed every Wireless Vacuum Pipe and saved all affected worlds.</span></label></div>
+    </div>
+    <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Cancel is the safe choice if you are not completely sure.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" id=""wirelessVacuumPipeDangerCancel"" onclick=""closeWirelessVacuumPipeDangerConfirm()"">CANCEL</button><button type=""button"" class=""btn hotfix-confirm"" id=""wirelessVacuumPipeDangerConfirmButton"" onclick=""confirmWirelessVacuumPipeDangerChange()"" disabled=""disabled""><span>!</span>I REMOVED EVERY WIRELESS VACUUM PIPE - DISABLE</button></div></div>
   </div>
 </div>
 
@@ -1321,6 +1354,24 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; WIRELESS VACUUM PIPE</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe produces two Wireless Vacuum Pipes in 30 seconds from two Vacuum Pipes, two Component Kits, and four Circuit Boards.</p></div>
+          <div class=""help-item""><b>PAINT IS THE CHANNEL</b><p>Paint endpoints the same color to join them. Different colors remain isolated, and repainting moves an endpoint to its new channel without replacing the part.</p></div>
+          <div class=""help-item""><b>LINK MODE</b><p>Same-color Link endpoints behave as one bidirectional pipe network. Machines prefer local storage first, then discover connected storage through other endpoints.</p></div>
+          <div class=""help-item""><b>SEND / RECEIVE</b><p>Send actively routes items to matching Receive endpoints. Receive also acts as a pull gateway, so a local pump or machine can consume supplies stored behind matching Send endpoints.</p></div>
+          <div class=""help-item""><b>SAFE TRANSFER SCOPE</b><p>Send and Receive default to <strong>Direct Container Only</strong>: only a container touching that endpoint can be drained or filled. Toggle it to <strong>Entire Pipe Network</strong> only when you intentionally want every attached container eligible.</p></div>
+          <div class=""help-item""><b>CROSS-WORLD ROUTING</b><p>Channels work between the overworld and underground worlds. ScrapLab loads only required endpoint cells, shares handles, and stops new remote routes at the 64-cell safety limit.</p></div>
+          <div class=""help-item""><b>OPTIONAL LOGIC INPUT</b><p>No logic connection means enabled. A connected ON signal enables the endpoint; OFF disables it without deleting its saved identity or channel.</p></div>
+          <div class=""help-item""><b>STATUS PANEL</b><p>Interact with the part to choose Link, Send, or Receive and review its channel, matching endpoints, connected worlds, and routing state.</p></div>
+          <div class=""help-item""><b>BACKPRESSURE SAFETY</b><p>Empty Send networks and full or filtered Receive networks consume nothing. Transfers use fresh endpoint checks and one native container transaction.</p></div>
+          <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes required registrations, reinstall before loading a world that may contain the part whenever ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
+          <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Remove every pipe from all worlds, inventories, hotbars, containers, Lifts, and saved creations, save each world, and close the game before disabling.</p></div>
+        </div>
+        <div class=""help-danger""><b>PERMANENT CUSTOM UUID.</b> Disabling the mod, running Steam Verify, or allowing Steam to overwrite its registrations while a Wireless Vacuum Pipe still exists can remove the part or prevent an affected save from loading.</div>
+      </div>
+
+      <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; BETTER PLASMA DRILLS</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>TWO ADVANCED LEVELS</b><p>Upgrade level 3 to level 4 for 25 Component Kits, then level 4 to level 5 for 50. Level 4 has 5 speed, 40 range, and 6,000 battery points; level 5 has 10 speed, 75 range, and 12,000 points.</p></div>
@@ -1586,6 +1637,11 @@ var secretRaidDetectorNeedsUpdate=false;
 var secretRaidDetectorCompatibility='';
 var secretRaidDetectorCanApply=true;
 var secretRaidDetectorReason='';
+var secretWirelessVacuumPipeInstalled=false;
+var secretWirelessVacuumPipeNeedsUpdate=false;
+var secretWirelessVacuumPipeCompatibility='';
+var secretWirelessVacuumPipeCanApply=true;
+var secretWirelessVacuumPipeReason='';
 var secretDeveloperCommandsInstalled=false;
 var secretDeveloperCommandsError='';
 var secretDeveloperCommandsCompatibility='';
@@ -1604,6 +1660,7 @@ var secretDualFluidCannonCanApply=true;
 var secretDualFluidCannonReason='';
 var secretModBusy=false;
 var secretModBusyTarget='';
+var secretWirelessVacuumPipeDangerAction='';
 var secretRaidDetectorDangerAction='';
 var secretPlasmaDangerAction='';
 var secretDependencyAction='';
@@ -1676,7 +1733,7 @@ function loadAppUpdateState(){
 function escPlain(value){return value===null||typeof value==='undefined'?'':String(value);}
 function updateUiBlocked(){
  if(operationBusy||tutorialActive||updateInstallBusy)return true;
- var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','secretModsLayer'];
+ var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','wirelessVacuumPipeDangerModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','secretModsLayer'];
  for(var i=0;i<ids.length;i++){
   var node=document.getElementById(ids[i]);
   if(node&&String(node.className).indexOf('show')>=0)return true;
@@ -1891,7 +1948,11 @@ function captureSecretCompatibility(kind,data){
    secretRaidDetectorCompatibility=state;
    secretRaidDetectorCanApply=canApply;
    secretRaidDetectorReason=reason;
- }else if(kind==='commands'){
+  }else if(kind==='wirelessPipe'){
+   secretWirelessVacuumPipeCompatibility=state;
+   secretWirelessVacuumPipeCanApply=canApply;
+   secretWirelessVacuumPipeReason=reason;
+  }else if(kind==='commands'){
   secretDeveloperCommandsCompatibility=state;
   secretDeveloperCommandsCanApply=canApply;
   secretDeveloperCommandsReason=reason;
@@ -1917,7 +1978,7 @@ function compatibilityStateLabel(installed,state,fallback){
 function renderCompatibilityReason(id,installed,canApply,reason){
  var node=document.getElementById(id);
  if(!node)return;
- var show=!installed&&!!reason&&(!canApply||id==='betterPlasmaDrillsReason');
+ var show=!installed&&!!reason&&!canApply;
  node.className=show?'secret-compat-reason show':'secret-compat-reason';
  node.innerText=show?reason:'';
 }
@@ -2030,6 +2091,23 @@ function loadSecretModsState(){
    secretRaidDetectorCanApply=false;
    secretRaidDetectorReason='Could not read the Raid Detector state.';
    showSecretModFeedback(secretRaidDetectorReason,'bad');
+  }
+  try{
+   var wirelessPipeData=parseResult(window.external.GetWirelessVacuumPipeModStatus());
+   if(wirelessPipeData.Success){
+    secretWirelessVacuumPipeInstalled=!!wirelessPipeData.Installed;
+    secretWirelessVacuumPipeNeedsUpdate=!!wirelessPipeData.NeedsUpdate;
+    captureSecretCompatibility('wirelessPipe',wirelessPipeData);
+    installedSecretMod=installedSecretMod||secretWirelessVacuumPipeInstalled;
+   }else{
+    secretWirelessVacuumPipeCanApply=false;
+    secretWirelessVacuumPipeReason=wirelessPipeData.Error||'Could not read the Wireless Vacuum Pipe state.';
+    showSecretModFeedback(secretWirelessVacuumPipeReason,'bad');
+   }
+  }catch(e){
+   secretWirelessVacuumPipeCanApply=false;
+   secretWirelessVacuumPipeReason='Could not read the Wireless Vacuum Pipe state.';
+   showSecretModFeedback(secretWirelessVacuumPipeReason,'bad');
   }
   try{
    var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
@@ -2161,9 +2239,30 @@ function renderSecretModsState(){
    detectorRow.className='secret-mod-row secret-mod-card'+(secretRaidDetectorInstalled?' enabled':'')+((!secretModsEnabled||!secretRaidDetectorCanApply)?' locked':'');
    detectorState.innerText=secretModBusy&&secretModBusyTarget==='detector'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretRaidDetectorNeedsUpdate?'DETECTOR UPDATE AVAILABLE':compatibilityStateLabel(secretRaidDetectorInstalled,secretRaidDetectorCompatibility,'NOT INSTALLED')));
    renderCompatibilityReason('raidDetectorReason',secretRaidDetectorInstalled,secretRaidDetectorCanApply,secretRaidDetectorReason);
-   if(secretRaidDetectorNeedsUpdate){var detectorReason=document.getElementById('raidDetectorReason');detectorReason.className='secret-compat-reason show';detectorReason.innerText=secretRaidDetectorReason||'A verified Raid Detector update is ready.';}
- }
- var revival=document.getElementById('revivalBuffSwitch');
+    if(secretRaidDetectorNeedsUpdate){var detectorReason=document.getElementById('raidDetectorReason');detectorReason.className='secret-compat-reason show';detectorReason.innerText=secretRaidDetectorReason||'A verified Raid Detector update is ready.';}
+  }
+  var wirelessPipe=document.getElementById('wirelessVacuumPipeSwitch');
+  var wirelessPipeRow=document.getElementById('wirelessVacuumPipeRow');
+  var wirelessPipeState=document.getElementById('wirelessVacuumPipeState');
+  var wirelessPipeUpdate=document.getElementById('wirelessVacuumPipeUpdate');
+  if(wirelessPipe&&wirelessPipeRow&&wirelessPipeState){
+   wirelessPipe.className=secretWirelessVacuumPipeInstalled?'secret-switch on':'secret-switch';
+   wirelessPipe.setAttribute('aria-checked',secretWirelessVacuumPipeInstalled?'true':'false');
+   wirelessPipe.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretWirelessVacuumPipeCanApply;
+   if(wirelessPipeUpdate){wirelessPipeUpdate.style.display=secretWirelessVacuumPipeNeedsUpdate?'block':'none';wirelessPipeUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretWirelessVacuumPipeCanApply;}
+   wirelessPipeRow.className='secret-mod-row secret-mod-card'+(secretWirelessVacuumPipeInstalled?' enabled':'')+((!secretModsEnabled||!secretWirelessVacuumPipeCanApply)?' locked':'');
+   var wirelessLabel=compatibilityStateLabel(secretWirelessVacuumPipeInstalled,secretWirelessVacuumPipeCompatibility,'NOT INSTALLED');
+   if(!secretWirelessVacuumPipeInstalled&&!secretWirelessVacuumPipeCanApply){
+    var wirelessReason=String(secretWirelessVacuumPipeReason||'').toLowerCase();
+    if(secretWirelessVacuumPipeCompatibility==='PARTIAL PATCH - REPAIR REQUIRED')wirelessLabel='PARTIAL PATCH \u2014 REPAIR REQUIRED';
+    else if(wirelessReason.indexOf('atlas')>=0||wirelessReason.indexOf('icon')>=0)wirelessLabel='UNSUPPORTED ICON ATLAS';
+    else if(secretWirelessVacuumPipeCompatibility!=='PARTIAL PATCH - REPAIR REQUIRED')wirelessLabel='UNSUPPORTED PIPE CODE';
+   }
+   wirelessPipeState.innerText=secretModBusy&&secretModBusyTarget==='wirelessPipe'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretWirelessVacuumPipeNeedsUpdate?'ROUTING UPDATE AVAILABLE':wirelessLabel));
+   renderCompatibilityReason('wirelessVacuumPipeReason',secretWirelessVacuumPipeInstalled,secretWirelessVacuumPipeCanApply,secretWirelessVacuumPipeReason);
+   if(secretWirelessVacuumPipeNeedsUpdate){var wirelessUpdateReason=document.getElementById('wirelessVacuumPipeReason');wirelessUpdateReason.className='secret-compat-reason show';wirelessUpdateReason.innerText=secretWirelessVacuumPipeReason||'Receive-side pull routing and safe transfer scope are ready.';}
+  }
+  var revival=document.getElementById('revivalBuffSwitch');
  var revivalRow=document.getElementById('revivalBuffRow');
  var revivalState=document.getElementById('revivalBuffState');
  if(revival&&revivalRow&&revivalState){
@@ -2212,9 +2311,9 @@ function renderSecretModsState(){
  var count=document.getElementById('secretModCount');
  var headCount=document.getElementById('secretModHeadCount');
  if(count){
-  var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
-  count.innerText=active+' ACTIVE \u00b7 10 AVAILABLE';
-  if(headCount)headCount.innerText=active+' ACTIVE / 10 AVAILABLE';
+   var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretWirelessVacuumPipeInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+   count.innerText=active+' ACTIVE \u00b7 11 AVAILABLE';
+   if(headCount)headCount.innerText=active+' ACTIVE / 11 AVAILABLE';
  }
  filterSecretMods();
 }
@@ -2272,6 +2371,7 @@ function secretModsBackdropClick(e){
 }
 function toggleSecretModsEnabled(){
  if(operationBusy||secretModBusy)return;
+ if(secretModsEnabled&&secretWirelessVacuumPipeInstalled){openWirelessVacuumPipeDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretRaidDetectorInstalled){openRaidDetectorDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretBetterPlasmaDrillsInstalled){openPlasmaDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretDualFluidCannonInstalled){openCannonDangerConfirm('masterOff');return;}
@@ -2286,6 +2386,7 @@ function toggleSecretModsEnabled(){
  renderSecretModsState();
 }
 function disableAllSecretModsConfirmed(){
+ if(secretWirelessVacuumPipeInstalled&&!setWirelessVacuumPipeMod(false))return false;
  if(secretRaidDetectorInstalled&&!setRaidDetectorMod(false))return false;
  if(secretBetterPlasmaDrillsInstalled&&!setBetterPlasmaDrillsMod(false))return false;
  if(secretDualFluidCannonInstalled&&secretChemicalFertilizerInstalled){
@@ -2336,6 +2437,34 @@ function toggleRaidDetectorMod(){
  if(secretRaidDetectorNeedsUpdate){setRaidDetectorMod(true);return;}
  if(secretRaidDetectorInstalled){openRaidDetectorDangerConfirm('detectorOnly');return;}
  setRaidDetectorMod(true);
+}
+function toggleWirelessVacuumPipeMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ if(secretWirelessVacuumPipeNeedsUpdate){setWirelessVacuumPipeMod(true);return;}
+ if(secretWirelessVacuumPipeInstalled){openWirelessVacuumPipeDangerConfirm('wirelessPipeOnly');return;}
+ setWirelessVacuumPipeMod(true);
+}
+function setWirelessVacuumPipeMod(enabled){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Wireless Vacuum Pipe.','bad');return false;}
+ secretModBusy=true;secretModBusyTarget='wirelessPipe';operationBusy=true;
+ var wasWirelessUpdate=enabled&&secretWirelessVacuumPipeInstalled&&secretWirelessVacuumPipeNeedsUpdate;
+ showSecretModFeedback(wasWirelessUpdate?'UPDATING WIRELESS PIPE ROUTING...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetWirelessVacuumPipeMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The Wireless Vacuum Pipe installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ if(!data.Success){showSecretModFeedback(data.Error||'Wireless Vacuum Pipe could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ secretWirelessVacuumPipeInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - Receive can now feed local machines, with direct-container scope on by default.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
+ applyGameLock(gameRunning);renderSecretModsState();return true;
+}
+function updateWirelessVacuumPipeMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretWirelessVacuumPipeNeedsUpdate)return;
+ setWirelessVacuumPipeMod(true);
 }
 function updateRaidDetectorMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy||!secretRaidDetectorNeedsUpdate)return;
@@ -2754,6 +2883,37 @@ function confirmDependencyChange(){
  closeDependencyConfirm();
  if(action==='installBoth')setDualFluidCannonMod(true);
  else if(action==='removeBoth')openCannonDangerConfirm('removeBoth');
+}
+function openWirelessVacuumPipeDangerConfirm(action){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Wireless Vacuum Pipe.','bad');return;}
+ secretWirelessVacuumPipeDangerAction=action;
+ var ack=document.getElementById('wirelessVacuumPipeDangerAck');
+ ack.checked=false;
+ document.getElementById('wirelessVacuumPipeDangerConfirmButton').disabled=true;
+ document.getElementById('wirelessVacuumPipeDangerModal').className='hotfix-modal cannon-danger-modal show';
+ window.setTimeout(function(){document.getElementById('wirelessVacuumPipeDangerCancel').focus();},30);
+}
+function updateWirelessVacuumPipeDangerConfirm(){
+ document.getElementById('wirelessVacuumPipeDangerConfirmButton').disabled=!document.getElementById('wirelessVacuumPipeDangerAck').checked;
+}
+function closeWirelessVacuumPipeDangerConfirm(){
+ document.getElementById('wirelessVacuumPipeDangerModal').className='hotfix-modal cannon-danger-modal';
+ document.getElementById('wirelessVacuumPipeDangerAck').checked=false;
+ secretWirelessVacuumPipeDangerAction='';
+}
+function wirelessVacuumPipeDangerBackdropClick(e){
+ e=e||window.event;
+ if((e.target||e.srcElement)===document.getElementById('wirelessVacuumPipeDangerModal'))closeWirelessVacuumPipeDangerConfirm();
+}
+function confirmWirelessVacuumPipeDangerChange(){
+ if(!document.getElementById('wirelessVacuumPipeDangerAck').checked)return;
+ var action=secretWirelessVacuumPipeDangerAction;
+ closeWirelessVacuumPipeDangerConfirm();
+ if(action==='masterOff'&&secretRaidDetectorInstalled)openRaidDetectorDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretBetterPlasmaDrillsInstalled)openPlasmaDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretDualFluidCannonInstalled)openCannonDangerConfirm('masterOff');
+ else if(action==='masterOff')disableAllSecretModsConfirmed();
+ else setWirelessVacuumPipeMod(false);
 }
 function openRaidDetectorDangerConfirm(action){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Raid Detector.','bad');return;}
@@ -3264,7 +3424,8 @@ function boot(){
   if(key===27&&document.getElementById('itemClearModal').className.indexOf('show')>=0){closeItemClearConfirm();return false;}
   if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
   if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
-   if(key===27&&document.getElementById('raidDetectorDangerModal').className.indexOf('show')>=0){closeRaidDetectorDangerConfirm();return false;}
+    if(key===27&&document.getElementById('wirelessVacuumPipeDangerModal').className.indexOf('show')>=0){closeWirelessVacuumPipeDangerConfirm();return false;}
+    if(key===27&&document.getElementById('raidDetectorDangerModal').className.indexOf('show')>=0){closeRaidDetectorDangerConfirm();return false;}
    if(key===27&&document.getElementById('plasmaDangerModal').className.indexOf('show')>=0){closePlasmaDangerConfirm();return false;}
    if(key===27&&document.getElementById('cannonDangerModal').className.indexOf('show')>=0){closeCannonDangerConfirm();return false;}
    if(key===27&&document.getElementById('developerCommandModal').className.indexOf('show')>=0){closeDeveloperCommandConfirm();return false;}

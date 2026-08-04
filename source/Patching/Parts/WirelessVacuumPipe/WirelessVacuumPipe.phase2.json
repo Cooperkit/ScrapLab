@@ -1,0 +1,45 @@
+{
+  "phase": 2,
+  "name": "Endpoint and manager",
+  "status": "COMPLETE",
+  "partUuid": "a34d9af0-4ba0-431d-b647-2d5435ecf138",
+  "managerUuid": "8a6e31c4-575f-40fa-96f3-85bd23eb34ce",
+  "managerSchemaVersion": 1,
+  "endpointRecordVersion": 1,
+  "endpointStorageVersion": 1,
+  "pollIntervalTicks": 10,
+  "managerUpdateTicks": 10,
+  "maxActiveEndpointCells": 64,
+  "handleIdleGraceTicks": 200,
+  "reconcileConfirmationTicks": 80,
+  "reconcileRetryTicks": 400,
+  "modes": ["LINK", "SEND", "RECEIVE"],
+  "phaseBoundary": {
+    "nativePipeQueryWrappers": false,
+    "directionalItemTransfers": false,
+    "iconRecipeLocalizationAndAppIntegration": false
+  },
+  "ownedFileHashes": {
+    "WirelessPipeManager.lua": "6157EB8829D2508258FC92B8BA15D0BFD5E2B8879124C2489EEE07E7D8AF721D",
+    "WirelessVacuumPipe.lua": "DD79BE94803F456837D38CE6C6AC0E2A9EC4B9AABD1F5D0AC26405CC52B7AC3F",
+    "WirelessVacuumPipe.shapeset": "B3657D8D5D0B46CA80B525FFC28B6AB5E75386527ED6812E4640184D079DF701",
+    "WirelessVacuumPipe.layout": "2F800DD9E1A29679182B7649D378F401D1D3E561E50A7894859D337157B18B12",
+    "WirelessVacuumPipePhase2Harness.lua": "73D82366393FB4C6E535354F9B95C05A7A8CE9B4D6CF46E3948DCD8465B0964A"
+  },
+  "validation": {
+    "sourceRegression": "PASS",
+    "fixtureInstallRemoveByteExact": "PASS",
+    "actualGameInstallState": "INSTALLED",
+    "engineLuaAndRegistration": "PASS",
+    "sameCellHandleSharing": "PASS",
+    "modeColorLogicGrouping": "PASS",
+    "startupReconciliation": "PASS",
+    "movingCreation": "PASS",
+    "cellBoundaryMovement": "PASS",
+    "elevatorWorldChange": "PASS",
+    "saveReloadPersistence": "PASS",
+    "recordedChecks": "7 PASS, 0 FAIL",
+    "primaryRunLog": "game-20260804-040620.log",
+    "restartVerificationLog": "game-20260804-041446.log"
+  }
+}

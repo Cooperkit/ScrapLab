@@ -194,13 +194,16 @@ try {
         'The icon pack did not allocate from the bottom-right atlas cell.'
     $atlasReceipt = Get-Content -LiteralPath $sharedAtlasReceipt -Raw |
         ConvertFrom-Json
-    Assert-True ($atlasReceipt.CatalogVersion -eq '1') `
+    Assert-True ($atlasReceipt.CatalogVersion -eq '2') `
         'The shared icon-pack catalog version was not recorded.'
     Assert-True ($atlasReceipt.ActiveMods -contains 'RaidDetector') `
         'The shared icon-pack receipt did not record the active mod.'
-    Assert-True ($atlasReceipt.Icons.Count -eq 1 -and
-        $atlasReceipt.Icons[0].X -eq 3936 -and
-        $atlasReceipt.Icons[0].Y -eq 3936) `
+    $raidIconReceipt = @($atlasReceipt.Icons | Where-Object {
+        $_.Uuid -eq $uuid
+    })
+    Assert-True ($raidIconReceipt.Count -eq 1 -and
+        $raidIconReceipt[0].X -eq 3936 -and
+        $raidIconReceipt[0].Y -eq 3936) `
         'The shared receipt did not retain the bottom-atlas assignment.'
     Assert-True ((Get-Content -LiteralPath (
         Join-Path $fakeGame 'Survival\CraftingRecipes\hideout.json') `
@@ -229,6 +232,44 @@ try {
         'Restart probe did not recognize the complete installation.'
     Assert-True (-not $installedStatus.NeedsUpdate) `
         'A new transparent-icon installation incorrectly requested an update.'
+
+    # Reproduce the real install-order bug: another ScrapLab part appends its
+    # own localization after Raid Detector in the same shared JSON object.
+    $englishRelative = `
+        'Survival\Gui\Language\English\inventoryDescriptions.json'
+    $englishPath = Join-Path $fakeGame $englishRelative
+    $englishText = [IO.File]::ReadAllText($englishPath)
+    $englishNewline = if ($englishText.Contains("`r`n")) { "`r`n" } else { "`n" }
+    $foreignUuid = '11111111-2222-4333-8444-555555555555'
+    $foreignEntry = `
+        "`t`"$foreignUuid`": {$englishNewline" +
+        "`t`t`"description`": `"Shared localization regression.`",$englishNewline" +
+        "`t`t`"title`": `"Other ScrapLab Part`",$englishNewline" +
+        "`t`t`"upperCaseTitle`": `"OTHER SCRAPLAB PART`"$englishNewline" +
+        "`t}"
+    $objectEnd = $englishText.LastIndexOf($englishNewline + '}')
+    Assert-True ($objectEnd -ge 0) 'English localization fixture has no object ending.'
+    Write-Utf8NoBom $englishPath (
+        $englishText.Substring(0, $objectEnd) + ',' + $englishNewline + $foreignEntry +
+        $englishText.Substring($objectEnd))
+    $composedStatus = Invoke-Static $detectorType 'GetStatusAt' @($fakeGame)
+    Assert-True ($composedStatus.Success -and $composedStatus.Installed) `
+        ('A later shared localization entry disabled Raid Detector: ' +
+            $composedStatus.CompatibilityState + ' / ' +
+            $composedStatus.CompatibilityReason + ' / ' +
+            $composedStatus.Error)
+    $composedRemove = Invoke-Static $detectorType 'SetEnabledAt' `
+        @($fakeGame, $backupRoot, $false)
+    Assert-True $composedRemove.Success `
+        ('Composed localization removal failed: ' + $composedRemove.Error)
+    Assert-True ([IO.File]::ReadAllText($englishPath).Contains($foreignUuid)) `
+        'Raid Detector removal deleted another mod localization entry.'
+    [IO.File]::WriteAllBytes($englishPath, $baseline[$englishRelative])
+    $composedReinstall = Invoke-Static $detectorType 'SetEnabledAt' `
+        @($fakeGame, $backupRoot, $true)
+    Assert-True ($composedReinstall.Success -and $composedReinstall.Installed) `
+        ('Reinstall after composed localization test failed: ' +
+            $composedReinstall.Error)
 
     # Recreate the exact definition-1 script and legacy opaque tile to prove
     # existing installations migrate atomically without replacing their clean

@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.4.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.5.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -198,6 +198,7 @@ the selected save database.
 | **Better Freezer & Beehive** | Adds direct Freezer water-container input, 4x production, five input slots for newly placed machines, and larger finished-item buffers. |
 | **Better Plasma Drills** | Adds level-4 and level-5 upgrades, greater speed, battery capacity, range, beam radii up to 10, and 20–300 unit damage per second. |
 | **Raid Detector** | Adds a beacon-housed logic sensor sold by the Hideout Trader that stays on for scheduled or active raids within 256 meters. |
+| **Wireless Vacuum Pipe** | Joins same-color pipe networks, moves items through Send/Receive, and lets Receive-side machines pull from matching Send storage across loaded worlds. Directional endpoints default to direct-container-only scope. |
 | **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
 | **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
 | **Dual-Fluid Water Cannon** | Accepts logic, water, and chemical inputs and fires every available liquid on one OFF-to-ON pulse. |
@@ -234,6 +235,36 @@ unregistering the custom part or requiring detectors to be removed from saves.
 > inventories, containers, and lifts, save the affected worlds, and close the
 > game before disabling the mod. If Steam removes its registrations, reinstall
 > it before opening a world that may still contain the custom part.
+
+**Wireless Vacuum Pipe** is a custom, save-sensitive logistics part with
+permanent UUID `a34d9af0-4ba0-431d-b647-2d5435ecf138`. Its default-unlocked
+Craftbot recipe makes two pipes in 30 seconds from two Vacuum Pipes, two
+Component Kits, and four Circuit Boards. Paint is the wireless channel:
+same-color endpoints can join their physical pipe systems in bidirectional
+**Link** mode, or move items from **Send** networks into matching **Receive**
+networks. A machine attached to Receive can also pull directly from storage
+behind matching Send endpoints, so a Receive-side pump works without requiring
+a destination chest. Link and directional groups remain deliberately separate.
+
+The route may cross between the overworld and underground worlds. ScrapLab
+loads only required endpoint cells, shares world handles, and safely refuses
+new remote routes after the 64-cell cap. Machines prefer local storage before
+wireless storage; directional transfers use native container transactions and
+leave items untouched when sources are empty or destinations are full or
+filtered. An optional logic input enables the endpoint when ON. With no logic
+wire connected, the endpoint stays enabled. Interact with a pipe to change its
+mode, transfer scope, channel, matching endpoints, worlds, and route state.
+Send and Receive default to **Direct Container Only**, which drains or fills
+only a container physically touching that endpoint. Toggle **Entire Pipe
+Network** only when all containers on that attached network should participate.
+The custom transparent icon is managed by the shared ScrapLab Icon Pack.
+
+> **Wireless Vacuum Pipe save warning:** before disabling the mod, remove every
+> custom pipe from every placed world (including underground worlds), player
+> inventory, hotbar, container, Lift, and saved creation. Save every affected
+> world and close Scrap Mechanic completely. If a Steam update or Verify removes
+> the registration, reinstall the mod before opening any save that may contain
+> the part.
 
 After Steam installs a new game build, installed-state receipts are compared
 with the actual Lua files. Compatible updated scripts may be patched only when
@@ -340,7 +371,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.4.0.zip
+release\ScrapLab-2.5.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

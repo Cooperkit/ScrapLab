@@ -1,0 +1,72 @@
+{
+  "phase0SchemaVersion": 1,
+  "status": "locked",
+  "lockedOn": "2026-08-04",
+  "identity": {
+    "displayName": "Wireless Vacuum Pipe",
+    "upperCaseDisplayName": "WIRELESS VACUUM PIPE",
+    "internalItemName": "obj_pneumatic_pipe_wireless",
+    "scriptClassName": "WirelessVacuumPipe",
+    "partUuid": "a34d9af0-4ba0-431d-b647-2d5435ecf138",
+    "referencePartName": "Vacuum Pipe 1",
+    "referencePartUuid": "59ea6ce8-239b-4eed-8847-a51b907d9b42",
+    "craftableVacuumPipeUuid": "9b8f2abd-265c-4750-b8b9-fe6cb564633c"
+  },
+  "inventory": {
+    "stackSize": 5,
+    "showInInventory": true,
+    "englishDescription": "Links vacuum pipe networks by paint color, even between worlds. Interact to choose Link, Send, or Receive mode."
+  },
+  "recipe": {
+    "recipeSet": "craftbot_core",
+    "defaultUnlocked": true,
+    "outputQuantity": 2,
+    "craftTimeSeconds": 30,
+    "ingredients": [
+      {
+        "name": "Vacuum Pipe",
+        "itemUuid": "9b8f2abd-265c-4750-b8b9-fe6cb564633c",
+        "quantity": 2
+      },
+      {
+        "name": "Component Kit",
+        "itemUuid": "5530e6a0-4748-4926-b134-50ca9ecb9dcf",
+        "quantity": 2
+      },
+      {
+        "name": "Circuit Board",
+        "itemUuid": "f152e4df-bc40-44fb-8d20-3b3ff70cdfe3",
+        "quantity": 4
+      }
+    ]
+  },
+  "logic": {
+    "enabled": true,
+    "maxParentCount": 1,
+    "maxChildCount": 0,
+    "connectionInput": "logic",
+    "connectionOutput": "none",
+    "unwiredBehavior": "enabled",
+    "wiredOnBehavior": "enabled",
+    "wiredOffBehavior": "disabled"
+  },
+  "runtimeBalance": {
+    "defaultMode": "PIPE_LINK",
+    "sendReceiveAttemptIntervalTicks": 4,
+    "maxActiveEndpointCells": 64
+  },
+  "icon": {
+    "selectedCandidate": 1,
+    "sourceFile": "WirelessVacuumPipeIcon.png",
+    "width": 96,
+    "height": 96,
+    "format": "RGBA PNG",
+    "background": "transparent",
+    "sha256": "FE550A6318D707609F03C5FE72449A2694C9832CDBD4B1FD50F20BC3D40A2967",
+    "verifiedPreviewSizes": [
+      24,
+      32,
+      96
+    ]
+  }
+}

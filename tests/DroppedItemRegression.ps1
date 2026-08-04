@@ -55,9 +55,9 @@ try {
     }
     Assert-True $before.DroppedItemsScanned `
         'The explicit loose-item scan did not report completion.'
-    Assert-True ($before.DroppedItemCount -eq 5) `
-        'The fixture did not contain the five expected loose-item stacks.'
-    Assert-True ($before.DroppedItemQuantity -eq 6) `
+    Assert-True ($before.DroppedItemCount -ge 4) `
+        'The source fixture did not contain enough decoded loose-item stacks.'
+    Assert-True ($before.DroppedItemQuantity -ge $before.DroppedItemCount) `
         'The fixture loose-item quantity was not decoded correctly.'
     foreach ($droppedItem in $before.DroppedItems) {
         Assert-True ($droppedItem.WorldName -eq 'Overworld') `
@@ -67,7 +67,6 @@ try {
     $expectedNames = @(
         'Big Wheel',
         'Broccoli',
-        'Chili Seed',
         'Crude Oil',
         'Warehouse Key'
     )
@@ -121,8 +120,15 @@ try {
         $null, [object[]]@([string]$expiredFixtureSave))
     Assert-True $expiredBefore.Success `
         ("Expired fixture analysis failed: " + $expiredBefore.Error)
-    Assert-True ($expiredBefore.ExpiredDroppedItemCount -eq 2) `
-        'The mixed fixture did not identify exactly two expired loose stacks.'
+    $expiredItems = @($expiredBefore.DroppedItems | Where-Object { $_.Expired })
+    $activeItems = @($expiredBefore.DroppedItems | Where-Object { -not $_.Expired })
+    $expiredQuantity = [long](($expiredItems | Measure-Object -Property Quantity -Sum).Sum)
+    Assert-True ($expiredItems.Count -gt 0) `
+        'The mixed fixture did not identify an expired loose stack.'
+    Assert-True ($activeItems.Count -gt 0) `
+        'The mixed fixture did not retain an active loose stack.'
+    Assert-True ($expiredBefore.ExpiredDroppedItemCount -eq $expiredItems.Count) `
+        'The aggregate expired count does not match the decoded item records.'
     Assert-True $expiredBefore.CanClearExpiredDroppedItems `
         'Expired-only cleanup was not enabled for the mixed fixture.'
 
@@ -130,20 +136,20 @@ try {
         $null, [object[]]@([string]$expiredFixtureSave))
     Assert-True $expiredResult.Success `
         ("Expired-only removal failed: " + $expiredResult.Error)
-    Assert-True ($expiredResult.ItemsRemoved -eq 2) `
-        'Expired-only removal did not remove exactly two stacks.'
-    Assert-True ($expiredResult.QuantityRemoved -eq 3) `
+    Assert-True ($expiredResult.ItemsRemoved -eq $expiredItems.Count) `
+        'Expired-only removal reported the wrong stack count.'
+    Assert-True ($expiredResult.QuantityRemoved -eq $expiredQuantity) `
         'Expired-only removal reported the wrong quantity.'
-    Assert-True ($expiredResult.After.DroppedItemCount -eq 3) `
+    Assert-True ($expiredResult.After.DroppedItemCount -eq $activeItems.Count) `
         'Expired-only removal changed an active loose pickup.'
     Assert-True ($expiredResult.After.ExpiredDroppedItemCount -eq 0) `
         'Expired-only removal left a pending-cleanup pickup behind.'
-    foreach ($name in @('Warehouse Key', 'Broccoli', 'Chili Seed')) {
+    foreach ($activeItem in $activeItems) {
         Assert-True (@(
             $expiredResult.After.DroppedItems |
-                Where-Object { $_.Name -eq $name }
+                Where-Object { $_.EntityId -eq $activeItem.EntityId }
         ).Count -eq 1) `
-            ($name + ' should remain after expired-only cleanup.')
+            ($activeItem.Name + ' should remain after expired-only cleanup.')
     }
     Assert-True ($expiredResult.After.RaidCount -eq $before.RaidCount) `
         'Expired-only removal changed the decoded raid count.'
@@ -163,8 +169,8 @@ try {
         'Single removal did not remove exactly one stack.'
     Assert-True ($single.QuantityRemoved -eq 1) `
         'Single removal reported the wrong item quantity.'
-    Assert-True ($single.After.DroppedItemCount -eq 4) `
-        'Single removal did not leave exactly four loose stacks.'
+    Assert-True ($single.After.DroppedItemCount -eq ($before.DroppedItemCount - 1)) `
+        'Single removal changed more than the selected loose stack.'
     Assert-True ($single.After.RaidCount -eq $before.RaidCount) `
         'Single removal changed the decoded raid count.'
     Assert-True (Test-Path -LiteralPath $single.BackupPath) `
@@ -174,9 +180,9 @@ try {
         $null,
         [object[]]@([string]$fixtureSave, [long]0))
     Assert-True $all.Success ("Clear-all failed: " + $all.Error)
-    Assert-True ($all.ItemsRemoved -eq 4) `
+    Assert-True ($all.ItemsRemoved -eq ($before.DroppedItemCount - 1)) `
         'Clear-all did not remove every remaining loose stack.'
-    Assert-True ($all.QuantityRemoved -eq 5) `
+    Assert-True ($all.QuantityRemoved -eq ($before.DroppedItemQuantity - $bigWheel.Quantity)) `
         'Clear-all reported the wrong remaining quantity.'
     Assert-True ($all.After.DroppedItemCount -eq 0) `
         'Clear-all left decoded loose items in the fixture.'

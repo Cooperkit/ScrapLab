@@ -2,6 +2,54 @@
 
 ## Unreleased
 
+## 2.5.0 - 2026-08-04
+
+- Added Receive-side pull routing to Wireless Vacuum Pipe. Pumps and other
+  machines attached to a Receive endpoint can now consume supplies from
+  matching Send endpoints, including across worlds.
+- Added a persistent per-endpoint transfer-scope option for Send and Receive.
+  **Direct Container Only** is the safe default; players may opt into the entire
+  attached pipe network when they intentionally want broad draining or filling.
+- Added a one-click definition update that upgrades intact existing Wireless
+  Vacuum Pipe installations without unregistering their custom UUID or replacing
+  their original uninstall backups.
+- Fixed Raid Detector incorrectly reporting **PARTIAL PATCH — REPAIR REQUIRED**
+  after Wireless Vacuum Pipe added its entries to the shared localization
+  files. Custom-part language entries are now validated independently of
+  install order, and removing either part preserves the other part's entries.
+- Fixed Wireless Vacuum Pipe states after an intentional removal, Steam Verify,
+  or an older development-to-production migration left only intact inactive
+  ScrapLab-owned files. The patcher now treats verified official registrations
+  as clean, safely reuses exact owned assets on reinstall, and guarantees those
+  assets are deleted by the next uninstall instead of showing a false icon-atlas
+  conflict.
+- Fixed Patch Bay compatibility presentation so a partial Wireless Vacuum Pipe
+  state cannot be mislabeled solely because its explanation mentions an icon,
+  and benign **Verified official Better Plasma Drills files** text is no longer
+  displayed as though it were a warning.
+
+- Added the save-sensitive **Wireless Vacuum Pipe** Super Secret Mod with
+  permanent UUID `a34d9af0-4ba0-431d-b647-2d5435ecf138`, a default-unlocked
+  Craftbot recipe, isolated ScrapLab runtime, localized inventory descriptions,
+  and a transparent icon managed by the shared bottom-up icon catalog.
+- Added bidirectional same-color **Link** networks and directional **Send** to
+  **Receive** transfers across loaded overworld and underground worlds. Native
+  local storage remains preferred, transfers preserve filters and backpressure,
+  optional logic controls endpoint availability, and remote loading is bounded
+  by shared handles and a 64-cell cap.
+- Added a 33-target atomic patch service with known/adaptive preflight, verified
+  backups, exact and surgical removal, bounded receipts, Steam-overwrite
+  detection, cache invalidation, and complete rollback after any failed write.
+- Added the Logistics Patch Bay category, Wireless Vacuum Pipe card, helper
+  protocol and app bridge, live compatibility states, active-mod counting, and
+  Scrap Mechanic-styled progress feedback.
+- Added save-sensitive individual and master-switch removal confirmations. The
+  master flow warns about Wireless Vacuum Pipe before changing any other mod and
+  removes it first only after every required acknowledgement succeeds.
+- Added Field Manual and README guidance for crafting, paint channels, Link,
+  Send/Receive, cross-world loading, optional logic, route status, backpressure,
+  Steam-update recovery, and save-safe removal.
+
 ## 2.4.0 - 2026-08-03
 
 - Added the save-sensitive **Raid Detector** Super Secret Mod with permanent

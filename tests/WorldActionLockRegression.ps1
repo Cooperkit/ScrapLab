@@ -1,13 +1,18 @@
 param(
     [string]$RaidRescueExe,
-    [string]$Node =
-        "C:\Users\emima\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
+    [string]$Node
 )
 
 $ErrorActionPreference = "Stop"
 
 if ([String]::IsNullOrWhiteSpace($RaidRescueExe)) {
     $RaidRescueExe = Join-Path $PSScriptRoot "..\dist\ScrapLab.exe"
+}
+if ([String]::IsNullOrWhiteSpace($Node)) {
+    $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
+    $Node = if ($nodeCommand) { $nodeCommand.Source } else {
+        Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
+    }
 }
 if (-not (Test-Path -LiteralPath $Node)) {
     throw "The bundled Node runtime was not found."
@@ -40,7 +45,7 @@ foreach ($requiredUi in @(
     'GetRaidDetectorModStatus',
     'SetRaidDetectorMod',
     'I REMOVED EVERY RAID DETECTOR - DISABLE',
-    '10 AVAILABLE'
+    '11 AVAILABLE'
 )) {
     if (-not $html.Contains($requiredUi)) {
         throw "The Better Plasma Drills update UI is missing: $requiredUi"

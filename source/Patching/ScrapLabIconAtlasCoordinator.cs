@@ -15,7 +15,7 @@ namespace RaidRescue
         internal const int CellSize = 96;
         internal const int CurrentBuildX = 3936;
         internal const int CurrentBuildY = 3936;
-        internal const string CatalogVersion = "1";
+        internal const string CatalogVersion = "2";
 
         internal sealed class IconAsset
         {
@@ -88,6 +88,14 @@ namespace RaidRescue
                     {
                         "RaidRescue.Parts.RaidDetector.RaidDetectorIconLegacyOpaque.png"
                     }
+                },
+                new IconAsset
+                {
+                    ModKey = "WirelessVacuumPipe",
+                    Uuid = "a34d9af0-4ba0-431d-b647-2d5435ecf138",
+                    ResourceName =
+                        "RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipeIcon.png",
+                    LegacyResourceNames = new string[0]
                 }
             };
 

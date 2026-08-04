@@ -143,6 +143,9 @@ namespace RaidRescue
                     return BetterPlasmaDrillsPatchService.SetEnabled(request.Enabled);
                 case PatchHelperProtocol.RaidDetector:
                     return RaidDetectorPatchService.SetEnabled(request.Enabled);
+                case PatchHelperProtocol.WirelessVacuumPipe:
+                    return WirelessVacuumPipePatchService.SetEnabled(
+                        request.Enabled);
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return DualFluidCannonPatchCoordinator.SetChemicalEnabled(
                         request.Enabled);
@@ -175,6 +178,8 @@ namespace RaidRescue
                     return BetterPlasmaDrillsPatchService.GetStatus();
                 case PatchHelperProtocol.RaidDetector:
                     return RaidDetectorPatchService.GetStatus();
+                case PatchHelperProtocol.WirelessVacuumPipe:
+                    return WirelessVacuumPipePatchService.GetStatus();
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return ChemicalFertilizerPatchService.GetStatus();
                 case PatchHelperProtocol.DualFluidCannon:

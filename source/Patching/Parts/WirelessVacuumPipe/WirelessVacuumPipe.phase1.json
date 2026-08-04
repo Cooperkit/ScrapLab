@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "probeDefinitionVersion": 3,
+  "phase": 1,
+  "status": "COMPLETE",
+  "completedDate": "2026-08-04",
+  "developerOnly": true,
+  "testItem": {
+    "name": "Circuit Board",
+    "uuid": "f152e4df-bc40-44fb-8d20-3b3ff70cdfe3"
+  },
+  "endpointPart": {
+    "name": "Piped Small Chest",
+    "uuid": "4c474cff-3f6a-4306-93d1-c4c74578afd2",
+    "temporary": true
+  },
+  "automaticCases": [
+    "normal",
+    "exact-full",
+    "already-full",
+    "source-changed",
+    "receiver-unload",
+    "endpoint-destroyed",
+    "error-before-commit",
+    "error-after-commit"
+  ],
+  "manualCases": [
+    "save-reload",
+    "host-client-loopback"
+  ],
+  "deferredReleaseCases": [
+    "connected-client-observation"
+  ],
+  "passCondition": "Every successful commit subtracts and adds exactly once; every failed commit changes neither endpoint; counts remain identical after process reload.",
+  "productionGuardsLockedByProbe": [
+    "Use Container.canCollect for authoritative destination capacity.",
+    "Do not commit through Container references cached across scheduler ticks.",
+    "Freshly resolve endpoint Shapes and Containers on the tick immediately before a transaction.",
+    "Skip the transaction when either endpoint generation or fresh resolution changed."
+  ],
+  "validationEvidence": {
+    "logFile": "game-20260804-021017.log",
+    "automaticPassed": 8,
+    "manualPassed": 2,
+    "failed": 0,
+    "sourceWorldId": 1,
+    "destinationWorldId": 12,
+    "reloadCounts": {
+      "source": 2,
+      "destination": 1
+    },
+    "cases": {
+      "normal": "PASS",
+      "exact-full": "PASS",
+      "already-full": "PASS",
+      "source-changed": "PASS",
+      "receiver-unload": "PASS",
+      "endpoint-destroyed": "PASS",
+      "error-before-commit": "PASS",
+      "error-after-commit": "PASS",
+      "save-reload": "PASS",
+      "host-client-loopback": "PASS"
+    }
+  },
+  "productionPhasesBlockedUntilPass": [],
+  "releasePhasesBlockedUntilDeferredPass": [7]
+}

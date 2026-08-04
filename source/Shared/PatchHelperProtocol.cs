@@ -25,6 +25,7 @@ namespace RaidRescue
         internal const string BetterFreezerBeehive = "better-freezer-beehive";
         internal const string BetterPlasmaDrills = "better-plasma-drills";
         internal const string RaidDetector = "raid-detector";
+        internal const string WirelessVacuumPipe = "wireless-vacuum-pipe";
         internal const string ChemicalFertilizer = "chemical-fertilizer";
         internal const string DualFluidCannon = "dual-fluid-cannon";
         internal const string DeveloperCommands = "developer-commands";
@@ -39,6 +40,7 @@ namespace RaidRescue
                 String.Equals(action, BetterFreezerBeehive, StringComparison.Ordinal) ||
                 String.Equals(action, BetterPlasmaDrills, StringComparison.Ordinal) ||
                 String.Equals(action, RaidDetector, StringComparison.Ordinal) ||
+                String.Equals(action, WirelessVacuumPipe, StringComparison.Ordinal) ||
                 String.Equals(action, ChemicalFertilizer, StringComparison.Ordinal) ||
                 String.Equals(action, DualFluidCannon, StringComparison.Ordinal) ||
                 String.Equals(action, DeveloperCommands, StringComparison.Ordinal);

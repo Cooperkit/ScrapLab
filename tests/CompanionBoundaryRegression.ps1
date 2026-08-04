@@ -62,6 +62,13 @@ $raidDetectorParsed = $raidDetectorStatus | ConvertFrom-Json
 Assert-True ($null -ne $raidDetectorParsed.Success) `
     'The Raid Detector helper did not return its typed result.'
 
+$wirelessVacuumPipeStatus = & $patchPath --status wireless-vacuum-pipe
+Assert-True ($LASTEXITCODE -eq 0) `
+    'The Wireless Vacuum Pipe helper status action failed.'
+$wirelessVacuumPipeParsed = $wirelessVacuumPipeStatus | ConvertFrom-Json
+Assert-True ($null -ne $wirelessVacuumPipeParsed.Success) `
+    'The Wireless Vacuum Pipe helper did not return its typed result.'
+
 & $patchPath --status definitely-not-an-action 2>$null
 Assert-True ($LASTEXITCODE -eq 2) 'The helper accepted an unknown status action.'
 
