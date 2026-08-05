@@ -1,14 +1,15 @@
--- SCRAPLAB WIRELESS PIPE GRAPH v6
--- Phase 3: conservative virtual Link traversal layered over the native pipe graph.
--- Native local results always come first. If wireless discovery is unavailable or
--- fails, callers receive the exact native result without a partial virtual graph.
+-- SCRAPLAB WIRELESS PIPE GRAPH v9
+-- Cached virtual Link traversal layered over the native pipe graph. Native
+-- local results remain authoritative. Physical components are scanned at most
+-- once per short cache epoch and shared by every consumer on that component.
 
 ScrapLabPipeGraph = ScrapLabPipeGraph or {}
-ScrapLabPipeGraph.DEFINITION_VERSION = 6
+ScrapLabPipeGraph.DEFINITION_VERSION = 9
 
 local WIRELESS_PIPE_UUID = sm.uuid.new( "a34d9af0-4ba0-431d-b647-2d5435ecf138" )
 local MAX_PHYSICAL_SHAPES = 4096
 local MAX_WIRELESS_ENDPOINTS = 256
+local CACHE_INTERVAL_TICKS = 10
 
 -- Shape:getPipeOffsets returns openings in the same order as the official
 -- shape-set definition. Preserve the engine's input/output boundary at every
@@ -44,6 +45,29 @@ local REGISTERED_CONTAINER_UUIDS = {
 }
 
 local peerCache = { revision = nil, entries = {} }
+local physicalCache = {
+	epoch = nil,
+	revision = nil,
+	-- Scrap Mechanic's restricted Lua runtime does not expose setmetatable.
+	-- This ordinary table is safe because the whole physical cache is discarded
+	-- every CACHE_INTERVAL_TICKS rather than surviving for the game session.
+	shapeKeys = {},
+	componentsByShape = {},
+	directByShape = {},
+	virtualQueries = {},
+	nativeQueries = {},
+	nextComponentId = 0
+}
+local performance = {
+	nativeCalls = 0,
+	nativeCacheHits = 0,
+	fastPathReturns = 0,
+	physicalScans = 0,
+	physicalNodes = 0,
+	componentCacheHits = 0,
+	directCacheHits = 0,
+	virtualQueryHits = 0
+}
 
 local function shapeExists( shape )
 	if not shape then return false end
@@ -64,7 +88,51 @@ local function getWorldId( shape )
 end
 
 local function shapeKey( shape )
-	return getWorldId( shape ) .. ":" .. getShapeId( shape )
+	local cached = physicalCache.shapeKeys[shape]
+	if cached then return cached end
+	local key = getWorldId( shape ) .. ":" .. getShapeId( shape )
+	physicalCache.shapeKeys[shape] = key
+	return key
+end
+
+local function managerAvailable()
+	return g_wirelessPipeManager ~= nil
+		and WirelessPipeManager ~= nil
+		and WirelessPipeManager.Sv_GetEndpointIdForShape ~= nil
+		and WirelessPipeManager.Sv_GetLinkPeerEntries ~= nil
+		and WirelessPipeManager.Sv_GetDirectionalSourceEntries ~= nil
+		and WirelessPipeManager.Sv_GetTopologyRevision ~= nil
+		and WirelessPipeManager.Sv_HasVirtualRoute ~= nil
+end
+
+local function currentTick()
+	local ok, tick = pcall( function() return sm.game.getCurrentTick() end )
+	return ok and tick or 0
+end
+
+local function resetPhysicalEntries()
+	physicalCache.shapeKeys = {}
+	physicalCache.componentsByShape = {}
+	physicalCache.directByShape = {}
+	physicalCache.virtualQueries = {}
+	physicalCache.nativeQueries = {}
+	physicalCache.nextComponentId = 0
+end
+
+local function ensureCacheEpoch()
+	local tick = currentTick()
+	local epoch = math.floor( tick / CACHE_INTERVAL_TICKS )
+	local revision = managerAvailable() and WirelessPipeManager.Sv_GetTopologyRevision() or nil
+	if physicalCache.epoch ~= epoch or physicalCache.revision ~= revision then
+		physicalCache.epoch = epoch
+		physicalCache.revision = revision
+		resetPhysicalEntries()
+	end
+	return tick
+end
+
+local function invalidatePhysicalEntries()
+	resetPhysicalEntries()
 end
 
 local function isWirelessEndpoint( shape )
@@ -73,37 +141,12 @@ local function isWirelessEndpoint( shape )
 	return ok and uuid == WIRELESS_PIPE_UUID
 end
 
-local function sortedNeighbours( shape )
-	local neighbours = shape:getPipedNeighbours()
-	table.sort( neighbours, function( a, b ) return shapeKey( a ) < shapeKey( b ) end )
-	return neighbours
-end
-
-local function walkPhysicalGraph( rootShape, visitor, initiallyVisited )
-	local queue = { rootShape }
-	local head = 1
-	local visited = {}
-	for key, value in pairs( initiallyVisited or {} ) do visited[key] = value end
-	local count = 0
-	while head <= #queue do
-		local shape = queue[head]
-		head = head + 1
-		if shapeExists( shape ) then
-			local key = shapeKey( shape )
-			if not visited[key] then
-				visited[key] = true
-				count = count + 1
-				if count > MAX_PHYSICAL_SHAPES then error( "physical pipe graph safety limit exceeded" ) end
-				local recurse = visitor( shape ) ~= false
-				if recurse then
-					for _, neighbour in ipairs( sortedNeighbours( shape ) ) do
-						local neighbourKey = shapeKey( neighbour )
-						if not visited[neighbourKey] then queue[#queue + 1] = neighbour end
-					end
-				end
-			end
-		end
+local function unsortedNeighbours( shape )
+	local ok, neighbours = pcall( function() return shape:getPipedNeighbours() end )
+	if not ok or type( neighbours ) ~= "table" then
+		error( "physical pipe neighbours are unavailable" )
 	end
+	return neighbours
 end
 
 local function openingDirections( shape )
@@ -113,13 +156,14 @@ end
 
 local function directionalNeighbours( shape, requestedDirection )
 	local directions = openingDirections( shape )
-	if not directions or not requestedDirection then return sortedNeighbours( shape ) end
+	local neighbours = unsortedNeighbours( shape )
+	if not directions or not requestedDirection then return neighbours end
 	local offsets = shape:getPipeOffsets()
 	if #offsets ~= #directions then error( "directional pipe opening catalog mismatch" ) end
 	local openingPositions = {}
 	for index, offset in ipairs( offsets ) do openingPositions[index] = shape:transformLocalPoint( offset ) end
 	local result = {}
-	for _, neighbour in ipairs( sortedNeighbours( shape ) ) do
+	for _, neighbour in ipairs( neighbours ) do
 		local neighbourPosition = neighbour.worldPosition
 		local closestIndex = nil
 		local closestDistance = math.huge
@@ -132,13 +176,127 @@ local function directionalNeighbours( shape, requestedDirection )
 	return result
 end
 
-local function managerAvailable()
-	return g_wirelessPipeManager ~= nil
-		and WirelessPipeManager ~= nil
-		and WirelessPipeManager.Sv_GetEndpointIdForShape ~= nil
-		and WirelessPipeManager.Sv_GetLinkPeerEntries ~= nil
-		and WirelessPipeManager.Sv_GetDirectionalSourceEntries ~= nil
-		and WirelessPipeManager.Sv_GetTopologyRevision ~= nil
+local function isRegisteredContainerShape( shape )
+	if not shapeExists( shape ) then return false end
+	return REGISTERED_CONTAINER_UUIDS[string.lower( tostring( shape:getShapeUuid() ) )] == true
+end
+
+local function shapeHasContainer( shape )
+	if not shapeExists( shape ) then return false end
+	local ok, container = pcall( function()
+		local interactable = shape:getInteractable()
+		return interactable and interactable:getContainer( 0 ) or nil
+	end )
+	return ok and container ~= nil
+end
+
+local function addBody( bodies, bodyKeys, shape )
+	local ok, body = pcall( function() return shape:getBody() end )
+	if not ok or not body then return end
+	local key = tostring( body.id or body )
+	if not bodyKeys[key] then
+		bodyKeys[key] = true
+		bodies[#bodies + 1] = body
+	end
+end
+
+local function bodiesStillValid( bodies, createdTick, validationTick )
+	for _, body in ipairs( bodies or {} ) do
+		local ok, valid = pcall( function()
+			return sm.exists( body ) and not body:hasChanged( createdTick )
+		end )
+		if not ok or not valid then return false end
+	end
+	return true
+end
+
+local function componentStillValid( component, tick )
+	if component.lastValidationTick == tick then return true end
+	component.lastValidationTick = tick
+	return bodiesStillValid( component.bodies, component.createdTick, tick )
+end
+
+local function buildPhysicalComponent( rootShape, tick )
+	performance.physicalScans = performance.physicalScans + 1
+	physicalCache.nextComponentId = physicalCache.nextComponentId + 1
+	local component = {
+		id = physicalCache.nextComponentId,
+		createdTick = tick,
+		lastValidationTick = tick,
+		shapes = {}, containers = {}, endpoints = {}, bodies = {}, members = {}
+	}
+	local bodyKeys = {}
+	local queue, head, visited = { rootShape }, 1, {}
+	while head <= #queue do
+		local shape = queue[head]
+		head = head + 1
+		if shapeExists( shape ) then
+			local key = shapeKey( shape )
+			if not visited[key] then
+				visited[key] = true
+				performance.physicalNodes = performance.physicalNodes + 1
+				if #component.shapes >= MAX_PHYSICAL_SHAPES then error( "physical pipe graph safety limit exceeded" ) end
+				local boundary = shape ~= rootShape and openingDirections( shape ) ~= nil
+				component.shapes[#component.shapes + 1] = shape
+				component.members[#component.members + 1] = { key = key, boundary = boundary }
+				addBody( component.bodies, bodyKeys, shape )
+				if isRegisteredContainerShape( shape ) then component.containers[#component.containers + 1] = shape end
+				if isWirelessEndpoint( shape ) then
+					local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( shape )
+					if endpointId then component.endpoints[#component.endpoints + 1] = { endpointId = endpointId, shape = shape } end
+				end
+				if not boundary then
+					for _, neighbour in ipairs( unsortedNeighbours( shape ) ) do
+						if shapeExists( neighbour ) and not visited[shapeKey( neighbour )] then queue[#queue + 1] = neighbour end
+					end
+				end
+			end
+		end
+	end
+	table.sort( component.shapes, function( a, b ) return shapeKey( a ) < shapeKey( b ) end )
+	table.sort( component.containers, function( a, b ) return shapeKey( a ) < shapeKey( b ) end )
+	table.sort( component.endpoints, function( a, b ) return tostring( a.endpointId ) < tostring( b.endpointId ) end )
+	for _, member in ipairs( component.members ) do
+		if not member.boundary then physicalCache.componentsByShape[member.key] = component end
+	end
+	return component
+end
+
+local function getPhysicalComponent( rootShape, tracker )
+	if not shapeExists( rootShape ) then return nil end
+	local tick = ensureCacheEpoch()
+	local key = shapeKey( rootShape )
+	local component = physicalCache.componentsByShape[key]
+	if component and componentStillValid( component, tick ) then
+		performance.componentCacheHits = performance.componentCacheHits + 1
+	else
+		if component then invalidatePhysicalEntries(); ensureCacheEpoch(); key = shapeKey( rootShape ) end
+		component = buildPhysicalComponent( rootShape, tick )
+	end
+	if tracker and not tracker.componentIds[component.id] then
+		tracker.componentIds[component.id] = true
+		tracker.components[#tracker.components + 1] = component
+	end
+	return component
+end
+
+local function getStartComponents( startShape, requestedDirection, tracker )
+	local result, seen = {}, {}
+	if not shapeExists( startShape ) then return result end
+	local roots
+	if openingDirections( startShape ) and requestedDirection then
+		roots = directionalNeighbours( startShape, requestedDirection )
+	else
+		roots = { startShape }
+	end
+	for _, root in ipairs( roots ) do
+		local component = getPhysicalComponent( root, tracker )
+		if component and not seen[component.id] then
+			seen[component.id] = true
+			result[#result + 1] = component
+		end
+	end
+	return result
 end
 
 local function getPeerEntries( endpointId )
@@ -168,160 +326,139 @@ end
 
 local function appendUniqueShapes( target, additions )
 	local seen = {}
-	for _, shape in ipairs( target ) do seen[shapeKey( shape )] = true end
-	for _, shape in ipairs( additions ) do
-		local key = shapeKey( shape )
-		if not seen[key] then
-			seen[key] = true
-			target[#target + 1] = shape
+	for _, shape in ipairs( target ) do if shapeExists( shape ) then seen[shapeKey( shape )] = true end end
+	for _, shape in ipairs( additions or {} ) do
+		if shapeExists( shape ) then
+			local key = shapeKey( shape )
+			if not seen[key] then seen[key] = true; target[#target + 1] = shape end
 		end
 	end
 	return target
 end
 
--- Returns remote Link endpoint shapes in deterministic breadth-first order.
--- A physical graph may contain more than one Link endpoint, so every newly
--- reached remote network is scanned for additional Link groups as well.
-local function discoverRemoteEndpoints( startShape, requestedDirection )
-	if not managerAvailable() or not shapeExists( startShape ) then return {} end
-	local endpointQueue = {}
-	local endpointHead = 1
-	local visitedEndpointIds = {}
-	local emittedShapeKeys = {}
-	local remote = {}
-
-	local function visitPhysicalShape( shape )
-			if isWirelessEndpoint( shape ) then
-				local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( shape )
-				if endpointId and not visitedEndpointIds[endpointId] then
-					visitedEndpointIds[endpointId] = true
-					endpointQueue[#endpointQueue + 1] = { endpointId = endpointId, shape = shape }
-					if #endpointQueue > MAX_WIRELESS_ENDPOINTS then error( "wireless endpoint safety limit exceeded" ) end
-				end
+local function appendComponentEndpoints( queue, seen, components )
+	for _, component in ipairs( components or {} ) do
+		for _, endpoint in ipairs( component.endpoints ) do
+			if endpoint.endpointId and not seen[endpoint.endpointId] then
+				seen[endpoint.endpointId] = true
+				queue[#queue + 1] = endpoint
+				if #queue > MAX_WIRELESS_ENDPOINTS then error( "wireless endpoint safety limit exceeded" ) end
 			end
-			-- Directional interactables terminate a pipe branch. Walking through one
-			-- would incorrectly join its input side to its output side.
-			if shape ~= startShape and openingDirections( shape ) then return false end
-			return true
-	end
-
-	local function enqueuePhysicalLinks( rootShape, direction )
-		if rootShape == startShape and openingDirections( rootShape ) and direction then
-			local visitedRoot = { [shapeKey( rootShape )] = true }
-			-- Endpoints on the requester's opposite port may share the same paint
-			-- channel. Mark them before following peers so a wireless cycle cannot
-			-- re-enter the machine through the wrong side.
-			local oppositeDirection = direction == "input" and "output" or "input"
-			for _, neighbour in ipairs( directionalNeighbours( rootShape, oppositeDirection ) ) do
-				walkPhysicalGraph( neighbour, function( shape )
-					if isWirelessEndpoint( shape ) then
-						local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( shape )
-						if endpointId then visitedEndpointIds[endpointId] = true end
-					end
-					if openingDirections( shape ) then return false end
-					return true
-				end, visitedRoot )
-			end
-			for _, neighbour in ipairs( directionalNeighbours( rootShape, direction ) ) do
-				walkPhysicalGraph( neighbour, visitPhysicalShape, visitedRoot )
-			end
-		else
-			walkPhysicalGraph( rootShape, visitPhysicalShape )
 		end
 	end
+end
 
-	enqueuePhysicalLinks( startShape, requestedDirection )
+-- Returns remote Link endpoint shapes. Component caching means a bus with many
+-- endpoints is still physically scanned once, rather than once per endpoint.
+local function discoverRemoteEndpoints( startShape, requestedDirection, tracker )
+	if not managerAvailable() or not shapeExists( startShape ) or
+		not WirelessPipeManager.Sv_HasVirtualRoute( "link" ) then return {} end
+	local endpointQueue, visitedEndpointIds, emittedShapeKeys, remote = {}, {}, {}, {}
+	-- Output routing must not follow a wireless peer back into the same
+	-- directional machine's input network. Input discovery is intentionally
+	-- allowed to follow a peer located on the output-side storage network: that
+	-- lets a Craftbot craft from the complete linked chest system while its
+	-- finished items still remain on the output side.
+	if requestedDirection == "output" and openingDirections( startShape ) then
+		for _, component in ipairs( getStartComponents( startShape, "input", tracker ) ) do
+			for _, endpoint in ipairs( component.endpoints ) do visitedEndpointIds[endpoint.endpointId] = true end
+		end
+	end
+	appendComponentEndpoints( endpointQueue, visitedEndpointIds,
+		getStartComponents( startShape, requestedDirection, tracker ) )
+	local endpointHead = 1
 	while endpointHead <= #endpointQueue do
 		local origin = endpointQueue[endpointHead]
 		endpointHead = endpointHead + 1
 		for _, peer in ipairs( getPeerEntries( origin.endpointId ) ) do
 			if peer.endpointId and not visitedEndpointIds[peer.endpointId] and shapeExists( peer.shape ) then
 				visitedEndpointIds[peer.endpointId] = true
-				endpointQueue[#endpointQueue + 1] = peer
-				if #endpointQueue > MAX_WIRELESS_ENDPOINTS then error( "wireless endpoint safety limit exceeded" ) end
 				local key = shapeKey( peer.shape )
-				if not emittedShapeKeys[key] then
-					emittedShapeKeys[key] = true
-					remote[#remote + 1] = peer.shape
-				end
-				enqueuePhysicalLinks( peer.shape )
+				if not emittedShapeKeys[key] then emittedShapeKeys[key] = true; remote[#remote + 1] = peer.shape end
+				local component = getPhysicalComponent( peer.shape, tracker )
+				appendComponentEndpoints( endpointQueue, visitedEndpointIds, component and { component } or {} )
 			end
 		end
 	end
+	table.sort( remote, function( a, b ) return shapeKey( a ) < shapeKey( b ) end )
 	return remote
 end
 
--- Native pipe queries are authoritative for the machine's ordinary local
--- network, but a neutral Link pipe is not itself an input/output consumer. On a
--- bus with several matching Links, relying on the native result alone can omit
--- a container attached to an origin-side Link network. Enumerate those Link
--- roots explicitly and merge them with every peer root so the color channel is
--- exposed as one conjoined container network.
-local function discoverOriginEndpoints( startShape, requestedDirection )
+local function discoverOriginEndpoints( startShape, requestedDirection, tracker )
 	if not managerAvailable() or not shapeExists( startShape ) then return {} end
 	local result, seen = {}, {}
-	local function visit( shape )
-		if isWirelessEndpoint( shape ) then
-			local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( shape )
-			if endpointId and not seen[endpointId] then
-				seen[endpointId] = true
-				result[#result + 1] = shape
+	for _, component in ipairs( getStartComponents( startShape, requestedDirection, tracker ) ) do
+		for _, endpoint in ipairs( component.endpoints ) do
+			if endpoint.endpointId and not seen[endpoint.endpointId] then
+				seen[endpoint.endpointId] = true
+				result[#result + 1] = endpoint.shape
 			end
 		end
-		if shape ~= startShape and openingDirections( shape ) then return false end
-		return true
-	end
-	if openingDirections( startShape ) and requestedDirection then
-		local visitedRoot = { [shapeKey( startShape )] = true }
-		for _, neighbour in ipairs( directionalNeighbours( startShape, requestedDirection ) ) do
-			walkPhysicalGraph( neighbour, visit, visitedRoot )
-		end
-	else
-		walkPhysicalGraph( startShape, visit )
 	end
 	table.sort( result, function( a, b ) return shapeKey( a ) < shapeKey( b ) end )
 	return result
 end
 
-local function discoverLinkedRoots( startShape, requestedDirection )
-	local remote = discoverRemoteEndpoints( startShape, requestedDirection )
+local function discoverLinkedRoots( startShape, requestedDirection, tracker )
+	local remote = discoverRemoteEndpoints( startShape, requestedDirection, tracker )
 	-- An unpaired Link must retain exact vanilla behavior.
 	if #remote == 0 then return {}, remote end
 	local roots = {}
-	appendUniqueShapes( roots, discoverOriginEndpoints( startShape, requestedDirection ) )
+	appendUniqueShapes( roots, discoverOriginEndpoints( startShape, requestedDirection, tracker ) )
 	appendUniqueShapes( roots, remote )
 	return roots, remote
 end
 
-local function isRegisteredContainerShape( shape )
-	if not shapeExists( shape ) then return false end
-	return REGISTERED_CONTAINER_UUIDS[string.lower( tostring( shape:getShapeUuid() ) )] == true
-end
-
-local function getPhysicalContainerShapes( rootShape )
+local function getPhysicalContainerShapes( rootShape, tracker )
+	local component = getPhysicalComponent( rootShape, tracker )
 	local containers = {}
-	walkPhysicalGraph( rootShape, function( shape )
-		if isRegisteredContainerShape( shape ) then containers[#containers + 1] = shape end
-		if shape ~= rootShape and openingDirections( shape ) then return false end
-		return true
-	end )
+	if component then appendUniqueShapes( containers, component.containers ) end
 	return containers
 end
 
-local function getDirectContainerShapes( rootShape )
-	local containers = {}
-	if not shapeExists( rootShape ) then return containers end
-	for _, shape in ipairs( sortedNeighbours( rootShape ) ) do
-		if isRegisteredContainerShape( shape ) then containers[#containers + 1] = shape end
+local function directEntryStillValid( entry, tick )
+	if entry.lastValidationTick == tick then return true end
+	entry.lastValidationTick = tick
+	return bodiesStillValid( entry.bodies, entry.createdTick, tick )
+end
+
+local function getDirectContainerShapes( rootShape, tracker )
+	if not shapeExists( rootShape ) then return {} end
+	local tick = ensureCacheEpoch()
+	local key = shapeKey( rootShape )
+	local entry = physicalCache.directByShape[key]
+	if entry and directEntryStillValid( entry, tick ) then
+		performance.directCacheHits = performance.directCacheHits + 1
+	else
+		if entry then invalidatePhysicalEntries(); ensureCacheEpoch(); key = shapeKey( rootShape ) end
+		entry = { createdTick = tick, lastValidationTick = tick, shapes = {}, bodies = {} }
+		local bodyKeys, seen = {}, {}
+		addBody( entry.bodies, bodyKeys, rootShape )
+		for _, shape in ipairs( unsortedNeighbours( rootShape ) ) do
+			if shapeHasContainer( shape ) then
+				local id = shapeKey( shape )
+				if not seen[id] then seen[id] = true; entry.shapes[#entry.shapes + 1] = shape end
+				addBody( entry.bodies, bodyKeys, shape )
+			end
+		end
+		table.sort( entry.shapes, function( a, b ) return shapeKey( a ) < shapeKey( b ) end )
+		physicalCache.directByShape[key] = entry
 	end
-	return containers
+	if tracker and not tracker.directKeys[key] then
+		tracker.directKeys[key] = true
+		tracker.directEntries[#tracker.directEntries + 1] = entry
+	end
+	local result = {}
+	appendUniqueShapes( result, entry.shapes )
+	return result
 end
 
-local function discoverDirectionalSourceEntries( startShape, requestedDirection )
+local function discoverDirectionalSourceEntries( startShape, requestedDirection, tracker )
 	if not managerAvailable() or not shapeExists( startShape ) then return {} end
 	if requestedDirection ~= nil and requestedDirection ~= "input" then return {} end
+	if not WirelessPipeManager.Sv_HasVirtualRoute( "directional" ) then return {} end
 	local result, seen = {}, {}
-	for _, endpoint in ipairs( discoverOriginEndpoints( startShape, requestedDirection ) ) do
+	for _, endpoint in ipairs( discoverOriginEndpoints( startShape, requestedDirection, tracker ) ) do
 		local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( endpoint )
 		if endpointId then
 			for _, entry in ipairs( WirelessPipeManager.Sv_GetDirectionalSourceEntries( endpointId ) ) do
@@ -336,31 +473,86 @@ local function discoverDirectionalSourceEntries( startShape, requestedDirection 
 	return result
 end
 
-local function getDirectionalSourceContainerShapes( entry )
+local function getDirectionalSourceContainerShapes( entry, tracker )
 	if not entry or not shapeExists( entry.shape ) then return {} end
-	if entry.directOnly ~= false then return getDirectContainerShapes( entry.shape ) end
-	return getPhysicalContainerShapes( entry.shape )
+	if entry.directOnly ~= false then return getDirectContainerShapes( entry.shape, tracker ) end
+	return getPhysicalContainerShapes( entry.shape, tracker )
+end
+
+local function trackerStillValid( tracker, tick )
+	for _, component in ipairs( tracker.components or {} ) do
+		if not componentStillValid( component, tick ) then return false end
+	end
+	for _, entry in ipairs( tracker.directEntries or {} ) do
+		if not directEntryStillValid( entry, tick ) then return false end
+	end
+	return true
+end
+
+local function newTracker()
+	return { components = {}, componentIds = {}, directEntries = {}, directKeys = {} }
+end
+
+local function getVirtualContainerShapes( startShape, requestedDirection )
+	if not managerAvailable() or not shapeExists( startShape ) or
+		not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then return {} end
+	local tick = ensureCacheEpoch()
+	local key = requestedDirection .. "|" .. shapeKey( startShape )
+	local cached = physicalCache.virtualQueries[key]
+	if cached and trackerStillValid( cached.tracker, tick ) then
+		performance.virtualQueryHits = performance.virtualQueryHits + 1
+		local result = {}
+		appendUniqueShapes( result, cached.shapes )
+		return result
+	elseif cached then
+		invalidatePhysicalEntries()
+		ensureCacheEpoch()
+		key = requestedDirection .. "|" .. shapeKey( startShape )
+	end
+
+	local tracker, result = newTracker(), {}
+	local linkedRoots = discoverLinkedRoots( startShape, requestedDirection, tracker )
+	for _, root in ipairs( linkedRoots ) do appendUniqueShapes( result, getPhysicalContainerShapes( root, tracker ) ) end
+	if requestedDirection == "input" then
+		for _, entry in ipairs( discoverDirectionalSourceEntries( startShape, requestedDirection, tracker ) ) do
+			appendUniqueShapes( result, getDirectionalSourceContainerShapes( entry, tracker ) )
+		end
+	end
+	physicalCache.virtualQueries[key] = { shapes = result, tracker = tracker }
+	local output = {}
+	appendUniqueShapes( output, result )
+	return output
+end
+
+local function getNativeShapeList( nativeFunction, startShape, requestedDirection )
+	local tick = ensureCacheEpoch()
+	local key = requestedDirection .. "|" .. shapeKey( startShape )
+	local cached = physicalCache.nativeQueries[key]
+	if cached and cached.tick == tick then
+		performance.nativeCacheHits = performance.nativeCacheHits + 1
+		local result = {}
+		appendUniqueShapes( result, cached.shapes )
+		return result
+	end
+	performance.nativeCalls = performance.nativeCalls + 1
+	local nativeShapes = nativeFunction( startShape )
+	local stored = {}
+	appendUniqueShapes( stored, nativeShapes )
+	physicalCache.nativeQueries[key] = { tick = tick, shapes = stored }
+	local result = {}
+	appendUniqueShapes( result, stored )
+	return result
 end
 
 local function extendNativeShapeList( nativeFunction, startShape, requestedDirection )
-	local localResults = nativeFunction( startShape )
-	if not managerAvailable() then return localResults end
+	local localResults = getNativeShapeList( nativeFunction, startShape, requestedDirection )
+	if not managerAvailable() or not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then
+		performance.fastPathReturns = performance.fastPathReturns + 1
+		return localResults
+	end
 	local ok, extended = pcall( function()
-		local result = {}
-		for _, shape in ipairs( localResults ) do result[#result + 1] = shape end
-		local linkedRoots = discoverLinkedRoots( startShape, requestedDirection )
-		for _, remoteEndpoint in ipairs( linkedRoots ) do
-			-- A neutral Pipe root has no input/output direction, so vanilla returns
-			-- zero containers here. Continue through its physical network and append
-			-- only shapes registered by the game as pipe containers.
-			appendUniqueShapes( result, getPhysicalContainerShapes( remoteEndpoint ) )
-		end
-		if requestedDirection == "input" then
-			for _, entry in ipairs( discoverDirectionalSourceEntries( startShape, requestedDirection ) ) do
-				appendUniqueShapes( result, getDirectionalSourceContainerShapes( entry ) )
-			end
-		end
-		return result
+		appendUniqueShapes( localResults, getVirtualContainerShapes( startShape, requestedDirection ) )
+		return localResults
 	end )
 	return ok and extended or localResults
 end
@@ -379,51 +571,36 @@ function ScrapLabPipeGraph.getOutputContainers( shape )
 	return extendNativeShapeList( sm.pipeGraph.getOutputContainers, shape, "output" )
 end
 
--- Phase 4 uses this local-only physical view for active SEND/RECEIVE routing.
--- It never follows a wireless peer and therefore cannot accidentally turn a
--- directional channel into Link mode. Neutral pipe roots need this fallback
--- because the engine's input/output queries legitimately return no containers.
+-- Local-only physical view for SEND/RECEIVE routing. It never follows a
+-- wireless peer and shares the same bounded component cache as Link queries.
 function ScrapLabPipeGraph.getLocalPhysicalContainerShapes( shape )
 	if not shapeExists( shape ) then return {} end
 	local ok, containers = pcall( function() return getPhysicalContainerShapes( shape ) end )
 	return ok and containers or {}
 end
 
-local function validateCollectRequest( container, items, quantities )
-	if type( items ) ~= "table" or type( quantities ) ~= "table" or #items == 0 or #items ~= #quantities then
-		return false
-	end
+function ScrapLabPipeGraph.getDirectContainerShapes( shape )
+	if not shapeExists( shape ) then return {} end
+	local ok, containers = pcall( function() return getDirectContainerShapes( shape ) end )
+	return ok and containers or {}
+end
 
-	-- The native pipe selector accepts arrays and evaluates the complete output
-	-- together. The public container validator accepts one UUID at a time, so
-	-- duplicate UUIDs must be combined before checking capacity and filters.
-	local requests = {}
-	local requestOrder = {}
+local function validateCollectRequest( container, items, quantities )
+	if type( items ) ~= "table" or type( quantities ) ~= "table" or #items == 0 or #items ~= #quantities then return false end
+	local requests, requestOrder = {}, {}
 	for index, itemUuid in ipairs( items ) do
 		local quantity = quantities[index]
-		if itemUuid == nil or type( quantity ) ~= "number" or quantity <= 0 or quantity ~= math.floor( quantity ) then
-			return false
-		end
+		if itemUuid == nil or type( quantity ) ~= "number" or quantity <= 0 or quantity ~= math.floor( quantity ) then return false end
 		local key = tostring( itemUuid )
-		if requests[key] == nil then
-			requests[key] = { uuid = itemUuid, quantity = 0 }
-			requestOrder[#requestOrder + 1] = key
-		end
+		if requests[key] == nil then requests[key] = { uuid = itemUuid, quantity = 0 }; requestOrder[#requestOrder + 1] = key end
 		requests[key].quantity = requests[key].quantity + quantity
 	end
-
 	for _, key in ipairs( requestOrder ) do
 		local request = requests[key]
 		if not sm.container.canCollect( container, request.uuid, request.quantity ) then return false end
 	end
 	if #requestOrder == 1 then return true end
-
-	-- Separate canCollect calls can otherwise overbook the same empty slots when
-	-- a Craftbot recipe has multiple distinct outputs. This conservative slot
-	-- simulation never mutates inventory and therefore remains safe even when a
-	-- vanilla caller already has an active transaction (Refinery does this).
-	local emptySlots = 0
-	local existingCapacity = {}
+	local emptySlots, existingCapacity = 0, {}
 	local maxStackSize = container:getMaxStackSize()
 	if type( maxStackSize ) ~= "number" or maxStackSize < 1 then return false end
 	for slot = 0, container:getSize() - 1 do
@@ -438,7 +615,6 @@ local function validateCollectRequest( container, items, quantities )
 			end
 		end
 	end
-
 	local slotsRequired = 0
 	for _, key in ipairs( requestOrder ) do
 		local request = requests[key]
@@ -450,41 +626,24 @@ local function validateCollectRequest( container, items, quantities )
 end
 
 local function validateSpendRequest( container, itemUuid, quantity )
-	return itemUuid ~= nil
-		and type( quantity ) == "number"
-		and quantity > 0
-		and quantity == math.floor( quantity )
-		and sm.container.canSpend( container, itemUuid, quantity )
+	return itemUuid ~= nil and type( quantity ) == "number" and quantity > 0
+		and quantity == math.floor( quantity ) and sm.container.canSpend( container, itemUuid, quantity )
 end
 
 local function extendNativeSelection( selectionKind, nativeFunction, shape, itemUuid, quantity )
 	local localResult = nativeFunction( shape, itemUuid, quantity )
 	if localResult ~= nil or not managerAvailable() then return localResult end
+	local requestedDirection = selectionKind == "collect" and "output" or "input"
+	if not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then return localResult end
 	local ok, selected = pcall( function()
-		local requestedDirection = selectionKind == "collect" and "output" or "input"
-		local linkedRoots = discoverLinkedRoots( shape, requestedDirection )
-		for _, remoteEndpoint in ipairs( linkedRoots ) do
-			for _, candidate in ipairs( getPhysicalContainerShapes( remoteEndpoint ) ) do
-				local container = candidate:getInteractable():getContainer( 0 )
-				if container then
-					local accepted = false
-					if selectionKind == "collect" then
-						accepted = validateCollectRequest( container, itemUuid, quantity )
-					else
-						accepted = validateSpendRequest( container, itemUuid, quantity )
-					end
-					if accepted then return candidate end
-				end
-			end
-		end
-		if selectionKind == "spend" then
-			for _, entry in ipairs( discoverDirectionalSourceEntries( shape, "input" ) ) do
-				for _, candidate in ipairs( getDirectionalSourceContainerShapes( entry ) ) do
-					local container = candidate:getInteractable():getContainer( 0 )
-					if container and validateSpendRequest( container, itemUuid, quantity ) then
-						return candidate
-					end
-				end
+		for _, candidate in ipairs( getVirtualContainerShapes( shape, requestedDirection ) ) do
+			local interactable = candidate:getInteractable()
+			local container = interactable and interactable:getContainer( 0 ) or nil
+			if container then
+				local accepted = selectionKind == "collect"
+					and validateCollectRequest( container, itemUuid, quantity )
+					or validateSpendRequest( container, itemUuid, quantity )
+				if accepted then return candidate end
 			end
 		end
 		return nil
@@ -501,9 +660,6 @@ function ScrapLabPipeGraph.getContainerShapeToSpendFrom( shape, itemUuid, quanti
 end
 
 local function getResourceConnectionTypes()
-	-- util.lua is also loaded by terrain-generation Lua states, where the
-	-- interactable API is intentionally absent. Resolve these constants only in
-	-- a game state that actually supports pipe/container queries.
 	if sm.interactable == nil or sm.interactable.connectionType == nil then return {} end
 	return {
 		sm.interactable.connectionType.water,
@@ -533,7 +689,8 @@ end
 
 function ScrapLabPipeGraph.getMatchingPipedContainers( connectedInteractable )
 	local localResults = sm.pipeGraph.getMatchingPipedContainers( connectedInteractable )
-	if not managerAvailable() or not connectedInteractable then return localResults end
+	if not managerAvailable() or not connectedInteractable or
+		not WirelessPipeManager.Sv_HasVirtualRoute( "input" ) then return localResults end
 	local ok, extended = pcall( function()
 		local startShape = connectedInteractable.shape
 		if not shapeExists( startShape ) then return localResults end
@@ -545,33 +702,13 @@ function ScrapLabPipeGraph.getMatchingPipedContainers( connectedInteractable )
 			seen[id] = true
 			result[#result + 1] = container
 		end
-		local linkedRoots = discoverLinkedRoots( startShape )
-		for _, remoteEndpoint in ipairs( linkedRoots ) do
-			walkPhysicalGraph( remoteEndpoint, function( shape )
-				local interactable = shape:getInteractable()
-				if interactable and matchesAnyOutputType( interactable, outputTypes ) then
-					local container = interactable:getContainer( 0 )
-					if container then
-						local id = tostring( sm.container.getId( container ) )
-						if not seen[id] then
-							seen[id] = true
-							result[#result + 1] = container
-						end
-					end
-				end
-				if shape ~= remoteEndpoint and openingDirections( shape ) then return false end
-				return true
-			end )
-		end
-		for _, entry in ipairs( discoverDirectionalSourceEntries( startShape ) ) do
-			for _, shape in ipairs( getDirectionalSourceContainerShapes( entry ) ) do
-				local interactable = shape:getInteractable()
-				if interactable and matchesAnyOutputType( interactable, outputTypes ) then
-					local container = interactable:getContainer( 0 )
-					if container then
-						local id = tostring( sm.container.getId( container ) )
-						if not seen[id] then seen[id] = true; result[#result + 1] = container end
-					end
+		for _, shape in ipairs( getVirtualContainerShapes( startShape, "input" ) ) do
+			local interactable = shape:getInteractable()
+			if interactable and matchesAnyOutputType( interactable, outputTypes ) then
+				local container = interactable:getContainer( 0 )
+				if container then
+					local id = tostring( sm.container.getId( container ) )
+					if not seen[id] then seen[id] = true; result[#result + 1] = container end
 				end
 			end
 		end
@@ -580,9 +717,6 @@ function ScrapLabPipeGraph.getMatchingPipedContainers( connectedInteractable )
 	return ok and extended or localResults
 end
 
--- Client effects must never draw a single impossible line between worlds.
--- This returns the native route for a same-world transfer and an empty route
--- for a cross-world transfer. Consumer-specific endpoint effects come later.
 function ScrapLabPipeGraph.getVisualRoute( fromShape, toShape, direction )
 	if not shapeExists( fromShape ) or not shapeExists( toShape ) then return {} end
 	if getWorldId( fromShape ) ~= getWorldId( toShape ) then return {} end
@@ -605,12 +739,7 @@ function ScrapLabPipeGraph.debugDiscoverLinkedRoots( shape, requestedDirection )
 end
 
 function ScrapLabPipeGraph.debugGetLinkedContainerShapes( shape, requestedDirection )
-	local ok, result = pcall( function()
-		local containers = {}
-		local linkedRoots = discoverLinkedRoots( shape, requestedDirection )
-		for _, root in ipairs( linkedRoots ) do appendUniqueShapes( containers, getPhysicalContainerShapes( root ) ) end
-		return containers
-	end )
+	local ok, result = pcall( function() return getVirtualContainerShapes( shape, requestedDirection or "input" ) end )
 	return ok and result or {}
 end
 
@@ -620,8 +749,7 @@ function ScrapLabPipeGraph.debugGetPhysicalContainerShapes( shape )
 end
 
 function ScrapLabPipeGraph.debugGetDirectContainerShapes( shape )
-	local ok, result = pcall( function() return getDirectContainerShapes( shape ) end )
-	return ok and result or {}
+	return ScrapLabPipeGraph.getDirectContainerShapes( shape )
 end
 
 function ScrapLabPipeGraph.debugGetDirectionalSourceEntries( shape, requestedDirection )
@@ -629,11 +757,33 @@ function ScrapLabPipeGraph.debugGetDirectionalSourceEntries( shape, requestedDir
 	return ok and result or {}
 end
 
+function ScrapLabPipeGraph.debugGetPerformanceSnapshot()
+	return {
+		cacheIntervalTicks = CACHE_INTERVAL_TICKS,
+		nativeCalls = performance.nativeCalls,
+		nativeCacheHits = performance.nativeCacheHits,
+		fastPathReturns = performance.fastPathReturns,
+		physicalScans = performance.physicalScans,
+		physicalNodes = performance.physicalNodes,
+		componentCacheHits = performance.componentCacheHits,
+		directCacheHits = performance.directCacheHits,
+		virtualQueryHits = performance.virtualQueryHits
+	}
+end
+
+function ScrapLabPipeGraph.debugResetPerformance()
+	for key in pairs( performance ) do performance[key] = 0 end
+end
+
 function ScrapLabPipeGraph.debugClearTopologyCache()
 	peerCache = { revision = nil, entries = {} }
+	physicalCache.epoch = nil
+	physicalCache.revision = nil
+	resetPhysicalEntries()
 end
 
 -- Future ScrapLab container parts can opt into the virtual graph explicitly.
 function ScrapLabPipeGraph.registerContainerUuid( uuid )
 	REGISTERED_CONTAINER_UUIDS[string.lower( tostring( uuid ) )] = true
+	ScrapLabPipeGraph.debugClearTopologyCache()
 end

@@ -995,7 +995,7 @@ button{font:inherit}
         <div class=""secret-mod-row secret-mod-card locked"" id=""wirelessVacuumPipeRow"" data-category=""logistics automation machinery"" data-search=""wireless vacuum pipe logistics automation link send receive cross world overworld underground paint color channel craftbot save sensitive"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; PIPE AUTOMATION &middot; SAVE-SENSITIVE</span><strong>WIRELESS VACUUM PIPE</strong><span>Link painted networks, let Receive-side machines pull from Send sources, or actively transfer items with safe container scope.</span><em id=""wirelessVacuumPipeState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""wirelessVacuumPipeReason""></span></div>
           <div class=""secret-mod-actions"">
-            <button type=""button"" class=""secret-mod-options"" id=""wirelessVacuumPipeUpdate"" aria-label=""Update Wireless Vacuum Pipe routing"" onclick=""updateWirelessVacuumPipeMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-mod-options"" id=""wirelessVacuumPipeUpdate"" aria-label=""Update Wireless Vacuum Pipe performance"" onclick=""updateWirelessVacuumPipeMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-switch"" id=""wirelessVacuumPipeSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Wireless Vacuum Pipe"" onclick=""toggleWirelessVacuumPipeMod()"" disabled=""disabled"">
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
@@ -1365,6 +1365,7 @@ button{font:inherit}
           <div class=""help-item""><b>OPTIONAL LOGIC INPUT</b><p>No logic connection means enabled. A connected ON signal enables the endpoint; OFF disables it without deleting its saved identity or channel.</p></div>
           <div class=""help-item""><b>STATUS PANEL</b><p>Interact with the part to choose Link, Send, or Receive and review its channel, matching endpoints, connected worlds, and routing state.</p></div>
           <div class=""help-item""><b>BACKPRESSURE SAFETY</b><p>Empty Send networks and full or filtered Receive networks consume nothing. Transfers use fresh endpoint checks and one native container transaction.</p></div>
+          <div class=""help-item""><b>PERFORMANCE UPDATE</b><p>Definition 3 shares short-lived physical-network scans between connected machines, skips Lua traversal when no route can apply, and backs off idle channels. Existing installations update without unregistering the custom part.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes required registrations, reinstall before loading a world that may contain the part whenever ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
           <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Remove every pipe from all worlds, inventories, hotbars, containers, Lifts, and saved creations, save each world, and close the game before disabling.</p></div>
         </div>
@@ -2448,7 +2449,7 @@ function setWirelessVacuumPipeMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Wireless Vacuum Pipe.','bad');return false;}
  secretModBusy=true;secretModBusyTarget='wirelessPipe';operationBusy=true;
  var wasWirelessUpdate=enabled&&secretWirelessVacuumPipeInstalled&&secretWirelessVacuumPipeNeedsUpdate;
- showSecretModFeedback(wasWirelessUpdate?'UPDATING WIRELESS PIPE ROUTING...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
+ showSecretModFeedback(wasWirelessUpdate?'OPTIMIZING WIRELESS PIPE NETWORKS...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
  renderSecretModsState();applyGameLock(gameRunning);
  var data;
  try{data=parseResult(window.external.SetWirelessVacuumPipeMod(enabled));}
@@ -2459,7 +2460,7 @@ function setWirelessVacuumPipeMod(enabled){
  secretWirelessVacuumPipeInstalled=!!data.Installed;
  if(data.BackupPath)lastGameBackupPath=data.BackupPath;
  loadSecretModsState();
- showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - Receive can now feed local machines, with direct-container scope on by default.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
+ showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - dense networks now share cached graph scans and idle channels back off automatically.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
  applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function updateWirelessVacuumPipeMod(){

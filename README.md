@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.5.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.5.1.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -259,6 +259,15 @@ only a container physically touching that endpoint. Toggle **Entire Pipe
 Network** only when all containers on that attached network should participate.
 The custom transparent icon is managed by the shared ScrapLab Icon Pack.
 
+Definition 3 keeps dense logistics builds responsive by caching each physical
+pipe component for a short, topology-checked interval and sharing that result
+between Craftbots, Vacuums, Prospectors, pumps, and storage queries. It returns
+straight to Scrap Mechanic's native graph when no wireless route can apply,
+deduplicates remote component scans, removes per-node neighbour sorting, and
+backs empty or blocked directional channels down to one retry per second.
+Verified older installations expose a one-click **Update** action that changes
+only the owned runtime files and preserves their original uninstall backups.
+
 > **Wireless Vacuum Pipe save warning:** before disabling the mod, remove every
 > custom pipe from every placed world (including underground worlds), player
 > inventory, hotbar, container, Lift, and saved creation. Save every affected
@@ -371,7 +380,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.5.0.zip
+release\ScrapLab-2.5.1.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

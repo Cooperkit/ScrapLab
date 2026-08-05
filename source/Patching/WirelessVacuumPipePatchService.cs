@@ -10,7 +10,7 @@ namespace RaidRescue
     internal static class WirelessVacuumPipePatchService
     {
         private const string ModKey = "WirelessVacuumPipe";
-        private const string DefinitionVersion = "2";
+        private const string DefinitionVersion = "5";
         internal const string PartUuid =
             "a34d9af0-4ba0-431d-b647-2d5435ecf138";
         internal const string ManagerUuid =
@@ -181,7 +181,7 @@ namespace RaidRescue
                             : PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
                         state.DefinitionUpdateAvailable
-                            ? "A verified Wireless Vacuum Pipe routing and transfer-scope update is ready."
+                            ? "A verified Wireless Vacuum Pipe update is ready."
                             : "Wireless Vacuum Pipe registrations, runtime, recipes, languages, and icon are intact.");
                     return result;
                 }
@@ -260,11 +260,11 @@ namespace RaidRescue
                     result.Installed = true;
                     result.NeedsUpdate = false;
                     result.Changes.Add(
-                        "Added Receive-side pull routing and safe per-endpoint direct-container transfer scope.");
+                        "Installed compatible pipe-graph caching and corrected one-way Craftbot Link routing.");
                     AdaptivePatchSupport.FillResult(result, build,
                         PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
-                        "Wireless Vacuum Pipe definition 2 was installed and verified.");
+                        "Wireless Vacuum Pipe definition 5 Craftbot routing update was installed and verified.");
                     SecretModBackupRetention.Prune(
                         backupRoot, ModKey, result.BackupPath, result);
                     return result;
@@ -668,33 +668,58 @@ namespace RaidRescue
             owned.Missing = !File.Exists(owned.Path);
             owned.Exact = !owned.Missing && BytesEqual(
                 File.ReadAllBytes(owned.Path), owned.Bytes);
-            string legacyHash = LegacyOwnedHash(relative);
             owned.LegacyExact = !owned.Missing && !owned.Exact &&
-                !String.IsNullOrEmpty(legacyHash) && String.Equals(
-                    AdaptivePatchSupport.Sha256(owned.Path), legacyHash,
-                    StringComparison.OrdinalIgnoreCase);
+                IsLegacyOwnedHash(relative,
+                    AdaptivePatchSupport.Sha256(owned.Path));
             state.Owned.Add(owned);
         }
 
-        private static string LegacyOwnedHash(string relative)
+        private static bool IsLegacyOwnedHash(
+            string relative, string candidate)
         {
             string file = Path.GetFileName(relative);
+            string[] hashes = null;
             if (String.Equals(file, "WirelessPipeManager.lua",
                 StringComparison.OrdinalIgnoreCase))
-                return "0CB52D246E313967CE35BC1CF38C73094F02BF18B1F7B9847EB17EA939AEE0DB";
-            if (String.Equals(file, "ScrapLabPipeGraph.lua",
+                hashes = new string[]
+                {
+                    "0CB52D246E313967CE35BC1CF38C73094F02BF18B1F7B9847EB17EA939AEE0DB",
+                    "7BBCB858591D3903FEF650626B3B0BBE58F0C1D9E28A9551888DAC7FC3730AF4",
+                    "C1F0FA66477AB6189A47F40BEA377991A13E3FE2E99BB077D0CE6A6665E43B57"
+                };
+            else if (String.Equals(file, "ScrapLabPipeGraph.lua",
                 StringComparison.OrdinalIgnoreCase))
-                return "4A225B56FB87F108C4987FC4EC6F1C8AA45ED466452A856BF3F5775EE2C11CD9";
-            if (String.Equals(file, "WirelessPipeTransfer.lua",
+                hashes = new string[]
+                {
+                    "4A225B56FB87F108C4987FC4EC6F1C8AA45ED466452A856BF3F5775EE2C11CD9",
+                    "2F19CA25EC83596931C369624A691C09DF7E9A8903736171AE4192311B21813A",
+                    "7EC649701A334452B8E4CD6B96403C977B1E6EB3AE5D7057B46B506D79537F4D",
+                    "D1E9A24346530DFA8344451475C9F35F8BA2F141A6A19130E8EFBBE408A1C9AC"
+                };
+            else if (String.Equals(file, "WirelessPipeTransfer.lua",
                 StringComparison.OrdinalIgnoreCase))
-                return "ED9507FEFFA91C280C5B6AAEC720EE773993B6E9E56A47F7CE274606AFC680BA";
-            if (String.Equals(file, "WirelessVacuumPipe.lua",
+                hashes = new string[]
+                {
+                    "ED9507FEFFA91C280C5B6AAEC720EE773993B6E9E56A47F7CE274606AFC680BA",
+                    "CC64EEFFFA602B4A6CC670A15ECF9DE99805C3AC394C4D46149FFEA00CE6B561"
+                };
+            else if (String.Equals(file, "WirelessVacuumPipe.lua",
                 StringComparison.OrdinalIgnoreCase))
-                return "25F6D11E19C3514FE2E06DA72FC5A60C45BE21471B49D35198F2E143EF8377D6";
-            if (String.Equals(file, "WirelessVacuumPipe.layout",
+                hashes = new string[]
+                {
+                    "25F6D11E19C3514FE2E06DA72FC5A60C45BE21471B49D35198F2E143EF8377D6"
+                };
+            else if (String.Equals(file, "WirelessVacuumPipe.layout",
                 StringComparison.OrdinalIgnoreCase))
-                return "2F800DD9E1A29679182B7649D378F401D1D3E561E50A7894859D337157B18B12";
-            return null;
+                hashes = new string[]
+                {
+                    "2F800DD9E1A29679182B7649D378F401D1D3E561E50A7894859D337157B18B12"
+                };
+            if (hashes == null) return false;
+            foreach (string hash in hashes)
+                if (String.Equals(candidate, hash,
+                    StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
         }
 
         private static List<AtomicCustomPartFilePlan>

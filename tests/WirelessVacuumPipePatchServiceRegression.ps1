@@ -120,12 +120,65 @@ try{
     Assert-True ($install.FilesPatched-ge30) "Unexpectedly small atomic plan: $($install.FilesPatched)"
     $installedStatus=Invoke-Static $serviceType 'GetStatusAt' @($fakeGame)
     Assert-True ($installedStatus.Success-and$installedStatus.Installed) ('Restart status failed: '+$installedStatus.Error)
+
+    # Recreate the verified definition-3 runtime from the current source. This
+    # keeps the regression self-contained even after the live game is updated
+    # to definition 4, and proves the compatibility correction changes only the
+    # two affected owned runtime files while preserving clean uninstall data.
+    $managerRelative='Survival\Scripts\ScrapLab\PipeSystem\WirelessPipeManager.lua'
+    $graphRelative='Survival\Scripts\ScrapLab\PipeSystem\ScrapLabPipeGraph.lua'
+    $managerSource=[IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\source\Patching\Scripts\ScrapLab\PipeSystem\WirelessPipeManager.lua'))
+    $graphSource=[IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\source\Patching\Scripts\ScrapLab\PipeSystem\ScrapLabPipeGraph.lua'))
+    $managerNewline=if($managerSource.Contains("`r`n")){"`r`n"}else{"`n"}
+    $graphNewline=if($graphSource.Contains("`r`n")){"`r`n"}else{"`n"}
+    $definition3Manager=$managerSource.Replace('WIRELESS VACUUM PIPE MANAGER v6','WIRELESS VACUUM PIPE MANAGER v5').Replace(
+        "`t-- Scrap Mechanic's restricted Lua runtime does not expose setmetatable.$managerNewline`t-- Endpoint unload/delete paths explicitly remove these live shape keys.$managerNewline`tself.sv.endpointIdByShape = {}",
+        "`tself.sv.endpointIdByShape = setmetatable( {}, { __mode = `"k`" } )")
+    $definition3Graph=$graphSource.Replace('WIRELESS PIPE GRAPH v9','WIRELESS PIPE GRAPH v7').Replace('ScrapLabPipeGraph.DEFINITION_VERSION = 9','ScrapLabPipeGraph.DEFINITION_VERSION = 7').Replace(
+        "`t-- Scrap Mechanic's restricted Lua runtime does not expose setmetatable.$graphNewline`t-- This ordinary table is safe because the whole physical cache is discarded$graphNewline`t-- every CACHE_INTERVAL_TICKS rather than surviving for the game session.$graphNewline`tshapeKeys = {},",
+        "`tshapeKeys = setmetatable( {}, { __mode = `"k`" } ),").Replace(
+        "`tphysicalCache.shapeKeys = {}",
+        "`tphysicalCache.shapeKeys = setmetatable( {}, { __mode = `"k`" } )").Replace(
+        "`t-- Output routing must not follow a wireless peer back into the same$graphNewline`t-- directional machine's input network. Input discovery is intentionally$graphNewline`t-- allowed to follow a peer located on the output-side storage network: that$graphNewline`t-- lets a Craftbot craft from the complete linked chest system while its$graphNewline`t-- finished items still remain on the output side.$graphNewline`tif requestedDirection == `"output`" and openingDirections( startShape ) then$graphNewline`t`tfor _, component in ipairs( getStartComponents( startShape, `"input`", tracker ) ) do",
+        "`tif openingDirections( startShape ) and requestedDirection then$graphNewline`t`tlocal oppositeDirection = requestedDirection == `"input`" and `"output`" or `"input`"$graphNewline`t`tfor _, component in ipairs( getStartComponents( startShape, oppositeDirection, tracker ) ) do")
+    [IO.File]::WriteAllText((Join-Path $fakeGame $managerRelative),$definition3Manager,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $fakeGame $graphRelative),$definition3Graph,[Text.UTF8Encoding]::new($false))
+    $definition3Runtime=@{
+        $managerRelative='C1F0FA66477AB6189A47F40BEA377991A13E3FE2E99BB077D0CE6A6665E43B57'
+        $graphRelative='7EC649701A334452B8E4CD6B96403C977B1E6EB3AE5D7057B46B506D79537F4D'
+    }
+    $receiptPath=Join-Path $receiptRoot 'WirelessVacuumPipe.json'
+    $legacyReceipt=Get-Content -LiteralPath $receiptPath -Raw|ConvertFrom-Json
+    $legacyReceipt.DefinitionVersion='3'
+    foreach($relative in $definition3Runtime.Keys){
+        Assert-True ((Get-Hash (Join-Path $fakeGame $relative))-eq$definition3Runtime[$relative]) "The generated definition-3 fixture changed: $relative"
+        $receiptFile=$legacyReceipt.Files|Where-Object{$_.RelativePath-eq$relative}|Select-Object -First 1
+        Assert-True ($null-ne$receiptFile) "Definition-3 receipt entry is missing: $relative"
+        $receiptFile.OutputHash=$definition3Runtime[$relative]
+    }
+    [IO.File]::WriteAllText($receiptPath,($legacyReceipt|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
+    $definitionUpdate=Invoke-Static $serviceType 'GetStatusAt' @($fakeGame)
+    Assert-True ($definitionUpdate.Success-and$definitionUpdate.Installed-and$definitionUpdate.NeedsUpdate) ('Definition-3 runtime did not offer the compatibility update: '+$definitionUpdate.CompatibilityReason)
+    $migration=Invoke-Static $serviceType 'SetEnabledAt' @($fakeGame,$backupRoot,$true)
+    Assert-True ($migration.Success-and$migration.FilesPatched-eq2) ('Definition-3 compatibility migration failed: '+$migration.Error)
+
     $shapeText=Get-Content -LiteralPath (Join-Path $fakeGame $ownedTargets[4]) -Raw
     Assert-True ($shapeText.Contains('"showInInventory" : true')-and$shapeText.Contains('"stackSize" : 5')) 'Locked inventory visibility/stack size was not embedded.'
     $recipeText=Get-Content -LiteralPath (Join-Path $fakeGame $targets[3]) -Raw
     Assert-True ($recipeText.Contains('"quantity": 2')-and$recipeText.Contains('"craftTime": 30')-and$recipeText.Contains('a34d9af0-4ba0-431d-b647-2d5435ecf138')) 'Locked Craftbot recipe is missing.'
     $crafterText=Get-Content -LiteralPath (Join-Path $fakeGame 'Survival\Scripts\game\interactables\Crafter.lua') -Raw
     Assert-True (-not$crafterText.Contains('[ScrapLab Pipe Crafter]')) 'Production Crafter bridge retained development print spam.'
+    $graphText=Get-Content -LiteralPath (Join-Path $fakeGame 'Survival\Scripts\ScrapLab\PipeSystem\ScrapLabPipeGraph.lua') -Raw
+    $managerText=Get-Content -LiteralPath (Join-Path $fakeGame 'Survival\Scripts\ScrapLab\PipeSystem\WirelessPipeManager.lua') -Raw
+    $transferText=Get-Content -LiteralPath (Join-Path $fakeGame 'Survival\Scripts\ScrapLab\PipeSystem\WirelessPipeTransfer.lua') -Raw
+    Assert-True ($graphText.Contains('ScrapLabPipeGraph.DEFINITION_VERSION = 9')-and$graphText.Contains('CACHE_INTERVAL_TICKS = 10')-and$graphText.Contains('componentCacheHits')-and$graphText.Contains('Sv_HasVirtualRoute')) 'Definition 5 graph caching and fast paths are missing.'
+    Assert-True (-not$graphText.Contains('local function sortedNeighbours')) 'Definition 5 retained per-node neighbour sorting.'
+    Assert-True (-not($graphText -match 'setmetatable\s*\(')) 'Definition 5 graph calls a Lua function unavailable in Scrap Mechanic.'
+    Assert-True ($graphText.Contains('if requestedDirection == "output" and openingDirections( startShape ) then')-and$graphText.Contains('getStartComponents( startShape, "input", tracker )')) 'Definition 5 Craftbot one-way loop guard is missing.'
+    Assert-True (-not$graphText.Contains('oppositeDirection = requestedDirection == "input"')) 'Definition 5 still blocks input traversal into linked output-side storage.'
+    Assert-True ($managerText.Contains('WIRELESS VACUUM PIPE MANAGER v6')-and$managerText.Contains('function WirelessPipeManager.sv_getMatchingCount')-and$managerText.Contains('function WirelessPipeManager.Sv_HasVirtualRoute')-and$managerText.Contains('endpointIdByShape')) 'Definition 4 manager indexes are missing.'
+    Assert-True (-not($managerText -match 'setmetatable\s*\(')) 'Definition 4 manager calls a Lua function unavailable in Scrap Mechanic.'
+    Assert-True ($transferText.Contains('MAX_IDLE_BACKOFF_TICKS = 40')-and$transferText.Contains('idleBackoffs')-and$transferText.Contains('backoffSkips')) 'Definition 3 idle transfer backoff is missing.'
     foreach($language in $languages){Assert-True ((Get-Content -LiteralPath (Join-Path $fakeGame "Survival\Gui\Language\$language\inventoryDescriptions.json") -Raw).Contains('a34d9af0-4ba0-431d-b647-2d5435ecf138')) "Missing $language localization."}
     $wirelessEnglish=Join-Path $fakeGame 'Survival\Gui\Language\English\inventoryDescriptions.json'
     $wirelessEnglishBytes=[IO.File]::ReadAllBytes($wirelessEnglish)
@@ -143,7 +196,7 @@ try{
     Assert-True ($iconXml.Contains('a34d9af0-4ba0-431d-b647-2d5435ecf138')) 'Wireless icon XML entry is missing.'
     Assert-True ($iconXml.Contains('a638a8aa-6f4f-41c2-9e31-702687066092')-eq$baselineHasRaidDetector) 'Wireless installation changed the Raid Detector icon registration state.'
     $receipt=Get-Content -LiteralPath (Join-Path $receiptRoot 'WirelessVacuumPipe.json') -Raw|ConvertFrom-Json
-    Assert-True ($receipt.DefinitionVersion-eq'2'-and$receipt.Files.Count-ge30) 'Bounded production receipt is incomplete.'
+    Assert-True ($receipt.DefinitionVersion-eq'5'-and$receipt.Files.Count-ge30) 'Bounded production receipt is incomplete.'
 
     $remove=Invoke-Static $serviceType 'SetEnabledAt' @($fakeGame,$backupRoot,$false)
     Assert-True $remove.Success ('Exact removal failed: '+$remove.Error)

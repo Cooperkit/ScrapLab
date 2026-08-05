@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE DIRECTIONAL TRANSFER v3
+-- SCRAPLAB WIRELESS VACUUM PIPE DIRECTIONAL TRANSFER v4
 -- Server-authoritative SEND -> RECEIVE scheduling. Selection and commit are
 -- deliberately separated by one fixed tick so no cached Container reference
 -- can survive an endpoint destruction or world-unload boundary.
@@ -13,6 +13,7 @@ local WIRELESS_PIPE_UUID = sm.uuid.new( "a34d9af0-4ba0-431d-b647-2d5435ecf138" )
 local ATTEMPT_INTERVAL_TICKS = 4
 local COMMIT_DELAY_TICKS = 1
 local MAX_GROUPS_PER_TICK = 64
+local MAX_IDLE_BACKOFF_TICKS = 40
 
 local function shapeExists( shape )
 	return shape ~= nil and sm.exists( shape )
@@ -35,6 +36,9 @@ end
 
 local function directContainerShapes( endpointShape )
 	if not shapeExists( endpointShape ) then return {} end
+	if ScrapLabPipeGraph and type( ScrapLabPipeGraph.getDirectContainerShapes ) == "function" then
+		return ScrapLabPipeGraph.getDirectContainerShapes( endpointShape )
+	end
 	local result, seen = {}, {}
 	local ok, neighbours = pcall( function() return endpointShape:getPipedNeighbours() end )
 	if not ok or type( neighbours ) ~= "table" then return result end
@@ -130,18 +134,40 @@ local function ensureRuntime( manager )
 		locks = {},
 		status = {},
 		activity = {},
+		nextAttempt = {},
+		idleDelay = {},
 		metrics = {
 			attempts = 0, selected = 0, committed = 0, rejected = 0,
-			transactionFailures = 0, staleGuardRejects = 0
+			transactionFailures = 0, staleGuardRejects = 0,
+			idleBackoffs = 0, backoffSkips = 0
 		}
 	}
+	manager.sv.directional.nextAttempt = manager.sv.directional.nextAttempt or {}
+	manager.sv.directional.idleDelay = manager.sv.directional.idleDelay or {}
+	manager.sv.directional.metrics.idleBackoffs = manager.sv.directional.metrics.idleBackoffs or 0
+	manager.sv.directional.metrics.backoffSkips = manager.sv.directional.metrics.backoffSkips or 0
 	manager.sv.saved.directionalCursors = manager.sv.saved.directionalCursors or {}
 	return manager.sv.directional
 end
 
 local function setStatus( manager, endpointId, state )
 	local runtime = ensureRuntime( manager )
+	local previous = runtime.status[endpointId]
 	if state then runtime.status[endpointId] = state else runtime.status[endpointId] = nil end
+	if previous ~= state and manager.sv_invalidateStatusCache then manager:sv_invalidateStatusCache() end
+end
+
+local function resetBackoff( runtime, channel, tick )
+	runtime.idleDelay[channel] = ATTEMPT_INTERVAL_TICKS
+	runtime.nextAttempt[channel] = ( tick or sm.game.getCurrentTick() ) + ATTEMPT_INTERVAL_TICKS
+end
+
+local function applyIdleBackoff( runtime, channel, tick )
+	local previous = runtime.idleDelay[channel] or ATTEMPT_INTERVAL_TICKS
+	local delay = math.min( MAX_IDLE_BACKOFF_TICKS, math.max( ATTEMPT_INTERVAL_TICKS, previous * 2 ) )
+	runtime.idleDelay[channel] = delay
+	runtime.nextAttempt[channel] = ( tick or sm.game.getCurrentTick() ) + delay
+	runtime.metrics.idleBackoffs = runtime.metrics.idleBackoffs + 1
 end
 
 local function liveEndpoint( manager, endpointId, expectedMode, expectedChannel, expectedGeneration, expectedDirectOnly )
@@ -227,6 +253,7 @@ local function rejectPending( manager, key, pending, reason, stale )
 	runtime.metrics.rejected = runtime.metrics.rejected + 1
 	if stale then runtime.metrics.staleGuardRejects = runtime.metrics.staleGuardRejects + 1 end
 	setStatus( manager, pending.senderId, reason == "destination unavailable" and "DESTINATION FULL" or "CHANNEL EMPTY" )
+	applyIdleBackoff( runtime, pending.channel, sm.game.getCurrentTick() )
 	releaseGroup( runtime, key )
 end
 
@@ -262,6 +289,7 @@ local function commitPending( manager, key, pending )
 	local beganOk, began = pcall( function() return sm.container.beginTransaction() end )
 	if not beganOk or not began then
 		runtime.metrics.transactionFailures = runtime.metrics.transactionFailures + 1
+		applyIdleBackoff( runtime, pending.channel, sm.game.getCurrentTick() )
 		releaseGroup( runtime, key )
 		return
 	end
@@ -274,6 +302,7 @@ local function commitPending( manager, key, pending )
 		-- the uncommitted transaction at the callback boundary; Phase 1 proved
 		-- this path changes neither container.
 		runtime.metrics.transactionFailures = runtime.metrics.transactionFailures + 1
+		applyIdleBackoff( runtime, pending.channel, sm.game.getCurrentTick() )
 		releaseGroup( runtime, key )
 		sm.log.warning( "[ScrapLab Pipe Transfer] transaction queue failed: " .. tostring( queueError ) )
 		return
@@ -281,11 +310,13 @@ local function commitPending( manager, key, pending )
 	local commitOk, committed = pcall( function() return sm.container.endTransaction() end )
 	if not commitOk or not committed then
 		runtime.metrics.transactionFailures = runtime.metrics.transactionFailures + 1
+		applyIdleBackoff( runtime, pending.channel, sm.game.getCurrentTick() )
 		releaseGroup( runtime, key )
 		return
 	end
 
 	runtime.metrics.committed = runtime.metrics.committed + 1
+	resetBackoff( runtime, pending.channel, sm.game.getCurrentTick() )
 	recordSuccessfulCursor( manager, pending.channel, pending.senderId, pending.receiverId )
 	setStatus( manager, pending.senderId, "SENDING" )
 	setStatus( manager, pending.receiverId, "READY TO RECEIVE" )
@@ -320,6 +351,7 @@ local function scheduleGroup( manager, channel, senders, receivers, tick )
 						local destination = findDestinationCandidate( receiverLive.shape, itemUuid, source.quantity, receiverDirectOnly )
 						if destination then
 							sawDestination = true
+							resetBackoff( runtime, channel, tick )
 							runtime.locks[key] = true
 							runtime.pending[key] = {
 								selectedTick = tick,
@@ -350,6 +382,7 @@ local function scheduleGroup( manager, channel, senders, receivers, tick )
 	for _, senderId in ipairs( senders ) do
 		setStatus( manager, senderId, not sawSource and "CHANNEL EMPTY" or ( not sawDestination and "DESTINATION FULL" or "SENDING" ) )
 	end
+	applyIdleBackoff( runtime, channel, tick )
 end
 
 function WirelessPipeTransfer.Sv_ServerOnCreate( manager )
@@ -370,7 +403,11 @@ function WirelessPipeTransfer.Sv_ServerOnFixedUpdate( manager )
 		local channel = channelFromGroupKey( key )
 		local receivers = manager.sv.groups.RECEIVE["RECEIVE|" .. tostring( channel )] or {}
 		if channel and #senders > 0 and #receivers > 0 then
-			scheduleGroup( manager, channel, senders, receivers, tick )
+			if tick >= ( runtime.nextAttempt[channel] or 0 ) then
+				scheduleGroup( manager, channel, senders, receivers, tick )
+			else
+				runtime.metrics.backoffSkips = runtime.metrics.backoffSkips + 1
+			end
 			processed = processed + 1
 			if processed >= MAX_GROUPS_PER_TICK then break end
 		end
@@ -379,10 +416,15 @@ end
 
 function WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( manager, endpointId )
 	local runtime = ensureRuntime( manager )
+	local record = manager.sv.saved.endpoints[tostring( endpointId or "" )]
+	if record and record.channel then resetBackoff( runtime, record.channel, sm.game.getCurrentTick() - ATTEMPT_INTERVAL_TICKS ) end
 	setStatus( manager, endpointId, nil )
 	runtime.activity[endpointId] = nil
 	for key, pending in pairs( runtime.pending ) do
-		if pending.senderId == endpointId or pending.receiverId == endpointId then releaseGroup( runtime, key ) end
+		if pending.senderId == endpointId or pending.receiverId == endpointId then
+			resetBackoff( runtime, pending.channel, sm.game.getCurrentTick() - ATTEMPT_INTERVAL_TICKS )
+			releaseGroup( runtime, key )
+		end
 	end
 end
 
@@ -416,12 +458,16 @@ function WirelessPipeTransfer.Sv_GetDebugSnapshot( manager )
 		committed = runtime.metrics.committed,
 		rejected = runtime.metrics.rejected,
 		transactionFailures = runtime.metrics.transactionFailures,
-		staleGuardRejects = runtime.metrics.staleGuardRejects
+		staleGuardRejects = runtime.metrics.staleGuardRejects,
+		idleBackoffs = runtime.metrics.idleBackoffs,
+		backoffSkips = runtime.metrics.backoffSkips,
+		maxIdleBackoffTicks = MAX_IDLE_BACKOFF_TICKS
 	}
 end
 
 ScrapLabWirelessPipeTransferConstants = {
 	attemptIntervalTicks = ATTEMPT_INTERVAL_TICKS,
 	commitDelayTicks = COMMIT_DELAY_TICKS,
+	maxIdleBackoffTicks = MAX_IDLE_BACKOFF_TICKS,
 	quantityPerTransfer = 1
 }

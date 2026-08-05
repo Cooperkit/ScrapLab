@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v4
+-- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v6
 -- Persistent endpoint registry, Link topology, and the Phase 4 directional
 -- scheduler host. Inventory authority remains inside native transactions.
 
@@ -110,6 +110,9 @@ function WirelessPipeManager.server_onCreate( self )
 	self.sv.saved.endpoints = self.sv.saved.endpoints or {}
 	self.sv.saved.directionalCursors = self.sv.saved.directionalCursors or {}
 	self.sv.live = {}
+	-- Scrap Mechanic's restricted Lua runtime does not expose setmetatable.
+	-- Endpoint unload/delete paths explicitly remove these live shape keys.
+	self.sv.endpointIdByShape = {}
 	self.sv.recentlyUnloaded = {}
 	self.sv.groups = { LINK = {}, SEND = {}, RECEIVE = {} }
 	self.sv.handles = {}
@@ -120,6 +123,9 @@ function WirelessPipeManager.server_onCreate( self )
 	self.sv.groupsDirty = true
 	self.sv.generation = 0
 	self.sv.topologyRevision = 1
+	self.sv.statusRevision = 1
+	self.sv.statusCache = { signature = nil, entries = {} }
+	self.sv.routeCapabilities = { link = false, directional = false, input = false, output = false }
 	self.sv.lastHandleTopologySignature = nil
 	self.sv.directionalDebugModes = {}
 	WirelessPipeTransfer.Sv_ServerOnCreate( self )
@@ -182,6 +188,13 @@ end
 function WirelessPipeManager.sv_bumpTopologyRevision( self )
 	self.sv.topologyRevision = ( self.sv.topologyRevision or 0 ) + 1
 	if self.sv.topologyRevision > 2147483000 then self.sv.topologyRevision = 1 end
+	if self.sv.statusCache then self.sv.statusCache.signature = nil end
+end
+
+function WirelessPipeManager.sv_invalidateStatusCache( self )
+	self.sv.statusRevision = ( self.sv.statusRevision or 0 ) + 1
+	if self.sv.statusRevision > 2147483000 then self.sv.statusRevision = 1 end
+	if self.sv.statusCache then self.sv.statusCache.signature = nil end
 end
 
 function WirelessPipeManager.sv_makeRecord( self, data )
@@ -246,6 +259,7 @@ function WirelessPipeManager.sv_registerEndpoint( self, data, shape, owner )
 		owner = owner,
 		generation = generation
 	}
+	if shape then self.sv.endpointIdByShape[shape] = endpointId end
 	self.sv.recentlyUnloaded[endpointId] = nil
 	self.sv.reconcile[endpointId] = nil
 	WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
@@ -285,6 +299,7 @@ function WirelessPipeManager.sv_unloadEndpoint( self, endpointId, shape, generat
 	endpointId = tostring( endpointId or "" )
 	local live = self.sv.live[endpointId]
 	if live and live.shape == shape and ( generation == nil or live.generation == generation ) then
+		if live.shape then self.sv.endpointIdByShape[live.shape] = nil end
 		self.sv.live[endpointId] = nil
 		self.sv.recentlyUnloaded[endpointId] = { tick = sm.game.getCurrentTick() }
 		WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
@@ -298,6 +313,7 @@ function WirelessPipeManager.sv_unregisterEndpoint( self, endpointId, shape, gen
 	local live = self.sv.live[endpointId]
 	if live and live.shape ~= shape then return false end
 	if live and generation and live.generation ~= generation then return false end
+	if live and live.shape then self.sv.endpointIdByShape[live.shape] = nil end
 	self.sv.live[endpointId] = nil
 	self.sv.recentlyUnloaded[endpointId] = nil
 	self.sv.saved.endpoints[endpointId] = nil
@@ -324,8 +340,34 @@ function WirelessPipeManager.sv_rebuildGroups( self )
 	for _, mode in ipairs( MODE_ORDER ) do
 		for _, members in pairs( self.sv.groups[mode] ) do table.sort( members ) end
 	end
+	local hasLink = false
+	for _, members in pairs( self.sv.groups.LINK ) do
+		if #members > 1 then hasLink = true; break end
+	end
+	local hasDirectional = false
+	for key, senders in pairs( self.sv.groups.SEND ) do
+		local channel = tostring( key ):match( "^[^|]+|(.+)$" )
+		local receivers = channel and self.sv.groups.RECEIVE[groupKey( "RECEIVE", channel )] or nil
+		if #senders > 0 and receivers and #receivers > 0 then hasDirectional = true; break end
+	end
+	self.sv.routeCapabilities = {
+		link = hasLink,
+		directional = hasDirectional,
+		input = hasLink or hasDirectional,
+		output = hasLink
+	}
 	self.sv.groupsDirty = false
 	self:sv_bumpTopologyRevision()
+end
+
+function WirelessPipeManager.sv_hasVirtualRoute( self, requestedDirection )
+	if self.sv.groupsDirty then self:sv_rebuildGroups() end
+	local capabilities = self.sv.routeCapabilities or {}
+	requestedDirection = string.lower( tostring( requestedDirection or "input" ) )
+	if requestedDirection == "link" then return capabilities.link == true end
+	if requestedDirection == "directional" then return capabilities.directional == true end
+	if requestedDirection == "output" then return capabilities.output == true end
+	return capabilities.input == true
 end
 
 function WirelessPipeManager.sv_getMatchingIds( self, record )
@@ -347,9 +389,22 @@ function WirelessPipeManager.sv_getMatchingIds( self, record )
 	return result
 end
 
+function WirelessPipeManager.sv_getMatchingCount( self, record )
+	if not record or not record.enabled then return 0 end
+	local channel = normalizeChannel( record.channel )
+	if record.mode == "LINK" then
+		local members = self.sv.groups.LINK[groupKey( "LINK", channel )] or {}
+		return math.max( 0, #members - 1 )
+	elseif record.mode == "SEND" then
+		return #( self.sv.groups.RECEIVE[groupKey( "RECEIVE", channel )] or {} )
+	elseif record.mode == "RECEIVE" then
+		return #( self.sv.groups.SEND[groupKey( "SEND", channel )] or {} )
+	end
+	return 0
+end
+
 function WirelessPipeManager.sv_isActiveEndpoint( self, record )
-	if not record or not record.enabled then return false end
-	return #self:sv_getMatchingIds( record ) > 0
+	return self:sv_getMatchingCount( record ) > 0
 end
 
 function WirelessPipeManager.sv_buildDesiredCells( self )
@@ -548,6 +603,14 @@ function WirelessPipeManager.sv_getEndpointStatus( self, endpointId )
 	if not record then
 		return { state = "WIRELESS MANAGER UNAVAILABLE", matchingCount = 0, worlds = {} }
 	end
+	local cacheSignature = tostring( self.sv.topologyRevision or 0 ) .. ":" .. tostring( self.sv.statusRevision or 0 )
+	self.sv.statusCache = self.sv.statusCache or { signature = nil, entries = {} }
+	if self.sv.statusCache.signature ~= cacheSignature then
+		self.sv.statusCache.signature = cacheSignature
+		self.sv.statusCache.entries = {}
+	end
+	local cached = self.sv.statusCache.entries[endpointId]
+	if cached then return cached end
 	local matches = self:sv_getMatchingIds( record )
 	local labels, seenLabels = {}, {}
 	local crossWorld = false
@@ -577,7 +640,7 @@ function WirelessPipeManager.sv_getEndpointStatus( self, endpointId )
 	elseif record.mode == "LINK" then state = crossWorld and "CROSS-WORLD LINKED" or "LINKED"
 	elseif record.mode == "SEND" then state = WirelessPipeTransfer.Sv_GetEndpointState( self, endpointId ) or "SENDING"
 	else state = "READY TO RECEIVE" end
-	return {
+	local status = {
 		state = state,
 		mode = record.mode,
 		directOnly = record.directOnly ~= false,
@@ -591,6 +654,8 @@ function WirelessPipeManager.sv_getEndpointStatus( self, endpointId )
 		handleReady = groupReady,
 		handleLimited = groupLimited
 	}
+	self.sv.statusCache.entries[endpointId] = status
+	return status
 end
 
 function WirelessPipeManager.sv_getDebugSnapshot( self )
@@ -620,8 +685,13 @@ end
 
 function WirelessPipeManager.sv_getEndpointIdForShape( self, shape )
 	if not shape then return nil end
+	local indexed = self.sv.endpointIdByShape and self.sv.endpointIdByShape[shape] or nil
+	if indexed then return indexed end
 	for endpointId, live in pairs( self.sv.live ) do
-		if live.shape == shape then return endpointId end
+		if live.shape == shape then
+			if self.sv.endpointIdByShape then self.sv.endpointIdByShape[shape] = endpointId end
+			return endpointId
+		end
 	end
 	return nil
 end
@@ -788,6 +858,11 @@ end
 function WirelessPipeManager.Sv_GetTopologyRevision()
 	if not g_wirelessPipeManager then return nil end
 	return g_wirelessPipeManager.sv.topologyRevision
+end
+
+function WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection )
+	if not g_wirelessPipeManager then return false end
+	return g_wirelessPipeManager:sv_hasVirtualRoute( requestedDirection )
 end
 
 function WirelessPipeManager.Sv_GetDirectionalDebugSnapshot()

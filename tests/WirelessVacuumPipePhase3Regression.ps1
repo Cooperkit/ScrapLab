@@ -53,21 +53,25 @@ foreach ($needle in @('self.sv.topologyRevision = 1', 'sv_bumpTopologyRevision',
     Assert-Contains $managerText $needle "Manager Phase 3 contract is missing: $needle"
 }
 foreach ($needle in @(
-    'SCRAPLAB WIRELESS PIPE GRAPH v6', 'ScrapLabPipeGraph.DEFINITION_VERSION = 6', 'localResults = nativeFunction( startShape )', 'discoverRemoteEndpoints',
+    'SCRAPLAB WIRELESS PIPE GRAPH v9', 'ScrapLabPipeGraph.DEFINITION_VERSION = 9', 'CACHE_INTERVAL_TICKS = 10', 'getNativeShapeList', 'discoverRemoteEndpoints',
 	'discoverDirectionalSourceEntries', 'Sv_GetDirectionalSourceEntries', 'getDirectionalSourceContainerShapes',
-    'MAX_PHYSICAL_SHAPES = 4096', 'MAX_WIRELESS_ENDPOINTS = 256', 'appendUniqueShapes',
+    'MAX_PHYSICAL_SHAPES = 4096', 'MAX_WIRELESS_ENDPOINTS = 256', 'appendUniqueShapes', 'buildPhysicalComponent', 'componentStillValid', 'virtualQueryHits',
     'PIPE_OPENING_DIRECTIONS', 'directionalNeighbours', 'directional pipe opening catalog mismatch',
-    'discoverRemoteEndpoints( startShape, requestedDirection )', 'discoverOriginEndpoints', 'discoverLinkedRoots', 'debugGetLinkedContainerShapes', 'one conjoined container network', 'shape ~= startShape and openingDirections( shape )',
-    'oppositeDirection = direction == "input" and "output" or "input"',
-    'shape ~= rootShape and openingDirections( shape )', 'selectionKind == "collect" and "output" or "input"',
-    'validateCollectRequest', 'duplicate UUIDs must be combined', 'slotsRequired <= emptySlots', 'validateSpendRequest',
+    'discoverRemoteEndpoints( startShape, requestedDirection, tracker )', 'discoverOriginEndpoints', 'discoverLinkedRoots', 'debugGetLinkedContainerShapes',
+    'requestedDirection == "output" and openingDirections( startShape )', 'getStartComponents( startShape, "input", tracker )',
+    'selectionKind == "collect" and "output" or "input"',
+    'validateCollectRequest', 'slotsRequired <= emptySlots', 'validateSpendRequest',
     'if sm.interactable == nil or sm.interactable.connectionType == nil then return {} end',
     'ScrapLabPipeGraph.getInputContainers', 'ScrapLabPipeGraph.getOutputContainers',
     'ScrapLabPipeGraph.getMatchingPipedContainers', 'ScrapLabPipeGraph.getContainerShapeToCollectTo',
     'ScrapLabPipeGraph.getContainerShapeToSpendFrom', 'ScrapLabPipeGraph.getVisualRoute',
     'ScrapLabPipeGraph.getGuiInputContainers',
-    'return ok and extended or localResults'
+    'Sv_HasVirtualRoute', 'return ok and extended or localResults'
 )) { Assert-Contains $wrapperText $needle "Wrapper contract is missing: $needle" }
+
+Assert-True ($wrapperText.IndexOf('local function sortedNeighbours', [StringComparison]::Ordinal) -lt 0) 'Definition 7 must not sort every physical adjacency list.'
+Assert-True (-not($wrapperText -match 'setmetatable\s*\(')) 'The graph calls setmetatable, which Scrap Mechanic does not expose.'
+Assert-True ($wrapperText.IndexOf('oppositeDirection = requestedDirection == "input"',[StringComparison]::Ordinal)-lt0) 'Input discovery is still blocked from a linked output-side chest system.'
 
 Assert-True (($wrapperText | Select-String -Pattern 'sm\.container\.(spend|collect|beginTransaction|endTransaction|abortTransaction)' -AllMatches).Matches.Count -eq 0) 'Phase 4 inventory mutation leaked into the Phase 3 wrapper.'
 Assert-True ($wrapperText.IndexOf('g_wirelessPipeManager =', [StringComparison]::Ordinal) -lt 0) 'The graph wrapper must not mutate manager ownership.'

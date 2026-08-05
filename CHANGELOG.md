@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## 2.5.1 - 2026-08-05
+
+- Fixed a Craftbot input Link ignoring a same-color Link attached to the
+  Craftbot's output chest system. Input resource discovery may now traverse
+  that Link and count the complete chest network, while output routing retains
+  its one-way loop guard so finished items cannot feed back into the input.
+- Fixed Wireless Vacuum Pipe definition 3 failing to load inside Scrap
+  Mechanic's restricted Lua runtime because `setmetatable` is unavailable.
+  Definition 4 uses bounded ordinary cache tables: graph entries are discarded
+  every ten ticks and manager shape entries are removed with their endpoints.
+  Intact definition-3 installations receive the correction through the existing
+  atomic **UPDATE** action without unregistering the custom part.
+- Reworked Wireless Vacuum Pipe graph expansion for dense logistics builds.
+  Physical pipe components are cached for a short topology-checked interval,
+  shared across connected machines, and scanned without sorting every node's
+  neighbours. Repeated same-tick native queries are memoized and networks with
+  no applicable wireless route now return through the vanilla fast path.
+- Added idle Send/Receive backoff, constant-time active-route checks, cached
+  endpoint status, and direct shape-to-endpoint indexing. Empty or full channels
+  now retry progressively less often while active transfers retain their normal
+  rate.
+- Added a safe definition-2 to definition-3 Wireless Vacuum Pipe migration.
+  The update atomically replaces only the three verified runtime files, keeps
+  the original clean uninstall backups, and restores the complete definition-2
+  state if migration fails.
+
 ## 2.5.0 - 2026-08-04
 
 - Added Receive-side pull routing to Wireless Vacuum Pipe. Pumps and other

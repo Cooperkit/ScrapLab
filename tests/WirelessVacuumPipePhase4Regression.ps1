@@ -23,13 +23,14 @@ $harness=Get-Content -LiteralPath $harnessPath -Raw
 $installer=Get-Content -LiteralPath $installerPath -Raw
 
 foreach($needle in @(
-    'WIRELESS VACUUM PIPE MANAGER v4','MANAGER_SCHEMA_VERSION = 3','WirelessPipeTransfer.Sv_ServerOnCreate',
+    'WIRELESS VACUUM PIPE MANAGER v6','MANAGER_SCHEMA_VERSION = 3','WirelessPipeTransfer.Sv_ServerOnCreate',
     'WirelessPipeTransfer.Sv_ServerOnFixedUpdate','WirelessPipeTransfer.Sv_OnEndpointTopologyChanged',
     'directionalCursors','Sv_GetDirectionalDebugSnapshot','Sv_ConsumeEndpointActivity','Sv_DebugSetEndpointMode'
 )){Assert-Contains $manager $needle "Manager Phase 4 contract missing: $needle"}
+Assert-True (-not($manager -match 'setmetatable\s*\(')) 'The manager calls setmetatable, which Scrap Mechanic does not expose.'
 
 foreach($needle in @(
-    'DIRECTIONAL TRANSFER v3','ATTEMPT_INTERVAL_TICKS = 4','COMMIT_DELAY_TICKS = 1',
+    'DIRECTIONAL TRANSFER v4','ATTEMPT_INTERVAL_TICKS = 4','COMMIT_DELAY_TICKS = 1','MAX_IDLE_BACKOFF_TICKS = 40',
     'sm.pipeGraph.getInputContainers','sm.pipeGraph.getOutputContainers','nativeContainerShapes',
     'ScrapLabPipeGraph.getLocalPhysicalContainerShapes',
     'pending','locks','orderedFromCursor','directionalCursors','senderGeneration','receiverGeneration',
@@ -37,12 +38,13 @@ foreach($needle in @(
     'sm.container.canSpend','sm.container.canCollect','sm.container.beginTransaction',
     'sm.container.spend','sm.container.collect','sm.container.endTransaction',
     'recordSuccessfulCursor','transactionFailures','staleGuardRejects','Sv_OnEndpointTopologyChanged','Sv_ConsumeEndpointActivity',
-    'quantityPerTransfer = 1','directContainerShapes','senderDirectOnly','receiverDirectOnly','endpoint scope changed'
+    'quantityPerTransfer = 1','directContainerShapes','senderDirectOnly','receiverDirectOnly','endpoint scope changed',
+    'applyIdleBackoff','resetBackoff','idleBackoffs','backoffSkips'
 )){Assert-Contains $transfer $needle "Directional transfer contract missing: $needle"}
 
 foreach($needle in @(
     'function ScrapLabPipeGraph.getLocalPhysicalContainerShapes','getPhysicalContainerShapes( shape )',
-    'Phase 4 uses this local-only physical view','never follows a wireless peer'
+    'Local-only physical view for SEND/RECEIVE routing','never follows a'
 )){Assert-Contains $graph $needle "Local physical graph contract missing: $needle"}
 
 Assert-True ($transfer.IndexOf('ScrapLabPipeGraph.getInputContainers',[StringComparison]::Ordinal)-lt 0) 'SEND must use the local native graph, not the virtual Link graph.'
