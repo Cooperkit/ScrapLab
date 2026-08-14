@@ -14,7 +14,8 @@ NetworkStorageChest.colorNormal = sm.color.new( 0x777777ff )
 NetworkStorageChest.colorHighlight = sm.color.new( 0xeeeeeeff )
 
 local PART_UUID = "bc7576a7-f226-459a-883c-e8460e955d63"
-local EXPECTED_BUFFER_SIZE = 5
+local EXPECTED_BUFFER_SIZE = 3
+local LEGACY_BUFFER_SIZE = 5
 local PHASE1_PREFIX = "[ScrapLab Storage Phase 1] "
 local GUI_PATH = "$SURVIVAL_DATA/Gui/JsonGuis/ScrapLab/Parts/NetworkStorageChest.gui"
 local ITEM_PATH = "$SURVIVAL_DATA/Gui/JsonGuis/ScrapLab/Parts/NetworkStorageChestItem.gui"
@@ -33,6 +34,7 @@ local VIEW_DISTANCE = 16
 local MAX_LOCAL_PIPE_SHAPES = 4096
 local WITHDRAW_RATE_LIMIT_TICKS = 6
 local INVENTORY_DEPOSIT_RATE_LIMIT_TICKS = 3
+local ROUTING_MODE_RATE_LIMIT_TICKS = 10
 local WITHDRAW_ACTIONS = { TAKE_ONE = true, TAKE_STACK = true, TAKE_ALL = true }
 local DEPOSIT_RETRY_TICKS = 8
 local NIL_UUID_STRING = "00000000-0000-0000-0000-000000000000"
@@ -312,37 +314,113 @@ end
 local function inspectDestinationContents( container, itemUuid )
 	local wanted = tostring( itemUuid )
 	local stackSize = math.max( 1, sm.item.getStackSize( itemUuid ) or 1 )
-	local hasItem, fullestPartial = false, 0
+	local hasItem, fullestPartial, occupiedStacks = false, 0, 0
 	for slot = 0, container:getSize() - 1 do
 		local item = container:getItem( slot )
-		if item and item.uuid and tostring( item.uuid ) == wanted and ( item.quantity or 0 ) > 0 then
-			hasItem = true
-			if item.quantity < stackSize then fullestPartial = math.max( fullestPartial, item.quantity ) end
+		if item and item.uuid and ( item.quantity or 0 ) > 0 then
+			occupiedStacks = occupiedStacks + 1
+			if tostring( item.uuid ) == wanted then
+				hasItem = true
+				if item.quantity < stackSize then fullestPartial = math.max( fullestPartial, item.quantity ) end
+			end
 		end
 	end
-	return hasItem, fullestPartial
+	return hasItem, fullestPartial, occupiedStacks
+end
+
+local function destinationHasEmptySlot( container, record )
+	local size = record and tonumber( record.size ) or container:getSize()
+	local occupied = record and tonumber( record.occupiedStacks ) or nil
+	if occupied == nil then
+		occupied = 0
+		for slot = 0, size - 1 do
+			local item = container:getItem( slot )
+			if item and item.uuid and not item.uuid:isNil() and ( item.quantity or 0 ) > 0 then
+				occupied = occupied + 1
+			end
+		end
+	end
+	return occupied < size
+end
+
+local function destinationProximity( originShape, targetShape, fallbackDistance )
+	local ok, tier, distance = pcall( function()
+		local originWorld = originShape:getBody():getWorld()
+		local targetWorld = targetShape:getBody():getWorld()
+		if originWorld == targetWorld then
+			return 0, ( targetShape:getWorldPosition() - originShape:getWorldPosition() ):length2()
+		end
+		return 1, tonumber( fallbackDistance ) or 0
+	end )
+	if ok then return tier, distance end
+	return 2, tonumber( fallbackDistance ) or math.huge
+end
+
+local function contentRoutingRank( descriptor, hasItem, fullestPartial, occupiedStacks,
+		familyStacks, categoryStacks, knownProfile )
+	if descriptor.specialized then return 1, "DEDICATED CONTAINER" end
+	if fullestPartial > 0 then return 2, "FULLEST PARTIAL STACK" end
+	if hasItem then return 3, "EXACT ITEM CHEST" end
+	if knownProfile and familyStacks > 0 and familyStacks * 2 >= occupiedStacks then
+		return 4, "DOMINANT ITEM FAMILY"
+	end
+	if knownProfile and categoryStacks > 0 and categoryStacks * 2 >= occupiedStacks then
+		return 5, "DOMINANT ITEM CATEGORY"
+	end
+	if knownProfile and familyStacks > 0 then return 6, "MATCHING ITEM FAMILY" end
+	if knownProfile and categoryStacks > 0 then return 7, "MATCHING ITEM CATEGORY" end
+	if occupiedStacks == 0 then return 8, "EMPTY CHEST" end
+	return 9, "UNRELATED CHEST"
 end
 
 -- Server --------------------------------------------------------------------
 
+function NetworkStorageChest.sv_updateClientData( self )
+	local buffer = self.interactable:getContainer( 0 )
+	local size = buffer and buffer:getSize() or 0
+	self.network:setClientData( {
+		phase = 2,
+		bufferReady = size == EXPECTED_BUFFER_SIZE,
+		bufferSize = size,
+		smartRouting = not self.sv or self.sv.smartRouting ~= false
+	} )
+end
+
+function NetworkStorageChest.sv_tryMigrateDepositBuffer( self )
+	local buffer = self.interactable:getContainer( 0 )
+	if not buffer or buffer:getSize() == EXPECTED_BUFFER_SIZE then return buffer end
+	if not buffer:isEmpty() or ( self.sv and hasEntries( self.sv.viewers ) ) then return buffer end
+	self.interactable:removeContainer( 0 )
+	buffer = self.interactable:addContainer( 0, EXPECTED_BUFFER_SIZE )
+	if self.sv then
+		self.sv.lastBufferRevision = buffer and buffer:getRevision() or -1
+		self.sv.depositDirty = false
+		self:sv_updateClientData()
+	end
+	sm.log.info( PHASE1_PREFIX .. "empty legacy deposit buffer migrated to three slots" )
+	return buffer
+end
+
 function NetworkStorageChest.server_onCreate( self )
 	local buffer = self.interactable:getContainer( 0 )
-	-- Safely migrate the empty Phase 0 ten-slot probe. A non-empty legacy
+	-- Safely migrate empty five/ten-slot versions. A non-empty legacy
 	-- buffer is never removed, because resizing must not destroy player items.
 	if buffer and buffer:getSize() ~= EXPECTED_BUFFER_SIZE and buffer:isEmpty() then
 		self.interactable:removeContainer( 0 )
 		buffer = self.interactable:addContainer( 0, EXPECTED_BUFFER_SIZE )
-		sm.log.info( PHASE1_PREFIX .. "empty legacy deposit buffer migrated to five slots" )
+		sm.log.info( PHASE1_PREFIX .. "empty legacy deposit buffer migrated to three slots" )
 	end
 	if not buffer then buffer = self.interactable:addContainer( 0, EXPECTED_BUFFER_SIZE ) end
 
 	local size = buffer and buffer:getSize() or 0
 	if size ~= EXPECTED_BUFFER_SIZE then
-		sm.log.error( PHASE1_PREFIX .. "expected a 5-slot engine container for " .. PART_UUID ..
-			", got " .. tostring( size ) .. "; empty it and reload the world to migrate safely" )
+		sm.log.warning( PHASE1_PREFIX .. "expected a 3-slot engine container for " .. PART_UUID ..
+			", got " .. tostring( size ) .. "; its items remain intact and it will migrate after routing empties it" )
 	else
-		sm.log.info( PHASE1_PREFIX .. "persistent 5-slot deposit buffer ready" )
+		sm.log.info( PHASE1_PREFIX .. "persistent 3-slot deposit buffer ready" )
 	end
+	local stored = self.storage:load()
+	if type( stored ) ~= "table" then stored = {} end
 
 	self.sv = {
 		tick = 0,
@@ -372,6 +450,8 @@ function NetworkStorageChest.server_onCreate( self )
 		depositStatus = "READY",
 		depositDebug = false,
 		depositRoutingSuspended = false,
+		stored = stored,
+		smartRouting = stored.smartRouting ~= false,
 		routeState = localRouteState( false )
 	}
 	g_scrapLabNetworkStorageChestInstances = g_scrapLabNetworkStorageChestInstances or {}
@@ -380,11 +460,7 @@ function NetworkStorageChest.server_onCreate( self )
 	self.interactable.publicData = self.interactable.publicData or {}
 	self:sv_publishDiagnostics( "IDLE", 0, 0, 0 )
 
-	self.network:setClientData( {
-		phase = 2,
-		bufferReady = size == EXPECTED_BUFFER_SIZE,
-		bufferSize = size
-	} )
+	self:sv_updateClientData()
 end
 
 function NetworkStorageChest.server_onRefresh( self )
@@ -420,6 +496,8 @@ function NetworkStorageChest.sv_publishDiagnostics( self, status, scanned, total
 		containerScans = stats.containerScans,
 		slotsScanned = stats.slotsScanned,
 		activitySerial = self.sv and self.sv.activitySerial or 0,
+		smartRouting = not self.sv or self.sv.smartRouting ~= false,
+		bufferSize = self.interactable:getContainer( 0 ) and self.interactable:getContainer( 0 ):getSize() or 0,
 		qualificationLocked = self.sv and self.sv.qualificationLocked == true or false,
 		sessions = countTable( self.sv and self.sv.sessions ),
 		lastError = self.sv and self.sv.lastError or nil
@@ -836,12 +914,16 @@ function NetworkStorageChest.sv_collectDepositContainers( self )
 		if id and id ~= bufferId and not seen[id] and not BLOCKED_DEPOSIT_UUIDS[uuid] and
 			descriptor.container and sm.exists( descriptor.container ) then
 			seen[id] = true
+			local proximityTier, proximityDistance = destinationProximity(
+				self.shape, descriptor.shape, descriptor.routeDistance )
 			result[#result + 1] = {
 				id = id, shape = descriptor.shape, container = descriptor.container,
 				specialized = SPECIALIZED_DEPOSIT_UUIDS[uuid] == true,
 				wireless = descriptor.wireless == true,
 				routePriority = descriptor.routePriority or ( descriptor.wireless and 1 or 0 ),
 				routeDistance = descriptor.routeDistance or 0,
+				proximityTier = proximityTier,
+				proximityDistance = proximityDistance,
 				original = descriptor
 			}
 		end
@@ -851,24 +933,74 @@ end
 
 function NetworkStorageChest.sv_planDepositSlot( self, itemUuid, quantity, descriptors )
 	local candidates = {}
+	local smartRouting = not self.sv or self.sv.smartRouting ~= false
+	local itemProfile = NetworkInventoryIndex.getItemProfile( itemUuid )
+	local knownProfile = itemProfile and itemProfile.category ~= "UNKNOWN"
 	for _, descriptor in ipairs( descriptors or {} ) do
 		local capacity = maxCollectableQuantity( descriptor.container, itemUuid, quantity )
 		if capacity > 0 then
-			local hasItem, fullestPartial = inspectDestinationContents( descriptor.container, itemUuid )
-			local rank = descriptor.specialized and 1 or ( fullestPartial > 0 and 2 or ( hasItem and 3 or 4 ) )
-			candidates[#candidates + 1] = {
-				descriptor = descriptor,
-				capacity = capacity,
-				revision = descriptor.container:getRevision(),
-				rank = rank,
-				fullestPartial = fullestPartial,
-				hasItem = hasItem
-			}
+			local record = NetworkInventoryIndex.read( descriptor.container, self.sv and self.sv.tick or nil )
+			local emptySlot = destinationHasEmptySlot( descriptor.container, record )
+			local hasItem, fullestPartial, occupiedStacks = false, 0, 0
+			local familyStacks, categoryStacks = 0, 0
+			if record then
+				local exact = record.byUuid and record.byUuid[tostring( itemUuid )] or nil
+				hasItem = exact ~= nil
+				fullestPartial = exact and ( exact.fullestPartial or 0 ) or 0
+				occupiedStacks = record.occupiedStacks or 0
+				if knownProfile then
+					familyStacks = record.familyStacks and ( record.familyStacks[itemProfile.family] or 0 ) or 0
+					categoryStacks = record.categoryStacks and ( record.categoryStacks[itemProfile.category] or 0 ) or 0
+				end
+			else
+				hasItem, fullestPartial, occupiedStacks = inspectDestinationContents( descriptor.container, itemUuid )
+			end
+			if smartRouting or emptySlot then
+				local rank, reason
+				if smartRouting then
+					rank, reason = contentRoutingRank( descriptor, hasItem, fullestPartial,
+						occupiedStacks, familyStacks, categoryStacks, knownProfile )
+				else
+					rank, reason = 1, "NEAREST EMPTY CHEST"
+				end
+				candidates[#candidates + 1] = {
+					descriptor = descriptor,
+					capacity = capacity,
+					revision = descriptor.container:getRevision(),
+					rank = rank,
+					reason = reason,
+					fullestPartial = fullestPartial,
+					hasItem = hasItem,
+					occupiedStacks = occupiedStacks,
+					familyStacks = familyStacks,
+					categoryStacks = categoryStacks
+				}
+			end
 		end
 	end
 	table.sort( candidates, function( a, b )
+		if not smartRouting then
+			if a.descriptor.proximityTier ~= b.descriptor.proximityTier then
+				return a.descriptor.proximityTier < b.descriptor.proximityTier
+			end
+			if a.descriptor.proximityDistance ~= b.descriptor.proximityDistance then
+				return a.descriptor.proximityDistance < b.descriptor.proximityDistance
+			end
+			if a.descriptor.routePriority ~= b.descriptor.routePriority then
+				return a.descriptor.routePriority < b.descriptor.routePriority
+			end
+			return a.descriptor.id < b.descriptor.id
+		end
 		if a.rank ~= b.rank then return a.rank < b.rank end
 		if a.fullestPartial ~= b.fullestPartial then return a.fullestPartial > b.fullestPartial end
+		local aOccupied, bOccupied = math.max( 1, a.occupiedStacks ), math.max( 1, b.occupiedStacks )
+		local aFamilyPurity, bFamilyPurity = a.familyStacks * bOccupied, b.familyStacks * aOccupied
+		if aFamilyPurity ~= bFamilyPurity then return aFamilyPurity > bFamilyPurity end
+		local aCategoryPurity, bCategoryPurity = a.categoryStacks * bOccupied, b.categoryStacks * aOccupied
+		if aCategoryPurity ~= bCategoryPurity then return aCategoryPurity > bCategoryPurity end
+		if a.familyStacks ~= b.familyStacks then return a.familyStacks > b.familyStacks end
+		if a.categoryStacks ~= b.categoryStacks then return a.categoryStacks > b.categoryStacks end
+		if a.capacity ~= b.capacity then return a.capacity > b.capacity end
 		if a.descriptor.routePriority ~= b.descriptor.routePriority then
 			return a.descriptor.routePriority < b.descriptor.routePriority
 		end
@@ -888,6 +1020,7 @@ function NetworkStorageChest.sv_planDepositSlot( self, itemUuid, quantity, descr
 				quantity = amount,
 				revision = candidate.revision,
 				rank = candidate.rank,
+				reason = candidate.reason,
 				fullestPartial = candidate.fullestPartial
 			}
 			remaining = remaining - amount
@@ -939,7 +1072,7 @@ function NetworkStorageChest.sv_routeDepositSlot( self, buffer, slot )
 	for _, entry in ipairs( allocation ) do
 		NetworkInventoryIndex.invalidate( entry.descriptor.id )
 		touched[entry.descriptor.id] = entry.descriptor.original
-		explanations[#explanations + 1] = "rank " .. tostring( entry.rank ) .. " -> container " ..
+		explanations[#explanations + 1] = tostring( entry.reason or ( "rank " .. tostring( entry.rank ) ) ) .. " -> container " ..
 			tostring( entry.descriptor.id ) .. " x" .. tostring( entry.quantity )
 	end
 	return true, remaining > 0 and "PARTIAL" or "SORTED", routed, remaining, touched,
@@ -994,7 +1127,7 @@ end
 function NetworkStorageChest.server_onFixedUpdate( self )
 	if not self.sv then return end
 	self.sv.tick = self.sv.tick + 1
-	local buffer = self.interactable:getContainer( 0 )
+	local buffer = self:sv_tryMigrateDepositBuffer()
 	local bufferRevision = buffer and buffer:getRevision() or -1
 	if not self.sv.depositRoutingSuspended and bufferRevision ~= self.sv.lastBufferRevision then
 		self.sv.lastBufferRevision = bufferRevision
@@ -1037,7 +1170,8 @@ function NetworkStorageChest.sv_createSession( self, player )
 	self.sv.sessions[key] = {
 		token = token,
 		lastRequestTick = -WITHDRAW_RATE_LIMIT_TICKS,
-		lastDepositTick = -INVENTORY_DEPOSIT_RATE_LIMIT_TICKS
+		lastDepositTick = -INVENTORY_DEPOSIT_RATE_LIMIT_TICKS,
+		lastRoutingTick = -ROUTING_MODE_RATE_LIMIT_TICKS
 	}
 	return token
 end
@@ -1298,7 +1432,9 @@ function NetworkStorageChest.sv_n_openCatalog( self, _, player )
 		self.sv.depositRetryTick = self.sv.tick + 1
 	end
 	local sessionToken = self:sv_createSession( player )
-	self.network:sendToClient( player, "cl_n_sessionState", { token = sessionToken, phase = 2 } )
+	self.network:sendToClient( player, "cl_n_sessionState", {
+		token = sessionToken, phase = 2, smartRouting = self.sv.smartRouting ~= false
+	} )
 	self.network:sendToClient( player, "cl_n_depositStatus", {
 		status = self.sv.depositStatus or "READY", moved = 0, remaining = 0, destinations = 0
 	} )
@@ -1320,6 +1456,47 @@ function NetworkStorageChest.sv_n_openCatalog( self, _, player )
 			self.network:sendToClient( player, "cl_n_catalogSnapshot", self:sv_indexingPayload() )
 		end
 	end
+end
+
+function NetworkStorageChest.sv_n_setRoutingMode( self, data, player )
+	local key = playerKey( player )
+	local session = key and self.sv.sessions[key] or nil
+	if type( data ) ~= "table" or not session or data.token ~= session.token or
+		not self.sv.viewers[key] or not validViewer( player, self.shape ) then
+		if player then self.network:sendToClient( player, "cl_n_routingModeState", {
+			success = false, status = "SESSION_EXPIRED", smartRouting = self.sv.smartRouting ~= false
+		} ) end
+		return
+	end
+	local enabled = data.smartRouting == true
+	if self.sv.tick - ( session.lastRoutingTick or -ROUTING_MODE_RATE_LIMIT_TICKS ) <
+		ROUTING_MODE_RATE_LIMIT_TICKS then
+		self.network:sendToClient( player, "cl_n_routingModeState", {
+			success = false, status = "RATE_LIMITED", smartRouting = self.sv.smartRouting ~= false
+		} )
+		return
+	end
+	session.lastRoutingTick = self.sv.tick
+	if enabled == ( self.sv.smartRouting ~= false ) then
+		self.network:sendToClient( player, "cl_n_routingModeState", {
+			success = true, status = "READY", smartRouting = enabled
+		} )
+		return
+	end
+	self.sv.smartRouting = enabled
+	self.sv.stored = self.sv.stored or {}
+	self.sv.stored.smartRouting = enabled
+	self.storage:save( self.sv.stored )
+	local buffer = self.interactable:getContainer( 0 )
+	if buffer and not buffer:isEmpty() and not self.sv.depositRoutingSuspended then
+		self.sv.depositDirty = true
+		self.sv.depositRetryTick = self.sv.tick + 1
+	end
+	self:sv_updateClientData()
+	self.network:sendToClient( player, "cl_n_routingModeState", {
+		success = true, status = "READY", smartRouting = enabled
+	} )
+	self:sv_publishDiagnostics( self.sv.indexing and "INDEXING" or "READY", 0, 0, 0 )
 end
 
 function NetworkStorageChest.sv_setDepositDebug( self, enabled )
@@ -1430,6 +1607,8 @@ function NetworkStorageChest.client_onCreate( self )
 		withdrawStatus = nil,
 		inventoryDepositBusy = false,
 		inventoryDepositStatus = nil,
+		routingBusy = false,
+		legacyBuffer = false,
 		depositState = { status = "READY", moved = 0, remaining = 0 }
 	}
 end
@@ -1437,7 +1616,10 @@ end
 function NetworkStorageChest.client_onClientDataUpdate( self, data )
 	self.cl = self.cl or {}
 	self.cl.serverState = data or self.cl.serverState
-	self:cl_refreshStatus()
+	if self.cl.guiData then
+		self:cl_refreshStatus()
+		self.cl.guiDirty = true
+	end
 end
 
 function NetworkStorageChest.client_onDestroy( self )
@@ -1462,6 +1644,7 @@ function NetworkStorageChest.client_onUpdate( self )
 	if self.cl.guiDirty then
 		self.cl.guiDirty = false
 		self.cl.gui:render( self.cl.guiData )
+		self:cl_applyRoutingButtonState()
 	end
 end
 
@@ -1478,13 +1661,14 @@ function NetworkStorageChest.cl_applyLocalization( self )
 	if not self.cl or not self.cl.guiData then return end
 	local labels = {
 		Title = "title", ClearSearch = "clear", SelectedLabel = "selectedItem",
-		InventoryLabel = "playerInventory", DepositLabel = "depositBuffer",
+		InventoryLabel = "playerInventory",
 		DepositHelp = "depositHelp", TakeOneButton = "takeOne",
 		TakeStackButton = "takeStack", TakeAllButton = "takeAll"
 	}
 	for widgetName, key in pairs( labels ) do
 		findRequiredWidget( self.cl.guiData, widgetName ).Caption = localizedText( key )
 	end
+	findRequiredWidget( self.cl.guiData, "DepositLabel" ).Caption = localizedText( "depositBuffer3" )
 	findRequiredWidget( self.cl.guiData, "SelectedName" ).Caption = localizedText( "none" )
 	findRequiredWidget( self.cl.guiData, "SelectionStatus" ).Caption = localizedText( "selectPrompt" )
 end
@@ -1497,7 +1681,7 @@ function NetworkStorageChest.cl_openGui( self )
 		sm.gui.displayAlertText( localizedText( "bufferUnavailable" ), 4 )
 		return
 	end
-	if buffer:getSize() ~= EXPECTED_BUFFER_SIZE then
+	if buffer:getSize() ~= EXPECTED_BUFFER_SIZE and buffer:getSize() ~= LEGACY_BUFFER_SIZE then
 		sm.gui.displayAlertText( localizedText( "legacyBuffer" ), 5 )
 		return
 	end
@@ -1507,6 +1691,10 @@ function NetworkStorageChest.cl_openGui( self )
 	local depositBox = findRequiredWidget( guiData, "DepositBox" )
 	depositBox.ContainerData.ContainerId = buffer.id
 	depositBox.ContainerData.DropContainerIds = { inventory.id }
+	local legacyBuffer = buffer:getSize() ~= EXPECTED_BUFFER_SIZE
+	depositBox.width = buffer:getSize() * 64
+	depositBox.ContainerData.ContainerWidth = buffer:getSize() * 64
+	findRequiredWidget( guiData, "RoutingModeButton" ).Visible = not legacyBuffer
 
 	local gui = sm.jsonGui.createGui( { isInteractive = true, bNeedsCursor = true, hidesHotbar = true } )
 	self.cl.gui = gui
@@ -1550,6 +1738,8 @@ function NetworkStorageChest.cl_openGui( self )
 	self.cl.withdrawBusy = false
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
+	self.cl.routingBusy = false
+	self.cl.legacyBuffer = legacyBuffer
 	self.cl.withdrawStatus = nil
 	self.cl.catalogState.status = "INDEXING"
 	self.cl.lastBufferRevision = buffer:getRevision()
@@ -1560,6 +1750,7 @@ function NetworkStorageChest.cl_openGui( self )
 	self:cl_rebuildPlayerInventory( true )
 	self:cl_refreshStatus()
 	gui:render( guiData )
+	self:cl_applyRoutingButtonState()
 	self.network:sendToServer( "sv_n_openCatalog" )
 end
 
@@ -1585,6 +1776,8 @@ function NetworkStorageChest.cl_destroyGui( self )
 	self.cl.withdrawBusy = false
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
+	self.cl.routingBusy = false
+	self.cl.legacyBuffer = false
 	if gui and sm.exists( gui ) and gui:isActive() then gui:close() end
 end
 
@@ -1602,12 +1795,16 @@ function NetworkStorageChest.cl_onGuiClosed( self )
 	self.cl.withdrawBusy = false
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
+	self.cl.routingBusy = false
+	self.cl.legacyBuffer = false
 end
 
 function NetworkStorageChest.cl_n_sessionState( self, data )
 	if not self.cl or type( data ) ~= "table" then return end
 	self.cl.sessionToken = data.token
+	if data.smartRouting ~= nil then self.cl.serverState.smartRouting = data.smartRouting == true end
 	self.cl.withdrawBusy = false
+	self.cl.routingBusy = false
 	self:cl_refreshStatus()
 	if self.cl.guiData then self.cl.guiDirty = true end
 end
@@ -1869,6 +2066,25 @@ function NetworkStorageChest.cl_refreshWithdrawalControls( self )
 	findRequiredWidget( self.cl.guiData, "TakeAllButton" ).Enabled = enabled
 end
 
+function NetworkStorageChest.cl_refreshRoutingControl( self )
+	if not self.cl or not self.cl.guiData then return end
+	local button = findRequiredWidget( self.cl.guiData, "RoutingModeButton" )
+	local smartRouting = not self.cl.serverState or self.cl.serverState.smartRouting ~= false
+	button.Visible = not self.cl.legacyBuffer
+	button.Enabled = not self.cl.legacyBuffer and self.cl.sessionToken ~= nil and not self.cl.routingBusy
+	button.Caption = self.cl.routingBusy and localizedText( "routingApplying" )
+		or ( smartRouting and localizedText( "routingSmartOn" ) or localizedText( "routingSmartOff" ) )
+	button.TextColour = smartRouting and "1 0.80 0.25 1" or "0.55 0.85 0.95 1"
+	button.ToolTip = button.ToolTip or {}
+	button.ToolTip.Text = smartRouting and localizedText( "routingSmartHint" ) or localizedText( "routingNearestHint" )
+end
+
+function NetworkStorageChest.cl_applyRoutingButtonState( self )
+	if not self.cl or not self.cl.gui or self.cl.legacyBuffer then return end
+	local smartRouting = not self.cl.serverState or self.cl.serverState.smartRouting ~= false
+	pcall( function() self.cl.gui:setButtonState( "RoutingModeButton", smartRouting ) end )
+end
+
 function NetworkStorageChest.cl_refreshStatus( self )
 	if not self.cl or not self.cl.guiData then return end
 	local state = self.cl.catalogState or {}
@@ -1881,9 +2097,12 @@ function NetworkStorageChest.cl_refreshStatus( self )
 		BUFFER_UNAVAILABLE = localizedText( "depositUnavailable" )
 	}
 	local depositHelp = findRequiredWidget( self.cl.guiData, "DepositHelp" )
-	depositHelp.Caption = self.cl.inventoryDepositStatus or depositCaptions[deposit.status]
+	depositHelp.Caption = self.cl.legacyBuffer and localizedText( "legacyBufferHelp" )
+		or self.cl.inventoryDepositStatus or depositCaptions[deposit.status]
 		or localizedText( "inventoryDepositHelp" )
 	depositHelp.TextColour = deposit.status == "READY" and "0.92 0.92 0.92 1" or "1 0.72 0.24 1"
+	findRequiredWidget( self.cl.guiData, "DepositLabel" ).Caption = self.cl.legacyBuffer
+		and localizedText( "legacyBufferLabel" ) or localizedText( "depositBuffer3" )
 
 	local progressHolder = findRequiredWidget( self.cl.guiData, "IndexProgressHolder" )
 	local progressFill = findRequiredWidget( self.cl.guiData, "IndexProgressFill" )
@@ -1917,6 +2136,7 @@ function NetworkStorageChest.cl_refreshStatus( self )
 	findRequiredWidget( self.cl.guiData, "SelectionStatus" ).TextColour =
 		self.cl.withdrawStatus and "1 0.72 0.24 1" or "0.92 0.92 0.92 1"
 	self:cl_refreshWithdrawalControls()
+	self:cl_refreshRoutingControl()
 end
 
 function NetworkStorageChest.cl_onCatalogItemClick( self, widgetName )
@@ -2155,11 +2375,35 @@ function NetworkStorageChest.cl_onControlClick( self, widgetName )
 	elseif widgetName == "TakeAllButton" then
 		self:cl_requestWithdrawal( "TAKE_ALL" )
 		return
+	elseif widgetName == "RoutingModeButton" then
+		if self.cl.legacyBuffer or self.cl.routingBusy or not self.cl.sessionToken then return end
+		self.cl.routingBusy = true
+		self:cl_refreshRoutingControl()
+		self.cl.guiDirty = true
+		self.network:sendToServer( "sv_n_setRoutingMode", {
+			token = self.cl.sessionToken,
+			smartRouting = self.cl.serverState and self.cl.serverState.smartRouting == false
+		} )
+		return
 	else
 		return
 	end
 	self:cl_rebuildCatalog( true )
 	self:cl_refreshStatus()
+end
+
+function NetworkStorageChest.cl_n_routingModeState( self, data )
+	if not self.cl or type( data ) ~= "table" then return end
+	self.cl.routingBusy = false
+	if data.smartRouting ~= nil then self.cl.serverState.smartRouting = data.smartRouting == true end
+	if data.success ~= true and data.status == "SESSION_EXPIRED" then
+		self.cl.sessionToken = nil
+		sm.gui.displayAlertText( localizedText( "sessionError" ), 3 )
+	end
+	if self.cl.guiData then
+		self:cl_refreshStatus()
+		self.cl.guiDirty = true
+	end
 end
 
 function NetworkStorageChest.cl_onHandleMouseWheel( self, _, scrollValue )

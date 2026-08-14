@@ -417,7 +417,7 @@ function SurvivalGame.sv_slstorage1ProcessAuto( self )
 		sl1aRecord( runtime, "aggregate-stack-sources", waterStacks == 2 and waterSources == 2, "water stacks/sources=" .. waterStacks .. "/" .. waterSources )
 		sl1aRecord( runtime, "terminal-buffer-excluded", fertilizer == 0 and sl1aCount( sl1aContainer( runtime.terminal ), SL1A_FERTILIZER_UUID ) == 3,
 			"catalog fertilizer=" .. fertilizer .. ", buffer fertilizer=3" )
-		sl1aRecord( runtime, "five-slot-real-buffer", sl1aContainer( runtime.terminal ):getSize() == 5, "slots=" .. tostring( sl1aContainer( runtime.terminal ):getSize() ) )
+		sl1aRecord( runtime, "three-slot-real-buffer", sl1aContainer( runtime.terminal ):getSize() == 3, "slots=" .. tostring( sl1aContainer( runtime.terminal ):getSize() ) )
 
 		local stats = g_scrapLabNetworkInventoryIndex.getStatistics()
 		runtime.cacheBaseline = stats

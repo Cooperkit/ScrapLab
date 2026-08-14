@@ -8,6 +8,10 @@ local SL3_WATER = sm.uuid.new( "869d4736-289a-4952-96cd-8a40117a2d28" )
 local SL3_COMPONENT = sm.uuid.new( "5530e6a0-4748-4926-b134-50ca9ecb9dcf" )
 local SL3_CIRCUIT = sm.uuid.new( "f152e4df-bc40-44fb-8d20-3b3ff70cdfe3" )
 local SL3_BLOCKER = sm.uuid.new( "ac0b5b0a-14e1-4b31-8944-0a351fbfcc67" )
+local SL3_GAS = sm.uuid.new( "d4d68946-aa03-4b8f-b1af-96b81ad4e305" )
+local SL3_SWITCH = sm.uuid.new( "7cf717d7-d167-4f2d-a6e7-6b2c70aa3986" )
+local SL3_SENSOR = sm.uuid.new( "1d4793af-cb66-4628-804a-9d7404712643" )
+local SL3_ENGINE = sm.uuid.new( "1bfccc0a-828f-475c-882c-87d5a96054c9" )
 local SL3_PREFIX = "[ScrapLab Storage Phase 3 Auto] "
 
 local function sl3Log( text ) sm.log.info( SL3_PREFIX .. tostring( text ) ) end
@@ -121,6 +125,22 @@ local function sl3Tests( runtime )
 		} ) end, verify = function( r, status )
 			return status == "SORTED" and sl3Count( r.chests[1], SL3_CIRCUIT ) == circuitStack + 1,
 				"same-item quantity=" .. sl3Count( r.chests[1], SL3_CIRCUIT )
+		end },
+		{ name = "interactive-family-before-gas-chest", uuid = SL3_SWITCH, setup = function( r ) return sl3Fill( {
+			{ container = r.buffer, slot = 0, uuid = SL3_SWITCH, quantity = 1 },
+			{ container = r.chests[1], slot = 0, uuid = SL3_GAS, quantity = 5 },
+			{ container = r.chests[2], slot = 0, uuid = SL3_SENSOR, quantity = 1 },
+			{ container = r.chests[2], slot = 1, uuid = SL3_ENGINE, quantity = 1 }
+		} ) end, verify = function( r, status )
+			return status == "SORTED" and sl3Count( r.chests[2], SL3_SWITCH ) == 1 and sl3Count( r.chests[1], SL3_SWITCH ) == 0,
+				"status=" .. status .. ", parts=" .. sl3Count( r.chests[2], SL3_SWITCH ) .. ", gas=" .. sl3Count( r.chests[1], SL3_SWITCH )
+		end },
+		{ name = "empty-before-unrelated-chest", uuid = SL3_SWITCH, setup = function( r ) return sl3Fill( {
+			{ container = r.buffer, slot = 0, uuid = SL3_SWITCH, quantity = 1 },
+			{ container = r.chests[1], slot = 0, uuid = SL3_GAS, quantity = 5 }
+		} ) end, verify = function( r, status )
+			return status == "SORTED" and sl3Count( r.chests[1], SL3_SWITCH ) == 0,
+				"status=" .. status .. ", unrelated=" .. sl3Count( r.chests[1], SL3_SWITCH )
 		end },
 		{ name = "split-allocation", uuid = SL3_COMPONENT, setup = function( r )
 			local entries = { { container = r.buffer, slot = 0, uuid = SL3_COMPONENT, quantity = 5 },

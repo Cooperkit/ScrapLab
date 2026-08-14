@@ -17,7 +17,7 @@ foreach($needle in @(
     'SL7_SPAWN_COUNT = 500','SL7_SPAWN_BUDGET = 10','SL7_DESTROY_BUDGET = 30',
     'closed-terminal-idle-cost','cold-100-container-index','warm-cache-100','single-revision-rescan',
     'incremental-500-container-index','shared-cache-overlapping-terminal',
-    'five-slot-buffer-refresh-persistence','bounded-unused-index-cache',
+    'three-slot-buffer-refresh-persistence','bounded-unused-index-cache',
     'scrapLabStoragePhase7Cleanup','sl7Recover','sv_beginPhase1QualificationSession',
     'scanContainerScans == 400','scanCacheHits == 500','502 temporary parts removed'
 )){Assert-Contains $phase7 $needle "Phase 7 harness is missing '$needle'."}

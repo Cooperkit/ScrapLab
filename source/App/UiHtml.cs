@@ -544,6 +544,22 @@ button{font:inherit}
 .cannon-danger-ack input:checked+.cannon-danger-box:after{content:'\2713';position:absolute;left:3px;top:-1px;color:#fff4d8;font:bold 16px/21px Arial}
 .cannon-danger-modal .hotfix-confirm:disabled{cursor:not-allowed;color:#8d8581;border-color:#5d5552;background:#353535;box-shadow:inset 0 1px #555,0 3px 0 #171717;text-shadow:none;opacity:.65}
 .cannon-danger-modal .hotfix-confirm:disabled:before,.cannon-danger-modal .hotfix-confirm:disabled span{display:none}
+.gameplay-batch-modal{z-index:195}.gameplay-batch-modal .hotfix-dialog{width:700px;border-color:#d9a31d;box-shadow:inset 0 0 0 2px #59450f,0 24px 75px #000}
+.gameplay-batch-modal .hotfix-head{background:linear-gradient(95deg,#413515,#292c2d 58%,#18343c)}.gameplay-batch-modal .hotfix-title strong{color:#ffd046}
+.gameplay-batch-stats{display:flex;margin:0 -4px 10px}.gameplay-batch-stat{flex:1;margin:0 4px;padding:9px 10px;background:#171a1b;border:1px solid #485254;border-radius:3px 9px 3px 9px}
+.gameplay-batch-stat b{display:block;color:#7ed5e9;font:7px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}.gameplay-batch-stat strong{display:block;margin-top:4px;color:#f4f4ed;font:18px Shentox,""Arial Black"",sans-serif}
+.gameplay-batch-list{max-height:176px;margin-top:10px;overflow-y:auto;background:#171a1b;border:1px solid #454c4e;scrollbar-face-color:#52666b;scrollbar-track-color:#111415}
+.gameplay-batch-list::-webkit-scrollbar{width:10px}.gameplay-batch-list::-webkit-scrollbar-track{background:#101314}.gameplay-batch-list::-webkit-scrollbar-thumb{background:#52666b;border:2px solid #101314}
+.gameplay-batch-line{display:flex;align-items:flex-start;padding:8px 10px;border-bottom:1px solid #34393a}.gameplay-batch-line:last-child{border-bottom:0}
+.gameplay-batch-line b{width:126px;flex:0 0 126px;color:#ffd046;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.4px}.gameplay-batch-line span{flex:1;color:#adb5b4;font-size:9px;line-height:1.35}
+.gameplay-batch-manual{margin-top:10px;padding:9px 11px;color:#8bd7e9;background:#19272b;border:1px solid #426d77;border-radius:3px;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.45px}
+.gameplay-batch-modal .hotfix-confirm{min-width:262px;font-size:9px}.gameplay-batch-danger .hotfix-dialog{border-color:#f05331;box-shadow:inset 0 0 0 2px #651c12,0 24px 75px #000}
+.gameplay-batch-danger .hotfix-head{background:linear-gradient(90deg,#481b14,#292b2c 60%)}.gameplay-batch-danger .hotfix-title strong{color:#ff7654}
+.gameplay-batch-risk{margin:0;padding:0;list-style:none;background:#181a1b;border:1px solid #55413c}.gameplay-batch-risk li{padding:8px 11px;border-bottom:1px solid #3c3533;color:#ffd2c4;font-size:10px}.gameplay-batch-risk li:last-child{border-bottom:0}
+.gameplay-batch-risk li:before{content:'!';display:inline-block;width:15px;height:15px;margin-right:8px;color:#fff1d9;text-align:center;font:bold 10px/15px Arial;background:#b93621;border-radius:50%}
+.gameplay-batch-result .hotfix-dialog{width:760px}.gameplay-batch-result .gameplay-batch-list{max-height:285px}.gameplay-batch-result .gameplay-batch-line b{width:118px;flex-basis:118px}
+.gameplay-batch-line.good b{color:#76d7b5}.gameplay-batch-line.skip b{color:#ffd046}.gameplay-batch-line.bad b{color:#ff7654}.gameplay-batch-line.idle b{color:#8d9697}
+.gameplay-batch-result .hotfix-foot{justify-content:flex-end}
 
 .onboard-modal,.help-modal{display:none;position:fixed;z-index:130;left:0;right:0;top:0;bottom:0;padding:22px;
  align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(44,109,130,.25),rgba(5,6,7,.94) 68%)}
@@ -678,6 +694,22 @@ button{font:inherit}
 .secret-mods-catalog-head{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;padding:0 1px 9px;border-bottom:1px solid #3b4446}
 .secret-mods-catalog-label b{display:block;color:#73cee6;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.9px}
 .secret-mods-catalog-label span{display:block;margin-top:3px;color:#858f91;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.65px}
+.secret-catalog-tools{display:flex;align-items:center;min-width:0;margin-left:10px;gap:8px}
+.secret-all-switch{position:relative;box-sizing:border-box;width:132px;min-width:132px;height:33px;padding:0 47px 0 8px;overflow:visible;cursor:pointer;
+ color:#aeb5b4;text-align:left;background:linear-gradient(#24292a,#171a1b);border:1px solid #596163;border-radius:3px 9px 3px 9px;
+ box-shadow:inset 0 1px #3b4142,0 2px #080909;outline:0;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}
+.secret-all-switch:focus{border-color:#86d7e9;box-shadow:inset 0 1px #3b4142,0 0 0 2px rgba(114,205,229,.2)}
+.secret-all-switch:disabled{cursor:not-allowed;opacity:.52}.secret-all-label{position:relative;z-index:2;white-space:nowrap}
+.secret-all-track{position:absolute;right:6px;top:7px;width:38px;height:17px;overflow:hidden;background:#353b3c;border:1px solid #111415;border-radius:3px;
+ box-shadow:inset 0 2px 4px #080909}.secret-all-track i{position:absolute;left:2px;top:2px;width:11px;height:11px;background:linear-gradient(#929898,#565c5d);border:1px solid #161819;border-radius:2px;transition:left .2s,background .2s,box-shadow .2s}
+.secret-all-switch.mixed{color:#ffe27a;border-color:#96701a}.secret-all-switch.mixed .secret-all-track{background:repeating-linear-gradient(135deg,#926913 0,#926913 5px,#292b2c 5px,#292b2c 10px)}
+.secret-all-switch.mixed .secret-all-track i{left:13px;background:linear-gradient(#fff29a,#ffd046 60%,#c9850c);box-shadow:0 0 7px rgba(255,208,70,.6)}
+.secret-all-switch.on{color:#2c260d;border-color:#d8a625;background:linear-gradient(#fff18b,#ffd046 58%,#c98910);box-shadow:inset 0 1px #fff8c0,0 2px #6f4b0b}
+.secret-all-switch.on .secret-all-track{background:#c58c12;box-shadow:inset 0 2px 4px #6a4707,0 0 7px rgba(255,208,70,.55)}
+.secret-all-switch.on .secret-all-track i{left:24px;background:linear-gradient(#fffbd0,#fff08a 58%,#d8a21e);box-shadow:0 0 7px rgba(255,244,155,.7)}
+.secret-all-switch.busy:after{content:'';position:absolute;left:-40px;top:0;width:34px;height:31px;background:linear-gradient(90deg,transparent,rgba(255,222,97,.42),transparent);transform:skewX(-18deg);animation:allModsSweep 1.05s linear infinite}
+.secret-all-skipped{display:none;position:absolute;right:-5px;top:-7px;z-index:4;padding:2px 4px;color:#ffdb69;background:#3a2116;border:1px solid #b35c2a;border-radius:2px;font:7px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.35px;box-shadow:0 2px 5px #000}
+.secret-all-skipped.show{display:block}
 .secret-mod-search{position:relative;width:285px;height:33px;background:#111415;border:1px solid #4c5b5f;border-radius:3px 9px 3px 9px;box-shadow:inset 0 2px 5px #050606}
 .secret-mod-search:before{content:'';position:absolute;left:10px;top:8px;width:9px;height:9px;border:2px solid #76cde4;border-radius:50%}
 .secret-mod-search:after{content:'';position:absolute;left:20px;top:18px;width:6px;height:2px;background:#76cde4;transform:rotate(45deg)}
@@ -716,7 +748,9 @@ button{font:inherit}
  color:#838a8a;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.75px}
 .secret-mods-status i{width:7px;height:7px;margin-right:7px;background:#656b6b;border-radius:50%;box-shadow:0 0 0 2px #151718}
 .secret-mods-status.on{color:#e2c15f}.secret-mods-status.on i{background:#ffd046;box-shadow:0 0 8px #ffd046}
-@media(max-width:820px){.secret-sidebar{width:188px;flex-basis:188px}.secret-mod-card{width:100%;flex-basis:100%;margin-right:0}.secret-head-count{display:none}.secret-mod-search{width:230px}}
+@keyframes allModsSweep{from{left:-40px}to{left:140px}}
+@media(max-width:920px){.secret-mod-search{width:205px}.secret-all-switch{width:120px;min-width:120px}}
+@media(max-width:820px){.secret-sidebar{width:188px;flex-basis:188px}.secret-mod-card{width:100%;flex-basis:100%;margin-right:0}.secret-head-count{display:none}.secret-mod-search{width:165px}.secret-mods-catalog-label span{display:none}}
 
 .tutorial{display:none;position:fixed;z-index:160;left:0;right:0;top:0;bottom:0;overflow:hidden}
 .tutorial.show{display:block}.tutorial-shade{position:fixed;z-index:0;background:rgba(4,6,7,.82);pointer-events:none;
@@ -938,12 +972,16 @@ button{font:inherit}
         <section class=""secret-catalog"">
       <div class=""secret-mods-catalog-head"">
         <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 12 AVAILABLE</span></div>
-        <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""SEARCH PATCH CATALOG..."" onkeyup=""filterSecretMods()"" /></div>
+        <div class=""secret-catalog-tools"">
+          <button type=""button"" class=""secret-all-switch"" id=""allGameplayModsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Enable all compatible gameplay mods"" onclick=""toggleAllGameplayMods()""><span class=""secret-all-label"">ALL MODS</span><span class=""secret-all-track""><i></i></span><b class=""secret-all-skipped"" id=""allGameplayModsSkipped""></b></button>
+          <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""SEARCH PATCH CATALOG..."" onkeyup=""filterSecretMods()"" /></div>
+        </div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
         <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-category=""commands"" data-search=""developer dev commands cheats unlimited god noclip fly flight collision spawn time raid host chat utility"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock Survival developer tools plus /fly collision-free flight, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
           <div class=""secret-mod-actions"">
+            <button type=""button"" class=""secret-mod-options"" id=""developerCommandsUpdate"" aria-label=""Update Developer Commands"" onclick=""updateDeveloperCommandsMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-mod-options"" id=""developerCommandsOptions"" aria-label=""Open Developer Commands options"" onclick=""openDeveloperCommandOptions()"" disabled=""disabled"">OPTIONS</button>
             <button type=""button"" class=""secret-switch"" id=""developerCommandsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Developer Commands"" onclick=""toggleDeveloperCommandsMod()"" disabled=""disabled"">
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
@@ -952,27 +990,19 @@ button{font:inherit}
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""resourceLocatorRow"" data-category=""mining"" data-search=""resource locator dots haybot spine wood stone metal connect tool utility"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">UTILITY &middot; CONNECT TOOL</span><strong>RESOURCE LOCATOR DOTS</strong><span id=""resourceLocatorDescription"">Reveal haybot spines and refineable resource cores with an inactive Connect Tool output.</span><em id=""resourceLocatorState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""resourceLocatorReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""resourceLocatorUpdate"" aria-label=""Update Resource Locator Dots"" onclick=""updateResourceLocatorMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""resourceLocatorSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Resource Locator Dots"" onclick=""toggleResourceLocatorMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""fullSpeedCarryingRow"" data-category=""movement"" data-search=""full speed carrying carry sprint walking lift creation warehouse crate resource movement quality of life"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MOVEMENT &middot; QUALITY OF LIFE</span><strong>FULL-SPEED CARRYING</strong><span>Walk normally and sprint while hand-carrying objects or moving creations with the Lift.</span><em id=""fullSpeedCarryingState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""fullSpeedCarryingReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""fullSpeedCarryingSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Full-Speed Carrying"" onclick=""toggleFullSpeedCarryingMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""fullSpeedCarryingUpdate"" aria-label=""Update Full-Speed Carrying"" onclick=""updateFullSpeedCarryingMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""fullSpeedCarryingSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Full-Speed Carrying"" onclick=""toggleFullSpeedCarryingMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""betterEnginesRow"" data-category=""machinery"" data-search=""better engines electric gas power torque battery fuel efficiency vehicle machinery"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MACHINERY &middot; POWERTRAIN</span><strong>BETTER ENGINES</strong><span>Give Electric Engines 10,000 gear power and make level-5 Electric and Gas Engines more efficient.</span><em id=""betterEnginesState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterEnginesReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""betterEnginesSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Engines"" onclick=""toggleBetterEnginesMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""betterEnginesUpdate"" aria-label=""Update Better Engines"" onclick=""updateBetterEnginesMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""betterEnginesSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Engines"" onclick=""toggleBetterEnginesMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""betterFreezerBeehiveRow"" data-category=""farming machinery"" data-search=""better freezer beehive water container ice beeswax pigment flower production storage farming machinery automation"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">FARMING &middot; MACHINERY &middot; AUTOMATION</span><strong>BETTER FREEZER &amp; BEEHIVE</strong><span>Connect Freezers to Water Containers, produce 4x faster, and give newly placed machines five input slots.</span><em id=""betterFreezerBeehiveState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterFreezerBeehiveReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""betterFreezerBeehiveSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Freezer and Beehive"" onclick=""toggleBetterFreezerBeehiveMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""betterFreezerBeehiveUpdate"" aria-label=""Update Better Freezer and Beehive"" onclick=""updateBetterFreezerBeehiveMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""betterFreezerBeehiveSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Better Freezer and Beehive"" onclick=""toggleBetterFreezerBeehiveMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""betterPlasmaDrillsRow"" data-category=""mining"" data-search=""better plasma drills mining power tool level 4 level 5 range radius battery speed save dangerous"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MINING &middot; COMBAT &middot; SAVE-SENSITIVE</span><strong>BETTER PLASMA DRILLS</strong><span>Add level-4/5 upgrades, larger beams, and level-based unit damage up to 300 per second.</span><em id=""betterPlasmaDrillsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""betterPlasmaDrillsReason""></span></div>
@@ -1002,28 +1032,25 @@ button{font:inherit}
           </div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""networkStorageChestRow"" data-category=""logistics automation"" data-search=""network storage chest inventory catalog sorting deposit wireless cross world logistics craftbot save sensitive"">
-          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; INVENTORY &middot; SAVE-SENSITIVE</span><strong>NETWORK STORAGE CHEST</strong><span>Browse reachable piped storage, withdraw from one catalog, and automatically sort deposits into matching chests.</span><em id=""networkStorageChestState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""networkStorageChestReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""networkStorageChestSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Network Storage Chest"" onclick=""toggleNetworkStorageChestMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; INVENTORY &middot; SAVE-SENSITIVE</span><strong>NETWORK STORAGE CHEST</strong><span>Browse reachable storage and choose Smart Sort or nearest-empty-chest deposit routing.</span><em id=""networkStorageChestState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""networkStorageChestReason""></span></div>
+          <div class=""secret-mod-actions"">
+            <button type=""button"" class=""secret-mod-options"" id=""networkStorageChestUpdate"" aria-label=""Update Network Storage Chest smart routing"" onclick=""updateNetworkStorageChestMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-switch"" id=""networkStorageChestSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Network Storage Chest"" onclick=""toggleNetworkStorageChestMod()"" disabled=""disabled"">
+              <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+            </button>
+          </div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""revivalBuffRow"" data-category=""survival"" data-search=""revival baguette buffs pizza veggie burger perk knockout death revive multiplayer survival"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">SURVIVAL &middot; REVIVAL</span><strong>REVIVAL BUFF RECOVERY</strong><span>Revival Baguettes restore every pizza and veggie-burger buff held when the player was knocked out.</span><em id=""revivalBuffState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""revivalBuffReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""revivalBuffSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Revival Buff Recovery"" onclick=""toggleRevivalBuffMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""revivalBuffUpdate"" aria-label=""Update Revival Buff Recovery"" onclick=""updateRevivalBuffMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""revivalBuffSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Revival Buff Recovery"" onclick=""toggleRevivalBuffMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""chemicalFertilizerRow"" data-category=""farming"" data-search=""chemical fertilizer splash farm plot grow bed red farmbot projectile farming dependency"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">FARMING &middot; PROJECTILES</span><strong>CHEMICAL FERTILIZER SPLASH</strong><span>Chemical shots fertilize plots; Red Farmbot pesticide fertilizes a 2.5-block radius.</span><em id=""chemicalFertilizerState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""chemicalFertilizerReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""chemicalFertilizerSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Chemical Fertilizer Splash"" onclick=""toggleChemicalFertilizerMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""chemicalFertilizerUpdate"" aria-label=""Update Chemical Fertilizer Splash"" onclick=""updateChemicalFertilizerMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""chemicalFertilizerSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Chemical Fertilizer Splash"" onclick=""toggleChemicalFertilizerMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""dualFluidCannonRow"" data-category=""machinery farming"" data-search=""dual fluid water cannon chemical container logic projectile farming dependency dangerous save"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">MACHINERY &middot; SAVE-SENSITIVE</span><strong>DUAL-FLUID WATER CANNON</strong><span>Connect Water and Chemical Containers; each logic pulse fires every available liquid.</span><em id=""dualFluidCannonState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""dualFluidCannonReason""></span></div>
-          <button type=""button"" class=""secret-switch"" id=""dualFluidCannonSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Dual-Fluid Water Cannon"" onclick=""toggleDualFluidCannonMod()"" disabled=""disabled"">
-            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
-          </button>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""dualFluidCannonUpdate"" aria-label=""Update Dual-Fluid Water Cannon"" onclick=""updateDualFluidCannonMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""dualFluidCannonSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Dual-Fluid Water Cannon"" onclick=""toggleDualFluidCannonMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mods-empty"" id=""secretModsEmpty"">NO PATCHES MATCH THIS FILTER</div>
       </div>
@@ -1317,6 +1344,8 @@ button{font:inherit}
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; BACKUPS AND REMOVAL</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>ADAPTIVE GAME UPDATES</b><p>After Steam installs a new build, secret-mod switches turn off until you intentionally re-enable them. If the protected code is still exact, ScrapLab safely refreshes the generated script cache without rewriting unchanged Lua.</p></div>
+          <div class=""help-item""><b>ALL MODS CONTROL</b><p>The compact three-state switch beside catalog search installs or updates every compatible gameplay mod with one administrator approval. Mixed means compatible work remains; the skipped badge counts blocked mods without stopping safe independent patches.</p></div>
+          <div class=""help-item""><b>DEVELOPER COMMANDS STAY MANUAL</b><p>All Mods never installs, updates, removes, or changes Developer Commands access. Bulk removal leaves the Patch Bay armed, uses one combined custom-part acknowledgement, and stops before later removals if any restoration fails.</p></div>
           <div class=""help-item""><b>PROTECTED CODE</b><p>Formatting or comments inside required code block the patch. Unrelated updated code elsewhere is preserved. The normal cumulative raid/fertilizer hotfix remains strictly version-locked.</p></div>
           <div class=""help-item""><b>HYBRID RESTORATION</b><p>Unchanged adaptive installs restore their exact pre-install bytes. If unrelated edits were added later, ScrapLab removes only its intact snippets. Edited, duplicated, or partial patch snippets block removal safely.</p></div>
           <div class=""help-item""><b>HOTFIX INDEPENDENCE</b><p>Chemical Fertilizer removal restores the exact state from before that mod. If the separate cumulative fertilizer hotfix was installed, that normal hotfix remains installed.</p></div>
@@ -1397,7 +1426,8 @@ button{font:inherit}
         <div class=""help-grid"">
           <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe uses one piped Small Chest, ten Component Kits, and twenty Circuit Boards. Crafting takes 30 seconds.</p></div>
           <div class=""help-item""><b>ONE STORAGE CATALOG</b><p>Open the terminal to browse every reachable input container. Search and sort the catalog, then use Take controls to withdraw safely from one or several source chests.</p></div>
-          <div class=""help-item""><b>SMART DEPOSIT SORTING</b><p>Use the five-slot tray or click a player-inventory stack. ScrapLab fills matching partial stacks and specialized containers before general empty storage.</p></div>
+          <div class=""help-item""><b>THREE-SLOT ROUTING TRAY</b><p>Use the three-slot tray or click a player-inventory stack. The two-slot-wide control selects Smart Sort or Nearest mode for that terminal.</p></div>
+          <div class=""help-item""><b>SMART OR NEAREST</b><p>Smart Sort groups exact items and matching item families. Turn it off to use the closest compatible same-world chest with an empty slot; cross-world destinations are considered afterward.</p></div>
           <div class=""help-item""><b>WIRELESS SUPPORT</b><p>With Wireless Vacuum Pipe installed, the catalog and sorter respect Link, Send, Receive, direct-only, full-network, and cross-world routes. Without it, the terminal remains fully usable on local pipes.</p></div>
           <div class=""help-item""><b>TRANSFER SAFETY</b><p>Every move is server-authoritative and revision checked. A stale network, full destination, or concurrent edit moves nothing partially and never creates copied catalog items.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes a required registration, reinstall before opening a world containing the terminal when ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
@@ -1566,6 +1596,41 @@ button{font:inherit}
   </div>
 </div>
 
+<div class=""hotfix-modal gameplay-batch-modal"" id=""gameplayBatchInstallModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""gameplayBatchInstallTitle"" onclick=""gameplayBatchInstallBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""gameplayBatchInstallTitle"">ARM THE COMPLETE GAMEPLAY SET?</strong><span>ONE ELEVATED COORDINATOR &middot; GUARDED PER-MOD TRANSACTIONS</span></div></div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"">ScrapLab will re-check every gameplay patch, install every compatible missing mod, and apply verified definition updates.</p>
+      <div class=""gameplay-batch-stats""><div class=""gameplay-batch-stat""><b>INSTALL</b><strong id=""gameplayBatchInstallCount"">0</strong></div><div class=""gameplay-batch-stat""><b>UPDATE</b><strong id=""gameplayBatchUpdateCount"">0</strong></div><div class=""gameplay-batch-stat""><b>ALREADY ACTIVE</b><strong id=""gameplayBatchActiveCount"">0</strong></div><div class=""gameplay-batch-stat""><b>SKIP</b><strong id=""gameplayBatchSkipCount"">0</strong></div></div>
+      <div class=""gameplay-batch-list"" id=""gameplayBatchPreviewList""></div>
+      <div class=""gameplay-batch-manual"">DEVELOPER COMMANDS: MANUAL &mdash; this batch never installs, updates, removes, or changes its access mode.</div>
+      <div class=""hotfix-stop"">SCRAP MECHANIC MUST BE COMPLETELY CLOSED UNTIL EVERY STARTED PATCH IS VERIFIED.</div>
+    </div>
+    <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Confirmation arms the Patch Bay, then Windows requests administrator permission once.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" id=""gameplayBatchInstallCancel"" onclick=""closeGameplayBatchInstall()"">CANCEL</button><button type=""button"" class=""btn update-install"" id=""gameplayBatchInstallConfirm"" onclick=""confirmEnableAllGameplayMods()"">ENABLE ALL COMPATIBLE MODS</button></div></div>
+  </div>
+</div>
+
+<div class=""hotfix-modal gameplay-batch-modal gameplay-batch-danger"" id=""gameplayBatchDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""gameplayBatchDangerTitle"" onclick=""gameplayBatchDangerBackdropClick(event)"">
+  <div class=""hotfix-dialog""><div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""gameplayBatchDangerTitle"">REMOVE ALL GAMEPLAY MODS?</strong><span>SAVE-SENSITIVE PART CHECK &middot; DEPENDENCY-SAFE ORDER</span></div></div>
+    <div class=""hotfix-body""><p class=""hotfix-intro"">ScrapLab will remove gameplay mods in a guarded order and stop immediately if any removal fails. Developer Commands remain unchanged.</p>
+      <ul class=""gameplay-batch-risk"" id=""gameplayBatchRiskList""></ul>
+      <div class=""cannon-danger-ack"" id=""gameplayBatchDangerAckWrap""><label><input type=""checkbox"" id=""gameplayBatchDangerAck"" onchange=""updateGameplayBatchDangerConfirm()""/><span class=""cannon-danger-box""></span><span>I removed the listed custom parts from worlds, inventories, containers, lifts, and saved creations.</span></label></div>
+      <div class=""hotfix-stop"">REMOVAL DOES NOT TURN OFF THE PATCH BAY AND DOES NOT TOUCH DEVELOPER COMMANDS.</div>
+    </div>
+    <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Cancel to leave every mod exactly as it is.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" id=""gameplayBatchDangerCancel"" onclick=""closeGameplayBatchDanger()"">CANCEL</button><button type=""button"" class=""btn hotfix-confirm"" id=""gameplayBatchDangerConfirm"" onclick=""confirmDisableAllGameplayMods()"" disabled><span>!</span>REMOVE GAMEPLAY MODS</button></div></div>
+  </div>
+</div>
+
+<div class=""hotfix-modal gameplay-batch-modal gameplay-batch-result"" id=""gameplayBatchResultModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""gameplayBatchResultTitle"" onclick=""gameplayBatchResultBackdropClick(event)"">
+  <div class=""hotfix-dialog""><div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""gameplayBatchResultTitle"">GAMEPLAY BATCH COMPLETE</strong><span id=""gameplayBatchResultSubtitle"">VERIFIED PATCH REPORT</span></div></div>
+    <div class=""hotfix-body""><div class=""gameplay-batch-stats"" id=""gameplayBatchResultStats""></div><div class=""gameplay-batch-list"" id=""gameplayBatchResultList""></div><div class=""gameplay-batch-manual"">DEVELOPER COMMANDS: MANUAL &mdash; its installed state and player-access option were preserved.</div></div>
+    <div class=""hotfix-foot""><button type=""button"" class=""btn update-install"" id=""gameplayBatchResultClose"" onclick=""closeGameplayBatchResult()"">CLOSE REPORT</button></div>
+  </div>
+</div>
+
 <div class=""hotfix-modal"" id=""hotfixModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""hotfixTitle"" onclick=""hotfixBackdropClick(event)"">
   <div class=""hotfix-dialog"">
     <div class=""hotfix-hazard""></div>
@@ -1647,18 +1712,22 @@ var secretResourceLocatorCompatibility='';
 var secretResourceLocatorCanApply=true;
 var secretResourceLocatorReason='';
 var secretRevivalBuffInstalled=false;
+var secretRevivalBuffNeedsUpdate=false;
 var secretRevivalBuffCompatibility='';
 var secretRevivalBuffCanApply=true;
 var secretRevivalBuffReason='';
 var secretFullSpeedCarryingInstalled=false;
+var secretFullSpeedCarryingNeedsUpdate=false;
 var secretFullSpeedCarryingCompatibility='';
 var secretFullSpeedCarryingCanApply=true;
 var secretFullSpeedCarryingReason='';
 var secretBetterEnginesInstalled=false;
+var secretBetterEnginesNeedsUpdate=false;
 var secretBetterEnginesCompatibility='';
 var secretBetterEnginesCanApply=true;
 var secretBetterEnginesReason='';
 var secretBetterFreezerBeehiveInstalled=false;
+var secretBetterFreezerBeehiveNeedsUpdate=false;
 var secretBetterFreezerBeehiveCompatibility='';
 var secretBetterFreezerBeehiveCanApply=true;
 var secretBetterFreezerBeehiveReason='';
@@ -1678,10 +1747,12 @@ var secretWirelessVacuumPipeCompatibility='';
 var secretWirelessVacuumPipeCanApply=true;
 var secretWirelessVacuumPipeReason='';
 var secretNetworkStorageChestInstalled=false;
+var secretNetworkStorageChestNeedsUpdate=false;
 var secretNetworkStorageChestCompatibility='';
 var secretNetworkStorageChestCanApply=true;
 var secretNetworkStorageChestReason='';
 var secretDeveloperCommandsInstalled=false;
+var secretDeveloperCommandsNeedsUpdate=false;
 var secretDeveloperCommandsError='';
 var secretDeveloperCommandsCompatibility='';
 var secretDeveloperCommandsCanApply=true;
@@ -1689,16 +1760,20 @@ var secretDeveloperCommandsReason='';
 var secretDeveloperCommandsMode='host';
 var developerCommandDraftMode='host';
 var secretChemicalFertilizerInstalled=false;
+var secretChemicalFertilizerNeedsUpdate=false;
 var secretChemicalFertilizerCompatibility='';
 var secretChemicalFertilizerCanApply=true;
 var secretChemicalFertilizerReason='';
 var secretDualFluidCannonInstalled=false;
+var secretDualFluidCannonNeedsUpdate=false;
 var secretDualFluidCannonError='';
 var secretDualFluidCannonCompatibility='';
 var secretDualFluidCannonCanApply=true;
 var secretDualFluidCannonReason='';
 var secretModBusy=false;
 var secretModBusyTarget='';
+var secretGameplayBatchBusy=false;
+var secretGameplayBatchAutoArmed=false;
 var secretWirelessVacuumPipeDangerAction='';
 var secretRaidDetectorDangerAction='';
 var secretNetworkStorageChestDangerAction='';
@@ -1773,7 +1848,7 @@ function loadAppUpdateState(){
 function escPlain(value){return value===null||typeof value==='undefined'?'':String(value);}
 function updateUiBlocked(){
  if(operationBusy||tutorialActive||updateInstallBusy)return true;
- var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','networkStorageChestDangerModal','wirelessVacuumPipeDangerModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','secretModsLayer'];
+ var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','networkStorageChestDangerModal','wirelessVacuumPipeDangerModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','gameplayBatchInstallModal','gameplayBatchDangerModal','gameplayBatchResultModal','secretModsLayer'];
  for(var i=0;i<ids.length;i++){
   var node=document.getElementById(ids[i]);
   if(node&&String(node.className).indexOf('show')>=0)return true;
@@ -2046,6 +2121,7 @@ function loadSecretModsState(){
   var revivalData=parseResult(window.external.GetRevivalBuffModStatus());
   if(revivalData.Success){
    secretRevivalBuffInstalled=!!revivalData.Installed;
+   secretRevivalBuffNeedsUpdate=!!revivalData.NeedsUpdate;
    captureSecretCompatibility('revival',revivalData);
    installedSecretMod=installedSecretMod||secretRevivalBuffInstalled;
   }else{
@@ -2058,6 +2134,7 @@ function loadSecretModsState(){
   var carryingData=parseResult(window.external.GetFullSpeedCarryingModStatus());
   if(carryingData.Success){
    secretFullSpeedCarryingInstalled=!!carryingData.Installed;
+   secretFullSpeedCarryingNeedsUpdate=!!carryingData.NeedsUpdate;
    captureSecretCompatibility('carrying',carryingData);
    installedSecretMod=installedSecretMod||secretFullSpeedCarryingInstalled;
   }else{
@@ -2074,6 +2151,7 @@ function loadSecretModsState(){
   var enginesData=parseResult(window.external.GetBetterEnginesModStatus());
   if(enginesData.Success){
    secretBetterEnginesInstalled=!!enginesData.Installed;
+   secretBetterEnginesNeedsUpdate=!!enginesData.NeedsUpdate;
    captureSecretCompatibility('engines',enginesData);
    installedSecretMod=installedSecretMod||secretBetterEnginesInstalled;
   }else{
@@ -2090,6 +2168,7 @@ function loadSecretModsState(){
    var freezerBeehiveData=parseResult(window.external.GetBetterFreezerBeehiveModStatus());
    if(freezerBeehiveData.Success){
     secretBetterFreezerBeehiveInstalled=!!freezerBeehiveData.Installed;
+    secretBetterFreezerBeehiveNeedsUpdate=!!freezerBeehiveData.NeedsUpdate;
     captureSecretCompatibility('freezerBeehive',freezerBeehiveData);
     installedSecretMod=installedSecretMod||secretBetterFreezerBeehiveInstalled;
    }else{
@@ -2157,6 +2236,7 @@ function loadSecretModsState(){
    var networkStorageData=parseResult(window.external.GetNetworkStorageChestModStatus());
    if(networkStorageData.Success){
     secretNetworkStorageChestInstalled=!!networkStorageData.Installed;
+    secretNetworkStorageChestNeedsUpdate=!!networkStorageData.NeedsUpdate;
     captureSecretCompatibility('networkStorage',networkStorageData);
     installedSecretMod=installedSecretMod||secretNetworkStorageChestInstalled;
    }else{
@@ -2173,6 +2253,7 @@ function loadSecretModsState(){
    var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
   if(commandData.Success){
    secretDeveloperCommandsInstalled=!!commandData.Installed;
+   secretDeveloperCommandsNeedsUpdate=!!commandData.NeedsUpdate;
    secretDeveloperCommandsMode=commandData.Mode==='everyone'?'everyone':'host';
    secretDeveloperCommandsError='';
    captureSecretCompatibility('commands',commandData);
@@ -2189,6 +2270,7 @@ function loadSecretModsState(){
   var chemicalData=parseResult(window.external.GetChemicalFertilizerModStatus());
   if(chemicalData.Success){
    secretChemicalFertilizerInstalled=!!chemicalData.Installed;
+   secretChemicalFertilizerNeedsUpdate=!!chemicalData.NeedsUpdate;
    captureSecretCompatibility('chemical',chemicalData);
    installedSecretMod=installedSecretMod||secretChemicalFertilizerInstalled;
   }else{
@@ -2201,6 +2283,7 @@ function loadSecretModsState(){
   var cannonData=parseResult(window.external.GetDualFluidCannonModStatus());
   if(cannonData.Success){
    secretDualFluidCannonInstalled=!!cannonData.Installed;
+   secretDualFluidCannonNeedsUpdate=!!cannonData.NeedsUpdate;
    secretDualFluidCannonError='';
    captureSecretCompatibility('cannon',cannonData);
    installedSecretMod=installedSecretMod||secretDualFluidCannonInstalled;
@@ -2236,6 +2319,7 @@ function renderSecretModsState(){
   locator.className=secretResourceLocatorInstalled?'secret-switch on':'secret-switch';
   locator.setAttribute('aria-checked',secretResourceLocatorInstalled?'true':'false');
   locator.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretResourceLocatorCanApply;
+  var locatorUpdate=document.getElementById('resourceLocatorUpdate');if(locatorUpdate){locatorUpdate.style.display=secretResourceLocatorNeedsUpdate?'block':'none';locatorUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretResourceLocatorCanApply;}
   locatorRow.className='secret-mod-row secret-mod-card'+(secretResourceLocatorInstalled?' enabled':'')+((!secretModsEnabled||!secretResourceLocatorCanApply)?' locked':'');
   locatorState.innerText=secretModBusy&&secretModBusyTarget==='resource'?'APPLYING...':(gameRunning?'GAME RUNNING · CLOSE IT FIRST':(secretResourceLocatorNeedsUpdate&&secretResourceLocatorCompatibility!=='COMPATIBLE GAME UPDATE'?'UPDATE READY · DOT VISIBILITY FIX':compatibilityStateLabel(secretResourceLocatorInstalled,secretResourceLocatorCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('resourceLocatorReason',secretResourceLocatorInstalled,secretResourceLocatorCanApply,secretResourceLocatorReason);
@@ -2247,8 +2331,9 @@ function renderSecretModsState(){
   carrying.className=secretFullSpeedCarryingInstalled?'secret-switch on':'secret-switch';
   carrying.setAttribute('aria-checked',secretFullSpeedCarryingInstalled?'true':'false');
   carrying.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretFullSpeedCarryingCanApply;
+  var carryingUpdate=document.getElementById('fullSpeedCarryingUpdate');if(carryingUpdate){carryingUpdate.style.display=secretFullSpeedCarryingNeedsUpdate?'block':'none';carryingUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretFullSpeedCarryingCanApply;}
   carryingRow.className='secret-mod-row secret-mod-card'+(secretFullSpeedCarryingInstalled?' enabled':'')+((!secretModsEnabled||!secretFullSpeedCarryingCanApply)?' locked':'');
-  carryingState.innerText=secretModBusy&&secretModBusyTarget==='carrying'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretFullSpeedCarryingInstalled,secretFullSpeedCarryingCompatibility,'NOT INSTALLED'));
+  carryingState.innerText=secretModBusy&&secretModBusyTarget==='carrying'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretFullSpeedCarryingNeedsUpdate?'UPDATE AVAILABLE':compatibilityStateLabel(secretFullSpeedCarryingInstalled,secretFullSpeedCarryingCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('fullSpeedCarryingReason',secretFullSpeedCarryingInstalled,secretFullSpeedCarryingCanApply,secretFullSpeedCarryingReason);
  }
  var engines=document.getElementById('betterEnginesSwitch');
@@ -2258,8 +2343,9 @@ function renderSecretModsState(){
   engines.className=secretBetterEnginesInstalled?'secret-switch on':'secret-switch';
   engines.setAttribute('aria-checked',secretBetterEnginesInstalled?'true':'false');
   engines.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterEnginesCanApply;
+  var enginesUpdate=document.getElementById('betterEnginesUpdate');if(enginesUpdate){enginesUpdate.style.display=secretBetterEnginesNeedsUpdate?'block':'none';enginesUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterEnginesCanApply;}
   enginesRow.className='secret-mod-row secret-mod-card'+(secretBetterEnginesInstalled?' enabled':'')+((!secretModsEnabled||!secretBetterEnginesCanApply)?' locked':'');
-  enginesState.innerText=secretModBusy&&secretModBusyTarget==='engines'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretBetterEnginesInstalled,secretBetterEnginesCompatibility,'NOT INSTALLED'));
+  enginesState.innerText=secretModBusy&&secretModBusyTarget==='engines'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretBetterEnginesNeedsUpdate?'UPDATE AVAILABLE':compatibilityStateLabel(secretBetterEnginesInstalled,secretBetterEnginesCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('betterEnginesReason',secretBetterEnginesInstalled,secretBetterEnginesCanApply,secretBetterEnginesReason);
  }
  var freezerBeehive=document.getElementById('betterFreezerBeehiveSwitch');
@@ -2269,8 +2355,9 @@ function renderSecretModsState(){
   freezerBeehive.className=secretBetterFreezerBeehiveInstalled?'secret-switch on':'secret-switch';
   freezerBeehive.setAttribute('aria-checked',secretBetterFreezerBeehiveInstalled?'true':'false');
   freezerBeehive.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterFreezerBeehiveCanApply;
+  var freezerBeehiveUpdate=document.getElementById('betterFreezerBeehiveUpdate');if(freezerBeehiveUpdate){freezerBeehiveUpdate.style.display=secretBetterFreezerBeehiveNeedsUpdate?'block':'none';freezerBeehiveUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretBetterFreezerBeehiveCanApply;}
   freezerBeehiveRow.className='secret-mod-row secret-mod-card'+(secretBetterFreezerBeehiveInstalled?' enabled':'')+((!secretModsEnabled||!secretBetterFreezerBeehiveCanApply)?' locked':'');
-  freezerBeehiveState.innerText=secretModBusy&&secretModBusyTarget==='freezerBeehive'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretBetterFreezerBeehiveInstalled,secretBetterFreezerBeehiveCompatibility,'NOT INSTALLED'));
+  freezerBeehiveState.innerText=secretModBusy&&secretModBusyTarget==='freezerBeehive'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretBetterFreezerBeehiveNeedsUpdate?'UPDATE AVAILABLE':compatibilityStateLabel(secretBetterFreezerBeehiveInstalled,secretBetterFreezerBeehiveCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('betterFreezerBeehiveReason',secretBetterFreezerBeehiveInstalled,secretBetterFreezerBeehiveCanApply,secretBetterFreezerBeehiveReason);
  }
  var plasma=document.getElementById('betterPlasmaDrillsSwitch');
@@ -2322,15 +2409,17 @@ function renderSecretModsState(){
    renderCompatibilityReason('wirelessVacuumPipeReason',secretWirelessVacuumPipeInstalled,secretWirelessVacuumPipeCanApply,secretWirelessVacuumPipeReason);
    if(secretWirelessVacuumPipeNeedsUpdate){var wirelessUpdateReason=document.getElementById('wirelessVacuumPipeReason');wirelessUpdateReason.className='secret-compat-reason show';wirelessUpdateReason.innerText=secretWirelessVacuumPipeReason||'Receive-side pull routing and safe transfer scope are ready.';}
   }
-  var networkStorage=document.getElementById('networkStorageChestSwitch');
-  var networkStorageRow=document.getElementById('networkStorageChestRow');
+   var networkStorage=document.getElementById('networkStorageChestSwitch');
+   var networkStorageUpdate=document.getElementById('networkStorageChestUpdate');
+   var networkStorageRow=document.getElementById('networkStorageChestRow');
   var networkStorageState=document.getElementById('networkStorageChestState');
   if(networkStorage&&networkStorageRow&&networkStorageState){
    networkStorage.className=secretNetworkStorageChestInstalled?'secret-switch on':'secret-switch';
-   networkStorage.setAttribute('aria-checked',secretNetworkStorageChestInstalled?'true':'false');
-   networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
+    networkStorage.setAttribute('aria-checked',secretNetworkStorageChestInstalled?'true':'false');
+    networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
+    if(networkStorageUpdate){networkStorageUpdate.style.display=secretNetworkStorageChestNeedsUpdate?'block':'none';networkStorageUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;}
    networkStorageRow.className='secret-mod-row secret-mod-card'+(secretNetworkStorageChestInstalled?' enabled':'')+((!secretModsEnabled||!secretNetworkStorageChestCanApply)?' locked':'');
-   networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED'));
+   networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'ROUTING MODE UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
    renderCompatibilityReason('networkStorageChestReason',secretNetworkStorageChestInstalled,secretNetworkStorageChestCanApply,secretNetworkStorageChestReason);
   }
   var revival=document.getElementById('revivalBuffSwitch');
@@ -2340,21 +2429,24 @@ function renderSecretModsState(){
   revival.className=secretRevivalBuffInstalled?'secret-switch on':'secret-switch';
   revival.setAttribute('aria-checked',secretRevivalBuffInstalled?'true':'false');
   revival.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretRevivalBuffCanApply;
+  var revivalUpdate=document.getElementById('revivalBuffUpdate');if(revivalUpdate){revivalUpdate.style.display=secretRevivalBuffNeedsUpdate?'block':'none';revivalUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretRevivalBuffCanApply;}
   revivalRow.className='secret-mod-row secret-mod-card'+(secretRevivalBuffInstalled?' enabled':'')+((!secretModsEnabled||!secretRevivalBuffCanApply)?' locked':'');
-  revivalState.innerText=secretModBusy&&secretModBusyTarget==='revival'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretRevivalBuffInstalled,secretRevivalBuffCompatibility,'NOT INSTALLED'));
+  revivalState.innerText=secretModBusy&&secretModBusyTarget==='revival'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretRevivalBuffNeedsUpdate?'UPDATE AVAILABLE':compatibilityStateLabel(secretRevivalBuffInstalled,secretRevivalBuffCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('revivalBuffReason',secretRevivalBuffInstalled,secretRevivalBuffCanApply,secretRevivalBuffReason);
  }
- var commands=document.getElementById('developerCommandsSwitch');
- var commandOptions=document.getElementById('developerCommandsOptions');
+  var commands=document.getElementById('developerCommandsSwitch');
+  var commandOptions=document.getElementById('developerCommandsOptions');
+  var commandUpdate=document.getElementById('developerCommandsUpdate');
  var commandsRow=document.getElementById('developerCommandsRow');
  var commandsState=document.getElementById('developerCommandsState');
  if(commands&&commandsRow&&commandsState){
   commands.className=secretDeveloperCommandsInstalled?'secret-switch on':'secret-switch';
   commands.setAttribute('aria-checked',secretDeveloperCommandsInstalled?'true':'false');
   commands.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
+  if(commandUpdate){commandUpdate.style.display=secretDeveloperCommandsNeedsUpdate?'block':'none';commandUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;}
   if(commandOptions)commandOptions.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDeveloperCommandsError||!secretDeveloperCommandsCanApply;
   commandsRow.className='secret-mod-row secret-mod-card'+(secretDeveloperCommandsInstalled?' enabled':'')+((!secretModsEnabled||secretDeveloperCommandsError||!secretDeveloperCommandsCanApply)?' locked':'');
-  commandsState.innerText=secretModBusy&&secretModBusyTarget==='commands'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDeveloperCommandsError?'UNSUPPORTED FILE - NO CHANGES':compatibilityStateLabel(secretDeveloperCommandsInstalled,secretDeveloperCommandsCompatibility,'NOT INSTALLED')));
+  commandsState.innerText=secretModBusy&&secretModBusyTarget==='commands'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDeveloperCommandsError?'UNSUPPORTED FILE - NO CHANGES':(secretDeveloperCommandsNeedsUpdate?'UPDATE AVAILABLE':compatibilityStateLabel(secretDeveloperCommandsInstalled,secretDeveloperCommandsCompatibility,'NOT INSTALLED'))));
   renderCompatibilityReason('developerCommandsReason',secretDeveloperCommandsInstalled,secretDeveloperCommandsCanApply,secretDeveloperCommandsReason);
  }
  var chemical=document.getElementById('chemicalFertilizerSwitch');
@@ -2364,8 +2456,9 @@ function renderSecretModsState(){
   chemical.className=secretChemicalFertilizerInstalled?'secret-switch on':'secret-switch';
   chemical.setAttribute('aria-checked',secretChemicalFertilizerInstalled?'true':'false');
   chemical.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretChemicalFertilizerCanApply;
+  var chemicalUpdate=document.getElementById('chemicalFertilizerUpdate');if(chemicalUpdate){chemicalUpdate.style.display=secretChemicalFertilizerNeedsUpdate?'block':'none';chemicalUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretChemicalFertilizerCanApply;}
   chemicalRow.className='secret-mod-row secret-mod-card'+(secretChemicalFertilizerInstalled?' enabled':'')+((!secretModsEnabled||!secretChemicalFertilizerCanApply)?' locked':'');
-  chemicalState.innerText=secretModBusy&&secretModBusyTarget==='chemical'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretChemicalFertilizerInstalled,secretChemicalFertilizerCompatibility,'NOT INSTALLED'));
+  chemicalState.innerText=secretModBusy&&secretModBusyTarget==='chemical'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretChemicalFertilizerNeedsUpdate?'UPDATE AVAILABLE':compatibilityStateLabel(secretChemicalFertilizerInstalled,secretChemicalFertilizerCompatibility,'NOT INSTALLED')));
   renderCompatibilityReason('chemicalFertilizerReason',secretChemicalFertilizerInstalled,secretChemicalFertilizerCanApply,secretChemicalFertilizerReason);
  }
  var cannon=document.getElementById('dualFluidCannonSwitch');
@@ -2375,20 +2468,166 @@ function renderSecretModsState(){
   cannon.className=secretDualFluidCannonInstalled?'secret-switch on':'secret-switch';
   cannon.setAttribute('aria-checked',secretDualFluidCannonInstalled?'true':'false');
   cannon.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDualFluidCannonError||!secretDualFluidCannonCanApply;
+  var cannonUpdate=document.getElementById('dualFluidCannonUpdate');if(cannonUpdate){cannonUpdate.style.display=secretDualFluidCannonNeedsUpdate?'block':'none';cannonUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!!secretDualFluidCannonError||!secretDualFluidCannonCanApply;}
   cannonRow.className='secret-mod-row secret-mod-card'+(secretDualFluidCannonInstalled?' enabled':'')+((!secretModsEnabled||secretDualFluidCannonError||!secretDualFluidCannonCanApply)?' locked':'');
-  cannonState.innerText=secretModBusy&&secretModBusyTarget==='cannon'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDualFluidCannonError?'UNSUPPORTED FILE - NO CHANGES':(secretDualFluidCannonInstalled?(secretChemicalFertilizerInstalled?'INSTALLED':'DEPENDENCY MISSING - REPAIR REQUIRED'):compatibilityStateLabel(false,secretDualFluidCannonCompatibility,(secretChemicalFertilizerInstalled?'NOT INSTALLED':'READY - INSTALLS FERTILIZER')))));
+  cannonState.innerText=secretModBusy&&secretModBusyTarget==='cannon'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretDualFluidCannonError?'UNSUPPORTED FILE - NO CHANGES':(secretDualFluidCannonNeedsUpdate?'UPDATE AVAILABLE':(secretDualFluidCannonInstalled?(secretChemicalFertilizerInstalled?'INSTALLED':'DEPENDENCY MISSING - REPAIR REQUIRED'):compatibilityStateLabel(false,secretDualFluidCannonCompatibility,(secretChemicalFertilizerInstalled?'NOT INSTALLED':'READY - INSTALLS FERTILIZER'))))));
   renderCompatibilityReason('dualFluidCannonReason',secretDualFluidCannonInstalled,secretDualFluidCannonCanApply,secretDualFluidCannonReason);
  }
  var count=document.getElementById('secretModCount');
  var headCount=document.getElementById('secretModHeadCount');
- if(count){
+  if(count){
    var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretWirelessVacuumPipeInstalled?1:0)+(secretNetworkStorageChestInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
    count.innerText=active+' ACTIVE \u00b7 12 AVAILABLE';
    if(headCount)headCount.innerText=active+' ACTIVE / 12 AVAILABLE';
+  }
+  renderAllGameplayModsControl();
+  filterSecretMods();
  }
- filterSecretMods();
-}
-function setSecretCategory(category,button){
+ function gameplayModSnapshot(){
+  return [
+   {key:'resource-locator',name:'Resource Locator Dots',installed:secretResourceLocatorInstalled,update:secretResourceLocatorNeedsUpdate,can:secretResourceLocatorCanApply,reason:secretResourceLocatorReason},
+   {key:'revival-buffs',name:'Revival Buff Recovery',installed:secretRevivalBuffInstalled,update:secretRevivalBuffNeedsUpdate,can:secretRevivalBuffCanApply,reason:secretRevivalBuffReason},
+   {key:'full-speed-carrying',name:'Full-Speed Carrying',installed:secretFullSpeedCarryingInstalled,update:secretFullSpeedCarryingNeedsUpdate,can:secretFullSpeedCarryingCanApply,reason:secretFullSpeedCarryingReason},
+   {key:'better-engines',name:'Better Engines',installed:secretBetterEnginesInstalled,update:secretBetterEnginesNeedsUpdate,can:secretBetterEnginesCanApply,reason:secretBetterEnginesReason},
+   {key:'better-freezer-beehive',name:'Better Freezer & Beehive',installed:secretBetterFreezerBeehiveInstalled,update:secretBetterFreezerBeehiveNeedsUpdate,can:secretBetterFreezerBeehiveCanApply,reason:secretBetterFreezerBeehiveReason},
+   {key:'better-plasma-drills',name:'Better Plasma Drills',installed:secretBetterPlasmaDrillsInstalled,update:secretBetterPlasmaDrillsNeedsUpdate,can:secretBetterPlasmaDrillsCanApply,reason:secretBetterPlasmaDrillsReason},
+   {key:'chemical-fertilizer',name:'Chemical Fertilizer Splash',installed:secretChemicalFertilizerInstalled,update:secretChemicalFertilizerNeedsUpdate,can:secretChemicalFertilizerCanApply,reason:secretChemicalFertilizerReason},
+   {key:'dual-fluid-cannon',name:'Dual-Fluid Water Cannon',installed:secretDualFluidCannonInstalled,update:secretDualFluidCannonNeedsUpdate,can:secretDualFluidCannonCanApply&&!secretDualFluidCannonError,reason:secretDualFluidCannonReason||secretDualFluidCannonError},
+   {key:'raid-detector',name:'Raid Detector',installed:secretRaidDetectorInstalled,update:secretRaidDetectorNeedsUpdate,can:secretRaidDetectorCanApply,reason:secretRaidDetectorReason},
+   {key:'wireless-vacuum-pipe',name:'Wireless Vacuum Pipe',installed:secretWirelessVacuumPipeInstalled,update:secretWirelessVacuumPipeNeedsUpdate,can:secretWirelessVacuumPipeCanApply,reason:secretWirelessVacuumPipeReason},
+   {key:'network-storage-chest',name:'Network Storage Chest',installed:secretNetworkStorageChestInstalled,update:secretNetworkStorageChestNeedsUpdate,can:secretNetworkStorageChestCanApply,reason:secretNetworkStorageChestReason}
+  ];
+ }
+ function allGameplayModsState(){
+  var mods=gameplayModSnapshot(),active=0,pending=0,eligible=0,skipped=0;
+  for(var i=0;i<mods.length;i++){
+   var mod=mods[i];
+   if(mod.installed)active++;
+   var compatible=(mod.installed&&!mod.update)||!!mod.can;
+   if(!compatible){skipped++;continue;}
+   eligible++;
+   if(!mod.installed||mod.update)pending++;
+  }
+  return {mods:mods,active:active,pending:pending,eligible:eligible,skipped:skipped,state:active===0?'off':(eligible>0&&pending===0?'on':'mixed')};
+ }
+ function renderAllGameplayModsControl(){
+  var button=document.getElementById('allGameplayModsSwitch');
+  var skipped=document.getElementById('allGameplayModsSkipped');
+  if(!button||!skipped)return;
+  var summary=allGameplayModsState();
+  var busyNow=!!secretGameplayBatchBusy;
+  button.className='secret-all-switch '+summary.state+(busyNow?' busy':'');
+  button.setAttribute('aria-checked',summary.state==='mixed'?'mixed':(summary.state==='on'?'true':'false'));
+  button.setAttribute('aria-label',summary.state==='on'?'Remove all installed gameplay mods':'Enable all compatible gameplay mods');
+  button.disabled=!!gameRunning||!!operationBusy||!!secretModBusy||busyNow;
+  skipped.className='secret-all-skipped'+(summary.skipped?' show':'');
+  skipped.innerText=summary.skipped?summary.skipped+' SKIPPED':'';
+ }
+ function appendGameplayBatchLine(container,outcome,name,reason){
+  var line=document.createElement('div');
+  var state=outcome==='FAILED'?'bad':(outcome==='SKIPPED'?'skip':(outcome==='NOT ATTEMPTED'?'idle':'good'));
+  line.className='gameplay-batch-line '+state;
+  var label=document.createElement('b');label.innerText=outcome;
+  var copy=document.createElement('span');copy.innerText=name+(reason?' - '+reason:'');
+  line.appendChild(label);line.appendChild(copy);container.appendChild(line);
+ }
+ function toggleAllGameplayMods(){
+  if(operationBusy||secretModBusy||secretGameplayBatchBusy)return;
+  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing gameplay mods.','bad');return;}
+  var summary=allGameplayModsState();
+  if(summary.state==='on')openGameplayBatchDanger();
+  else openGameplayBatchInstall(summary);
+ }
+ function openGameplayBatchInstall(summary){
+  summary=summary||allGameplayModsState();
+  var installs=0,updates=0,active=0,skips=0;
+  var list=document.getElementById('gameplayBatchPreviewList');list.innerHTML='';
+  for(var i=0;i<summary.mods.length;i++){
+   var mod=summary.mods[i],outcome,reason='';
+   if(mod.installed&&!mod.update){outcome='ALREADY ACTIVE';active++;reason='No file change needed.';}
+   else if(mod.can&&mod.installed&&mod.update){outcome='UPDATE';updates++;reason='A verified patch-definition update is ready.';}
+   else if(mod.can&&!mod.installed){outcome='INSTALL';installs++;reason='Compatible and ready.';}
+   else{outcome='SKIPPED';skips++;reason=mod.reason||'Required game code is not currently compatible.';}
+   appendGameplayBatchLine(list,outcome,mod.name,reason);
+  }
+  document.getElementById('gameplayBatchInstallCount').innerText=installs;
+  document.getElementById('gameplayBatchUpdateCount').innerText=updates;
+  document.getElementById('gameplayBatchActiveCount').innerText=active;
+  document.getElementById('gameplayBatchSkipCount').innerText=skips;
+  document.getElementById('gameplayBatchInstallModal').className='hotfix-modal gameplay-batch-modal show';
+  window.setTimeout(function(){document.getElementById('gameplayBatchInstallConfirm').focus();},30);
+ }
+ function closeGameplayBatchInstall(){document.getElementById('gameplayBatchInstallModal').className='hotfix-modal gameplay-batch-modal';}
+ function gameplayBatchInstallBackdropClick(e){e=e||window.event;if((e.target||e.srcElement)===document.getElementById('gameplayBatchInstallModal'))closeGameplayBatchInstall();}
+ function confirmEnableAllGameplayMods(){
+  closeGameplayBatchInstall();
+  secretGameplayBatchAutoArmed=!secretModsEnabled;
+  if(secretGameplayBatchAutoArmed){secretModsEnabled=true;try{window.external.SetSecretModsEnabled(true);}catch(ignore){}}
+  runGameplayModsBatch(true);
+ }
+ function installedSaveSensitiveGameplayMods(){
+  var risks=[];
+  if(secretNetworkStorageChestInstalled)risks.push('Network Storage Chest - remove every custom chest part.');
+  if(secretWirelessVacuumPipeInstalled)risks.push('Wireless Vacuum Pipe - remove every custom wireless pipe part.');
+  if(secretRaidDetectorInstalled)risks.push('Raid Detector - remove every detector part.');
+  if(secretBetterPlasmaDrillsInstalled)risks.push('Better Plasma Drills - remove or downgrade all level 4 and 5 drills.');
+  if(secretDualFluidCannonInstalled)risks.push('Dual-Fluid Water Cannon - disconnect its chemical input before restoring vanilla limits.');
+  return risks;
+ }
+ function openGameplayBatchDanger(){
+  var risks=installedSaveSensitiveGameplayMods(),list=document.getElementById('gameplayBatchRiskList');list.innerHTML='';
+  for(var i=0;i<risks.length;i++){var item=document.createElement('li');item.innerText=risks[i];list.appendChild(item);}
+  if(!risks.length){var safe=document.createElement('li');safe.innerText='No installed custom-UUID gameplay parts were detected.';list.appendChild(safe);}
+  var ack=document.getElementById('gameplayBatchDangerAck');ack.checked=false;
+  document.getElementById('gameplayBatchDangerAckWrap').style.display=risks.length?'block':'none';
+  document.getElementById('gameplayBatchDangerConfirm').disabled=risks.length>0;
+  document.getElementById('gameplayBatchDangerModal').className='hotfix-modal gameplay-batch-modal gameplay-batch-danger show';
+  window.setTimeout(function(){document.getElementById('gameplayBatchDangerCancel').focus();},30);
+ }
+ function updateGameplayBatchDangerConfirm(){document.getElementById('gameplayBatchDangerConfirm').disabled=!document.getElementById('gameplayBatchDangerAck').checked;}
+ function closeGameplayBatchDanger(){document.getElementById('gameplayBatchDangerModal').className='hotfix-modal gameplay-batch-modal gameplay-batch-danger';document.getElementById('gameplayBatchDangerAck').checked=false;}
+ function gameplayBatchDangerBackdropClick(e){e=e||window.event;if((e.target||e.srcElement)===document.getElementById('gameplayBatchDangerModal'))closeGameplayBatchDanger();}
+ function confirmDisableAllGameplayMods(){
+  if(document.getElementById('gameplayBatchDangerAckWrap').style.display!=='none'&&!document.getElementById('gameplayBatchDangerAck').checked)return;
+  closeGameplayBatchDanger();secretGameplayBatchAutoArmed=false;runGameplayModsBatch(false);
+ }
+ function runGameplayModsBatch(enabled){
+  secretGameplayBatchBusy=true;secretModBusy=true;secretModBusyTarget='batch';operationBusy=true;
+  showSecretModFeedback(enabled?'INSTALLING ALL COMPATIBLE GAMEPLAY MODS...':'REMOVING GAMEPLAY MODS IN SAVE-SAFE ORDER...','working');
+  renderSecretModsState();applyGameLock(gameRunning);
+  window.setTimeout(function(){
+   var data;
+   try{data=parseResult(window.external.SetAllGameplayMods(enabled));}
+   catch(e){data={Success:false,Error:e.message||'The gameplay batch coordinator did not return a result.',BatchItems:[]};}
+   secretGameplayBatchBusy=false;secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+   if(data.Cancelled){
+    if(enabled&&secretGameplayBatchAutoArmed){secretModsEnabled=false;try{window.external.SetSecretModsEnabled(false);}catch(ignore){}}
+    secretGameplayBatchAutoArmed=false;showSecretModFeedback('No gameplay mods were changed because administrator permission was cancelled.','show');
+    applyGameLock(gameRunning);renderSecretModsState();return;
+   }
+   secretGameplayBatchAutoArmed=false;
+   if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+   loadSecretModsState();applyGameLock(gameRunning);renderSecretModsState();
+   showGameplayBatchResult(data,enabled);
+  },45);
+ }
+ function showGameplayBatchResult(data,enabled){
+  var items=data&&data.BatchItems?data.BatchItems:[];
+  var counts={'INSTALLED':0,'UPDATED':0,'ALREADY ACTIVE':0,'SKIPPED':0,'FAILED':0,'REMOVED':0,'NOT ATTEMPTED':0};
+  var list=document.getElementById('gameplayBatchResultList');list.innerHTML='';
+  for(var i=0;i<items.length;i++){var item=items[i]||{};counts[item.Outcome]=(counts[item.Outcome]||0)+1;appendGameplayBatchLine(list,item.Outcome||'FAILED',item.Name||item.Key||'Unknown mod',item.Reason||'');}
+  if(!items.length)appendGameplayBatchLine(list,data&&data.Success?'ALREADY ACTIVE':'FAILED','Gameplay batch',data&&data.Error?data.Error:'No patch operation was required.');
+  var stats=document.getElementById('gameplayBatchResultStats');stats.innerHTML='';
+  var shown=enabled?[['INSTALLED',counts['INSTALLED']],['UPDATED',counts['UPDATED']],['ACTIVE',counts['ALREADY ACTIVE']],['SKIPPED',counts['SKIPPED']],['FAILED',counts['FAILED']]]:[['REMOVED',counts['REMOVED']],['FAILED',counts['FAILED']],['NOT ATTEMPTED',counts['NOT ATTEMPTED']]];
+  for(var j=0;j<shown.length;j++){var box=document.createElement('div');box.className='gameplay-batch-stat';var label=document.createElement('b');label.innerText=shown[j][0];var number=document.createElement('strong');number.innerText=shown[j][1];box.appendChild(label);box.appendChild(number);stats.appendChild(box);}
+  document.getElementById('gameplayBatchResultTitle').innerText=data&&data.Success?'GAMEPLAY BATCH COMPLETE':'GAMEPLAY BATCH NEEDS ATTENTION';
+  document.getElementById('gameplayBatchResultSubtitle').innerText=data&&data.CompatibilityState?data.CompatibilityState:'VERIFIED PATCH REPORT';
+  document.getElementById('gameplayBatchResultModal').className='hotfix-modal gameplay-batch-modal gameplay-batch-result show';
+  window.setTimeout(function(){document.getElementById('gameplayBatchResultClose').focus();},30);
+ }
+ function closeGameplayBatchResult(){document.getElementById('gameplayBatchResultModal').className='hotfix-modal gameplay-batch-modal gameplay-batch-result';}
+ function gameplayBatchResultBackdropClick(e){e=e||window.event;if((e.target||e.srcElement)===document.getElementById('gameplayBatchResultModal'))closeGameplayBatchResult();}
+ function setSecretCategory(category,button){
  secretModCategory=category||'all';
  var buttons=document.getElementsByClassName('secret-category');
  for(var i=0;i<buttons.length;i++)buttons[i].className='secret-category'+(buttons[i]===button?' active':'');
@@ -2522,10 +2761,47 @@ function toggleNetworkStorageChestMod(){
  if(secretNetworkStorageChestInstalled){openNetworkStorageChestDangerConfirm('networkStorageOnly');return;}
  setNetworkStorageChestMod(true);
 }
+function updateNetworkStorageChestMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretNetworkStorageChestNeedsUpdate)return;
+ setNetworkStorageChestMod(true);
+}
+function updateResourceLocatorMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretResourceLocatorNeedsUpdate)return;
+ setResourceLocatorMod(true);
+}
+function updateRevivalBuffMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretRevivalBuffNeedsUpdate)return;
+ setRevivalBuffMod(true);
+}
+function updateFullSpeedCarryingMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretFullSpeedCarryingNeedsUpdate)return;
+ setFullSpeedCarryingMod(true);
+}
+function updateBetterEnginesMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretBetterEnginesNeedsUpdate)return;
+ setBetterEnginesMod(true);
+}
+function updateBetterFreezerBeehiveMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretBetterFreezerBeehiveNeedsUpdate)return;
+ setBetterFreezerBeehiveMod(true);
+}
+function updateDeveloperCommandsMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretDeveloperCommandsNeedsUpdate)return;
+ setDeveloperCommandsMod(true,secretDeveloperCommandsMode);
+}
+function updateChemicalFertilizerMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretChemicalFertilizerNeedsUpdate)return;
+ setChemicalFertilizerMod(true);
+}
+function updateDualFluidCannonMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretDualFluidCannonNeedsUpdate)return;
+ setDualFluidCannonMod(true);
+}
 function setNetworkStorageChestMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
+ var wasNetworkStorageUpdate=enabled&&secretNetworkStorageChestInstalled&&secretNetworkStorageChestNeedsUpdate;
  secretModBusy=true;secretModBusyTarget='networkStorage';operationBusy=true;
- showSecretModFeedback(enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','working');
+ showSecretModFeedback(wasNetworkStorageUpdate?'UPGRADING DEPOSIT ROUTING MODES...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','working');
  renderSecretModsState();applyGameLock(gameRunning);
  var data;
  try{data=parseResult(window.external.SetNetworkStorageChestMod(enabled));}
@@ -2536,7 +2812,7 @@ function setNetworkStorageChestMod(enabled){
  secretNetworkStorageChestInstalled=!!data.Installed;
  if(data.BackupPath)lastGameBackupPath=data.BackupPath;
  loadSecretModsState();
- showSecretModFeedback(secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, smart sorting, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+ showSecretModFeedback(wasNetworkStorageUpdate?'ROUTING UPDATED - the three-slot tray now switches between Smart Sort and nearest-empty routing.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
  applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function setWirelessVacuumPipeMod(enabled){

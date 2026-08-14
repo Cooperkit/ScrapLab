@@ -174,8 +174,17 @@ namespace RaidRescue
         public string BackupPath { get; set; }
         public int FilesPatched { get; set; }
         public List<string> Changes { get; set; }
+        public List<GamePatchBatchItem> BatchItems { get; set; }
 
         internal Dictionary<string, bool> ActivationChanges;
+    }
+
+    public sealed class GamePatchBatchItem
+    {
+        public string Key { get; set; }
+        public string Name { get; set; }
+        public string Outcome { get; set; }
+        public string Reason { get; set; }
     }
 
     public sealed class PerformanceScanResult

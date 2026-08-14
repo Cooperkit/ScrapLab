@@ -102,6 +102,7 @@ $patchSources = @(
     "Patching\RaidDetectorPatchService.cs",
     "Patching\WirelessVacuumPipePatchService.cs",
     "Patching\NetworkStorageChestPatchService.cs",
+    "Patching\GameplayModsBatchCoordinator.cs",
     "Patching\AdaptivePatchSupport.cs"
 ) | ForEach-Object { Get-SourcePath $_ }
 
@@ -224,7 +225,7 @@ foreach ($name in $builtFiles) {
     Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
 }
 
-$version = "2.6.0"
+$version = "2.7.0"
 $releaseRoot = Join-Path $root "release"
 $bundle = Join-Path $releaseRoot "ScrapLab-$version"
 New-Item -ItemType Directory -Path $bundle -Force | Out-Null

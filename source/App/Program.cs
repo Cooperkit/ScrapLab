@@ -960,6 +960,12 @@ namespace RaidRescue
                 PatchHelperProtocol.DeveloperCommands, enabled, mode ?? ""));
         }
 
+        public string SetAllGameplayMods(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.AllGameplayMods, enabled, ""));
+        }
+
         public void OpenFolder(string path)
         {
             try

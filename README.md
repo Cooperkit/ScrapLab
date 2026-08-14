@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.6.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.7.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -189,20 +189,28 @@ Click the small ScrapLab emblem at the far left of the title bar to open the
 hidden workshop. These patches change installed Scrap Mechanic Lua files, not
 the selected save database.
 
+The compact **All Mods** switch beside the Patch Catalog search installs every
+currently compatible gameplay mod with one administrator approval. Its mixed
+state means a compatible mod is missing or has an update ready; blocked mods
+are shown as skipped instead of preventing the rest of the batch. Developer
+Commands are always manual and are never changed by **All Mods**. Bulk removal
+uses one combined custom-part warning, preserves Developer Commands, leaves the
+Patch Bay armed, and stops before later removals if any mod cannot be restored.
+
 | Mod | Effect |
 | --- | --- |
-| **Developer Commands** | Unlocks Survival chat commands plus `/fly` collision-free flight, with configurable Host Only or Every Player access. |
-| **Resource Locator Dots** | Makes refineable resource cores and haybot spines visible with the Connect Tool. |
-| **Full-Speed Carrying** | Restores normal walking and sprinting for hand-carried objects and Lift-held creations, using the game's native carry sprint animations. |
-| **Better Engines** | Gives every Electric Engine gear 10,000 power and raises level-5 Electric/Gas efficiency to 40,250 points per battery or fuel item. |
-| **Better Freezer & Beehive** | Adds direct Freezer water-container input, 4x production, five input slots for newly placed machines, and larger finished-item buffers. |
-| **Better Plasma Drills** | Adds level-4 and level-5 upgrades, greater speed, battery capacity, range, beam radii up to 10, and 20–300 unit damage per second. |
-| **Raid Detector** | Adds a beacon-housed logic sensor sold by the Hideout Trader that stays on for scheduled or active raids within 256 meters. |
-| **Wireless Vacuum Pipe** | Joins same-color pipe networks, moves items through Send/Receive, and lets Receive-side machines pull from matching Send storage across loaded worlds. Directional endpoints default to direct-container-only scope. |
-| **Network Storage Chest** | Adds one searchable catalog for every reachable piped container, server-validated withdrawals, and a five-slot tray that sorts deposits into the best matching storage. |
-| **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
-| **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
-| **Dual-Fluid Water Cannon** | Accepts logic, water, and chemical inputs and fires every available liquid on one OFF-to-ON pulse. |
+| **Developer Commands** | Enables `/fly`, `/unlimited`, and other dev commands with configurable access. |
+| **Resource Locator Dots** | Shows Connect Tool dots on refinable resource cores. |
+| **Full-Speed Carrying** | Restores normal movement and sprinting while carrying. |
+| **Better Engines** | Boosts engine power and top-tier fuel efficiency. |
+| **Better Freezer & Beehive** | Adds freezer water input, larger storage, and 4x production. |
+| **Better Plasma Drills** | Adds levels 4–5 with stronger, faster, longer-range drilling. |
+| **Raid Detector** | Adds a trader-bought 256-meter raid logic sensor. |
+| **Wireless Vacuum Pipe** | Links same-color pipe systems, including across worlds. |
+| **Network Storage Chest** | Browses network storage and routes deposits in Smart or Nearest mode. |
+| **Revival Buff Recovery** | Restores food buffs after a Revival Baguette revive. |
+| **Chemical Fertilizer Splash** | Makes chemical projectiles fertilize crops and grow beds. |
+| **Dual-Fluid Water Cannon** | Fires connected water and chemical together on a logic pulse. |
 
 Every workshop action preflights all targets before writing, creates
 SHA-256-verified backups, replaces files atomically, verifies the outputs, and
@@ -280,17 +288,28 @@ only the owned runtime files and preserves their original uninstall backups.
 permanent UUID `bc7576a7-f226-459a-883c-e8460e955d63`. Its default-unlocked
 Craftbot recipe makes one terminal in 30 seconds from one piped Small Chest,
 ten Component Kits, and twenty Circuit Boards. The part reuses the piped Small
-Chest model while keeping its own isolated script, five-slot deposit tray,
+Chest model while keeping its own isolated script, three-slot deposit tray,
 GUI, localization, and shared ScrapLab Icon Pack registration.
 
 Interact with the terminal to browse one compact, searchable catalog of all
 items in reachable containers. Withdrawals and deposits are checked and
 committed on the server, refresh on network revisions, and abort safely if a
-container changes before commit. The deposit tray prefers an existing partial
-stack, then a chest already holding that item, a compatible filtered chest,
-and finally empty general storage. Items that cannot be routed remain in the
-tray. The player panel combines hotbar slots `0-9` and backpack slots `10+` in
-one scrollable view.
+container changes before commit. The deposit tray prefers compatible native
+filtered storage, existing partial stacks, and chests already holding the exact
+item. It then learns each chest's dominant item family and category, so new
+interactive parts join similar parts instead of unrelated gas or food. Empty
+storage is preferred over contaminating an unrelated chest. These profiles are
+cached by container revision, and unknown future or third-party items safely
+fall back to exact-item and empty-storage routing. Items that cannot be routed
+remain in the tray. The player panel combines hotbar slots `0-9` and backpack
+slots `10+` in one scrollable view.
+
+Each terminal remembers its own routing toggle. **Smart Sort ON** uses the
+content-learning rules above. **Smart Sort OFF** chooses the closest compatible
+same-world chest that has an empty slot, then considers cross-world storage and
+uses stable container IDs for exact ties. Existing occupied five-slot trays are
+never truncated: they stay intact until automatic routing empties them, then
+migrate safely to three slots while the terminal is closed.
 
 The terminal works on ordinary local pipe networks by itself. When Wireless
 Vacuum Pipe is installed and ready, it also follows same-color Link routes and
@@ -410,7 +429,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.6.0.zip
+release\ScrapLab-2.7.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

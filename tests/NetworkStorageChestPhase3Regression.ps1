@@ -4,6 +4,7 @@ $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $part = Join-Path $root 'source\Patching\Parts\NetworkStorageChest'
 $lua = Get-Content -LiteralPath (Join-Path $part 'NetworkStorageChest.lua') -Raw
+$index = Get-Content -LiteralPath (Join-Path $root 'source\Patching\Scripts\ScrapLab\Storage\NetworkInventoryIndex.lua') -Raw
 $harness = Get-Content -LiteralPath (Join-Path $part 'NetworkStorageChestPhase3Harness.lua') -Raw
 $deployer = Get-Content -LiteralPath (Join-Path $part 'NetworkStorageChestPhase0Deploy.ps1') -Raw
 $gui = Get-Content -LiteralPath (Join-Path $part 'NetworkStorageChest.gui') -Raw | ConvertFrom-Json
@@ -15,7 +16,18 @@ Assert-True $lua.Contains('sm.container.spendFromSlot( buffer, slot, itemUuid, r
 Assert-True $lua.Contains('entry.descriptor.container:getRevision() ~= entry.revision') 'Destination revision guard is missing.'
 Assert-True $lua.Contains('BLOCKED_DEPOSIT_UUIDS') 'Machine-owned destination exclusion is missing.'
 Assert-True $lua.Contains('PARTIAL_DESTINATIONS_FULL') 'Safe partial routing UI state is missing.'
-foreach($test in @('specialized-container-first','fullest-partial-stack-first','same-item-before-empty','split-allocation','partial-capacity-left-safe','no-destination-keeps-items','destination-revision-conflict','terminal-buffer-excluded')){
+foreach($snippet in @('contentRoutingRank','DOMINANT ITEM FAMILY','MATCHING ITEM CATEGORY','EMPTY CHEST','UNRELATED CHEST','aFamilyPurity','aCategoryPurity')){
+    Assert-True $lua.Contains($snippet) "Content-learning routing lost: $snippet"
+}
+foreach($snippet in @('destinationHasEmptySlot','destinationProximity','NEAREST EMPTY CHEST',
+    'if not smartRouting then','proximityTier','proximityDistance','stored.smartRouting')){
+    Assert-True $lua.Contains($snippet) "Routing-mode behavior lost: $snippet"
+}
+Assert-True $lua.Contains('local EXPECTED_BUFFER_SIZE = 3') 'The real deposit tray is not three slots.'
+foreach($snippet in @('getItemProfile','SHAPESET_REGISTRY','categoryStacks','familyStacks','fullestPartial','catalogFailures')){
+    Assert-True $index.Contains($snippet) "Revision-cached routing catalog lost: $snippet"
+}
+foreach($test in @('specialized-container-first','fullest-partial-stack-first','same-item-before-empty','interactive-family-before-gas-chest','empty-before-unrelated-chest','split-allocation','partial-capacity-left-safe','no-destination-keeps-items','destination-revision-conflict','terminal-buffer-excluded')){
     Assert-True $harness.Contains($test) "Harness lost test: $test"
 }
 Assert-True $harness.Contains('-conservation') 'Harness conservation assertions are missing.'

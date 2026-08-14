@@ -35,12 +35,17 @@ foreach ($key in @('inventoryDepositHelp','inventoryDepositClick','inventoryDepo
 Assert-True ($gui.width -eq 1120 -and $gui.height -eq 540) 'The accepted compact 1120x540 footprint changed.'
 foreach ($name in @('SearchInput','SortButton','ClearSearch','CatalogScrollHost','IndexProgressHolder',
     'IndexProgressFill','SelectionStatus','TakeOneButton','TakeStackButton','TakeAllButton',
-    'SelectedIconImage','SelectedDetail','PlayerInventoryScrollHost','DepositBox','DepositHelp')) {
+    'SelectedIconImage','SelectedDetail','PlayerInventoryScrollHost','DepositBox','DepositHelp','RoutingModeButton')) {
     Assert-True ($null -ne (Find-Widget $gui $name)) "Missing GUI widget: $name"
 }
 Assert-True ((Find-Widget $gui 'IndexProgressFill').Skin -eq 'DressbotProgress') 'Indexing does not use the native progress skin.'
-Assert-True ((Find-Widget $gui 'DepositBox').ContainerData.ContainerWidth -eq 320) 'The five-slot deposit tray width changed.'
-Assert-True ((Find-Widget $gui 'DepositBox').ContainerData.ItemSize.width -eq 64) 'The deposit tray lost its compact five-slot rhythm.'
+Assert-True ((Find-Widget $gui 'DepositBox').ContainerData.ContainerWidth -eq 192) 'The deposit tray is not exactly three slots wide.'
+Assert-True ((Find-Widget $gui 'DepositBox').ContainerData.ItemSize.width -eq 64) 'The deposit tray lost its compact three-slot rhythm.'
+$routingButton = Find-Widget $gui 'RoutingModeButton'
+Assert-True ($routingButton.width -eq 128 -and $routingButton.height -eq 64 -and $routingButton.x -eq 216) `
+    'The routing toggle does not occupy the exact two reclaimed slot positions.'
+Assert-True ($routingButton.Skin -eq 'SettingsButton' -and $routingButton.onClick -eq 'cl_onControlClick') `
+    'The routing toggle lost its native Scrap Mechanic button behavior.'
 $playerHost = Find-Widget $gui 'PlayerInventoryScrollHost'
 Assert-True ($playerHost.height -eq 256 -and $playerHost.width -eq 342) 'The unified player-inventory viewport changed.'
 Assert-True ($null -eq (Find-Widget $gui 'InventoryBox') -and $null -eq (Find-Widget $gui 'HotbarBox')) 'Duplicate native player-inventory renderers returned.'
@@ -57,6 +62,13 @@ foreach ($needle in @('buildVisibleCatalog','sourceKind','localSources','wireles
     'PlayerInventoryScrollHost','cl_rebuildPlayerInventory','hotbarBinding','playerInventorySlots',
     'cl_restoreCatalogScroll','selectionPreservedScroll','slotAccurate')) {
     Assert-Contains $lua $needle "Terminal script is missing Phase 5 behavior: $needle"
+}
+foreach ($needle in @('cl_refreshRoutingControl','cl_applyRoutingButtonState','sv_n_setRoutingMode',
+    'cl_n_routingModeState','self.storage:save','legacyBufferHelp','ROUTING_MODE_RATE_LIMIT_TICKS')) {
+    Assert-Contains $lua $needle "Routing-mode UI/state behavior is missing: $needle"
+}
+foreach ($key in @('depositBuffer3','routingSmartOn','routingSmartOff','routingSmartHint','routingNearestHint','legacyBufferLabel')) {
+    Assert-True (-not [string]::IsNullOrWhiteSpace([string]$localization.English.$key)) "English is missing $key."
 }
 foreach ($needle in @('sv_n_stageInventorySlot','lastDepositTick','inventory:getRevision() ~= tonumber( data.revision )',
     'sm.container.spendFromSlot( inventory, slot, item.uuid, moved, true )','sm.container.collect( buffer, item.uuid, moved )')) {

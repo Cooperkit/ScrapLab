@@ -59,7 +59,7 @@ The GUI API can bind a named visible inventory grid to one real container. `setC
 The safe design is therefore:
 
 - a custom paged item catalog made from server-provided UUID/count data;
-- a real 5-slot deposit buffer bound to a normal container grid;
+- a real 3-slot deposit buffer bound to a normal container grid, beside a two-slot-wide routing-mode control;
 - explicit Take controls that perform validated server transactions;
 - no copied or client-owned item state.
 
@@ -136,7 +136,7 @@ Phase 0 will probe whether the normal runtime GUI exposes a reliable text-entry 
 
 ### 2.3 Depositing and automatic sorting
 
-The lower section is a real 5-slot **DEPOSIT TRAY**. The unified player slot grid stages a clicked stack into it through a revision-checked server transaction; compatible external item drags can still target the real tray.
+The lower section is a real 3-slot **DEPOSIT TRAY** plus a routing toggle occupying the reclaimed two-slot footprint. The unified player slot grid stages a clicked stack into it through a revision-checked server transaction; compatible external item drags can still target the real tray. Smart Sort uses content-learning ranking; Nearest mode selects the closest compatible same-world chest with an empty slot before cross-world fallback. The choice persists per terminal.
 
 On a deposit-container revision:
 
@@ -159,9 +159,13 @@ Rank remaining candidates by this stable tuple:
 1. A native filtered or specialized container that explicitly accepts the item.
 2. An existing partial stack of the same UUID, preferring the fullest partial stack to free slots quickly.
 3. A container already holding the same UUID, so item types remain grouped.
-4. A general unfiltered storage container with free capacity.
-5. Local physical route before wireless route when match quality is otherwise equal.
-6. Shorter route, then stable container ID, as deterministic tie-breakers.
+4. A container dominated by the same shape-set item family, such as interactive parts, blocks, consumables, farming items, or resources.
+5. A container dominated by the same broader item category, followed by weaker family/category matches.
+6. Empty general storage before an occupied but unrelated chest.
+7. Greater family/category purity and useful capacity, then local physical route before wireless when semantic match quality is equal.
+8. Shorter route, then stable container ID, as deterministic tie-breakers.
+
+Family and category counts are stored in the shared container-revision cache. An unchanged destination is not rescanned for each deposit. The item catalog is built once per game session from Scrap Mechanic's registered shape sets, including intact custom shape-set registrations; engine item predicates provide a safe fallback when an entry cannot be classified. Unknown items never group merely because they are unknown.
 
 The planner may split one deposited stack across several destinations. It calculates a bounded allocation, spends only the routed amount from the exact deposit slot, collects each portion, and commits all portions together. A concurrent edit causes the complete transaction to abort and retry from a new snapshot.
 
@@ -467,7 +471,7 @@ the public executable.
 
 - **Network Storage Chest** is the locked display name.
 - The permanent UUID and piped Small Chest model reference are locked.
-- The terminal has one 5-slot real deposit buffer; it is not counted as network storage.
+- The terminal has one 3-slot real deposit buffer; it is not counted as network storage. Occupied legacy five-slot buffers migrate only after they empty, so no saved item is truncated.
 - Every transfer is manual withdrawal or automatic deposit sorting. The part does not continuously rebalance existing chests.
 - Wireless integration respects Link/Send/Receive direction and does not create a separate wireless protocol.
 - Cross-world access requires Wireless Vacuum Pipe to be installed and ready.

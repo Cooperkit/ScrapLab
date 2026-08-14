@@ -30,6 +30,7 @@ namespace RaidRescue
         internal const string ChemicalFertilizer = "chemical-fertilizer";
         internal const string DualFluidCannon = "dual-fluid-cannon";
         internal const string DeveloperCommands = "developer-commands";
+        internal const string AllGameplayMods = "all-gameplay-mods";
 
         internal static bool IsKnownAction(string action)
         {
@@ -45,13 +46,15 @@ namespace RaidRescue
                 String.Equals(action, NetworkStorageChest, StringComparison.Ordinal) ||
                 String.Equals(action, ChemicalFertilizer, StringComparison.Ordinal) ||
                 String.Equals(action, DualFluidCannon, StringComparison.Ordinal) ||
-                String.Equals(action, DeveloperCommands, StringComparison.Ordinal);
+                String.Equals(action, DeveloperCommands, StringComparison.Ordinal) ||
+                String.Equals(action, AllGameplayMods, StringComparison.Ordinal);
         }
 
         internal static bool IsStatusAction(string action)
         {
             return IsKnownAction(action) &&
-                !String.Equals(action, Hotfix, StringComparison.Ordinal);
+                !String.Equals(action, Hotfix, StringComparison.Ordinal) &&
+                !String.Equals(action, AllGameplayMods, StringComparison.Ordinal);
         }
 
         internal static bool IsValidMode(string action, string mode)

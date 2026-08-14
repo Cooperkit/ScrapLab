@@ -52,7 +52,7 @@ Assert-Contains $harness 'pos = { x = 5, y = 8, z = 0 }' 'The reversed indirect 
 Assert-Contains $deployer 'NetworkStorageChestPhase4Harness.lua' 'The development deployer does not own/load the Phase 4 harness.'
 Assert-Contains $deployer '$Text.Substring(0, $insertAt)' 'The English localization installer does not use a single root insertion.'
 Assert-True (-not $deployer.Contains('return $Text.Replace($opening, $opening + $entry)')) 'The localization installer still duplicates entries in every nested object.'
-Assert-Contains $service 'private const string DefinitionVersion = "7"' 'Wireless patch definition was not raised for the Link-scope correction.'
+Assert-Contains $service 'private const string DefinitionVersion = "8"' 'Wireless patch definition no longer includes the Link-scope correction and current UI update.'
 Assert-Contains $service '3411D6804F6D874C4B9BD8D8C80C4109BF3CECFB0F44F31EDF49C0DF4F3D8DC8' 'Definition-6 manager migration hash is missing.'
 Assert-Contains $service '2EE306FA1303FDA36CC2CE64964CCD4E567CC27EA7D82D4F47B5B6CCE31BC321' 'Definition-5 manager migration hash is missing.'
 Assert-Contains $service '8C8641F1069968D0750ABCDCB0C56261616D44B11E2C1814C4664222BED2BD2A' 'Definition-5 graph migration hash is missing.'

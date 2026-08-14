@@ -105,7 +105,7 @@ function SurvivalGame.sv_slstorage0Cleanup( self, player )
 	local container = interactable and interactable:getContainer( 0 ) or nil
 	local _, _, total = slStoragePhase0ContainerSummary( container )
 	if total > 0 then
-		self:sv_slstorage0Message( player, "Cleanup refused: empty the 5-slot deposit buffer first." )
+		self:sv_slstorage0Message( player, "Cleanup refused: empty the 3-slot deposit buffer first." )
 		return
 	end
 	shape:destroyShape( 0 )

@@ -158,6 +158,9 @@ namespace RaidRescue
                 case PatchHelperProtocol.DeveloperCommands:
                     return DeveloperCommandsPatchService.SetEnabled(
                         request.Enabled, request.Mode);
+                case PatchHelperProtocol.AllGameplayMods:
+                    return GameplayModsBatchCoordinator.SetEnabled(
+                        request.Enabled);
                 default:
                     return Failure("The patch helper rejected an unknown action.");
             }

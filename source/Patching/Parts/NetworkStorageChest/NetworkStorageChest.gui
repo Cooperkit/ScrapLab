@@ -377,7 +377,7 @@
           "y": 88
         },
         {
-          "Caption": "5-SLOT DEPOSIT BUFFER",
+          "Caption": "3-SLOT DEPOSIT BUFFER",
           "Childs": [],
           "FontName": "SM_TextLabel",
           "Name": "DepositLabel",
@@ -415,7 +415,7 @@
             "ContainerId": -1,
             "ContainerOffsetX": 0,
             "ContainerOffsetY": 0,
-            "ContainerWidth": 320,
+            "ContainerWidth": 192,
             "IsHotbar": false,
             "ItemSize": {
               "height": 64,
@@ -432,8 +432,29 @@
           "Skin": "PanelEmpty",
           "Type": "JsonContainerBox",
           "height": 64,
-          "width": 320,
+          "width": 192,
           "x": 24,
+          "y": 392
+        },
+        {
+          "Caption": "SMART SORT\nON",
+          "Childs": [],
+          "Enabled": false,
+          "FontName": "SM_ButtonSmall",
+          "Name": "RoutingModeButton",
+          "NeedKey": true,
+          "NeedMouse": true,
+          "Skin": "SettingsButton",
+          "TextAlign": "Center",
+          "TextColour": "1 0.80 0.25 1",
+          "ToolTip": {
+            "Text": "Smart Sort groups matching items. Turn it off to use the nearest compatible chest with an empty slot."
+          },
+          "Type": "Button",
+          "height": 64,
+          "onClick": "cl_onControlClick",
+          "width": 128,
+          "x": 216,
           "y": 392
         }
       ],

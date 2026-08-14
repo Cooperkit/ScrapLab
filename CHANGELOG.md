@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+## 2.7.0 - 2026-08-14
+
+- Redesigned the Network Storage Chest deposit strip as a real three-slot tray
+  plus a native two-slot-wide routing toggle. Each terminal persists Smart Sort
+  or Nearest Empty mode; nearest routing uses same-world physical distance,
+  compatible empty-slot checks, cross-world fallback, and deterministic ties.
+- Added a lossless five-to-three-slot migration. Occupied legacy trays are
+  never resized or hidden; they keep routing safely and migrate only after they
+  are empty and the terminal UI is closed. Definition 3 updates the runtime,
+  GUI, and localization atomically while retaining original uninstall backups.
+- Added a compact **Update** action to every Patch Catalog mod card whenever
+  that installed patch reports a newer verified definition. Updates use each
+  mod's existing atomic installer; Developer Commands preserve the selected
+  Host Only or Every Player access mode.
+- Upgraded Network Storage Chest smart deposits with content-learning routing.
+  Exact items and native filtered containers remain authoritative, while normal
+  chests now develop cached item-family profiles so interactive parts prefer
+  other parts instead of unrelated fuel, food, or resource storage. Empty
+  storage is preferred over contaminating an unrelated chest.
+- Added a verified in-place Network Storage Chest definition-2 update. Existing
+  installations keep their original clean-file receipt and save-sensitive part
+  registrations while only the two owned routing scripts are replaced and
+  checksum-verified. Routing profiles reuse the revision cache instead of
+  rescanning every destination slot for every deposit.
+- Fixed Network Storage Chest being misreported as **Partial Patch - Repair
+  Required** after Steam Verify restored every official registration but left
+  ScrapLab's intact owned runtime and UI files. It now shows **Reinstall
+  Required - Save Part at Risk**, reinstalls safely, and retains the original
+  missing-file ownership so a later removal still deletes those owned files.
+- Added a compact three-state **All Mods** control to the Patch Catalog header.
+  It installs or updates all 11 compatible gameplay mods through one elevated
+  coordinator, reports incompatible skips without blocking independent mods,
+  and always leaves Developer Commands under manual control.
+- Added a single combined save-sensitive warning for bulk removal, dependency-
+  safe ordering, first-failure stopping, per-mod installed/updated/skipped/
+  failed results, mixed-state accessibility, game-running lockout, and a
+  reduced-motion-safe Scrap Mechanic machinery treatment.
 - Redesigned the in-game **Wireless Vacuum Pipe** panel as a centered native
   Scrap Mechanic machine interface. Operation modes now use proper selected
   controls, connection health has a color-coded status lamp, channel/world/

@@ -362,7 +362,7 @@ local function sl7ProcessSoak( self )
 		pcall( function() r.instances[1]:server_onRefresh() end )
 		local refreshed = sl7Container( r.terminals[1] )
 		local quantity = refreshed and sm.container.totalQuantity( refreshed, SL7_COMPONENT ) or -1
-		sl7Record( r, "five-slot-buffer-refresh-persistence", refreshed and refreshed:getSize() == 5 and
+		sl7Record( r, "three-slot-buffer-refresh-persistence", refreshed and refreshed:getSize() == 3 and
 			tostring( sm.container.getId( refreshed ) ) == id and quantity == 3,
 			"size=" .. tostring( refreshed and refreshed:getSize() ) .. ", quantity=" .. tostring( quantity ) )
 		local beforePrune = sl7Stats()

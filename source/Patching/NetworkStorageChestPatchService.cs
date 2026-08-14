@@ -11,7 +11,12 @@ namespace RaidRescue
     internal static class NetworkStorageChestPatchService
     {
         private const string ModKey = "NetworkStorageChest";
-        private const string DefinitionVersion = "1";
+        private const string DefinitionVersion = "3";
+        private const string LegacyV1RuntimeHash = "453BB866D4B4D564C79BFF9F4A2997131BF9826496608DBEA7709BE2730FC596";
+        private const string LegacyV1IndexHash = "F036925AFA22A028CFED0A82E89A691442FC77DEB851D0876F3DD92ED535D4EC";
+        private const string LegacyV2RuntimeHash = "B42F99CA53E5D36188F8BFC352DCB0F560A649BD6783E31DAE38BC22ECC3FB49";
+        private const string LegacyV2GuiHash = "999B00353C31FBCA9EE94BF9B816132C8F773890BBC489B155236F028D6D5A37";
+        private const string LegacyV2LocalizationHash = "4FF131F150F0FF472786CA49A701AFD05D3E04375A89C710A9412417A80A010F";
         internal const string PartUuid = "bc7576a7-f226-459a-883c-e8460e955d63";
         internal const string VerifiedSteamBuildId = "24529696";
         internal const string VerifiedGameVersion = "1.0.5.876";
@@ -59,7 +64,7 @@ namespace RaidRescue
         {
             public string RelativePath, DisplayName, ResourceName, Path;
             public byte[] Bytes;
-            public bool Missing, Exact;
+            public bool Missing, Exact, LegacyExact;
         }
 
         private sealed class ProbeState
@@ -72,7 +77,10 @@ namespace RaidRescue
             public ScrapLabIconAtlasCoordinator.CatalogPlan CatalogPlan;
             public ScrapLabIconAtlasCoordinator.AtlasInfo AtlasInfo;
             public ScrapLabIconAtlasCoordinator.SharedAtlasReceipt AtlasReceipt;
-            public bool AtlasClean, AtlasInstalled, AtlasKnown, OwnedClean, OwnedInstalled, AllClean, AllInstalled, AllKnownClean;
+            public bool AtlasClean, AtlasInstalled, AtlasKnown;
+            public bool OwnedClean, OwnedInstalled, DefinitionUpdateAvailable;
+            public bool RegistrationsClean, OrphanedOwnedAssets;
+            public bool AllClean, AllInstalled, AllKnownClean;
         }
 
         public static GamePatchResult GetStatus()
@@ -99,10 +107,14 @@ namespace RaidRescue
                 {
                     result.Installed = true;
                     result.AlreadyPatched = true;
+                    result.NeedsUpdate = state.DefinitionUpdateAvailable;
                     AdaptivePatchSupport.FillResult(result, build,
+                        state.DefinitionUpdateAvailable ? PatchCompatibilityState.DefinitionUpdate :
                         state.AllKnownClean ? PatchCompatibilityState.KnownInstalled : PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
-                        "The Network Storage Chest part, recipe, runtime, localization, and icon are intact.");
+                        state.DefinitionUpdateAvailable
+                            ? "A verified three-slot routing-mode update is ready."
+                            : "The Network Storage Chest part, recipe, runtime, localization, and icon are intact.");
                     return result;
                 }
                 if (state.AllClean)
@@ -142,6 +154,19 @@ namespace RaidRescue
             {
                 SteamBuildInfo build = ReadBuild(gamePath, result);
                 ProbeState state = Probe(gamePath);
+                if (enabled && state.AllInstalled && state.DefinitionUpdateAvailable)
+                {
+                    List<AtomicCustomPartFilePlan> updatePlans = BuildDefinitionUpdatePlans(state);
+                    ApplyDefinitionUpdate(updatePlans, result, gamePath, backupRoot, build);
+                    result.Success = true;
+                    result.Installed = true;
+                    result.NeedsUpdate = false;
+                    result.Changes.Add("Installed the three-slot tray with per-terminal Smart Sort and Nearest Empty routing modes.");
+                    AdaptivePatchSupport.FillResult(result, build, PatchCompatibilityState.AdaptiveInstalled,
+                        !state.AllKnownClean, true, "Network Storage Chest routing definition 3 was installed and verified.");
+                    SecretModBackupRetention.Prune(backupRoot, ModKey, result.BackupPath, result);
+                    return result;
+                }
                 if (enabled && state.AllInstalled)
                 {
                     result.Success = true; result.Installed = true; result.AlreadyPatched = true;
@@ -174,7 +199,7 @@ namespace RaidRescue
                     plans, result, gamePath, backupRoot, build, enabled, state.IconCatalog);
                 result.Success = true; result.Installed = enabled;
                 result.Changes.Add(enabled
-                    ? "Installed the Network Storage Chest, five-slot deposit tray, catalog, and server-authoritative transfers."
+                    ? "Installed the Network Storage Chest, three-slot deposit tray, routing-mode control, catalog, and server-authoritative transfers."
                     : "Removed the Network Storage Chest registrations, recipe, runtime, localization, and icon entry.");
                 result.Changes.Add(enabled
                     ? "Added the default-unlocked Craftbot recipe and optional Wireless Vacuum Pipe integration."
@@ -236,7 +261,14 @@ namespace RaidRescue
             AddOwned(state, gamePath, Path.Combine("Survival", "Scripts", "ScrapLab", "Parts", "NetworkStorageChest", "NetworkStorageChest.localization.json"), "Network Storage Chest localization", ResourcePrefix + "NetworkStorageChest.localization.json");
 
             state.OwnedClean = true; state.OwnedInstalled = true;
-            foreach (OwnedAsset owned in state.Owned) { state.OwnedClean &= owned.Missing; state.OwnedInstalled &= owned.Exact; }
+            bool anyLegacyOwned = false;
+            foreach (OwnedAsset owned in state.Owned)
+            {
+                state.OwnedClean &= owned.Missing;
+                state.OwnedInstalled &= owned.Exact || owned.LegacyExact;
+                anyLegacyOwned |= owned.LegacyExact;
+            }
+            state.DefinitionUpdateAvailable = state.OwnedInstalled && anyLegacyOwned;
             bool textsClean = true, textsInstalled = true, known = state.AtlasKnown;
             foreach (TextState text in state.Texts)
             {
@@ -244,7 +276,11 @@ namespace RaidRescue
                 else { textsClean &= text.Clean; textsInstalled &= text.Installed; }
                 known &= text.Known;
             }
-            state.AllClean = textsClean && state.OwnedClean;
+            state.RegistrationsClean = textsClean;
+            state.OrphanedOwnedAssets = state.RegistrationsClean &&
+                state.OwnedInstalled;
+            state.AllClean = state.RegistrationsClean &&
+                (state.OwnedClean || state.OwnedInstalled);
             state.AllInstalled = textsInstalled && state.OwnedInstalled && state.AtlasInstalled;
             state.AllKnownClean = known;
             return state;
@@ -299,7 +335,9 @@ namespace RaidRescue
             ScrapLabIconAtlasCoordinator.IconPlacement placement = catalog.Placements[PartUuid];
             AddTextPlan(plans, xml, PatchIconXml(xml.Document.NormalizedText, placement.X, placement.Y));
             if (catalog.AtlasChanged) AddBinaryPlan(plans, IconPngRelative, "IconMapSurvival.png", state.AtlasPath, state.AtlasBytes, catalog.AtlasBytes, true, false);
-            foreach (OwnedAsset owned in state.Owned) AddOwnedPlan(plans, owned, owned.Bytes);
+            foreach (OwnedAsset owned in state.Owned)
+                AddOwnedPlan(plans, owned, owned.Bytes,
+                    state.OrphanedOwnedAssets);
             return plans;
         }
 
@@ -316,15 +354,112 @@ namespace RaidRescue
             byte[] baseline = File.Exists(baselinePath) ? File.ReadAllBytes(baselinePath) : null;
             byte[] atlasOutput = ScrapLabIconAtlasCoordinator.RemoveCatalogWhenUnused(xmlOutput, state.AtlasBytes, state.IconCatalog, baseline);
             if (!BytesEqual(atlasOutput, state.AtlasBytes)) AddBinaryPlan(plans, IconPngRelative, "IconMapSurvival.png", state.AtlasPath, state.AtlasBytes, atlasOutput, true, false);
-            foreach (OwnedAsset owned in state.Owned) AddOwnedPlan(plans, owned, null);
+            foreach (OwnedAsset owned in state.Owned)
+                AddOwnedPlan(plans, owned, null, false);
             return plans;
         }
 
         private static void AddOwned(ProbeState state, string gamePath, string relative, string display, string resource)
         {
             byte[] bytes = GetResource(resource); string path = Path.Combine(gamePath, relative); bool missing = !File.Exists(path);
+            byte[] current = missing ? null : File.ReadAllBytes(path);
+            bool exact = !missing && BytesEqual(current, bytes);
             state.Owned.Add(new OwnedAsset { RelativePath = relative, DisplayName = display, ResourceName = resource, Path = path, Bytes = bytes,
-                Missing = missing, Exact = !missing && BytesEqual(File.ReadAllBytes(path), bytes) });
+                Missing = missing, Exact = exact, LegacyExact = !missing && !exact && IsLegacyOwnedHash(relative, AdaptivePatchSupport.Sha256(current)) });
+        }
+
+        private static bool IsLegacyOwnedHash(string relative, string hash)
+        {
+            string file = Path.GetFileName(relative);
+            if (String.Equals(file, "NetworkStorageChest.lua", StringComparison.OrdinalIgnoreCase))
+                return String.Equals(hash, LegacyV1RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV2RuntimeHash, StringComparison.OrdinalIgnoreCase);
+            if (String.Equals(file, "NetworkInventoryIndex.lua", StringComparison.OrdinalIgnoreCase))
+                return String.Equals(hash, LegacyV1IndexHash, StringComparison.OrdinalIgnoreCase);
+            if (String.Equals(file, "NetworkStorageChest.gui", StringComparison.OrdinalIgnoreCase))
+                return String.Equals(hash, LegacyV2GuiHash, StringComparison.OrdinalIgnoreCase);
+            if (String.Equals(file, "NetworkStorageChest.localization.json", StringComparison.OrdinalIgnoreCase))
+                return String.Equals(hash, LegacyV2LocalizationHash, StringComparison.OrdinalIgnoreCase);
+            return false;
+        }
+
+        private static List<AtomicCustomPartFilePlan> BuildDefinitionUpdatePlans(ProbeState state)
+        {
+            if (state == null || !state.DefinitionUpdateAvailable)
+                throw new InvalidOperationException("The Network Storage Chest routing-mode update is not available.");
+            List<AtomicCustomPartFilePlan> plans = new List<AtomicCustomPartFilePlan>();
+            foreach (OwnedAsset owned in state.Owned)
+                if (owned.LegacyExact) AddOwnedPlan(plans, owned, owned.Bytes, false);
+            if (plans.Count == 0)
+                throw new InvalidOperationException("No verified legacy Network Storage Chest runtime files were found.");
+            return plans;
+        }
+
+        private static void ApplyDefinitionUpdate(List<AtomicCustomPartFilePlan> plans,
+            GamePatchResult result, string gamePath, string backupRoot, SteamBuildInfo build)
+        {
+            AdaptivePatchReceipt receipt = AdaptivePatchSupport.LoadReceipt(ModKey);
+            if (receipt == null || receipt.Files == null)
+                throw new InvalidOperationException("The original Network Storage Chest receipt is missing, so its runtime cannot be updated safely.");
+            foreach (AtomicCustomPartFilePlan plan in plans)
+            {
+                AdaptivePatchReceiptFile file = AdaptivePatchSupport.FindReceiptFile(receipt, plan.RelativePath);
+                if (file == null || !String.Equals(file.OutputHash, plan.SourceHash, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(plan.DisplayName + " no longer matches its verified install receipt.");
+            }
+
+            string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss-fff");
+            string backupPath = Path.Combine(backupRoot, "Update-" + ModKey + "-" + stamp);
+            Directory.CreateDirectory(backupPath);
+            result.BackupPath = backupPath;
+            List<AdaptivePatchReceiptFile> manifest = new List<AdaptivePatchReceiptFile>();
+            foreach (AtomicCustomPartFilePlan plan in plans)
+            {
+                string backup = Path.Combine(backupPath, plan.RelativePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(backup));
+                File.WriteAllBytes(backup, plan.SourceBytes);
+                if (!String.Equals(AdaptivePatchSupport.Sha256(backup), plan.SourceHash, StringComparison.OrdinalIgnoreCase))
+                    throw new IOException(plan.DisplayName + " update backup failed checksum verification.");
+                manifest.Add(new AdaptivePatchReceiptFile
+                {
+                    RelativePath = plan.RelativePath,
+                    SourceHash = plan.SourceHash,
+                    OutputHash = plan.OutputHash,
+                    Newline = "PRESERVED",
+                    HasBom = false
+                });
+            }
+            AdaptivePatchSupport.WriteBackupManifest(backupPath, "Network Storage Chest",
+                "Routing Mode Definition Update", gamePath, build, DefinitionVersion, manifest);
+
+            List<AtomicCustomPartFilePlan> changed = new List<AtomicCustomPartFilePlan>();
+            try
+            {
+                foreach (AtomicCustomPartFilePlan plan in plans)
+                {
+                    AdaptivePatchSupport.ReplaceFile(plan.Path, plan.OutputBytes, ModKey + "-definition-update");
+                    changed.Add(plan);
+                    if (!File.Exists(plan.Path) || !String.Equals(AdaptivePatchSupport.Sha256(plan.Path), plan.OutputHash, StringComparison.OrdinalIgnoreCase))
+                        throw new IOException(plan.DisplayName + " failed final update verification.");
+                }
+                foreach (AtomicCustomPartFilePlan plan in plans)
+                {
+                    AdaptivePatchReceiptFile file = AdaptivePatchSupport.FindReceiptFile(receipt, plan.RelativePath);
+                    file.OutputHash = plan.OutputHash;
+                }
+                receipt.DefinitionVersion = DefinitionVersion;
+                AdaptivePatchSupport.SaveReceipt(ModKey, receipt);
+            }
+            catch
+            {
+                for (int index = changed.Count - 1; index >= 0; index--)
+                    AdaptivePatchSupport.ReplaceFile(changed[index].Path, changed[index].SourceBytes, ModKey + "-definition-update-rollback");
+                foreach (AtomicCustomPartFilePlan plan in changed)
+                    if (!File.Exists(plan.Path) || !String.Equals(AdaptivePatchSupport.Sha256(plan.Path), plan.SourceHash, StringComparison.OrdinalIgnoreCase))
+                        throw new IOException("Network Storage Chest update rollback could not restore " + plan.DisplayName + ".");
+                throw;
+            }
+            result.FilesPatched = plans.Count;
         }
 
         private static void AddTextPlan(List<AtomicCustomPartFilePlan> plans, TextState state, string output)
@@ -333,18 +468,28 @@ namespace RaidRescue
             AddBinaryPlan(plans, state.RelativePath, state.DisplayName, state.Path, state.Document.OriginalBytes, state.Document.Render(output), false, false);
         }
 
-        private static void AddOwnedPlan(List<AtomicCustomPartFilePlan> plans, OwnedAsset owned, byte[] output)
+        private static void AddOwnedPlan(List<AtomicCustomPartFilePlan> plans,
+            OwnedAsset owned, byte[] output,
+            bool restoreAsMissing)
         {
             bool exists = File.Exists(owned.Path); byte[] source = exists ? File.ReadAllBytes(owned.Path) : null;
-            AddBinaryPlan(plans, owned.RelativePath, owned.DisplayName, owned.Path, source, output, false, output == null);
+            AtomicCustomPartFilePlan plan = AddBinaryPlan(plans,
+                owned.RelativePath, owned.DisplayName, owned.Path,
+                source, output, false, output == null);
+            plan.ReceiptSourceMissing = restoreAsMissing;
         }
 
-        private static void AddBinaryPlan(List<AtomicCustomPartFilePlan> plans, string relative, string display, string path, byte[] source, byte[] output, bool atlas, bool forceDelete)
+        private static AtomicCustomPartFilePlan AddBinaryPlan(
+            List<AtomicCustomPartFilePlan> plans, string relative,
+            string display, string path, byte[] source, byte[] output,
+            bool atlas, bool forceDelete)
         {
             bool exists = source != null;
-            plans.Add(new AtomicCustomPartFilePlan { RelativePath = relative, DisplayName = display, Path = path, SourceExists = exists,
+            AtomicCustomPartFilePlan plan = new AtomicCustomPartFilePlan { RelativePath = relative, DisplayName = display, Path = path, SourceExists = exists,
                 SourceBytes = source, OutputBytes = output, SourceHash = exists ? AdaptivePatchSupport.Sha256(source) : "MISSING",
-                OutputHash = output == null ? "MISSING" : AdaptivePatchSupport.Sha256(output), IsAtlas = atlas, ForceDeleteOnRemove = forceDelete });
+                OutputHash = output == null ? "MISSING" : AdaptivePatchSupport.Sha256(output), IsAtlas = atlas, ForceDeleteOnRemove = forceDelete };
+            plans.Add(plan);
+            return plan;
         }
 
         private static string PatchShapes(string text) { return InsertAfterUnique(text, "\t\t\"$SURVIVAL_DATA/Objects/Database/ShapeSets/interactive_shared.shapeset\",", "\n\t\t\"" + ShapeSetPath + "\","); }
