@@ -14,5 +14,5 @@ STEAM-*
 *.scraplab-backup-*.db
 __pycache__/
 *.py[cod]
-tools/experiments/
+/tools/
 
