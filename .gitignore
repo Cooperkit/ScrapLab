@@ -15,4 +15,5 @@ STEAM-*
 __pycache__/
 *.py[cod]
 /tools/
+/tests/
 
