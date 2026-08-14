@@ -212,180 +212,52 @@ Patch Bay armed, and stops before later removals if any mod cannot be restored.
 | **Chemical Fertilizer Splash** | Makes chemical projectiles fertilize crops and grow beds. |
 | **Dual-Fluid Water Cannon** | Fires connected water and chemical together on a logic pulse. |
 
-Every workshop action preflights all targets before writing, creates
-SHA-256-verified backups, replaces files atomically, verifies the outputs, and
-rolls the entire operation back if one target fails. Backup retention is
-bounded rather than growing forever.
+Every workshop action checks compatibility, creates verified backups, and
+rolls back failed changes. Backup retention is bounded.
 
-**Raid Detector** is a custom, save-sensitive part with permanent UUID
-`a638a8aa-6f4f-41c2-9e31-702687066092`. Buy one repeatedly from the unlocked
-Hideout Trader for four Caged Farmers. It scans a 256-meter 3D sphere in its
-current world every ten fixed ticks and keeps one normal fan-out logic output
-on from raid scheduling through the active attack. The part reuses the vanilla
-beacon housing, animates only while detecting, and creates no map marker, menu,
-or sound. Its concept #1 artwork is part of the shared **ScrapLab Icon Pack**.
-Definition 2 uses the interactable body's world reference so the server scan
-works correctly during the complete countdown and active-attack sequence.
-When the first custom-part mod is installed, ScrapLab writes every icon shipped
-with that app version into verified transparent cells, allocating from the
-bottom-right of the atlas upward so normal game additions can continue growing
-from the top. Individual mod toggles then change only their icon's XML
-registration; the PNG is rewritten only when the pack is first installed,
-expanded by an app update, or removed with the final custom-part mod. Decoded
-pixels outside all managed cells must remain identical. One bounded baseline
-and catalog receipt is shared instead of copying the 11 MB atlas per mod.
-Custom icons use true alpha transparency. If an older verified Raid Detector
-installation still contains the opaque blue-background artwork, its Patch Bay
-card offers a safe **Update** action that replaces only that managed icon tile.
-The same Update action migrates verified definition-1 detector scripts without
-unregistering the custom part or requiring detectors to be removed from saves.
+### Custom parts
 
-> **Raid Detector save warning:** remove every detector from worlds,
-> inventories, containers, and lifts, save the affected worlds, and close the
-> game before disabling the mod. If Steam removes its registrations, reinstall
-> it before opening a world that may still contain the custom part.
+- **Raid Detector** — UUID `a638a8aa-6f4f-41c2-9e31-702687066092`. Costs four
+  Caged Farmers at the Hideout Trader and outputs logic while a scheduled or
+  active raid is within 256 meters.
+- **Wireless Vacuum Pipe** — UUID `a34d9af0-4ba0-431d-b647-2d5435ecf138`.
+  Craft two from two Vacuum Pipes, two Component Kits, and four Circuit Boards.
+  Matching colors link pipe systems or route Send to Receive, including across
+  worlds. Send and Receive default to **Direct Container Only**; switch to
+  **Entire Pipe Network** when wanted.
+- **Network Storage Chest** — UUID `bc7576a7-f226-459a-883c-e8460e955d63`.
+  Craft one from a piped Small Chest, ten Component Kits, and twenty Circuit
+  Boards. Browse connected storage and route its three-slot tray with **Smart
+  Sort** or **Nearest Empty**. Wireless Vacuum Pipe support is optional.
 
-**Wireless Vacuum Pipe** is a custom, save-sensitive logistics part with
-permanent UUID `a34d9af0-4ba0-431d-b647-2d5435ecf138`. Its default-unlocked
-Craftbot recipe makes two pipes in 30 seconds from two Vacuum Pipes, two
-Component Kits, and four Circuit Boards. Paint is the wireless channel:
-same-color endpoints can join their physical pipe systems in bidirectional
-**Link** mode, or move items from **Send** networks into matching **Receive**
-networks. A machine attached to Receive can also pull directly from storage
-behind matching Send endpoints, so a Receive-side pump works without requiring
-a destination chest. Link and directional groups remain deliberately separate.
+All custom icons share the verified **ScrapLab Icon Pack**.
 
-The route may cross between the overworld and underground worlds. ScrapLab
-loads only required endpoint cells, shares world handles, and safely refuses
-new remote routes after the 64-cell cap. Machines prefer local storage before
-wireless storage; directional transfers use native container transactions and
-leave items untouched when sources are empty or destinations are full or
-filtered. An optional logic input enables the endpoint when ON. With no logic
-wire connected, the endpoint stays enabled. Interact with a pipe to change its
-mode, transfer scope, channel, matching endpoints, worlds, and route state.
-Send and Receive default to **Direct Container Only**, which drains or fills
-only a container physically touching that endpoint. Toggle **Entire Pipe
-Network** only when all containers on that attached network should participate.
-The custom transparent icon is managed by the shared ScrapLab Icon Pack.
+> **Custom-part warning:** before disabling one of these mods, remove all of
+> its custom parts from worlds, inventories, containers, Lifts, and saved
+> creations. Save and close the game first. If Steam removes a registration,
+> reinstall the mod before loading an affected save.
 
-Definition 3 keeps dense logistics builds responsive by caching each physical
-pipe component for a short, topology-checked interval and sharing that result
-between Craftbots, Vacuums, Prospectors, pumps, and storage queries. It returns
-straight to Scrap Mechanic's native graph when no wireless route can apply,
-deduplicates remote component scans, removes per-node neighbour sorting, and
-backs empty or blocked directional channels down to one retry per second.
-Verified older installations expose a one-click **Update** action that changes
-only the owned runtime files and preserves their original uninstall backups.
+### Gameplay patch notes
 
-> **Wireless Vacuum Pipe save warning:** before disabling the mod, remove every
-> custom pipe from every placed world (including underground worlds), player
-> inventory, hotbar, container, Lift, and saved creation. Save every affected
-> world and close Scrap Mechanic completely. If a Steam update or Verify removes
-> the registration, reinstall the mod before opening any save that may contain
-> the part.
+- **Full-Speed Carrying** is client-side, so each multiplayer user must install
+  it to receive normal carry movement and sprinting.
+- **Better Freezer & Beehive** gives new machines five input slots, 4x speed,
+  and larger output storage. Existing machines keep their current slot count.
+- **Better Plasma Drills** adds levels 4 and 5 for 25 and 50 Component Kits,
+  with greater speed, range, radius, battery capacity, and unit damage.
+- **Developer Commands** includes `/fly`; flight and damage protection apply
+  only to the player who enabled it. Use Every Player access only with people
+  you trust.
 
-**Network Storage Chest** is a custom, save-sensitive logistics terminal with
-permanent UUID `bc7576a7-f226-459a-883c-e8460e955d63`. Its default-unlocked
-Craftbot recipe makes one terminal in 30 seconds from one piped Small Chest,
-ten Component Kits, and twenty Circuit Boards. The part reuses the piped Small
-Chest model while keeping its own isolated script, three-slot deposit tray,
-GUI, localization, and shared ScrapLab Icon Pack registration.
+> **Advanced drill warning:** remove or downgrade every level-4/5 drill before
+> disabling the mod or verifying game files.
 
-Interact with the terminal to browse one compact, searchable catalog of all
-items in reachable containers. Withdrawals and deposits are checked and
-committed on the server, refresh on network revisions, and abort safely if a
-container changes before commit. The deposit tray prefers compatible native
-filtered storage, existing partial stacks, and chests already holding the exact
-item. It then learns each chest's dominant item family and category, so new
-interactive parts join similar parts instead of unrelated gas or food. Empty
-storage is preferred over contaminating an unrelated chest. These profiles are
-cached by container revision, and unknown future or third-party items safely
-fall back to exact-item and empty-storage routing. Items that cannot be routed
-remain in the tray. The player panel combines hotbar slots `0-9` and backpack
-slots `10+` in one scrollable view.
+> **Dual-Fluid Water Cannon warning:** disconnect Chemical Containers and save
+> affected worlds before disabling the mod or verifying game files.
 
-Each terminal remembers its own routing toggle. **Smart Sort ON** uses the
-content-learning rules above. **Smart Sort OFF** chooses the closest compatible
-same-world chest that has an empty slot, then considers cross-world storage and
-uses stable container IDs for exact ties. Existing occupied five-slot trays are
-never truncated: they stay intact until automatic routing empties them, then
-migrate safely to three slots while the terminal is closed.
-
-The terminal works on ordinary local pipe networks by itself. When Wireless
-Vacuum Pipe is installed and ready, it also follows same-color Link routes and
-permitted Send/Receive routes, including loaded overworld-to-underground
-connections. Removing Wireless Vacuum Pipe leaves the terminal installed and
-local-only. A Steam update that removes any required registration is reported
-as **Reinstall Required - Save Part at Risk** and is never repaired silently.
-
-> **Network Storage Chest save warning:** empty every deposit tray, remove every
-> terminal from worlds, player inventories, hotbars, containers, Lifts, and
-> saved creations, save all affected worlds, and close the game before
-> disabling the mod. If Steam removes the registration, reinstall it before
-> opening a save that may still contain the part.
-
-After Steam installs a new game build, installed-state receipts are compared
-with the actual Lua files. Compatible updated scripts may be patched only when
-every protected snippet and structural guard remains exact. Changed protected
-code, partial patches, duplicate targets, and unrelated modifications on a
-known build are blocked without writing.
-
-> **Dual-Fluid Water Cannon warning:** disconnect Chemical Containers from
-> mounted water cannons and save each affected world before disabling the mod,
-> running Steam Verify, or allowing a game update to restore the original
-> two-input script.
-
-**Full-Speed Carrying** changes only the carry tools' sprint restrictions and
-animation slots. Crouching, water and chemical-goop movement, damage states,
-Lift placement, and save data remain untouched. Because the restriction is
-client-side, each multiplayer participant who wants the effect must enable it
-in their own game installation.
-
-**Better Engines** keeps the original speed curves, gear counts, bearing
-limits, upgrade paths, saved settings, and Gas Engine power. It changes only
-the Electric Engine gear-power table and the normal/creative level-5
-efficiency records in the Electric and Gas engine scripts.
-
-**Better Freezer & Beehive** lets one directly connected Water Container feed
-a Freezer, with connected water preferred before its internal supply. Freezers
-produce 20 ice every 21.6 seconds and store up to 2,500 finished ice; Beehives
-produce one beeswax every 43.2 seconds and store up to 100. Newly placed
-machines receive five filtered 20-item input slots. Existing machines keep
-their current slot count, and five-slot containers created by the mod remain
-save-persistent after removal without changing either machine UUID.
-
-**Better Plasma Drills** upgrades level 3 to level 4 for 25 Component Kits and
-level 4 to level 5 for 50. Level 4 uses 5 speed, 6,000 battery points, 40 range,
-and radius settings 5–7; level 5 uses 10 speed, 12,000 points, 75 range, and
-radius settings 8–10. Both retain level-3 material capability while updating
-voxel terrain every three or two ticks respectively. Levels 1–5 deal 20, 30,
-50, 100, and 300 unit damage per second. This remains continuous beam damage
-against every unit-backed creature the vanilla raycast can hit; player
-characters, voxel behavior, battery use, impact force, and part destruction
-are unchanged.
-
-An intact older Better Plasma Drills installation appears as **Damage Update
-Available**. Its Patch Bay **Update** action migrates the protected Lua and
-receipt atomically without temporarily removing the level-4/5 UUIDs. Original
-uninstall bases and unrelated later edits are preserved.
-
-> **Save warning:** Levels 4 and 5 use permanent ScrapLab UUIDs. Downgrade or
-> remove every advanced drill from worlds, inventories, containers, and lifts
-> before disabling the mod or verifying game files. If Steam replaces the mod,
-> reinstall it before loading affected worlds.
-
-Developer commands and optional mods can permanently change gameplay. Back up
-important worlds and use Every Player command access only with trusted players.
-`/fly` uses ScrapLab's hidden input tool and isolated scripts under
-`Survival/Scripts/ScrapLab`. Smooth impulse flight handles open space, while
-short capsule-checked position steps cross solid geometry. Scrap Mechanic's
-normal camera and mouse controls remain untouched, falling and ragdolling are
-suppressed during flight, personal damage protection stays active, and noclip
-refuses to exit inside solid geometry. The world-bound player script performs
-flight physics; the command script only coordinates permissions, input, and
-multiplayer state. Flight protection is keyed to the requesting player and does
-not change Scrap Mechanic's separate global `/god` setting or protect other
-players in the hosted world.
+After a Steam update, ScrapLab offers **Update** or reinstall actions only when
+the protected game code is still compatible. Conflicts and partial patches are
+blocked without writing.
 
 ## Updates and migration
 
