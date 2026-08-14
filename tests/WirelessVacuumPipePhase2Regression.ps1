@@ -87,7 +87,7 @@ Assert-True ($part.pipe.openings.Count -eq 2) 'The shape must have exactly two p
 Assert-True ($part.pipe.type -eq 'Pipe') 'The shape is not registered as a physical pipe.'
 [xml](Get-Content -LiteralPath $layout -Raw) | Out-Null
 $layoutText = Get-Content -LiteralPath $layout -Raw
-foreach ($needle in @('name="ModeLinkLabel"', 'value="LINK"', 'name="ModeSendLabel"', 'value="SEND"', 'name="ModeReceiveLabel"', 'value="RECEIVE"', 'name="ScopeButton"', 'value="DIRECT CONTAINER ONLY"')) {
+foreach ($needle in @('name="ModeLink"', 'value="LINK"', 'name="ModeSend"', 'value="SEND"', 'name="ModeReceive"', 'value="RECEIVE"', 'name="ScopeButton"', 'value="DIRECT CONTAINER ONLY"')) {
     Assert-Contains $layoutText $needle "Mode button label is missing: $needle"
 }
 Assert-True ($layoutText.IndexOf('key="WordWrap"', [StringComparison]::Ordinal) -lt 0) 'The layout still uses the unsupported WordWrap property.'

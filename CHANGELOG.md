@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Redesigned the in-game **Wireless Vacuum Pipe** panel as a centered native
+  Scrap Mechanic machine interface. Operation modes now use proper selected
+  controls, connection health has a color-coded status lamp, channel/world/
+  match information is grouped into a readable dashboard, and Link versus
+  directional routing controls no longer leave confusing empty space.
+- Added an in-place definition-8 UI update for intact existing Wireless Vacuum
+  Pipe installations. The update replaces only verified owned runtime assets;
+  it does not unregister the save-sensitive part.
+
 ## 2.6.0 - 2026-08-14
 
 - Added the save-sensitive **Network Storage Chest** Super Secret Mod with

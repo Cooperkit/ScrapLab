@@ -10,7 +10,7 @@ namespace RaidRescue
     internal static class WirelessVacuumPipePatchService
     {
         private const string ModKey = "WirelessVacuumPipe";
-        private const string DefinitionVersion = "7";
+        private const string DefinitionVersion = "8";
         internal const string PartUuid =
             "a34d9af0-4ba0-431d-b647-2d5435ecf138";
         internal const string ManagerUuid =
@@ -750,13 +750,15 @@ namespace RaidRescue
                 StringComparison.OrdinalIgnoreCase))
                 hashes = new string[]
                 {
-                    "25F6D11E19C3514FE2E06DA72FC5A60C45BE21471B49D35198F2E143EF8377D6"
+                    "25F6D11E19C3514FE2E06DA72FC5A60C45BE21471B49D35198F2E143EF8377D6",
+                    "338FAB44E130D36A51D90EC5EC8079DA472C67A4C51900E92B36C3727FD67BED"
                 };
             else if (String.Equals(file, "WirelessVacuumPipe.layout",
                 StringComparison.OrdinalIgnoreCase))
                 hashes = new string[]
                 {
-                    "2F800DD9E1A29679182B7649D378F401D1D3E561E50A7894859D337157B18B12"
+                    "2F800DD9E1A29679182B7649D378F401D1D3E561E50A7894859D337157B18B12",
+                    "F5D5ADCC354E1CCA7001E68B17507B0657B84AAF80AEF05C4B159C551439A48B"
                 };
             if (hashes == null) return false;
             foreach (string hash in hashes)

@@ -1,41 +1,180 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <MyGUI type="Layout" version="3.2.0">
-    <Widget type="Widget" skin="BackgroundInteractableNarrow" align="Default" name="BackPanel" position_real="0.00234375 0 0.34 0.66">
+    <!--
+        Native Scrap Mechanic machine-panel composition:
+        BackgroundSensor supplies the industrial frame and hazard detailing,
+        while SettingsButton provides the game's selected-control language.
+    -->
+    <Widget type="Widget" skin="PanelEmpty" name="ContentPanel" position_real="0.323437 0.127778 0.35625 0.638889">
         <Property key="NeedKey" value="false" />
         <Property key="NeedMouse" value="true" />
         <Property key="InheritsAlpha" value="false" />
-        <Widget type="TextBox" skin="TextBox" name="Title" position_real="0.05 0.04 0.9 0.09">
+
+        <Widget type="Widget" skin="BackgroundSensor" name="MachineBackground" position_real="0 0 1 1">
+            <Property key="NeedMouse" value="false" />
+            <Property key="NeedKey" value="false" />
+        </Widget>
+
+        <Widget type="TextBox" skin="TextBox" name="Title" position_real="0.05 0.050 0.90 0.060">
             <Property key="Caption" value="WIRELESS VACUUM PIPE" />
             <Property key="FontName" value="SM_HeaderLarge_Wide" />
             <Property key="TextAlign" value="Center" />
             <Property key="NeedMouse" value="false" />
         </Widget>
-        <Widget type="TextBox" skin="TextBox" name="ModeLabel" position_real="0.07 0.15 0.28 0.06"><Property key="Caption" value="MODE" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Left" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="ModeValue" position_real="0.36 0.15 0.57 0.06"><Property key="Caption" value="LINK" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Right" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="StatusLabel" position_real="0.07 0.22 0.28 0.06"><Property key="Caption" value="STATUS" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Left" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="StatusValue" position_real="0.36 0.22 0.57 0.06"><Property key="Caption" value="UNPAIRED" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Right" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="WorldLabel" position_real="0.07 0.29 0.28 0.06"><Property key="Caption" value="THIS WORLD" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Left" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="WorldValue" position_real="0.36 0.29 0.57 0.06"><Property key="Caption" value="OVERWORLD" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Right" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="Widget" skin="BeaconIconColor" name="ChannelSwatch" position_real="0.07 0.37 0.06 0.06"><Property key="Colour" value="#df7f01" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="ChannelValue" position_real="0.15 0.37 0.32 0.06"><Property key="Caption" value="#DF7F01" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Left" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="EndpointLabel" position_real="0.5 0.37 0.29 0.06"><Property key="Caption" value="MATCHING" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Right" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="EndpointValue" position_real="0.81 0.37 0.12 0.06"><Property key="Caption" value="0" /><Property key="FontName" value="SM_HeaderLarge_Wide" /><Property key="TextAlign" value="Center" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="Explanation" position_real="0.07 0.45 0.86 0.09"><Property key="Caption" value="Joins every enabled Link endpoint painted this color." /><Property key="FontName" value="SM_Text" /><Property key="TextAlign" value="Left Top" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="RemoteWorlds" position_real="0.07 0.54 0.86 0.06"><Property key="Caption" value="NO MATCHING WORLDS" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Center" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="TextBox" skin="TextBox" name="ScopeLabel" position_real="0.07 0.61 0.25 0.06"><Property key="Caption" value="TRANSFER SCOPE" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Left" /><Property key="NeedMouse" value="false" /></Widget>
-        <Widget type="Button" skin="BeaconIconBorder" name="ScopeButton" position_real="0.34 0.60 0.59 0.08">
-            <Widget type="TextBox" skin="TextBox" name="ScopeButtonLabel" position_real="0 0 1 1"><Property key="Caption" value="DIRECT CONTAINER ONLY" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Center" /><Property key="NeedMouse" value="false" /><Property key="NeedKey" value="false" /></Widget>
+        <Widget type="TextBox" skin="TextBox" name="SystemLabel" position_real="0.05 0.108 0.90 0.038">
+            <Property key="Caption" value="WIRELESS LOGISTICS CONTROL" />
+            <Property key="FontName" value="SM_SubHeader" />
+            <Property key="TextColour" value="1 0.803922 0.247059" />
+            <Property key="TextAlign" value="Center" />
+            <Property key="NeedMouse" value="false" />
         </Widget>
-        <Widget type="Button" skin="BeaconIconBorder" name="ModeLink" position_real="0.07 0.72 0.27 0.11">
-            <Widget type="TextBox" skin="TextBox" name="ModeLinkLabel" position_real="0 0 1 1"><Property key="Caption" value="LINK" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Center" /><Property key="NeedMouse" value="false" /><Property key="NeedKey" value="false" /></Widget>
+
+        <Widget type="TextBox" skin="TextBox" name="ModeLabel" position_real="0.07 0.166 0.38 0.045">
+            <Property key="Caption" value="OPERATION MODE" />
+            <Property key="FontName" value="SM_TextLabel" />
+            <Property key="TextAlign" value="Left VCenter" />
+            <Property key="NeedMouse" value="false" />
         </Widget>
-        <Widget type="Button" skin="BeaconIconBorder" name="ModeSend" position_real="0.365 0.72 0.27 0.11">
-            <Widget type="TextBox" skin="TextBox" name="ModeSendLabel" position_real="0 0 1 1"><Property key="Caption" value="SEND" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Center" /><Property key="NeedMouse" value="false" /><Property key="NeedKey" value="false" /></Widget>
+        <Widget type="TextBox" skin="TextBox" name="ModePrefix" position_real="0.49 0.166 0.22 0.045">
+            <Property key="Caption" value="ACTIVE" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Right VCenter" />
+            <Property key="NeedMouse" value="false" />
         </Widget>
-        <Widget type="Button" skin="BeaconIconBorder" name="ModeReceive" position_real="0.66 0.72 0.27 0.11">
-            <Widget type="TextBox" skin="TextBox" name="ModeReceiveLabel" position_real="0 0 1 1"><Property key="Caption" value="RECEIVE" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Center" /><Property key="NeedMouse" value="false" /><Property key="NeedKey" value="false" /></Widget>
+        <Widget type="TextBox" skin="TextBox" name="ModeValue" position_real="0.73 0.166 0.20 0.045">
+            <Property key="Caption" value="LINK" />
+            <Property key="FontName" value="SM_TextLabel" />
+            <Property key="TextColour" value="1 0.803922 0.247059" />
+            <Property key="TextAlign" value="Right VCenter" />
+            <Property key="NeedMouse" value="false" />
         </Widget>
-        <Widget type="TextBox" skin="TextBox" name="Hint" position_real="0.07 0.87 0.86 0.08"><Property key="Caption" value="PAINT SETS CHANNEL  |  LOGIC OFF DISABLES" /><Property key="FontName" value="SM_TextLabel" /><Property key="TextAlign" value="Center" /><Property key="NeedMouse" value="false" /></Widget>
+        <Widget type="Button" skin="SettingsButton" name="ModeLink" position_real="0.07 0.217 0.27 0.067">
+            <Property key="Caption" value="LINK" />
+            <Property key="FontName" value="SM_ButtonSmall" />
+            <Property key="TextAlign" value="Center" />
+        </Widget>
+        <Widget type="Button" skin="SettingsButton" name="ModeSend" position_real="0.365 0.217 0.27 0.067">
+            <Property key="Caption" value="SEND" />
+            <Property key="FontName" value="SM_ButtonSmall" />
+            <Property key="TextAlign" value="Center" />
+        </Widget>
+        <Widget type="Button" skin="SettingsButton" name="ModeReceive" position_real="0.66 0.217 0.27 0.067">
+            <Property key="Caption" value="RECEIVE" />
+            <Property key="FontName" value="SM_ButtonSmall" />
+            <Property key="TextAlign" value="Center" />
+        </Widget>
+
+        <Widget type="TextBox" skin="TextBox" name="ConnectionLabel" position_real="0.07 0.309 0.86 0.036">
+            <Property key="Caption" value="CONNECTION STATUS" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Left VCenter" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="Widget" skin="BeaconIconColor" name="StatusLamp" position_real="0.07 0.352 0.055 0.055">
+            <Property key="Colour" value="#df7f01" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="StatusValue" position_real="0.145 0.350 0.56 0.060">
+            <Property key="Caption" value="UNPAIRED" />
+            <Property key="FontName" value="SM_TextLabel" />
+            <Property key="TextAlign" value="Left VCenter" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="EndpointLabel" position_real="0.70 0.323 0.23 0.033">
+            <Property key="Caption" value="MATCHES" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Center" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="EndpointValue" position_real="0.70 0.354 0.23 0.058">
+            <Property key="Caption" value="0" />
+            <Property key="FontName" value="SM_HeaderLarge_Wide" />
+            <Property key="TextColour" value="1 0.803922 0.247059" />
+            <Property key="TextAlign" value="Center" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+
+        <Widget type="TextBox" skin="TextBox" name="ChannelLabel" position_real="0.07 0.430 0.30 0.033">
+            <Property key="Caption" value="PAINT CHANNEL" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Left VCenter" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="Widget" skin="BeaconIconColor" name="ChannelSwatch" position_real="0.07 0.467 0.055 0.055">
+            <Property key="Colour" value="#df7f01" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="ChannelValue" position_real="0.145 0.463 0.31 0.062">
+            <Property key="Caption" value="#DF7F01" />
+            <Property key="FontName" value="SM_TextLabel" />
+            <Property key="TextAlign" value="Left VCenter" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="WorldLabel" position_real="0.48 0.430 0.45 0.033">
+            <Property key="Caption" value="CURRENT WORLD" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Right VCenter" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="WorldValue" position_real="0.48 0.463 0.45 0.062">
+            <Property key="Caption" value="OVERWORLD" />
+            <Property key="FontName" value="SM_TextLabel" />
+            <Property key="TextAlign" value="Right VCenter" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+
+        <Widget type="TextBox" skin="TextBox" name="RemoteLabel" position_real="0.07 0.535 0.86 0.032">
+            <Property key="Caption" value="MATCHING WORLDS" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Center" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="RemoteWorlds" position_real="0.07 0.566 0.86 0.048">
+            <Property key="Caption" value="NO MATCHING WORLDS" />
+            <Property key="FontName" value="SM_TextLabel" />
+            <Property key="TextAlign" value="Center" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+
+        <Widget type="TextBox" skin="TextBox" name="ScopeLabel" position_real="0.07 0.626 0.86 0.036">
+            <Property key="Caption" value="TRANSFER SCOPE" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Left VCenter" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="Button" skin="SettingsButton" name="ScopeButton" position_real="0.07 0.667 0.86 0.068">
+            <Property key="Caption" value="DIRECT CONTAINER ONLY" />
+            <Property key="FontName" value="SM_ButtonSmall" />
+            <Property key="TextAlign" value="Center" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="LinkScopeHint" position_real="0.07 0.646 0.86 0.078">
+            <Property key="Caption" value="LINK MODE JOINS EVERY MATCHING PIPE NETWORK" />
+            <Property key="FontName" value="SM_TextLabel" />
+            <Property key="TextColour" value="1 0.803922 0.247059" />
+            <Property key="TextAlign" value="Center" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+
+        <Widget type="TextBox" skin="TextBox" name="Explanation" position_real="0.07 0.758 0.86 0.090">
+            <Property key="Caption" value="Joins every enabled Link endpoint painted this color." />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextAlign" value="HCenter Top" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
+        <Widget type="TextBox" skin="TextBox" name="Hint" position_real="0.07 0.890 0.86 0.045">
+            <Property key="Caption" value="PAINT = CHANNEL   |   LOGIC INPUT = ENABLE" />
+            <Property key="FontName" value="SM_LabelSmall" />
+            <Property key="TextColour" value="0.55 0.55 0.55" />
+            <Property key="TextAlign" value="Center" />
+            <Property key="NeedMouse" value="false" />
+        </Widget>
     </Widget>
     <CodeGeneratorSettings />
 </MyGUI>

@@ -19,10 +19,28 @@ local POLL_INTERVAL_TICKS = 10
 local MODE_ORDER = { "LINK", "SEND", "RECEIVE" }
 
 local MODE_EXPLANATIONS = {
-	LINK = "Joins every enabled Link endpoint painted this color.",
-	SEND = "Sends items to matching Receivers. Direct-container scope is safest.",
-	RECEIVE = "Receives items and lets local machines pull from matching Send sources."
+	LINK = "Joins enabled Link endpoints on this paint channel into one pipe network.",
+	SEND = "Pushes items toward matching Receivers on this paint channel.",
+	RECEIVE = "Lets local machines pull items from matching Send endpoints."
 }
+
+local STATUS_COLORS = {
+	["LINKED"] = "65C466FF",
+	["CROSS-WORLD LINKED"] = "48C6E8FF",
+	["SENDING"] = "65C466FF",
+	["READY TO RECEIVE"] = "65C466FF",
+	["UNPAIRED"] = "F2B134FF",
+	["CHANNEL EMPTY"] = "F2B134FF",
+	["DISABLED BY LOGIC"] = "777777FF",
+	["REMOTE CELL LOAD LIMIT"] = "E56C2FFF",
+	["WIRELESS MANAGER UNAVAILABLE"] = "D94A3AFF"
+}
+
+local function formatMatchingWorlds( worlds )
+	if type( worlds ) ~= "table" or #worlds == 0 then return "NO MATCHING WORLDS" end
+	if #worlds <= 2 then return table.concat( worlds, "  |  " ) end
+	return tostring( worlds[1] ) .. "  |  " .. tostring( worlds[2] ) .. "  |  +" .. tostring( #worlds - 2 ) .. " MORE"
+end
 
 local function shapeWorld( shape )
 	local body = shape and shape:getBody() or nil
@@ -427,17 +445,20 @@ function WirelessVacuumPipe.cl_updateGui( self )
 	local directional = data.mode == "SEND" or data.mode == "RECEIVE"
 	self.cl.gui:setVisible( "ScopeLabel", directional )
 	self.cl.gui:setVisible( "ScopeButton", directional )
+	self.cl.gui:setVisible( "LinkScopeHint", not directional )
 	self.cl.gui:setButtonState( "ScopeButton", data.directOnly ~= false )
-	self.cl.gui:setText( "ScopeButtonLabel", data.directOnly ~= false and "DIRECT CONTAINER ONLY" or "ENTIRE PIPE NETWORK" )
+	self.cl.gui:setText( "ScopeButton", data.directOnly ~= false and "DIRECT CONTAINER ONLY" or "ENTIRE PIPE NETWORK" )
 	self.cl.gui:setText( "ModeValue", data.mode or "LINK" )
-	self.cl.gui:setText( "StatusValue", data.state or "WIRELESS MANAGER UNAVAILABLE" )
+	local status = data.state or "WIRELESS MANAGER UNAVAILABLE"
+	self.cl.gui:setText( "StatusValue", status )
 	self.cl.gui:setText( "ChannelValue", "#" .. tostring( data.channel or "DF7F01FF" ):sub( 1, 6 ) )
 	self.cl.gui:setText( "EndpointValue", tostring( data.matchingCount or 0 ) )
 	self.cl.gui:setText( "WorldValue", data.worldLabel or "UNKNOWN WORLD" )
 	self.cl.gui:setText( "Explanation", data.explanation or MODE_EXPLANATIONS[data.mode or "LINK"] )
-	local remote = data.worlds and table.concat( data.worlds, ", " ) or ""
-	self.cl.gui:setText( "RemoteWorlds", remote ~= "" and remote or "NO MATCHING WORLDS" )
+	self.cl.gui:setText( "RemoteWorlds", formatMatchingWorlds( data.worlds ) )
 	local ok, color = pcall( function() return sm.color.new( tostring( data.channel or "DF7F01FF" ) ) end )
 	if ok then self.cl.gui:setColor( "ChannelSwatch", color ) end
+	local statusOk, statusColor = pcall( function() return sm.color.new( STATUS_COLORS[status] or "F2B134FF" ) end )
+	if statusOk then self.cl.gui:setColor( "StatusLamp", statusColor ) end
 	self.cl.guiDirty = false
 end
