@@ -10,7 +10,7 @@ namespace RaidRescue
     internal static class WirelessVacuumPipePatchService
     {
         private const string ModKey = "WirelessVacuumPipe";
-        private const string DefinitionVersion = "5";
+        private const string DefinitionVersion = "7";
         internal const string PartUuid =
             "a34d9af0-4ba0-431d-b647-2d5435ecf138";
         internal const string ManagerUuid =
@@ -376,9 +376,7 @@ namespace RaidRescue
             state.Texts.Add(ReadText(gamePath, ManagersRelative,
                 "sob_managers.sobset", ManagersHash, ManagerUuid,
                 PatchManagers, UnpatchManagers, false));
-            state.Texts.Add(ReadText(gamePath, RecipesRelative,
-                "craftbot_core.json", RecipesHash, PartUuid,
-                PatchRecipe, UnpatchRecipe, false));
+            state.Texts.Add(ReadRecipe(gamePath));
             state.Texts.Add(ReadText(gamePath, RecipeManagerRelative,
                 "RecipeManager.lua", RecipeManagerHash,
                 "ITEMS.obj_pneumatic_pipe_wireless",
@@ -653,6 +651,48 @@ namespace RaidRescue
             return state;
         }
 
+        private static TextState ReadRecipe(string gamePath)
+        {
+            string path = Path.Combine(gamePath, RecipesRelative);
+            if (!File.Exists(path))
+                throw new FileNotFoundException(
+                    "craftbot_core.json was not found.", path);
+            LuaTextDocument document = AdaptivePatchSupport.ReadLua(path);
+            AdaptivePatchSupport.RequireAdaptiveFormat(
+                document, "craftbot_core.json");
+            string text = document.NormalizedText;
+            int markerCount = AdaptivePatchSupport.Count(text, PartUuid);
+            TextState state = new TextState
+            {
+                RelativePath = RecipesRelative,
+                DisplayName = "craftbot_core.json",
+                KnownHash = RecipesHash,
+                Path = path,
+                Document = document,
+                Known = String.Equals(document.OriginalHash, RecipesHash,
+                    StringComparison.OrdinalIgnoreCase) ||
+                    IsTrustedExistingOutput(RecipesRelative,
+                        document.OriginalHash)
+            };
+            if (markerCount == 0)
+            {
+                state.PatchedText = PatchRecipe(text);
+                state.Clean = true;
+            }
+            else if (markerCount == 1 &&
+                AdaptivePatchSupport.Count(text, RecipeEntry) == 1)
+            {
+                // Craftbot recipes are another shared append-only JSON array.
+                // A later ScrapLab recipe may follow this exact entry without
+                // changing or partially applying the Wireless recipe itself.
+                state.CleanText = UnpatchRecipe(text);
+                state.PatchedText = text;
+                state.Installed = AdaptivePatchSupport.Count(
+                    state.CleanText, PartUuid) == 0;
+            }
+            return state;
+        }
+
         private static void AddOwned(
             ProbeState state, string gamePath, string relative,
             string display, string resource)
@@ -685,7 +725,9 @@ namespace RaidRescue
                 {
                     "0CB52D246E313967CE35BC1CF38C73094F02BF18B1F7B9847EB17EA939AEE0DB",
                     "7BBCB858591D3903FEF650626B3B0BBE58F0C1D9E28A9551888DAC7FC3730AF4",
-                    "C1F0FA66477AB6189A47F40BEA377991A13E3FE2E99BB077D0CE6A6665E43B57"
+                    "C1F0FA66477AB6189A47F40BEA377991A13E3FE2E99BB077D0CE6A6665E43B57",
+                    "2EE306FA1303FDA36CC2CE64964CCD4E567CC27EA7D82D4F47B5B6CCE31BC321",
+                    "3411D6804F6D874C4B9BD8D8C80C4109BF3CECFB0F44F31EDF49C0DF4F3D8DC8"
                 };
             else if (String.Equals(file, "ScrapLabPipeGraph.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -694,7 +736,8 @@ namespace RaidRescue
                     "4A225B56FB87F108C4987FC4EC6F1C8AA45ED466452A856BF3F5775EE2C11CD9",
                     "2F19CA25EC83596931C369624A691C09DF7E9A8903736171AE4192311B21813A",
                     "7EC649701A334452B8E4CD6B96403C977B1E6EB3AE5D7057B46B506D79537F4D",
-                    "D1E9A24346530DFA8344451475C9F35F8BA2F141A6A19130E8EFBBE408A1C9AC"
+                    "D1E9A24346530DFA8344451475C9F35F8BA2F141A6A19130E8EFBBE408A1C9AC",
+                    "8C8641F1069968D0750ABCDCB0C56261616D44B11E2C1814C4664222BED2BD2A"
                 };
             else if (String.Equals(file, "WirelessPipeTransfer.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -1493,7 +1536,8 @@ namespace RaidRescue
                 "FullSpeedCarrying", "BetterFreezerBeehive",
                 "BetterEngines", "ResourceLocator",
                 "ChemicalFertilizerSplash", "DualFluidCannon",
-                "DeveloperCommands", "RevivalBuffRecovery"
+                "DeveloperCommands", "RevivalBuffRecovery",
+                "NetworkStorageChest"
             };
             foreach (string modKey in modKeys)
             {

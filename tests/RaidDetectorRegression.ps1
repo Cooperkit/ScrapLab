@@ -194,7 +194,7 @@ try {
         'The icon pack did not allocate from the bottom-right atlas cell.'
     $atlasReceipt = Get-Content -LiteralPath $sharedAtlasReceipt -Raw |
         ConvertFrom-Json
-    Assert-True ($atlasReceipt.CatalogVersion -eq '2') `
+    Assert-True ($atlasReceipt.CatalogVersion -eq '3') `
         'The shared icon-pack catalog version was not recorded.'
     Assert-True ($atlasReceipt.ActiveMods -contains 'RaidDetector') `
         'The shared icon-pack receipt did not record the active mod.'

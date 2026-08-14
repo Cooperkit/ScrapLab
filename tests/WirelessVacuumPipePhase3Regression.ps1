@@ -53,7 +53,7 @@ foreach ($needle in @('self.sv.topologyRevision = 1', 'sv_bumpTopologyRevision',
     Assert-Contains $managerText $needle "Manager Phase 3 contract is missing: $needle"
 }
 foreach ($needle in @(
-    'SCRAPLAB WIRELESS PIPE GRAPH v9', 'ScrapLabPipeGraph.DEFINITION_VERSION = 9', 'CACHE_INTERVAL_TICKS = 10', 'getNativeShapeList', 'discoverRemoteEndpoints',
+    'SCRAPLAB WIRELESS PIPE GRAPH v10', 'ScrapLabPipeGraph.DEFINITION_VERSION = 10', 'CACHE_INTERVAL_TICKS = 10', 'getNativeShapeList', 'discoverRemoteEndpoints',
 	'discoverDirectionalSourceEntries', 'Sv_GetDirectionalSourceEntries', 'getDirectionalSourceContainerShapes',
     'MAX_PHYSICAL_SHAPES = 4096', 'MAX_WIRELESS_ENDPOINTS = 256', 'appendUniqueShapes', 'buildPhysicalComponent', 'componentStillValid', 'virtualQueryHits',
     'PIPE_OPENING_DIRECTIONS', 'directionalNeighbours', 'directional pipe opening catalog mismatch',

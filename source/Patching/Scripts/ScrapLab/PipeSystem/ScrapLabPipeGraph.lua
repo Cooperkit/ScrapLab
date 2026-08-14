@@ -1,10 +1,10 @@
--- SCRAPLAB WIRELESS PIPE GRAPH v9
+-- SCRAPLAB WIRELESS PIPE GRAPH v10
 -- Cached virtual Link traversal layered over the native pipe graph. Native
 -- local results remain authoritative. Physical components are scanned at most
 -- once per short cache epoch and shared by every consumer on that component.
 
 ScrapLabPipeGraph = ScrapLabPipeGraph or {}
-ScrapLabPipeGraph.DEFINITION_VERSION = 9
+ScrapLabPipeGraph.DEFINITION_VERSION = 10
 
 local WIRELESS_PIPE_UUID = sm.uuid.new( "a34d9af0-4ba0-431d-b647-2d5435ecf138" )
 local MAX_PHYSICAL_SHAPES = 4096
@@ -101,6 +101,7 @@ local function managerAvailable()
 		and WirelessPipeManager.Sv_GetEndpointIdForShape ~= nil
 		and WirelessPipeManager.Sv_GetLinkPeerEntries ~= nil
 		and WirelessPipeManager.Sv_GetDirectionalSourceEntries ~= nil
+		and WirelessPipeManager.Sv_GetTerminalPeerEntries ~= nil
 		and WirelessPipeManager.Sv_GetTopologyRevision ~= nil
 		and WirelessPipeManager.Sv_HasVirtualRoute ~= nil
 end
@@ -583,6 +584,173 @@ function ScrapLabPipeGraph.getDirectContainerShapes( shape )
 	if not shapeExists( shape ) then return {} end
 	local ok, containers = pcall( function() return getDirectContainerShapes( shape ) end )
 	return ok and containers or {}
+end
+
+local function getContainerDescriptor( shape, route )
+	if not shapeExists( shape ) then return nil end
+	local ok, descriptor = pcall( function()
+		local interactable = shape:getInteractable()
+		local container = interactable and interactable:getContainer( 0 ) or nil
+		if not container then return nil end
+		local id = sm.container.getId( container )
+		if id == nil then return nil end
+		return {
+			id = tostring( id ),
+			shape = shape,
+			container = container,
+			worldId = getWorldId( shape ),
+			worldLabel = route.worldLabel,
+			wireless = route.wireless == true,
+			crossWorld = route.crossWorld == true,
+			routeKind = route.routeKind or "LOCAL",
+			routePriority = route.wireless and 1 or 0,
+			routeDistance = route.routeDistance or 0,
+			endpointId = route.endpointId,
+			directOnly = route.directOnly
+		}
+	end )
+	return ok and descriptor or nil
+end
+
+local function appendTerminalShapes( descriptors, byId, shapes, route )
+	for _, shape in ipairs( shapes or {} ) do
+		local descriptor = getContainerDescriptor( shape, route )
+		if descriptor then
+			local previous = byId[descriptor.id]
+			if not previous or descriptor.routePriority < previous.routePriority or
+				( descriptor.routePriority == previous.routePriority and descriptor.routeDistance < previous.routeDistance ) then
+				if previous then
+					for index, value in ipairs( descriptors ) do
+						if value == previous then descriptors[index] = descriptor; break end
+					end
+				else descriptors[#descriptors + 1] = descriptor end
+				byId[descriptor.id] = descriptor
+			end
+		end
+	end
+end
+
+local function terminalLocalWorld( shape )
+	local ok, world = pcall( function() return shape:getBody():getWorld() end )
+	if not ok or not world then return "?", "LOCAL WORLD" end
+	local publicData = world.publicData or {}
+	local kind = tostring( publicData.type or "" )
+	local label = kind == "Overworld" and "OVERWORLD"
+		or ( kind == "UndergroundWorld" and ( "UNDERGROUND - DEPTH " .. tostring( publicData.depth or "?" ) ) )
+		or ( kind ~= "" and string.upper( kind:gsub( "_", " " ) ) )
+		or ( "WORLD " .. tostring( world.id or "?" ) )
+	return tostring( world.id or world ), label
+end
+
+local function buildTerminalContainers( startShape, requestedDirection )
+	local descriptors, byId = {}, {}
+	if not shapeExists( startShape ) then
+		return descriptors, {
+			wirelessInstalled = true, managerAvailable = managerAvailable(),
+			wirelessState = "OFFLINE", compatibilityReason = "TERMINAL SHAPE UNAVAILABLE",
+			topologyGeneration = managerAvailable() and WirelessPipeManager.Sv_GetTopologyRevision() or 0,
+			worlds = {}, reachableWorlds = 0
+		}
+	end
+
+	local tracker = newTracker()
+	local localWorldId, localWorldLabel = terminalLocalWorld( startShape )
+	for _, component in ipairs( getStartComponents( startShape, requestedDirection, tracker ) ) do
+		appendTerminalShapes( descriptors, byId, component.containers, {
+			wireless = false, routeKind = "LOCAL", routeDistance = 0,
+			worldLabel = localWorldLabel
+		} )
+	end
+
+	local state = {
+		wirelessInstalled = true,
+		managerAvailable = managerAvailable(),
+		wirelessState = "LOCAL_ONLY",
+		compatibilityReason = nil,
+		topologyGeneration = managerAvailable() and WirelessPipeManager.Sv_GetTopologyRevision() or 0,
+		matchingEndpoints = 0,
+		readyEndpoints = 0,
+		limitedEndpoints = 0,
+		offlineEndpoints = 0,
+		worlds = { localWorldLabel },
+		reachableWorlds = 1,
+		crossWorld = false,
+		localOnly = true
+	}
+	if not state.managerAvailable then
+		state.wirelessState = "OFFLINE"
+		state.compatibilityReason = "WIRELESS MANAGER UNAVAILABLE"
+		return descriptors, state
+	end
+
+	local worldLabels, worldIds = { [localWorldLabel] = true }, { [localWorldId] = true }
+	local peerIds = {}
+	for _, endpoint in ipairs( discoverOriginEndpoints( startShape, requestedDirection, tracker ) ) do
+		local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( endpoint )
+		if endpointId then
+			for _, peer in ipairs( WirelessPipeManager.Sv_GetTerminalPeerEntries( endpointId, requestedDirection ) ) do
+				if peer.endpointId and not peerIds[peer.endpointId] then
+					peerIds[peer.endpointId] = true
+					state.matchingEndpoints = state.matchingEndpoints + 1
+					if peer.limited then state.limitedEndpoints = state.limitedEndpoints + 1 end
+					if peer.ready and peer.shape then
+						state.readyEndpoints = state.readyEndpoints + 1
+						local peerWorldId = tostring( peer.worldId or "?" )
+						local peerWorldLabel = peer.worldLabel or ( "WORLD " .. peerWorldId )
+						worldIds[peerWorldId] = true
+						worldLabels[peerWorldLabel] = true
+						if peerWorldId ~= localWorldId then state.crossWorld = true end
+						local shapes = peer.directOnly and getDirectContainerShapes( peer.shape, tracker )
+							or getPhysicalContainerShapes( peer.shape, tracker )
+						appendTerminalShapes( descriptors, byId, shapes, {
+							wireless = true,
+							crossWorld = peerWorldId ~= localWorldId,
+							routeKind = peer.mode == "LINK" and "LINK" or peer.mode,
+							routeDistance = 1,
+							endpointId = peer.endpointId,
+							directOnly = peer.directOnly,
+							worldLabel = peerWorldLabel
+						} )
+					else state.offlineEndpoints = state.offlineEndpoints + 1 end
+				end
+			end
+		end
+	end
+
+	state.worlds = {}
+	for label in pairs( worldLabels ) do state.worlds[#state.worlds + 1] = label end
+	table.sort( state.worlds )
+	state.reachableWorlds = 0
+	for _ in pairs( worldIds ) do state.reachableWorlds = state.reachableWorlds + 1 end
+	if state.matchingEndpoints == 0 then state.wirelessState = "LOCAL_ONLY"
+	elseif state.limitedEndpoints > 0 then state.wirelessState = "LIMITED"
+	elseif state.readyEndpoints == 0 then state.wirelessState = "OFFLINE"
+	elseif state.offlineEndpoints > 0 then state.wirelessState = "LIMITED"
+	else state.wirelessState = "READY" end
+	state.localOnly = state.readyEndpoints == 0
+	table.sort( descriptors, function( a, b )
+		if a.routePriority ~= b.routePriority then return a.routePriority < b.routePriority end
+		if a.routeDistance ~= b.routeDistance then return a.routeDistance < b.routeDistance end
+		return a.id < b.id
+	end )
+	return descriptors, state
+end
+
+-- Storage terminals use these descriptor queries instead of duplicating pipe
+-- traversal. Spend follows local/Link plus RECEIVE <- SEND routes; collect
+-- follows local/Link plus SEND -> RECEIVE routes.
+function ScrapLabPipeGraph.getTerminalSpendContainers( shape )
+	local ok, descriptors, state = pcall( buildTerminalContainers, shape, "input" )
+	if ok then return descriptors, state end
+	return {}, { wirelessInstalled = true, managerAvailable = managerAvailable(), wirelessState = "OFFLINE",
+		compatibilityReason = tostring( descriptors ), topologyGeneration = 0, worlds = {}, reachableWorlds = 0, localOnly = true }
+end
+
+function ScrapLabPipeGraph.getTerminalCollectContainers( shape )
+	local ok, descriptors, state = pcall( buildTerminalContainers, shape, "output" )
+	if ok then return descriptors, state end
+	return {}, { wirelessInstalled = true, managerAvailable = managerAvailable(), wirelessState = "OFFLINE",
+		compatibilityReason = tostring( descriptors ), topologyGeneration = 0, worlds = {}, reachableWorlds = 0, localOnly = true }
 end
 
 local function validateCollectRequest( container, items, quantities )

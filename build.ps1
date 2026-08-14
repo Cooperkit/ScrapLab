@@ -101,6 +101,7 @@ $patchSources = @(
     "Patching\ScrapLabIconAtlasCoordinator.cs",
     "Patching\RaidDetectorPatchService.cs",
     "Patching\WirelessVacuumPipePatchService.cs",
+    "Patching\NetworkStorageChestPatchService.cs",
     "Patching\AdaptivePatchSupport.cs"
 ) | ForEach-Object { Get-SourcePath $_ }
 
@@ -118,6 +119,13 @@ $wirelessPipeScript = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\Wireless
 $wirelessPipeShape = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVacuumPipe.shapeset"
 $wirelessPipeLayout = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVacuumPipe.layout"
 $wirelessPipeIcon = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVacuumPipeIcon.png"
+$networkStorageChestIcon = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChestIcon.png"
+$networkStorageChestScript = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChest.lua"
+$networkStorageChestIndex = Get-SourcePath "Patching\Scripts\ScrapLab\Storage\NetworkInventoryIndex.lua"
+$networkStorageChestGui = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChest.gui"
+$networkStorageChestItemGui = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChestItem.gui"
+$networkStorageChestShape = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChest.shapeset"
+$networkStorageChestLocalization = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChest.localization.json"
 
 & $compiler `
     /nologo `
@@ -140,6 +148,13 @@ $wirelessPipeIcon = Get-SourcePath "Patching\Parts\WirelessVacuumPipe\WirelessVa
     "/resource:$wirelessPipeShape,RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipe.shapeset" `
     "/resource:$wirelessPipeLayout,RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipe.layout" `
     "/resource:$wirelessPipeIcon,RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipeIcon.png" `
+    "/resource:$networkStorageChestIcon,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChestIcon.png" `
+    "/resource:$networkStorageChestScript,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChest.lua" `
+    "/resource:$networkStorageChestIndex,RaidRescue.Parts.NetworkStorageChest.NetworkInventoryIndex.lua" `
+    "/resource:$networkStorageChestGui,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChest.gui" `
+    "/resource:$networkStorageChestItemGui,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChestItem.gui" `
+    "/resource:$networkStorageChestShape,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChest.shapeset" `
+    "/resource:$networkStorageChestLocalization,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChest.localization.json" `
     "/out:$output\ScrapLab.PatchHelper.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `
@@ -209,7 +224,7 @@ foreach ($name in $builtFiles) {
     Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
 }
 
-$version = "2.5.1"
+$version = "2.6.0"
 $releaseRoot = Join-Path $root "release"
 $bundle = Join-Path $releaseRoot "ScrapLab-$version"
 New-Item -ItemType Directory -Path $bundle -Force | Out-Null

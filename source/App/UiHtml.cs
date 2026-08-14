@@ -905,7 +905,7 @@ button{font:inherit}
         </svg>
       </div>
       <div class=""secret-mods-heading""><strong id=""secretModsTitle"">SUPER SECRET MODS</strong><span>EXPERIMENTAL PATCH BAY · AUTHORIZED MECHANICS ONLY</span></div>
-      <div class=""secret-head-count"" id=""secretModHeadCount"">0 ACTIVE / 11 AVAILABLE</div>
+      <div class=""secret-head-count"" id=""secretModHeadCount"">0 ACTIVE / 12 AVAILABLE</div>
       <button type=""button"" class=""secret-mods-close"" aria-label=""Return to World Lab"" onclick=""closeSecretMods()"">WORLD LAB</button>
     </div>
     <div class=""secret-mods-body"">
@@ -937,7 +937,7 @@ button{font:inherit}
         </aside>
         <section class=""secret-catalog"">
       <div class=""secret-mods-catalog-head"">
-        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 11 AVAILABLE</span></div>
+        <div class=""secret-mods-catalog-label""><b>PATCH CATALOG</b><span id=""secretModCount"">0 ACTIVE &middot; 12 AVAILABLE</span></div>
         <div class=""secret-mod-search""><input type=""text"" id=""secretModSearch"" aria-label=""Filter secret mods"" placeholder=""SEARCH PATCH CATALOG..."" onkeyup=""filterSecretMods()"" /></div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
@@ -1000,6 +1000,12 @@ button{font:inherit}
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
           </div>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""networkStorageChestRow"" data-category=""logistics automation"" data-search=""network storage chest inventory catalog sorting deposit wireless cross world logistics craftbot save sensitive"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; INVENTORY &middot; SAVE-SENSITIVE</span><strong>NETWORK STORAGE CHEST</strong><span>Browse reachable piped storage, withdraw from one catalog, and automatically sort deposits into matching chests.</span><em id=""networkStorageChestState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""networkStorageChestReason""></span></div>
+          <button type=""button"" class=""secret-switch"" id=""networkStorageChestSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Network Storage Chest"" onclick=""toggleNetworkStorageChestMod()"" disabled=""disabled"">
+            <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
+          </button>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""revivalBuffRow"" data-category=""survival"" data-search=""revival baguette buffs pizza veggie burger perk knockout death revive multiplayer survival"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">SURVIVAL &middot; REVIVAL</span><strong>REVIVAL BUFF RECOVERY</strong><span>Revival Baguettes restore every pizza and veggie-burger buff held when the player was knocked out.</span><em id=""revivalBuffState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""revivalBuffReason""></span></div>
@@ -1099,6 +1105,20 @@ button{font:inherit}
       <div class=""cannon-danger-ack""><label><input type=""checkbox"" id=""raidDetectorDangerAck"" onchange=""updateRaidDetectorDangerConfirm()"" /><span class=""cannon-danger-box""></span><span>I removed every Raid Detector and saved all affected worlds.</span></label></div>
     </div>
     <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Cancel is the safe choice if you are not completely sure.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" id=""raidDetectorDangerCancel"" onclick=""closeRaidDetectorDangerConfirm()"">CANCEL</button><button type=""button"" class=""btn hotfix-confirm"" id=""raidDetectorDangerConfirmButton"" onclick=""confirmRaidDetectorDangerChange()"" disabled=""disabled""><span>!</span>I REMOVED EVERY RAID DETECTOR - DISABLE</button></div></div>
+  </div>
+</div>
+
+<div class=""hotfix-modal cannon-danger-modal"" id=""networkStorageChestDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""networkStorageChestDangerTitle"" onclick=""networkStorageChestDangerBackdropClick(event)"">
+  <div class=""hotfix-dialog"">
+    <div class=""hotfix-hazard""></div>
+    <div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""networkStorageChestDangerTitle"">SAVE PART COMPATIBILITY DANGER</strong><span>NETWORK STORAGE CHEST REMOVAL</span></div></div>
+    <div class=""hotfix-body"">
+      <p class=""hotfix-intro"">Removing this mod unregisters the permanent Network Storage Chest UUID. A save containing the part may lose it or fail to load correctly.</p>
+      <ul class=""hotfix-checks""><li>Empty every Network Storage Chest deposit tray first.</li><li>Remove every terminal from worlds, inventories, containers, Lifts, and saved creations.</li><li>Save every affected world, exit completely, and wait for ScrapLab to unlock.</li></ul>
+      <div class=""hotfix-stop"">DO NOT CONTINUE WHILE A NETWORK STORAGE CHEST STILL EXISTS IN ANY SAVE OR CREATION.</div>
+      <div class=""cannon-danger-ack""><label><input type=""checkbox"" id=""networkStorageChestDangerAck"" onchange=""updateNetworkStorageChestDangerConfirm()"" /><span class=""cannon-danger-box""></span><span>I emptied and removed every Network Storage Chest and saved all affected worlds.</span></label></div>
+    </div>
+    <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Cancel is the safe choice if you are not completely sure.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" onclick=""closeNetworkStorageChestDangerConfirm()"">CANCEL</button><button type=""button"" class=""btn hotfix-confirm"" id=""networkStorageChestDangerConfirmButton"" onclick=""confirmNetworkStorageChestDangerChange()"" disabled=""disabled""><span>!</span>I REMOVED EVERY NETWORK STORAGE CHEST - DISABLE</button></div></div>
   </div>
 </div>
 
@@ -1373,6 +1393,20 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; NETWORK STORAGE CHEST</div>
+        <div class=""help-grid"">
+          <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe uses one piped Small Chest, ten Component Kits, and twenty Circuit Boards. Crafting takes 30 seconds.</p></div>
+          <div class=""help-item""><b>ONE STORAGE CATALOG</b><p>Open the terminal to browse every reachable input container. Search and sort the catalog, then use Take controls to withdraw safely from one or several source chests.</p></div>
+          <div class=""help-item""><b>SMART DEPOSIT SORTING</b><p>Use the five-slot tray or click a player-inventory stack. ScrapLab fills matching partial stacks and specialized containers before general empty storage.</p></div>
+          <div class=""help-item""><b>WIRELESS SUPPORT</b><p>With Wireless Vacuum Pipe installed, the catalog and sorter respect Link, Send, Receive, direct-only, full-network, and cross-world routes. Without it, the terminal remains fully usable on local pipes.</p></div>
+          <div class=""help-item""><b>TRANSFER SAFETY</b><p>Every move is server-authoritative and revision checked. A stale network, full destination, or concurrent edit moves nothing partially and never creates copied catalog items.</p></div>
+          <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes a required registration, reinstall before opening a world containing the terminal when ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
+          <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Empty every deposit tray, remove every terminal from worlds and inventories, save all affected worlds, and close Scrap Mechanic before disabling.</p></div>
+        </div>
+        <div class=""help-danger""><b>PERMANENT CUSTOM UUID.</b> Removing the patch while a Network Storage Chest still exists can remove the part or prevent an affected save from loading correctly.</div>
+      </div>
+
+      <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; BETTER PLASMA DRILLS</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>TWO ADVANCED LEVELS</b><p>Upgrade level 3 to level 4 for 25 Component Kits, then level 4 to level 5 for 50. Level 4 has 5 speed, 40 range, and 6,000 battery points; level 5 has 10 speed, 75 range, and 12,000 points.</p></div>
@@ -1643,6 +1677,10 @@ var secretWirelessVacuumPipeNeedsUpdate=false;
 var secretWirelessVacuumPipeCompatibility='';
 var secretWirelessVacuumPipeCanApply=true;
 var secretWirelessVacuumPipeReason='';
+var secretNetworkStorageChestInstalled=false;
+var secretNetworkStorageChestCompatibility='';
+var secretNetworkStorageChestCanApply=true;
+var secretNetworkStorageChestReason='';
 var secretDeveloperCommandsInstalled=false;
 var secretDeveloperCommandsError='';
 var secretDeveloperCommandsCompatibility='';
@@ -1663,6 +1701,7 @@ var secretModBusy=false;
 var secretModBusyTarget='';
 var secretWirelessVacuumPipeDangerAction='';
 var secretRaidDetectorDangerAction='';
+var secretNetworkStorageChestDangerAction='';
 var secretPlasmaDangerAction='';
 var secretDependencyAction='';
 var secretCannonDangerAction='';
@@ -1734,7 +1773,7 @@ function loadAppUpdateState(){
 function escPlain(value){return value===null||typeof value==='undefined'?'':String(value);}
 function updateUiBlocked(){
  if(operationBusy||tutorialActive||updateInstallBusy)return true;
- var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','wirelessVacuumPipeDangerModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','secretModsLayer'];
+ var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','networkStorageChestDangerModal','wirelessVacuumPipeDangerModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','secretModsLayer'];
  for(var i=0;i<ids.length;i++){
   var node=document.getElementById(ids[i]);
   if(node&&String(node.className).indexOf('show')>=0)return true;
@@ -1953,6 +1992,10 @@ function captureSecretCompatibility(kind,data){
    secretWirelessVacuumPipeCompatibility=state;
    secretWirelessVacuumPipeCanApply=canApply;
    secretWirelessVacuumPipeReason=reason;
+  }else if(kind==='networkStorage'){
+   secretNetworkStorageChestCompatibility=state;
+   secretNetworkStorageChestCanApply=canApply;
+   secretNetworkStorageChestReason=reason;
   }else if(kind==='commands'){
   secretDeveloperCommandsCompatibility=state;
   secretDeveloperCommandsCanApply=canApply;
@@ -2111,6 +2154,22 @@ function loadSecretModsState(){
    showSecretModFeedback(secretWirelessVacuumPipeReason,'bad');
   }
   try{
+   var networkStorageData=parseResult(window.external.GetNetworkStorageChestModStatus());
+   if(networkStorageData.Success){
+    secretNetworkStorageChestInstalled=!!networkStorageData.Installed;
+    captureSecretCompatibility('networkStorage',networkStorageData);
+    installedSecretMod=installedSecretMod||secretNetworkStorageChestInstalled;
+   }else{
+    secretNetworkStorageChestCanApply=false;
+    secretNetworkStorageChestReason=networkStorageData.Error||'Could not read the Network Storage Chest state.';
+    showSecretModFeedback(secretNetworkStorageChestReason,'bad');
+   }
+  }catch(e){
+   secretNetworkStorageChestCanApply=false;
+   secretNetworkStorageChestReason='Could not read the Network Storage Chest state.';
+   showSecretModFeedback(secretNetworkStorageChestReason,'bad');
+  }
+  try{
    var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
   if(commandData.Success){
    secretDeveloperCommandsInstalled=!!commandData.Installed;
@@ -2263,6 +2322,17 @@ function renderSecretModsState(){
    renderCompatibilityReason('wirelessVacuumPipeReason',secretWirelessVacuumPipeInstalled,secretWirelessVacuumPipeCanApply,secretWirelessVacuumPipeReason);
    if(secretWirelessVacuumPipeNeedsUpdate){var wirelessUpdateReason=document.getElementById('wirelessVacuumPipeReason');wirelessUpdateReason.className='secret-compat-reason show';wirelessUpdateReason.innerText=secretWirelessVacuumPipeReason||'Receive-side pull routing and safe transfer scope are ready.';}
   }
+  var networkStorage=document.getElementById('networkStorageChestSwitch');
+  var networkStorageRow=document.getElementById('networkStorageChestRow');
+  var networkStorageState=document.getElementById('networkStorageChestState');
+  if(networkStorage&&networkStorageRow&&networkStorageState){
+   networkStorage.className=secretNetworkStorageChestInstalled?'secret-switch on':'secret-switch';
+   networkStorage.setAttribute('aria-checked',secretNetworkStorageChestInstalled?'true':'false');
+   networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
+   networkStorageRow.className='secret-mod-row secret-mod-card'+(secretNetworkStorageChestInstalled?' enabled':'')+((!secretModsEnabled||!secretNetworkStorageChestCanApply)?' locked':'');
+   networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED'));
+   renderCompatibilityReason('networkStorageChestReason',secretNetworkStorageChestInstalled,secretNetworkStorageChestCanApply,secretNetworkStorageChestReason);
+  }
   var revival=document.getElementById('revivalBuffSwitch');
  var revivalRow=document.getElementById('revivalBuffRow');
  var revivalState=document.getElementById('revivalBuffState');
@@ -2312,9 +2382,9 @@ function renderSecretModsState(){
  var count=document.getElementById('secretModCount');
  var headCount=document.getElementById('secretModHeadCount');
  if(count){
-   var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretWirelessVacuumPipeInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
-   count.innerText=active+' ACTIVE \u00b7 11 AVAILABLE';
-   if(headCount)headCount.innerText=active+' ACTIVE / 11 AVAILABLE';
+   var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretWirelessVacuumPipeInstalled?1:0)+(secretNetworkStorageChestInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+   count.innerText=active+' ACTIVE \u00b7 12 AVAILABLE';
+   if(headCount)headCount.innerText=active+' ACTIVE / 12 AVAILABLE';
  }
  filterSecretMods();
 }
@@ -2372,6 +2442,7 @@ function secretModsBackdropClick(e){
 }
 function toggleSecretModsEnabled(){
  if(operationBusy||secretModBusy)return;
+ if(secretModsEnabled&&secretNetworkStorageChestInstalled){openNetworkStorageChestDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretWirelessVacuumPipeInstalled){openWirelessVacuumPipeDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretRaidDetectorInstalled){openRaidDetectorDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretBetterPlasmaDrillsInstalled){openPlasmaDangerConfirm('masterOff');return;}
@@ -2387,6 +2458,7 @@ function toggleSecretModsEnabled(){
  renderSecretModsState();
 }
 function disableAllSecretModsConfirmed(){
+ if(secretNetworkStorageChestInstalled&&!setNetworkStorageChestMod(false))return false;
  if(secretWirelessVacuumPipeInstalled&&!setWirelessVacuumPipeMod(false))return false;
  if(secretRaidDetectorInstalled&&!setRaidDetectorMod(false))return false;
  if(secretBetterPlasmaDrillsInstalled&&!setBetterPlasmaDrillsMod(false))return false;
@@ -2444,6 +2516,28 @@ function toggleWirelessVacuumPipeMod(){
  if(secretWirelessVacuumPipeNeedsUpdate){setWirelessVacuumPipeMod(true);return;}
  if(secretWirelessVacuumPipeInstalled){openWirelessVacuumPipeDangerConfirm('wirelessPipeOnly');return;}
  setWirelessVacuumPipeMod(true);
+}
+function toggleNetworkStorageChestMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ if(secretNetworkStorageChestInstalled){openNetworkStorageChestDangerConfirm('networkStorageOnly');return;}
+ setNetworkStorageChestMod(true);
+}
+function setNetworkStorageChestMod(enabled){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
+ secretModBusy=true;secretModBusyTarget='networkStorage';operationBusy=true;
+ showSecretModFeedback(enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ var data;
+ try{data=parseResult(window.external.SetNetworkStorageChestMod(enabled));}
+ catch(e){data={Success:false,Error:e.message||'The Network Storage Chest installer did not return a result.'};}
+ secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+ if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ if(!data.Success){showSecretModFeedback(data.Error||'Network Storage Chest could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
+ secretNetworkStorageChestInstalled=!!data.Installed;
+ if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+ loadSecretModsState();
+ showSecretModFeedback(secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, smart sorting, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+ applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function setWirelessVacuumPipeMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Wireless Vacuum Pipe.','bad');return false;}
@@ -2884,6 +2978,26 @@ function confirmDependencyChange(){
  closeDependencyConfirm();
  if(action==='installBoth')setDualFluidCannonMod(true);
  else if(action==='removeBoth')openCannonDangerConfirm('removeBoth');
+}
+function openNetworkStorageChestDangerConfirm(action){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Network Storage Chest.','bad');return;}
+ secretNetworkStorageChestDangerAction=action;
+ var ack=document.getElementById('networkStorageChestDangerAck');ack.checked=false;
+ document.getElementById('networkStorageChestDangerConfirmButton').disabled=true;
+ document.getElementById('networkStorageChestDangerModal').className='hotfix-modal cannon-danger-modal show';
+}
+function updateNetworkStorageChestDangerConfirm(){document.getElementById('networkStorageChestDangerConfirmButton').disabled=!document.getElementById('networkStorageChestDangerAck').checked;}
+function closeNetworkStorageChestDangerConfirm(){document.getElementById('networkStorageChestDangerModal').className='hotfix-modal cannon-danger-modal';document.getElementById('networkStorageChestDangerAck').checked=false;secretNetworkStorageChestDangerAction='';}
+function networkStorageChestDangerBackdropClick(e){e=e||window.event;if((e.target||e.srcElement)===document.getElementById('networkStorageChestDangerModal'))closeNetworkStorageChestDangerConfirm();}
+function confirmNetworkStorageChestDangerChange(){
+ if(!document.getElementById('networkStorageChestDangerAck').checked)return;
+ var action=secretNetworkStorageChestDangerAction;closeNetworkStorageChestDangerConfirm();
+ if(action==='masterOff'&&secretWirelessVacuumPipeInstalled)openWirelessVacuumPipeDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretRaidDetectorInstalled)openRaidDetectorDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretBetterPlasmaDrillsInstalled)openPlasmaDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretDualFluidCannonInstalled)openCannonDangerConfirm('masterOff');
+ else if(action==='masterOff')disableAllSecretModsConfirmed();
+ else setNetworkStorageChestMod(false);
 }
 function openWirelessVacuumPipeDangerConfirm(action){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Wireless Vacuum Pipe.','bad');return;}
@@ -3425,6 +3539,7 @@ function boot(){
   if(key===27&&document.getElementById('itemClearModal').className.indexOf('show')>=0){closeItemClearConfirm();return false;}
   if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
   if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
+    if(key===27&&document.getElementById('networkStorageChestDangerModal').className.indexOf('show')>=0){closeNetworkStorageChestDangerConfirm();return false;}
     if(key===27&&document.getElementById('wirelessVacuumPipeDangerModal').className.indexOf('show')>=0){closeWirelessVacuumPipeDangerConfirm();return false;}
     if(key===27&&document.getElementById('raidDetectorDangerModal').className.indexOf('show')>=0){closeRaidDetectorDangerConfirm();return false;}
    if(key===27&&document.getElementById('plasmaDangerModal').className.indexOf('show')>=0){closePlasmaDangerConfirm();return false;}

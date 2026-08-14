@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v6
+-- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v8
 -- Persistent endpoint registry, Link topology, and the Phase 4 directional
 -- scheduler host. Inventory authority remains inside native transactions.
 
@@ -128,6 +128,7 @@ function WirelessPipeManager.server_onCreate( self )
 	self.sv.routeCapabilities = { link = false, directional = false, input = false, output = false }
 	self.sv.lastHandleTopologySignature = nil
 	self.sv.directionalDebugModes = {}
+	self.sv.directionalDebugScopes = {}
 	WirelessPipeTransfer.Sv_ServerOnCreate( self )
 
 	for endpointId, record in pairs( self.sv.saved.endpoints ) do
@@ -245,6 +246,7 @@ function WirelessPipeManager.sv_registerEndpoint( self, data, shape, owner )
 	local generation = self.sv.generation
 	local record = self:sv_makeRecord( data )
 	if self.sv.directionalDebugModes[endpointId] then record.mode = self.sv.directionalDebugModes[endpointId] end
+	if self.sv.directionalDebugScopes[endpointId] ~= nil then record.directOnly = self.sv.directionalDebugScopes[endpointId] end
 	if persistentRecordChanged( self.sv.saved.endpoints[endpointId], record ) then
 		self.sv.saved.endpoints[endpointId] = record
 		self.sv.saveDirty = true
@@ -275,6 +277,7 @@ function WirelessPipeManager.sv_refreshEndpoint( self, data, shape, owner, gener
 	end
 	local updated = self:sv_makeRecord( data )
 	if self.sv.directionalDebugModes[endpointId] then updated.mode = self.sv.directionalDebugModes[endpointId] end
+	if self.sv.directionalDebugScopes[endpointId] ~= nil then updated.directOnly = self.sv.directionalDebugScopes[endpointId] end
 	local previous = self.sv.saved.endpoints[endpointId]
 	local changed = persistentRecordChanged( previous, updated )
 	if changed then
@@ -320,6 +323,7 @@ function WirelessPipeManager.sv_unregisterEndpoint( self, endpointId, shape, gen
 	self.sv.reconcile[endpointId] = nil
 	self.sv.endpointHandleState[endpointId] = nil
 	self.sv.directionalDebugModes[endpointId] = nil
+	self.sv.directionalDebugScopes[endpointId] = nil
 	WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
 	self.sv.saveDirty = true
 	self.sv.groupsDirty = true
@@ -750,6 +754,54 @@ function WirelessPipeManager.sv_getDirectionalSourceEntries( self, endpointId )
 	return result
 end
 
+-- Read-only route metadata for terminal-style consumers. Unlike the existing
+-- live-only graph helpers, this includes unavailable peers so a UI can report
+-- LIMITED or OFFLINE instead of silently presenting an incomplete network as
+-- empty. The caller still receives a Shape only when the route is safe to use.
+function WirelessPipeManager.sv_getTerminalPeerEntries( self, endpointId, requestedDirection )
+	endpointId = tostring( endpointId or "" )
+	requestedDirection = string.lower( tostring( requestedDirection or "input" ) )
+	if self.sv.groupsDirty then self:sv_rebuildGroups() end
+	local record = self.sv.saved.endpoints[endpointId]
+	if not record or not record.enabled then return {} end
+
+	local allowed = record.mode == "LINK"
+		or ( requestedDirection == "input" and record.mode == "RECEIVE" )
+		or ( requestedDirection == "output" and record.mode == "SEND" )
+	if not allowed then return {} end
+
+	local result = {}
+	for _, peerId in ipairs( self:sv_getMatchingIds( record ) ) do
+		local peer = self.sv.saved.endpoints[peerId]
+		local live = self.sv.live[peerId]
+		local handle = self.sv.endpointHandleState[peerId] or {}
+		local liveShape = live and live.shape or nil
+		local shapeReady = liveShape ~= nil and sm.exists( liveShape )
+		local limited = handle.limited == true
+		local ready = shapeReady and not limited
+		if peer then
+			result[#result + 1] = {
+				endpointId = peerId,
+				shape = ready and liveShape or nil,
+				mode = peer.mode,
+				-- Link always represents the complete connected pipe system. The
+				-- Direct Container Only option belongs only to directional routes.
+				directOnly = peer.mode ~= "LINK" and peer.directOnly ~= false,
+				worldId = peer.worldId,
+				worldLabel = peer.worldLabel,
+				cellX = peer.cellX,
+				cellY = peer.cellY,
+				channel = peer.channel,
+				ready = ready,
+				limited = limited,
+				loading = not ready and not limited and handle.key ~= nil
+			}
+		end
+	end
+	table.sort( result, function( a, b ) return a.endpointId < b.endpointId end )
+	return result
+end
+
 function WirelessPipeManager.sv_validateInvariants( self )
 	local errors = {}
 	local handleCount = 0
@@ -816,6 +868,22 @@ function WirelessPipeManager.sv_debugSetEndpointMode( self, endpointId, mode )
 	return true
 end
 
+function WirelessPipeManager.sv_debugSetEndpointScope( self, endpointId, directOnly )
+	endpointId = tostring( endpointId or "" )
+	local record = self.sv.saved.endpoints[endpointId]
+	local live = self.sv.live[endpointId]
+	if not record or not live or not live.shape or not sm.exists( live.shape ) then return false end
+	local normalized = directOnly ~= false
+	self.sv.directionalDebugScopes[endpointId] = normalized
+	if record.directOnly == normalized then return true end
+	record.directOnly = normalized
+	self.sv.saveDirty = true
+	self.sv.groupsDirty = true
+	WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
+	self:sv_rebuildGroups()
+	return true
+end
+
 function WirelessPipeManager.Sv_RegisterEndpoint( data, shape, owner )
 	if not g_wirelessPipeManager then return { ok = false, reason = "WIRELESS MANAGER UNAVAILABLE" } end
 	return g_wirelessPipeManager:sv_registerEndpoint( data, shape, owner )
@@ -853,6 +921,16 @@ end
 function WirelessPipeManager.Sv_GetDirectionalSourceEntries( endpointId )
 	if not g_wirelessPipeManager then return {} end
 	return g_wirelessPipeManager:sv_getDirectionalSourceEntries( endpointId )
+end
+
+function WirelessPipeManager.Sv_GetTerminalPeerEntries( endpointId, requestedDirection )
+	if not g_wirelessPipeManager then return {} end
+	return g_wirelessPipeManager:sv_getTerminalPeerEntries( endpointId, requestedDirection )
+end
+
+function WirelessPipeManager.Sv_DebugSetEndpointScope( endpointId, directOnly )
+	if not g_wirelessPipeManager then return false end
+	return g_wirelessPipeManager:sv_debugSetEndpointScope( endpointId, directOnly )
 end
 
 function WirelessPipeManager.Sv_GetTopologyRevision()

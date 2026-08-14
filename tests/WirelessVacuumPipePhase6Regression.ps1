@@ -65,7 +65,7 @@ foreach ($required in @(
     'function setWirelessVacuumPipeMod(enabled)',
     'UNSUPPORTED ICON ATLAS',
     'UNSUPPORTED PIPE CODE',
-    '11 AVAILABLE',
+    '12 AVAILABLE',
     'id="wirelessVacuumPipeDangerModal"',
     'I REMOVED EVERY WIRELESS VACUUM PIPE - DISABLE',
     'Remove every pipe from placed worlds, including every underground world.',

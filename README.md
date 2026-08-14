@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.5.1.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.6.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -199,6 +199,7 @@ the selected save database.
 | **Better Plasma Drills** | Adds level-4 and level-5 upgrades, greater speed, battery capacity, range, beam radii up to 10, and 20–300 unit damage per second. |
 | **Raid Detector** | Adds a beacon-housed logic sensor sold by the Hideout Trader that stays on for scheduled or active raids within 256 meters. |
 | **Wireless Vacuum Pipe** | Joins same-color pipe networks, moves items through Send/Receive, and lets Receive-side machines pull from matching Send storage across loaded worlds. Directional endpoints default to direct-container-only scope. |
+| **Network Storage Chest** | Adds one searchable catalog for every reachable piped container, server-validated withdrawals, and a five-slot tray that sorts deposits into the best matching storage. |
 | **Revival Buff Recovery** | Restores the exact pizza and veggie-burger buffs held before a real Revival Baguette revive. |
 | **Chemical Fertilizer Splash** | Lets chemical projectiles fertilize farm plots and grow beds; farmbot chemicals use a radius. |
 | **Dual-Fluid Water Cannon** | Accepts logic, water, and chemical inputs and fires every available liquid on one OFF-to-ON pulse. |
@@ -274,6 +275,35 @@ only the owned runtime files and preserves their original uninstall backups.
 > world and close Scrap Mechanic completely. If a Steam update or Verify removes
 > the registration, reinstall the mod before opening any save that may contain
 > the part.
+
+**Network Storage Chest** is a custom, save-sensitive logistics terminal with
+permanent UUID `bc7576a7-f226-459a-883c-e8460e955d63`. Its default-unlocked
+Craftbot recipe makes one terminal in 30 seconds from one piped Small Chest,
+ten Component Kits, and twenty Circuit Boards. The part reuses the piped Small
+Chest model while keeping its own isolated script, five-slot deposit tray,
+GUI, localization, and shared ScrapLab Icon Pack registration.
+
+Interact with the terminal to browse one compact, searchable catalog of all
+items in reachable containers. Withdrawals and deposits are checked and
+committed on the server, refresh on network revisions, and abort safely if a
+container changes before commit. The deposit tray prefers an existing partial
+stack, then a chest already holding that item, a compatible filtered chest,
+and finally empty general storage. Items that cannot be routed remain in the
+tray. The player panel combines hotbar slots `0-9` and backpack slots `10+` in
+one scrollable view.
+
+The terminal works on ordinary local pipe networks by itself. When Wireless
+Vacuum Pipe is installed and ready, it also follows same-color Link routes and
+permitted Send/Receive routes, including loaded overworld-to-underground
+connections. Removing Wireless Vacuum Pipe leaves the terminal installed and
+local-only. A Steam update that removes any required registration is reported
+as **Reinstall Required - Save Part at Risk** and is never repaired silently.
+
+> **Network Storage Chest save warning:** empty every deposit tray, remove every
+> terminal from worlds, player inventories, hotbars, containers, Lifts, and
+> saved creations, save all affected worlds, and close the game before
+> disabling the mod. If Steam removes the registration, reinstall it before
+> opening a save that may still contain the part.
 
 After Steam installs a new game build, installed-state receipts are compared
 with the actual Lua files. Compatible updated scripts may be patched only when
@@ -380,7 +410,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.5.1.zip
+release\ScrapLab-2.6.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

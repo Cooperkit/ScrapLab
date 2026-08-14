@@ -45,7 +45,7 @@ foreach ($requiredUi in @(
     'GetRaidDetectorModStatus',
     'SetRaidDetectorMod',
     'I REMOVED EVERY RAID DETECTOR - DISABLE',
-    '11 AVAILABLE'
+    '12 AVAILABLE'
 )) {
     if (-not $html.Contains($requiredUi)) {
         throw "The Better Plasma Drills update UI is missing: $requiredUi"

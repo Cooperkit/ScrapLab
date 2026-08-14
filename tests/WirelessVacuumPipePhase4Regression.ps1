@@ -23,7 +23,7 @@ $harness=Get-Content -LiteralPath $harnessPath -Raw
 $installer=Get-Content -LiteralPath $installerPath -Raw
 
 foreach($needle in @(
-    'WIRELESS VACUUM PIPE MANAGER v6','MANAGER_SCHEMA_VERSION = 3','WirelessPipeTransfer.Sv_ServerOnCreate',
+    'WIRELESS VACUUM PIPE MANAGER v8','MANAGER_SCHEMA_VERSION = 3','WirelessPipeTransfer.Sv_ServerOnCreate',
     'WirelessPipeTransfer.Sv_ServerOnFixedUpdate','WirelessPipeTransfer.Sv_OnEndpointTopologyChanged',
     'directionalCursors','Sv_GetDirectionalDebugSnapshot','Sv_ConsumeEndpointActivity','Sv_DebugSetEndpointMode'
 )){Assert-Contains $manager $needle "Manager Phase 4 contract missing: $needle"}

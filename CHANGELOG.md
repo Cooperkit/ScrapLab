@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+## 2.6.0 - 2026-08-14
+
+- Added the save-sensitive **Network Storage Chest** Super Secret Mod with
+  permanent UUID `bc7576a7-f226-459a-883c-e8460e955d63`, a default-unlocked
+  Craftbot recipe, isolated runtime and GUI files, all 11 inventory-description
+  languages, and an icon managed through the shared ScrapLab Icon Pack.
+- Added one searchable, scrollable catalog for reachable local storage,
+  server-validated multi-container withdrawals, and a five-slot deposit tray
+  that prioritizes partial stacks, matching-item storage, filtered storage,
+  and then empty general containers. Hotbar and backpack slots appear together
+  in one player-inventory view.
+- Added optional Wireless Vacuum Pipe integration for Link and directional
+  routes, including qualified cross-world access, without making the wireless
+  mod a dependency. Removing Wireless Vacuum Pipe leaves local catalog access
+  intact.
+- Added an atomic adaptive installer with exact protected snippets, verified
+  backups, bounded receipts, rollback, surgical removal, shared-file and
+  shared-atlas composition, cache invalidation, Steam-overwrite detection, and
+  a save-sensitive removal gate in both the individual and master flows.
+- Completed the Phase 5 live qualification with **20 passed, 0 failed** and
+  added a Phase 6 production-service regression covering clean install,
+  installed-state detection, owned assets, exact removal, helper protocol,
+  app bridge, Patch Bay state, danger confirmation, and embedded JavaScript.
+- Completed the automated Phase 7 release qualification with **73 passed,
+  0 failed, 1 skipped** across the functional suites and **8 passed, 0 failed**
+  in the incremental 500-container soak. The soak verified warm shared caches,
+  one-container rescanning, refresh persistence, bounded pruning, and removal
+  of all 502 temporary fixtures. The temporary test loader was then removed
+  and the exact production game loader restored.
+- Fixed Wireless Vacuum Pipe falsely reporting a partial Craftbot recipe after
+  Network Storage Chest was installed later. Shared recipe arrays now validate
+  the exact unique Wireless recipe in place and preserve later ScrapLab recipes
+  in either removal order.
+
 ## 2.5.1 - 2026-08-05
 
 - Fixed a Craftbot input Link ignoring a same-color Link attached to the

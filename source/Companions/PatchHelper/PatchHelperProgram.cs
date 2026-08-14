@@ -146,6 +146,9 @@ namespace RaidRescue
                 case PatchHelperProtocol.WirelessVacuumPipe:
                     return WirelessVacuumPipePatchService.SetEnabled(
                         request.Enabled);
+                case PatchHelperProtocol.NetworkStorageChest:
+                    return NetworkStorageChestPatchService.SetEnabled(
+                        request.Enabled);
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return DualFluidCannonPatchCoordinator.SetChemicalEnabled(
                         request.Enabled);
@@ -180,6 +183,8 @@ namespace RaidRescue
                     return RaidDetectorPatchService.GetStatus();
                 case PatchHelperProtocol.WirelessVacuumPipe:
                     return WirelessVacuumPipePatchService.GetStatus();
+                case PatchHelperProtocol.NetworkStorageChest:
+                    return NetworkStorageChestPatchService.GetStatus();
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return ChemicalFertilizerPatchService.GetStatus();
                 case PatchHelperProtocol.DualFluidCannon:

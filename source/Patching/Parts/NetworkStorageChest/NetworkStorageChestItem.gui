@@ -1,0 +1,92 @@
+{
+  "Childs": [
+    {
+      "Childs": [],
+      "ImageGroup": "",
+      "ImageName": "",
+      "ImageResource": "",
+      "Name": "CatalogItemImage",
+      "NeedKey": false,
+      "NeedMouse": false,
+      "Skin": "ImageBox",
+      "Type": "ImageBox",
+      "height": 40,
+      "onMouseWheel": "cl_onHandleMouseWheel",
+      "width": 40,
+      "x": 12,
+      "y": 8
+    },
+    {
+      "Caption": "",
+      "Childs": [],
+      "FontName": "SM_NumberSmall",
+      "Name": "CatalogItemQuantity",
+      "NeedKey": false,
+      "NeedMouse": false,
+      "Skin": "TextBox",
+      "TextAlign": "Right",
+      "Type": "TextBox",
+      "height": 10,
+      "width": 48,
+      "x": 10,
+      "y": 49
+    },
+    {
+      "Childs": [],
+      "ImageTexture": "",
+      "Name": "CatalogItemKey",
+      "NeedKey": false,
+      "NeedMouse": false,
+      "Skin": "ImageBox",
+      "Type": "ImageBox",
+      "height": 13,
+      "width": 13,
+      "x": 47,
+      "y": 4
+    },
+    {
+      "Childs": [],
+      "ImageName": "interactive",
+      "ImageResource": "ItemTypeSet",
+      "Name": "CatalogItemType",
+      "NeedKey": false,
+      "NeedMouse": false,
+      "Skin": "ImageBox",
+      "Type": "ImageBox",
+      "height": 8,
+      "width": 8,
+      "x": 5,
+      "y": 51
+    },
+    {
+      "Caption": "L",
+      "Childs": [],
+      "FontName": "SM_HeaderTiny",
+      "Name": "CatalogItemRoute",
+      "NeedKey": false,
+      "NeedMouse": false,
+      "Skin": "TextBox",
+      "TextAlign": "Center",
+      "TextColour": "0.35 0.85 1 1",
+      "Type": "TextBox",
+      "height": 13,
+      "width": 13,
+      "x": 3,
+      "y": 3
+    }
+  ],
+  "Name": "CatalogItem",
+  "NeedKey": true,
+  "NeedMouse": true,
+  "Skin": "ContainerItemBackground",
+  "ToolTip": {
+    "Text": ""
+  },
+  "Type": "Button",
+  "height": 64,
+  "onClick": "cl_onCatalogItemClick",
+  "onMouseWheel": "cl_onHandleMouseWheel",
+  "width": 64,
+  "x": 0,
+  "y": 0
+}

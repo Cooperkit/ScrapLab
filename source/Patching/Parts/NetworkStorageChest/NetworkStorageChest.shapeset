@@ -1,0 +1,52 @@
+{
+	"partList" :
+	[
+		{
+			"box" :
+			{
+				"x" : 3,
+				"y" : 2,
+				"z" : 3
+			},
+			"color" : "df7f01",
+			"flammable" : false,
+			"name" : "obj_container_network_storage_chest",
+			"physicsMaterial" : "Mechanical",
+			"pipe" :
+			{
+				"openings" :
+				[
+					{
+						"side" : "+Y",
+						"x" : 0.0,
+						"y" : 1.0,
+						"z" : 0
+					}
+				],
+				"type" : "Container"
+			},
+			"ratings" :
+			{
+				"buoyancy" : 8,
+				"density" : 4,
+				"durability" : 6,
+				"friction" : 5
+			},
+			"renderable" : "$SURVIVAL_DATA/Objects/Renderable/interactive/obj_interactive_smallchest_pipe.rend",
+			"restrictions" :
+			{
+				"usable" : true
+			},
+			"rotationSet" : "PropYZ",
+			"scripted" :
+			{
+				"classname" : "NetworkStorageChest",
+				"data" : {},
+				"filename" : "$SURVIVAL_DATA/Scripts/ScrapLab/Parts/NetworkStorageChest/NetworkStorageChest.lua"
+			},
+			"showInInventory" : true,
+			"stackSize" : 5,
+			"uuid" : "bc7576a7-f226-459a-883c-e8460e955d63"
+		}
+	]
+}

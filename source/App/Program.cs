@@ -912,6 +912,18 @@ namespace RaidRescue
                 PatchHelperProtocol.WirelessVacuumPipe, enabled, ""));
         }
 
+        public string GetNetworkStorageChestModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.NetworkStorageChest));
+        }
+
+        public string SetNetworkStorageChestMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.NetworkStorageChest, enabled, ""));
+        }
+
         public string GetChemicalFertilizerModStatus()
         {
             return Serialize(PatchHelperClient.GetStatus(

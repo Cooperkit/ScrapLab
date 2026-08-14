@@ -1,0 +1,31 @@
+{
+  "phase1SchemaVersion": 1,
+  "status": "awaiting-in-game-validation",
+  "implementedOn": "2026-08-13",
+  "scope": "local-read-only-network-catalog",
+  "bufferSlots": 5,
+  "catalogColumns": 10,
+  "indexing": {
+    "nativeLocalInputContainersOnly": true,
+    "wirelessRoutesEnabled": false,
+    "terminalBufferExcluded": true,
+    "deduplicatesByContainerId": true,
+    "sharedRevisionCache": true,
+    "containerScanBudgetPerTick": 12,
+    "revisionPollIntervalTicks": 4,
+    "revisionPollBudget": 32,
+    "topologyPollIntervalTicks": 40,
+    "idleWithGuiClosed": true,
+    "savedItemCache": false,
+    "selfContainedAutomaticTest": "/slstorage1 auto",
+    "selfContainedScaleQualification": "/slstorage1 qualify",
+    "realEngineQualificationCounts": [1, 50, 100, 500],
+    "qualificationIdleTicks": 240,
+    "qualificationRealParts": 502
+  },
+  "movement": {
+    "networkWithdrawals": false,
+    "automaticDepositRouting": false,
+    "existingPlayerBufferTransactions": true
+  }
+}

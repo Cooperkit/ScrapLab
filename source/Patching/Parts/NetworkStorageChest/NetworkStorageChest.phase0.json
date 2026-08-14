@@ -1,0 +1,84 @@
+{
+  "phase0SchemaVersion": 1,
+  "status": "completed",
+  "lockedOn": "2026-08-13",
+  "validatedOn": "2026-08-13",
+  "validation": {
+    "allManualStepsPassed": true,
+    "catalogItemsTested": 60,
+    "filterReflowPassed": true,
+    "scrollingPassed": true,
+    "containerTransactionsPassed": true,
+    "closeReopenPersistencePassed": true,
+    "saveReloadPersistencePassed": true,
+    "statusCommandPassed": true,
+    "cleanupPassed": true,
+    "logsInspected": [
+      "game-20260813-180347.log",
+      "game-20260813-181211.log"
+    ]
+  },
+  "identity": {
+    "displayName": "Network Storage Chest",
+    "upperCaseDisplayName": "NETWORK STORAGE CHEST",
+    "internalItemName": "obj_container_network_storage_chest",
+    "scriptClassName": "NetworkStorageChest",
+    "partUuid": "bc7576a7-f226-459a-883c-e8460e955d63",
+    "referencePartName": "Small Chest with Vacuum Pipe port",
+    "referencePartUuid": "4c474cff-3f6a-4306-93d1-c4c74578afd2"
+  },
+  "inventory": {
+    "stackSize": 5,
+    "showInInventory": true,
+    "depositSlots": 5,
+    "englishDescription": "Browse a connected storage network, take items from one catalog, and automatically sort deposits into matching containers. Supports Wireless Vacuum Pipe routes when installed."
+  },
+  "recipe": {
+    "recipeSet": "craftbot_core",
+    "defaultUnlocked": true,
+    "outputQuantity": 1,
+    "craftTimeSeconds": 30,
+    "ingredients": [
+      {
+        "name": "Small Chest with Vacuum Pipe port",
+        "itemUuid": "4c474cff-3f6a-4306-93d1-c4c74578afd2",
+        "quantity": 1
+      },
+      {
+        "name": "Component Kit",
+        "itemUuid": "5530e6a0-4748-4926-b134-50ca9ecb9dcf",
+        "quantity": 10
+      },
+      {
+        "name": "Circuit Board",
+        "itemUuid": "f152e4df-bc40-44fb-8d20-3b3ff70cdfe3",
+        "quantity": 20
+      }
+    ]
+  },
+  "phase0Probe": {
+    "catalogCells": 60,
+    "usesJsonGridScrollView": true,
+    "reflowsFilteredResults": true,
+    "jsonContainerBoxes": true,
+    "catalogButtons": true,
+    "depositGridBoundToRealContainer": true,
+    "playerGridBoundToLocalInventory": true,
+    "searchTextChangedCallback": true,
+    "searchTextAcceptedCallback": true,
+    "localizedTitles": true,
+    "closeReopenPersistenceRequired": true,
+    "saveReloadPersistenceRequired": true,
+    "phase1NetworkIndexing": false,
+    "phase2Withdrawals": false,
+    "phase3AutomaticSorting": false
+  },
+  "icon": {
+    "sourceFile": "NetworkStorageChestIcon.png",
+    "width": 96,
+    "height": 96,
+    "format": "RGBA PNG",
+    "background": "transparent",
+    "sha256": "5AA33DF9468AA566A9F963CEC81D4A7A20BBB49A9073028F4EEF9C14EB718629"
+  }
+}

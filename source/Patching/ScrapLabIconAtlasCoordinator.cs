@@ -15,7 +15,7 @@ namespace RaidRescue
         internal const int CellSize = 96;
         internal const int CurrentBuildX = 3936;
         internal const int CurrentBuildY = 3936;
-        internal const string CatalogVersion = "2";
+        internal const string CatalogVersion = "3";
 
         internal sealed class IconAsset
         {
@@ -95,6 +95,14 @@ namespace RaidRescue
                     Uuid = "a34d9af0-4ba0-431d-b647-2d5435ecf138",
                     ResourceName =
                         "RaidRescue.Parts.WirelessVacuumPipe.WirelessVacuumPipeIcon.png",
+                    LegacyResourceNames = new string[0]
+                },
+                new IconAsset
+                {
+                    ModKey = "NetworkStorageChest",
+                    Uuid = "bc7576a7-f226-459a-883c-e8460e955d63",
+                    ResourceName =
+                        "RaidRescue.Parts.NetworkStorageChest.NetworkStorageChestIcon.png",
                     LegacyResourceNames = new string[0]
                 }
             };
