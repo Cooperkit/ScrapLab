@@ -63,6 +63,20 @@ button{font:inherit}
  cursor:pointer}
 .scroll-thumb:hover,.scroll-thumb.dragging{border-color:#ffe98d;background:linear-gradient(90deg,#e7a51d,#ffe269 48%,#cf8b12);
  box-shadow:inset 1px 0 #fff8c4,0 0 8px rgba(255,194,34,.48)}
+.app-scroll,.save-menu,.item-summary-list,.gameplay-batch-list,.help-body,.secret-category-nav,.secret-mods-list{
+ -ms-overflow-style:none;scrollbar-width:none}
+.app-scroll::-webkit-scrollbar,.save-menu::-webkit-scrollbar,.item-summary-list::-webkit-scrollbar,
+.gameplay-batch-list::-webkit-scrollbar,.help-body::-webkit-scrollbar,.secret-category-nav::-webkit-scrollbar,
+.secret-mods-list::-webkit-scrollbar{width:0!important;height:0!important;background:transparent!important}
+.machinery-scroll-track{display:none;position:fixed;width:13px;box-sizing:border-box;background:#111314;border:1px solid #060707;
+ border-radius:7px;box-shadow:inset 0 0 0 2px #242728,0 1px #4b4f50;user-select:none}
+.machinery-scroll-track.show{display:block}.machinery-scroll-thumb{position:absolute;left:2px;top:2px;width:7px;min-height:34px;
+ box-sizing:content-box;border:1px solid #9b6e12;border-radius:5px;background:linear-gradient(90deg,#c88714,#ffd247 48%,#b7770d);
+ box-shadow:inset 1px 0 #fff09a,0 0 5px rgba(255,194,34,.25);cursor:pointer}
+.machinery-scroll-thumb:before{content:'';position:absolute;left:1px;right:1px;top:50%;height:5px;margin-top:-3px;
+ border-top:1px solid #fff0a0;border-bottom:1px solid #8d5d08;background:linear-gradient(#8d5d08 0,#8d5d08 1px,transparent 1px,transparent 3px,#fff0a0 3px,#fff0a0 4px)}
+.machinery-scroll-thumb:hover,.machinery-scroll-thumb.dragging{border-color:#ffe98d;background:linear-gradient(90deg,#e7a51d,#ffe269 48%,#cf8b12);
+ box-shadow:inset 1px 0 #fff8c4,0 0 8px rgba(255,194,34,.48)}
 .hazard{position:relative;height:7px;overflow:hidden;background:#292b2c;border-bottom:1px solid #070808;
  box-shadow:0 2px 8px rgba(0,0,0,.65)}
 .hazard:before{content:'';position:absolute;left:-102px;top:0;width:calc(100% + 204px);height:7px;
@@ -115,10 +129,8 @@ button{font:inherit}
  transform:rotate(45deg);transition:transform .22s,top .22s}
 .save-picker.open .save-cog:before{top:17px;transform:rotate(225deg)}
 .save-menu{display:none;position:absolute;z-index:30;left:4px;right:4px;top:47px;max-height:245px;overflow-y:auto;
- padding:5px;background:#17191a;border:2px solid #ffd046;border-top-width:4px;border-radius:3px 3px 10px 10px;
- box-shadow:0 12px 28px rgba(0,0,0,.78),inset 0 0 0 1px #4d3d11;transform-origin:top;
- scrollbar-face-color:#3b3f40;scrollbar-track-color:#17191a;scrollbar-arrow-color:#ffd046;
- scrollbar-highlight-color:#5a5e5f;scrollbar-shadow-color:#0b0c0c;scrollbar-3dlight-color:#202324;scrollbar-darkshadow-color:#090a0a}
+ padding:5px 18px 5px 5px;background:#17191a;border:2px solid #ffd046;border-top-width:4px;border-radius:3px 3px 10px 10px;
+ box-shadow:0 12px 28px rgba(0,0,0,.78),inset 0 0 0 1px #4d3d11;transform-origin:top}
 .save-picker.open .save-menu{display:block;animation:shutterOpen .2s cubic-bezier(.15,.78,.25,1)}
 .save-option{position:relative;min-height:48px;padding:8px 12px 7px 15px;border-bottom:1px solid #353839;cursor:pointer;background:#242728;
  transition:background .13s,padding-left .13s}
@@ -404,12 +416,14 @@ button{font:inherit}
 .item-summary-copy span{display:block;margin-top:4px;color:#829193;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.45px}
 .item-summary-amount{width:52px;flex:0 0 52px;text-align:right;margin-left:7px}.item-summary-amount strong{display:block;color:#ffd046;font:18px Shentox,""Arial Black"",sans-serif}
 .item-summary-amount span{display:block;margin-top:3px;color:#aeb5b4;font-size:8px}.item-summary-empty{padding:28px;text-align:center;color:#899293;background:#171a1b;border:1px solid #41494b}
-.item-summary-scroll-track{position:absolute;right:1px;top:0;bottom:0;width:13px;background:#101516;border:1px solid #42555a;
- box-shadow:inset 0 0 0 2px #1d292c;border-radius:2px}.item-summary-scroll-track:before,.item-summary-scroll-track:after{content:'';position:absolute;left:3px;width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent}
-.item-summary-scroll-track:before{top:4px;border-bottom:5px solid #7bcfe2}.item-summary-scroll-track:after{bottom:4px;border-top:5px solid #7bcfe2}
-.item-summary-scroll-thumb{position:absolute;left:2px;top:15px;width:7px;min-height:38px;background:linear-gradient(90deg,#4ba9be,#8ce6f8 55%,#39869a);
- border:1px solid #baf4ff;box-shadow:0 0 7px rgba(105,204,229,.3);cursor:default}
-.item-summary-scroll-thumb:before{content:'';position:absolute;left:1px;right:1px;top:50%;height:2px;margin-top:-1px;background:#1c5663;border-top:1px solid #d5faff}
+.item-summary-scroll-track{position:absolute;right:1px;top:0;bottom:0;width:13px;background:#111314;border:1px solid #060707;
+ box-shadow:inset 0 0 0 2px #242728,0 1px #4b4f50;border-radius:7px}.item-summary-scroll-track:before,.item-summary-scroll-track:after{content:'';position:absolute;left:3px;width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent}
+.item-summary-scroll-track:before{top:4px;border-bottom:5px solid #ffd046}.item-summary-scroll-track:after{bottom:4px;border-top:5px solid #ffd046}
+.item-summary-scroll-thumb{position:absolute;left:2px;top:15px;width:7px;min-height:38px;background:linear-gradient(90deg,#c88714,#ffd247 48%,#b7770d);
+ border:1px solid #9b6e12;border-radius:5px;box-shadow:inset 1px 0 #fff09a,0 0 5px rgba(255,194,34,.25);cursor:pointer}
+.item-summary-scroll-thumb:before{content:'';position:absolute;left:1px;right:1px;top:50%;height:5px;margin-top:-3px;border-top:1px solid #fff0a0;border-bottom:1px solid #8d5d08;
+ background:linear-gradient(#8d5d08 0,#8d5d08 1px,transparent 1px,transparent 3px,#fff0a0 3px,#fff0a0 4px)}
+.item-summary-scroll-thumb:hover,.item-summary-scroll-thumb.dragging{border-color:#ffe98d;background:linear-gradient(90deg,#e7a51d,#ffe269 48%,#cf8b12);box-shadow:inset 1px 0 #fff8c4,0 0 8px rgba(255,194,34,.48)}
 .item-summary-scroll-thumb.disabled{opacity:.2;box-shadow:none}
 .footer{text-align:center;margin-top:10px;color:#777c7c;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
 
@@ -548,8 +562,7 @@ button{font:inherit}
 .gameplay-batch-modal .hotfix-head{background:linear-gradient(95deg,#413515,#292c2d 58%,#18343c)}.gameplay-batch-modal .hotfix-title strong{color:#ffd046}
 .gameplay-batch-stats{display:flex;margin:0 -4px 10px}.gameplay-batch-stat{flex:1;margin:0 4px;padding:9px 10px;background:#171a1b;border:1px solid #485254;border-radius:3px 9px 3px 9px}
 .gameplay-batch-stat b{display:block;color:#7ed5e9;font:7px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.7px}.gameplay-batch-stat strong{display:block;margin-top:4px;color:#f4f4ed;font:18px Shentox,""Arial Black"",sans-serif}
-.gameplay-batch-list{max-height:176px;margin-top:10px;overflow-y:auto;background:#171a1b;border:1px solid #454c4e;scrollbar-face-color:#52666b;scrollbar-track-color:#111415}
-.gameplay-batch-list::-webkit-scrollbar{width:10px}.gameplay-batch-list::-webkit-scrollbar-track{background:#101314}.gameplay-batch-list::-webkit-scrollbar-thumb{background:#52666b;border:2px solid #101314}
+.gameplay-batch-list{max-height:176px;margin-top:10px;padding-right:15px;overflow-y:auto;background:#171a1b;border:1px solid #454c4e}
 .gameplay-batch-line{display:flex;align-items:flex-start;padding:8px 10px;border-bottom:1px solid #34393a}.gameplay-batch-line:last-child{border-bottom:0}
 .gameplay-batch-line b{width:126px;flex:0 0 126px;color:#ffd046;font:8px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.4px}.gameplay-batch-line span{flex:1;color:#adb5b4;font-size:9px;line-height:1.35}
 .gameplay-batch-manual{margin-top:10px;padding:9px 11px;color:#8bd7e9;background:#19272b;border:1px solid #426d77;border-radius:3px;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.45px}
@@ -596,9 +609,7 @@ button{font:inherit}
 .help-heading span{display:block;margin-top:4px;color:#8fc6d5;font:10px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.8px}
 .help-close{width:35px;height:35px;padding:0;color:#abb2b2;background:#242829;border:1px solid #596061;border-radius:8px;cursor:pointer;font:bold 18px Arial}
 .help-close:hover{color:#fff;background:#a93624;border-color:#ff7654}
-.help-body{flex:1;min-height:0;overflow-y:auto;padding:15px 17px 18px;background:#191c1d;
- scrollbar-face-color:#437789;scrollbar-track-color:#111415;scrollbar-arrow-color:#9de8fb;
- scrollbar-highlight-color:#6fabbc;scrollbar-shadow-color:#15282e;scrollbar-3dlight-color:#20282a;scrollbar-darkshadow-color:#090b0c}
+.help-body{flex:1;min-height:0;overflow-y:auto;padding:15px 30px 18px 17px;background:#191c1d}
 .help-quick{display:flex;margin:0 -4px 11px}.help-step{flex:1;margin:4px;padding:10px 9px;background:#203039;border:1px solid #386a79;
  border-radius:3px 11px 3px 11px;animation:helpCardIn .35s ease-out both}
 .help-step:nth-child(2){animation-delay:.04s}.help-step:nth-child(3){animation-delay:.08s}.help-step:nth-child(4){animation-delay:.12s}
@@ -673,10 +684,7 @@ button{font:inherit}
 .secret-master-row{flex:0 0 auto;min-height:72px;margin-bottom:9px;padding:9px 10px;background:#25291f;border-color:#75601e}
 .secret-master-row .secret-mod-copy{padding-right:7px}.secret-master-row .secret-mod-copy span{font-size:9px}
 .secret-category-nav{position:relative;display:flex;min-height:94px;flex:1 1 auto;flex-direction:column;overflow-x:hidden;overflow-y:auto;
- padding:1px 4px 2px 1px;scrollbar-face-color:#45575b;scrollbar-track-color:#101314;scrollbar-arrow-color:#8fddf0}
-.secret-category-nav::-webkit-scrollbar{width:7px}.secret-category-nav::-webkit-scrollbar-track{background:#101314;border:1px solid #050606}
-.secret-category-nav::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#33454a,#587078);border:1px solid #101314;border-radius:4px}
-.secret-category-nav::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#45616a,#70a5b4)}
+ padding:1px 16px 2px 1px}
 .secret-category+.secret-category{margin-top:3px}
 .secret-category{position:relative;min-width:0;height:29px;min-height:29px;flex:0 0 29px;padding:0 9px 0 27px;text-align:left;white-space:nowrap;color:#9ea8a9;background:linear-gradient(90deg,#202526,#1c2122);border:1px solid #394446;border-radius:3px 8px 3px 8px;
  cursor:pointer;font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.6px;transition:color .14s,border-color .14s,background .14s,transform .14s}
@@ -716,11 +724,7 @@ button{font:inherit}
 .secret-mod-search input{position:absolute;left:32px;right:8px;top:1px;width:calc(100% - 40px);height:27px;padding:0;color:#eef3f2;background:transparent;border:0;outline:0;
  font:9px Shentox,""Arial Narrow"",sans-serif;letter-spacing:.55px}
 .secret-mod-search input::placeholder{color:#657174}
-.secret-mods-list{position:relative;display:flex;flex-wrap:wrap;align-content:flex-start;flex:1;min-height:125px;margin-top:8px;padding:1px 9px 4px 1px;overflow-x:hidden;overflow-y:auto;
- scrollbar-face-color:#45575b;scrollbar-track-color:#101314;scrollbar-arrow-color:#8fddf0;scrollbar-shadow-color:#0b0d0e;scrollbar-highlight-color:#657b80}
-.secret-mods-list::-webkit-scrollbar{width:11px}.secret-mods-list::-webkit-scrollbar-track{background:#101314;border:1px solid #050606}
-.secret-mods-list::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#33454a,#587078);border:2px solid #101314;border-radius:5px}
-.secret-mods-list::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#45616a,#70a5b4)}
+.secret-mods-list{position:relative;display:flex;flex-wrap:wrap;align-content:flex-start;flex:1;min-height:125px;margin-top:8px;padding:1px 18px 4px 1px;overflow-x:hidden;overflow-y:auto}
 .secret-mod-card{width:calc(50% - 8px);flex:0 0 calc(50% - 8px);margin:0 8px 8px 0;animation:secretCardDock .26s ease-out both}.secret-mod-card:nth-child(2){animation-delay:.025s}.secret-mod-card:nth-child(3){animation-delay:.05s}.secret-mod-card:nth-child(4){animation-delay:.075s}.secret-mod-card:nth-child(5){animation-delay:.1s}
 .secret-mod-tag{display:inline-block;margin:0 0 5px!important;color:#6fcbe3!important;font:8px Shentox,""Arial Narrow"",sans-serif!important;letter-spacing:.8px!important}
 .secret-mods-empty{display:none;width:calc(100% - 10px);flex:0 0 calc(100% - 10px);margin:18px 5px;padding:28px;text-align:center;color:#758184;background:#15191a;border:1px dashed #415054;border-radius:4px;
@@ -954,7 +958,7 @@ button{font:inherit}
             </button>
           </div>
           <div class=""secret-side-label"">CATEGORIES</div>
-          <nav class=""secret-category-nav"" aria-label=""Patch categories"">
+          <nav class=""secret-category-nav"" id=""secretCategoryNav"" aria-label=""Patch categories"">
             <button type=""button"" class=""secret-category active"" data-category=""all"" onclick=""setSecretCategory('all',this)"">ALL PATCHES</button>
             <button type=""button"" class=""secret-category"" data-category=""commands"" onclick=""setSecretCategory('commands',this)"">COMMAND TOOLS</button>
             <button type=""button"" class=""secret-category"" data-category=""movement"" onclick=""setSecretCategory('movement',this)"">MOVEMENT</button>
@@ -1676,6 +1680,9 @@ var scrollDragY=0;
 var scrollDragTop=0;
 var scrollUiQueued=false;
 var scrollIdleTimer=0;
+var machineryScrollbars=[];
+var machineryScrollDrag=null;
+var machineryScrollRefreshQueued=false;
 var smoothScrollRunning=false;
 var smoothScrollTarget=0;
 var smoothScrollPane=null;
@@ -2555,9 +2562,11 @@ function renderSecretModsState(){
   document.getElementById('gameplayBatchActiveCount').innerText=active;
   document.getElementById('gameplayBatchSkipCount').innerText=skips;
   document.getElementById('gameplayBatchInstallModal').className='hotfix-modal gameplay-batch-modal show';
+  scheduleMachineryScrollbars();
+  window.setTimeout(scheduleMachineryScrollbars,380);
   window.setTimeout(function(){document.getElementById('gameplayBatchInstallConfirm').focus();},30);
  }
- function closeGameplayBatchInstall(){document.getElementById('gameplayBatchInstallModal').className='hotfix-modal gameplay-batch-modal';}
+ function closeGameplayBatchInstall(){document.getElementById('gameplayBatchInstallModal').className='hotfix-modal gameplay-batch-modal';scheduleMachineryScrollbars();}
  function gameplayBatchInstallBackdropClick(e){e=e||window.event;if((e.target||e.srcElement)===document.getElementById('gameplayBatchInstallModal'))closeGameplayBatchInstall();}
  function confirmEnableAllGameplayMods(){
   closeGameplayBatchInstall();
@@ -2623,9 +2632,11 @@ function renderSecretModsState(){
   document.getElementById('gameplayBatchResultTitle').innerText=data&&data.Success?'GAMEPLAY BATCH COMPLETE':'GAMEPLAY BATCH NEEDS ATTENTION';
   document.getElementById('gameplayBatchResultSubtitle').innerText=data&&data.CompatibilityState?data.CompatibilityState:'VERIFIED PATCH REPORT';
   document.getElementById('gameplayBatchResultModal').className='hotfix-modal gameplay-batch-modal gameplay-batch-result show';
+  scheduleMachineryScrollbars();
+  window.setTimeout(scheduleMachineryScrollbars,380);
   window.setTimeout(function(){document.getElementById('gameplayBatchResultClose').focus();},30);
  }
- function closeGameplayBatchResult(){document.getElementById('gameplayBatchResultModal').className='hotfix-modal gameplay-batch-modal gameplay-batch-result';}
+ function closeGameplayBatchResult(){document.getElementById('gameplayBatchResultModal').className='hotfix-modal gameplay-batch-modal gameplay-batch-result';scheduleMachineryScrollbars();}
  function gameplayBatchResultBackdropClick(e){e=e||window.event;if((e.target||e.srcElement)===document.getElementById('gameplayBatchResultModal'))closeGameplayBatchResult();}
  function setSecretCategory(category,button){
  secretModCategory=category||'all';
@@ -2652,6 +2663,7 @@ function filterSecretMods(){
   if(visible)shown++;
  }
  empty.style.display=shown?'none':'block';
+ scheduleMachineryScrollbars();
 }
 function showSecretModFeedback(message,type){
  var feedback=document.getElementById('secretModsFeedback');
@@ -2668,12 +2680,15 @@ function toggleSecretMods(e){
  closeSaveMenu();closeHotfixConfirm();
  document.getElementById('secretModsTrigger').className='window-emblem secret-trigger armed';
  layer.className='secret-mods-layer show';
+ scheduleMachineryScrollbars();
+ window.setTimeout(scheduleMachineryScrollbars,280);
  window.setTimeout(function(){var search=document.getElementById('secretModSearch');if(search)search.focus();},170);
  return false;
 }
 function closeSecretMods(){
  document.getElementById('secretModsLayer').className='secret-mods-layer';
  document.getElementById('secretModsTrigger').className='window-emblem secret-trigger';
+ scheduleMachineryScrollbars();
 }
 function secretModsBackdropClick(e){
  e=e||window.event;
@@ -3432,10 +3447,13 @@ function openHelp(){
  document.getElementById('helpStatus').className='help-status';
  document.getElementById('helpStatus').innerText='Tutorial controls are available here whenever you need them.';
  document.getElementById('helpModal').className='help-modal show';
+ scheduleMachineryScrollbars();
+ window.setTimeout(scheduleMachineryScrollbars,380);
 }
 function closeHelp(){
  stopSmoothScroll(document.getElementById('helpBody'));
  document.getElementById('helpModal').className='help-modal';
+ scheduleMachineryScrollbars();
  window.setTimeout(maybeShowPendingUpdate,180);
 }
 function helpBackdropClick(e){
@@ -3676,6 +3694,71 @@ function nestedScrollTarget(node,pane){
  }
  return false;
 }
+function registerMachineryScrollbar(id,zIndex){
+ var pane=document.getElementById(id);
+ if(!pane)return;
+ var track=document.createElement('div'),thumb=document.createElement('div');
+ track.className='machinery-scroll-track';track.style.zIndex=String(zIndex||110);
+ track.setAttribute('role','scrollbar');track.setAttribute('aria-controls',id);
+ track.setAttribute('aria-orientation','vertical');track.setAttribute('aria-valuemin','0');
+ thumb.className='machinery-scroll-thumb';track.appendChild(thumb);document.body.appendChild(track);
+ var entry={pane:pane,track:track,thumb:thumb};machineryScrollbars.push(entry);
+ pane.onscroll=function(){
+  if(!smoothScrollRunning||smoothScrollPane!==pane)smoothScrollTarget=pane.scrollTop;
+  markScrollActive();updateMachineryScrollbar(entry);
+ };
+ pane.onmousewheel=function(e){return smoothWheelInput(pane,e,true);};
+ pane.onmouseenter=function(){updateMachineryScrollbar(entry);};
+ thumb.onmousedown=function(e){
+  e=e||window.event;stopSmoothScroll(pane);
+  machineryScrollDrag={entry:entry,y:e.clientY,top:parseInt(thumb.style.top,10)||2};
+  thumb.className='machinery-scroll-thumb dragging';
+  if(e.stopPropagation)e.stopPropagation();e.cancelBubble=true;
+  if(e.preventDefault)e.preventDefault();return false;
+ };
+ track.onmousedown=function(e){
+  e=e||window.event;if((e.target||e.srcElement)===thumb)return false;
+  stopSmoothScroll(pane);
+  var rect=track.getBoundingClientRect(),usable=Math.max(1,track.clientHeight-4-thumb.offsetHeight);
+  var top=Math.max(0,Math.min(usable,e.clientY-rect.top-2-thumb.offsetHeight/2));
+  pane.scrollTop=usable>0?top/usable*Math.max(0,pane.scrollHeight-pane.clientHeight):0;
+  updateMachineryScrollbar(entry);
+  if(e.preventDefault)e.preventDefault();return false;
+ };
+ track.onclick=function(e){e=e||window.event;e.cancelBubble=true;if(e.stopPropagation)e.stopPropagation();return false;};
+ updateMachineryScrollbar(entry);
+}
+function updateMachineryScrollbar(entry){
+ if(!entry||!entry.pane)return;
+ var pane=entry.pane,track=entry.track,thumb=entry.thumb;
+ var viewport=pane.clientHeight,total=pane.scrollHeight,rect=pane.getBoundingClientRect();
+ var visible=pane.offsetWidth>0&&viewport>0&&rect.bottom>rect.top+8&&rect.right>rect.left+8;
+ if(!visible||total<=viewport+1){track.className='machinery-scroll-track';track.setAttribute('aria-hidden','true');return;}
+ track.className='machinery-scroll-track show';track.setAttribute('aria-hidden','false');
+ track.style.left=Math.round(rect.right-15)+'px';track.style.top=Math.round(rect.top+3)+'px';
+ track.style.height=Math.max(28,Math.round(rect.bottom-rect.top-6))+'px';
+ var usable=Math.max(1,track.clientHeight-4),height=Math.min(usable,Math.max(34,Math.floor(usable*viewport/total)));
+ var travel=Math.max(0,usable-height),maximum=Math.max(0,total-viewport),top=2+(maximum?Math.round(travel*pane.scrollTop/maximum):0);
+ thumb.style.height=height+'px';thumb.style.top=top+'px';
+ track.setAttribute('aria-valuemax',String(maximum));track.setAttribute('aria-valuenow',String(Math.round(pane.scrollTop)));
+}
+function refreshMachineryScrollbars(){
+ machineryScrollRefreshQueued=false;
+ for(var i=0;i<machineryScrollbars.length;i++)updateMachineryScrollbar(machineryScrollbars[i]);
+}
+function scheduleMachineryScrollbars(){
+ if(machineryScrollRefreshQueued)return;
+ machineryScrollRefreshQueued=true;requestUiFrame(refreshMachineryScrollbars);
+}
+function setupMachineryScrollbars(){
+ registerMachineryScrollbar('saveMenu',45);
+ registerMachineryScrollbar('helpBody',145);
+ registerMachineryScrollbar('secretCategoryNav',105);
+ registerMachineryScrollbar('secretModsList',105);
+ registerMachineryScrollbar('gameplayBatchPreviewList',205);
+ registerMachineryScrollbar('gameplayBatchResultList',205);
+ scheduleMachineryScrollbars();
+}
 function setupScrollBar(){
  var pane=document.getElementById('appScroll'),track=document.getElementById('scrollTrack'),thumb=document.getElementById('scrollThumb');
  smoothScrollPane=pane;smoothScrollTarget=pane.scrollTop;
@@ -3689,9 +3772,6 @@ function setupScrollBar(){
   if(nestedScrollTarget(e.target||e.srcElement,pane))return true;
   return smoothWheelInput(pane,e,false);
  };
- var helpBody=document.getElementById('helpBody'),saveMenu=document.getElementById('saveMenu');
- if(helpBody)helpBody.onmousewheel=function(e){return smoothWheelInput(helpBody,e,true);};
- if(saveMenu)saveMenu.onmousewheel=function(e){return smoothWheelInput(saveMenu,e,true);};
  thumb.onmousedown=function(e){
   e=e||window.event;stopSmoothScroll(pane);scrollDrag=true;scrollDragY=e.clientY;scrollDragTop=parseInt(thumb.style.top,10)||2;
   thumb.className='scroll-thumb dragging';if(e.preventDefault)e.preventDefault();return false;
@@ -3703,7 +3783,7 @@ function setupScrollBar(){
   pane.scrollTop=Math.max(0,Math.min(pane.scrollHeight-pane.clientHeight,ratio*(pane.scrollHeight-pane.clientHeight)));
  };
  document.onmousemove=function(e){
-  if(itemSummaryScrollDrag){
+ if(itemSummaryScrollDrag){
    e=e||window.event;
    var summaryPane=document.getElementById('itemSummaryList'),summaryTrack=document.getElementById('itemSummaryScrollTrack'),summaryThumb=document.getElementById('itemSummaryScrollThumb');
    var summaryUsable=Math.max(0,summaryTrack.clientHeight-30-summaryThumb.offsetHeight);
@@ -3712,20 +3792,32 @@ function setupScrollBar(){
    summaryPane.scrollTop=summaryUsable>0?(summaryTop-15)/summaryUsable*(summaryPane.scrollHeight-summaryPane.clientHeight):0;
    return;
   }
+  if(machineryScrollDrag){
+   e=e||window.event;
+   var machineEntry=machineryScrollDrag.entry,machineThumb=machineEntry.thumb,machinePane=machineEntry.pane;
+   var machineUsable=Math.max(0,machineEntry.track.clientHeight-4-machineThumb.offsetHeight);
+   var machineTop=Math.max(2,Math.min(2+machineUsable,machineryScrollDrag.top+e.clientY-machineryScrollDrag.y));
+   machineThumb.style.top=machineTop+'px';
+   machinePane.scrollTop=machineUsable>0?(machineTop-2)/machineUsable*Math.max(0,machinePane.scrollHeight-machinePane.clientHeight):0;
+   return;
+  }
   if(!scrollDrag)return;e=e||window.event;
   var usable=track.clientHeight-4-thumb.offsetHeight;
   var top=Math.max(2,Math.min(2+usable,scrollDragTop+e.clientY-scrollDragY));
   pane.scrollTop=usable>0?(top-2)/usable*(pane.scrollHeight-pane.clientHeight):0;
  };
  document.onmouseup=function(){
-  if(itemSummaryScrollDrag){itemSummaryScrollDrag=false;updateItemSummaryScroll();}
-  if(scrollDrag){scrollDrag=false;thumb.className='scroll-thumb';}
+ if(itemSummaryScrollDrag){itemSummaryScrollDrag=false;updateItemSummaryScroll();}
+  if(machineryScrollDrag){machineryScrollDrag.entry.thumb.className='machinery-scroll-thumb';machineryScrollDrag=null;refreshMachineryScrollbars();}
+ if(scrollDrag){scrollDrag=false;thumb.className='scroll-thumb';}
  };
  window.onresize=function(){
   stopSmoothScroll(pane);
   scheduleScrollUi();
+  scheduleMachineryScrollbars();
  };
  updateScrollBar();
+ setupMachineryScrollbars();
 }
 
 function esc(value){
@@ -3942,10 +4034,13 @@ function toggleSaveMenu(event){
  if(gameRunning||operationBusy)return;
  var picker=document.getElementById('savePicker');
  picker.className=picker.className.indexOf(' open')>=0?'save-picker':'save-picker open';
+ scheduleMachineryScrollbars();
+ window.setTimeout(scheduleMachineryScrollbars,230);
 }
 function closeSaveMenu(){
  stopSmoothScroll(document.getElementById('saveMenu'));
  document.getElementById('savePicker').className='save-picker';
+ scheduleMachineryScrollbars();
 }
 function setSaveDisplay(name,meta){
  document.getElementById('saveName').innerText=name||'UNNAMED WORLD';
@@ -3960,7 +4055,7 @@ function saveMeta(item){
 }
 function renderSaveMenu(){
  var menu=document.getElementById('saveMenu');menu.innerHTML='';
- if(!saveItems.length){menu.innerHTML='<div class=""save-empty"">NO AUTOMATIC SAVES FOUND &mdash; USE BROWSE</div>';return;}
+ if(!saveItems.length){menu.innerHTML='<div class=""save-empty"">NO AUTOMATIC SAVES FOUND &mdash; USE BROWSE</div>';scheduleMachineryScrollbars();return;}
  for(var i=0;i<saveItems.length;i++){
   var item=saveItems[i],row=document.createElement('div');
   row.className='save-option'+(samePath(item.Path,currentPath)?' active':'');
@@ -3973,6 +4068,7 @@ function renderSaveMenu(){
   };
   menu.appendChild(row);
  }
+ scheduleMachineryScrollbars();
 }
 function samePath(a,b){return String(a||'').toLowerCase()===String(b||'').toLowerCase();}
 function upsertSave(item){
@@ -4585,6 +4681,7 @@ function itemSummaryThumbDown(e){
  if(String(thumb.className).indexOf('disabled')>=0)return false;
  stopSmoothScroll(document.getElementById('itemSummaryList'));
  itemSummaryScrollDrag=true;itemSummaryScrollDragY=e.clientY;itemSummaryScrollDragTop=parseInt(thumb.style.top,10)||15;
+ thumb.className='item-summary-scroll-thumb dragging';
  if(e.stopPropagation)e.stopPropagation();e.cancelBubble=true;if(e.preventDefault)e.preventDefault();return false;
 }
 function itemSummaryTrackDown(e){

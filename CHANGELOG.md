@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 2.7.1 - 2026-08-14
+
+- Replaced every native and one-off app scrollbar with one ScrapLab machinery
+  design: recessed dark rails, illuminated gold thumbs, grip markings, smooth
+  wheel input, track jumping, dragging, high-DPI positioning, and reduced-motion
+  support across the world selector, Help, Patch Catalog, batch dialogs, loose-
+  item totals, and main workspace.
+
 ## 2.7.0 - 2026-08-14
 
 - Redesigned the Network Storage Chest deposit strip as a real three-slot tray
