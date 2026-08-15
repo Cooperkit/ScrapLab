@@ -1782,6 +1782,8 @@ var secretModBusy=false;
 var secretModBusyTarget='';
 var secretGameplayBatchBusy=false;
 var secretGameplayBatchAutoArmed=false;
+var gamePatchRequestCounter=0;
+var pendingGamePatchOperation=null;
 var secretWirelessVacuumPipeDangerAction='';
 var secretRaidDetectorDangerAction='';
 var secretNetworkStorageChestDangerAction='';
@@ -1840,7 +1842,29 @@ var tutorialSteps=[
 
 function beginWindowDrag(){window.external.BeginDrag();}
 function minimizeWindow(){window.external.Minimize();}
-function closeWindow(){if(!updateInstallBusy)window.external.CloseWindow();}
+function closeWindow(){if(!updateInstallBusy&&!pendingGamePatchOperation)window.external.CloseWindow();}
+function beginGamePatchOperation(action,enabled,mode,completed,errorMessage){
+ if(pendingGamePatchOperation)return false;
+ gamePatchRequestCounter++;
+ var requestId=String(gamePatchRequestCounter);
+ pendingGamePatchOperation={id:requestId,completed:completed,error:errorMessage||'The patch helper did not return a result.'};
+ var started=false;
+ try{started=!!window.external.BeginGamePatchOperation(action,!!enabled,mode||'',requestId);}catch(e){}
+ if(!started){
+  var pending=pendingGamePatchOperation;pendingGamePatchOperation=null;
+  window.setTimeout(function(){pending.completed({Success:false,Error:pending.error});},0);
+  return false;
+ }
+ return true;
+}
+function receiveGamePatchOperation(text,requestId){
+ var pending=pendingGamePatchOperation;
+ if(!pending||String(requestId)!==pending.id)return;
+ pendingGamePatchOperation=null;
+ var data;
+ try{data=parseResult(text);}catch(e){data={Success:false,Error:e.message||pending.error};}
+ window.setTimeout(function(){pending.completed(data);},0);
+}
 function loadAppUpdateState(){
  try{appVersion=String(window.external.GetAppVersion()||'');}catch(e){appVersion='';}
  var versionNode=document.getElementById('helpAppVersion');
@@ -2601,25 +2625,23 @@ function renderSecretModsState(){
   if(document.getElementById('gameplayBatchDangerAckWrap').style.display!=='none'&&!document.getElementById('gameplayBatchDangerAck').checked)return;
   closeGameplayBatchDanger();secretGameplayBatchAutoArmed=false;runGameplayModsBatch(false);
  }
- function runGameplayModsBatch(enabled){
+ function runGameplayModsBatch(enabled,completed,suppressResult){
   secretGameplayBatchBusy=true;secretModBusy=true;secretModBusyTarget='batch';operationBusy=true;
   showSecretModFeedback(enabled?'INSTALLING ALL COMPATIBLE GAMEPLAY MODS...':'REMOVING GAMEPLAY MODS IN SAVE-SAFE ORDER...','working');
   renderSecretModsState();applyGameLock(gameRunning);
-  window.setTimeout(function(){
-   var data;
-   try{data=parseResult(window.external.SetAllGameplayMods(enabled));}
-   catch(e){data={Success:false,Error:e.message||'The gameplay batch coordinator did not return a result.',BatchItems:[]};}
+  beginGamePatchOperation('all-gameplay-mods',enabled,'',function(data){
    secretGameplayBatchBusy=false;secretModBusy=false;secretModBusyTarget='';operationBusy=false;
    if(data.Cancelled){
     if(enabled&&secretGameplayBatchAutoArmed){secretModsEnabled=false;try{window.external.SetSecretModsEnabled(false);}catch(ignore){}}
     secretGameplayBatchAutoArmed=false;showSecretModFeedback('No gameplay mods were changed because administrator permission was cancelled.','show');
-    applyGameLock(gameRunning);renderSecretModsState();return;
+    applyGameLock(gameRunning);renderSecretModsState();if(completed)completed(false,data);return;
    }
    secretGameplayBatchAutoArmed=false;
    if(data.BackupPath)lastGameBackupPath=data.BackupPath;
-   loadSecretModsState();applyGameLock(gameRunning);renderSecretModsState();
-   showGameplayBatchResult(data,enabled);
-  },45);
+   applyGameplayBatchState(data);applyGameLock(gameRunning);renderSecretModsState();
+   if(!suppressResult)showGameplayBatchResult(data,enabled);
+   if(completed)completed(!!data.Success,data);
+  },'The gameplay batch coordinator did not return a result.');
  }
  function showGameplayBatchResult(data,enabled){
   var items=data&&data.BatchItems?data.BatchItems:[];
@@ -2713,27 +2735,23 @@ function toggleSecretModsEnabled(){
  renderSecretModsState();
 }
 function disableAllSecretModsConfirmed(){
- if(secretNetworkStorageChestInstalled&&!setNetworkStorageChestMod(false))return false;
- if(secretWirelessVacuumPipeInstalled&&!setWirelessVacuumPipeMod(false))return false;
- if(secretRaidDetectorInstalled&&!setRaidDetectorMod(false))return false;
- if(secretBetterPlasmaDrillsInstalled&&!setBetterPlasmaDrillsMod(false))return false;
- if(secretDualFluidCannonInstalled&&secretChemicalFertilizerInstalled){
-  if(!setChemicalFertilizerMod(false))return false;
- }else{
-  if(secretDualFluidCannonInstalled&&!setDualFluidCannonMod(false))return false;
-  if(secretChemicalFertilizerInstalled&&!setChemicalFertilizerMod(false))return false;
- }
- if(secretRevivalBuffInstalled&&!setRevivalBuffMod(false))return false;
-  if(secretFullSpeedCarryingInstalled&&!setFullSpeedCarryingMod(false))return false;
-  if(secretBetterFreezerBeehiveInstalled&&!setBetterFreezerBeehiveMod(false))return false;
-  if(secretBetterEnginesInstalled&&!setBetterEnginesMod(false))return false;
- if(secretDeveloperCommandsInstalled&&!setDeveloperCommandsMod(false))return false;
- if(secretResourceLocatorInstalled&&!setResourceLocatorMod(false))return false;
+ runGameplayModsBatch(false,function(success,data){
+  if(!success){showGameplayBatchResult(data||{Success:false,Error:'Patch Bay removal stopped safely.'},false);return;}
+  if(secretDeveloperCommandsInstalled){
+   setDeveloperCommandsMod(false,secretDeveloperCommandsMode,function(commandsRemoved){
+    if(commandsRemoved)finishDisableAllSecretMods();
+   });
+   return;
+  }
+  finishDisableAllSecretMods();
+ },true);
+ return true;
+}
+function finishDisableAllSecretMods(){
  secretModsEnabled=false;
  try{window.external.SetSecretModsEnabled(false);}catch(e){}
  showSecretModFeedback('PATCH BAY OFFLINE - all installed secret mods are disabled.','show');
  renderSecretModsState();
- return true;
 }
 function toggleResourceLocatorMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy)return;
@@ -2813,41 +2831,79 @@ function updateDualFluidCannonMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy||!secretDualFluidCannonNeedsUpdate)return;
  setDualFluidCannonMod(true);
 }
+function runSingleGameModPatch(action,enabled,mode,target,working,errorMessage,onSuccess,completed){
+ secretModBusy=true;secretModBusyTarget=target;operationBusy=true;
+ showSecretModFeedback(working,'working');
+ renderSecretModsState();applyGameLock(gameRunning);
+ return beginGamePatchOperation(action,enabled,mode||'',function(data){
+  secretModBusy=false;secretModBusyTarget='';operationBusy=false;
+  if(data.Cancelled){
+   showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
+   applyGameLock(gameRunning);renderSecretModsState();if(completed)completed(false,data);return;
+  }
+  if(!data.Success){
+   showSecretModFeedback(data.Error||errorMessage,'bad');
+   applyGameLock(gameRunning);renderSecretModsState();if(completed)completed(false,data);return;
+  }
+  if(data.BackupPath)lastGameBackupPath=data.BackupPath;
+  applyGameplayModLocalState(action,!!data.Installed);
+  onSuccess(data);
+  applyGameLock(gameRunning);renderSecretModsState();
+  if(completed)completed(true,data);
+ },errorMessage);
+}
+function applyGameplayModLocalState(key,installed){
+ if(key==='resource-locator'){secretResourceLocatorInstalled=installed;secretResourceLocatorNeedsUpdate=false;}
+ else if(key==='revival-buffs'){secretRevivalBuffInstalled=installed;secretRevivalBuffNeedsUpdate=false;}
+ else if(key==='full-speed-carrying'){secretFullSpeedCarryingInstalled=installed;secretFullSpeedCarryingNeedsUpdate=false;}
+ else if(key==='better-engines'){secretBetterEnginesInstalled=installed;secretBetterEnginesNeedsUpdate=false;}
+ else if(key==='better-freezer-beehive'){secretBetterFreezerBeehiveInstalled=installed;secretBetterFreezerBeehiveNeedsUpdate=false;}
+ else if(key==='better-plasma-drills'){secretBetterPlasmaDrillsInstalled=installed;secretBetterPlasmaDrillsNeedsUpdate=false;}
+ else if(key==='raid-detector'){secretRaidDetectorInstalled=installed;secretRaidDetectorNeedsUpdate=false;}
+ else if(key==='wireless-vacuum-pipe'){secretWirelessVacuumPipeInstalled=installed;secretWirelessVacuumPipeNeedsUpdate=false;}
+ else if(key==='network-storage-chest'){secretNetworkStorageChestInstalled=installed;secretNetworkStorageChestNeedsUpdate=false;}
+ else if(key==='chemical-fertilizer'){secretChemicalFertilizerInstalled=installed;secretChemicalFertilizerNeedsUpdate=false;if(!installed){secretDualFluidCannonInstalled=false;secretDualFluidCannonNeedsUpdate=false;resetGameplayCompatibility('dual-fluid-cannon');}}
+ else if(key==='dual-fluid-cannon'){secretDualFluidCannonInstalled=installed;secretDualFluidCannonNeedsUpdate=false;if(installed){secretChemicalFertilizerInstalled=true;secretChemicalFertilizerNeedsUpdate=false;resetGameplayCompatibility('chemical-fertilizer');}}
+ else if(key==='developer-commands'){secretDeveloperCommandsInstalled=installed;secretDeveloperCommandsNeedsUpdate=false;}
+ resetGameplayCompatibility(key);
+}
+function resetGameplayCompatibility(key){
+ if(key==='resource-locator'){secretResourceLocatorCompatibility='';secretResourceLocatorCanApply=true;secretResourceLocatorReason='';}
+ else if(key==='revival-buffs'){secretRevivalBuffCompatibility='';secretRevivalBuffCanApply=true;secretRevivalBuffReason='';}
+ else if(key==='full-speed-carrying'){secretFullSpeedCarryingCompatibility='';secretFullSpeedCarryingCanApply=true;secretFullSpeedCarryingReason='';}
+ else if(key==='better-engines'){secretBetterEnginesCompatibility='';secretBetterEnginesCanApply=true;secretBetterEnginesReason='';}
+ else if(key==='better-freezer-beehive'){secretBetterFreezerBeehiveCompatibility='';secretBetterFreezerBeehiveCanApply=true;secretBetterFreezerBeehiveReason='';}
+ else if(key==='better-plasma-drills'){secretBetterPlasmaDrillsCompatibility='';secretBetterPlasmaDrillsCanApply=true;secretBetterPlasmaDrillsReason='';}
+ else if(key==='raid-detector'){secretRaidDetectorCompatibility='';secretRaidDetectorCanApply=true;secretRaidDetectorReason='';}
+ else if(key==='wireless-vacuum-pipe'){secretWirelessVacuumPipeCompatibility='';secretWirelessVacuumPipeCanApply=true;secretWirelessVacuumPipeReason='';}
+ else if(key==='network-storage-chest'){secretNetworkStorageChestCompatibility='';secretNetworkStorageChestCanApply=true;secretNetworkStorageChestReason='';}
+ else if(key==='chemical-fertilizer'){secretChemicalFertilizerCompatibility='';secretChemicalFertilizerCanApply=true;secretChemicalFertilizerReason='';}
+ else if(key==='dual-fluid-cannon'){secretDualFluidCannonCompatibility='';secretDualFluidCannonCanApply=true;secretDualFluidCannonReason='';secretDualFluidCannonError='';}
+ else if(key==='developer-commands'){secretDeveloperCommandsCompatibility='';secretDeveloperCommandsCanApply=true;secretDeveloperCommandsReason='';secretDeveloperCommandsError='';}
+}
+function applyGameplayBatchState(data){
+ var items=data&&data.BatchItems?data.BatchItems:[];
+ for(var i=0;i<items.length;i++){
+  var item=items[i]||{},outcome=String(item.Outcome||'');
+  if(outcome==='INSTALLED'||outcome==='UPDATED'||outcome==='ALREADY ACTIVE')applyGameplayModLocalState(String(item.Key||''),true);
+  else if(outcome==='REMOVED')applyGameplayModLocalState(String(item.Key||''),false);
+ }
+}
 function setNetworkStorageChestMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
  var wasNetworkStorageUpdate=enabled&&secretNetworkStorageChestInstalled&&secretNetworkStorageChestNeedsUpdate;
- secretModBusy=true;secretModBusyTarget='networkStorage';operationBusy=true;
- showSecretModFeedback(wasNetworkStorageUpdate?'POLISHING NETWORK STORAGE INTERFACE...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetNetworkStorageChestMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The Network Storage Chest installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
- if(!data.Success){showSecretModFeedback(data.Error||'Network Storage Chest could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
- secretNetworkStorageChestInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(wasNetworkStorageUpdate?'INTERFACE UPDATED - readable single-line tooltips and matching type/sort text are ready.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
- applyGameLock(gameRunning);renderSecretModsState();return true;
+ return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'POLISHING NETWORK STORAGE INTERFACE...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
+  secretNetworkStorageChestInstalled=!!data.Installed;
+  showSecretModFeedback(wasNetworkStorageUpdate?'INTERFACE UPDATED - readable single-line tooltips and matching type/sort text are ready.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+ });
 }
 function setWirelessVacuumPipeMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Wireless Vacuum Pipe.','bad');return false;}
- secretModBusy=true;secretModBusyTarget='wirelessPipe';operationBusy=true;
  var wasWirelessUpdate=enabled&&secretWirelessVacuumPipeInstalled&&secretWirelessVacuumPipeNeedsUpdate;
-  showSecretModFeedback(wasWirelessUpdate?'INSTALLING WIRELESS PERFORMANCE UPDATE...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetWirelessVacuumPipeMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The Wireless Vacuum Pipe installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
- if(!data.Success){showSecretModFeedback(data.Error||'Wireless Vacuum Pipe could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
- secretWirelessVacuumPipeInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
+ return runSingleGameModPatch('wireless-vacuum-pipe',enabled,'','wirelessPipe',wasWirelessUpdate?'INSTALLING WIRELESS PERFORMANCE UPDATE...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'Wireless Vacuum Pipe could not be changed.',function(data){
+  secretWirelessVacuumPipeInstalled=!!data.Installed;
   showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - remote cells now load on demand and stable pipe routes stay cached.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
- applyGameLock(gameRunning);renderSecretModsState();return true;
+ });
 }
 function updateWirelessVacuumPipeMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy||!secretWirelessVacuumPipeNeedsUpdate)return;
@@ -2860,20 +2916,10 @@ function updateRaidDetectorMod(){
 function setRaidDetectorMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Raid Detector.','bad');return false;}
  var wasDetectorUpdate=enabled&&secretRaidDetectorInstalled&&secretRaidDetectorNeedsUpdate;
- secretModBusy=true;secretModBusyTarget='detector';operationBusy=true;
- showSecretModFeedback(wasDetectorUpdate?'UPDATING RAID DETECTOR...':(enabled?'CALIBRATING RAID DETECTOR...':'REMOVING RAID DETECTOR REGISTRATIONS...'),'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetRaidDetectorMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The Raid Detector installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
- if(!data.Success){showSecretModFeedback(data.Error||'Raid Detector could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
- secretRaidDetectorInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(wasDetectorUpdate?'RAID DETECTOR UPDATED - countdown and active-raid logic are repaired.':(secretRaidDetectorInstalled?'RAID DETECTOR INSTALLED - the trader part and 256-meter logic sensor are ready.':'RAID DETECTOR REMOVED - its registrations, script, trade, and icon were restored.'),'good');
- applyGameLock(gameRunning);renderSecretModsState();return true;
+ return runSingleGameModPatch('raid-detector',enabled,'','detector',wasDetectorUpdate?'UPDATING RAID DETECTOR...':(enabled?'CALIBRATING RAID DETECTOR...':'REMOVING RAID DETECTOR REGISTRATIONS...'),'Raid Detector could not be changed.',function(data){
+  secretRaidDetectorInstalled=!!data.Installed;
+  showSecretModFeedback(wasDetectorUpdate?'RAID DETECTOR UPDATED - countdown and active-raid logic are repaired.':(secretRaidDetectorInstalled?'RAID DETECTOR INSTALLED - the trader part and 256-meter logic sensor are ready.':'RAID DETECTOR REMOVED - its registrations, script, trade, and icon were restored.'),'good');
+ });
 }
 function updateBetterPlasmaDrillsMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy||!secretBetterPlasmaDrillsNeedsUpdate)return;
@@ -2884,223 +2930,77 @@ function setBetterFreezerBeehiveMod(enabled){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Better Freezer & Beehive.','bad');
   return false;
  }
- secretModBusy=true;secretModBusyTarget='freezerBeehive';operationBusy=true;
- showSecretModFeedback(enabled?'UPGRADING FREEZER & BEEHIVE PRODUCTION...':'RESTORING ORIGINAL FREEZER & BEEHIVE...','working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetBetterFreezerBeehiveMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The Better Freezer & Beehive installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Better Freezer & Beehive could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretBetterFreezerBeehiveInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(secretBetterFreezerBeehiveInstalled
-  ?'BETTER FREEZER & BEEHIVE INSTALLED - water automation, five-slot new machines, and 4x production are ready.'
-  :'BETTER FREEZER & BEEHIVE REMOVED - vanilla scripts restored; existing five-slot containers remain safe.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();return true;
+ return runSingleGameModPatch('better-freezer-beehive',enabled,'','freezerBeehive',enabled?'UPGRADING FREEZER & BEEHIVE PRODUCTION...':'RESTORING ORIGINAL FREEZER & BEEHIVE...','Better Freezer & Beehive could not be changed.',function(data){
+  secretBetterFreezerBeehiveInstalled=!!data.Installed;
+  showSecretModFeedback(secretBetterFreezerBeehiveInstalled?'BETTER FREEZER & BEEHIVE INSTALLED - water automation, five-slot new machines, and 4x production are ready.':'BETTER FREEZER & BEEHIVE REMOVED - vanilla scripts restored; existing five-slot containers remain safe.','good');
+ });
 }
 function setBetterPlasmaDrillsMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Better Plasma Drills.','bad');return false;}
  var wasDamageUpdate=enabled&&secretBetterPlasmaDrillsInstalled&&secretBetterPlasmaDrillsNeedsUpdate;
- secretModBusy=true;secretModBusyTarget='plasma';operationBusy=true;
- showSecretModFeedback(wasDamageUpdate?'UPGRADING PLASMA DRILL UNIT DAMAGE...':(enabled?'FORGING ADVANCED PLASMA DRILLS...':'REMOVING ADVANCED PLASMA DRILLS...'),'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetBetterPlasmaDrillsMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The Better Plasma Drills installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');applyGameLock(gameRunning);renderSecretModsState();return false;}
- if(!data.Success){showSecretModFeedback(data.Error||'Better Plasma Drills could not be changed.','bad');applyGameLock(gameRunning);renderSecretModsState();return false;}
- secretBetterPlasmaDrillsInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(secretBetterPlasmaDrillsInstalled?(wasDamageUpdate?'BETTER PLASMA DRILLS UPDATED - unit damage now scales from 20 to 300 per second.':'BETTER PLASMA DRILLS INSTALLED - levels 4 and 5 and increased unit damage are ready.'):'BETTER PLASMA DRILLS REMOVED - the original three-level chain was restored.','good');
- applyGameLock(gameRunning);renderSecretModsState();return true;
+ return runSingleGameModPatch('better-plasma-drills',enabled,'','plasma',wasDamageUpdate?'UPGRADING PLASMA DRILL UNIT DAMAGE...':(enabled?'FORGING ADVANCED PLASMA DRILLS...':'REMOVING ADVANCED PLASMA DRILLS...'),'Better Plasma Drills could not be changed.',function(data){
+  secretBetterPlasmaDrillsInstalled=!!data.Installed;
+  showSecretModFeedback(secretBetterPlasmaDrillsInstalled?(wasDamageUpdate?'BETTER PLASMA DRILLS UPDATED - unit damage now scales from 20 to 300 per second.':'BETTER PLASMA DRILLS INSTALLED - levels 4 and 5 and increased unit damage are ready.'):'BETTER PLASMA DRILLS REMOVED - the original three-level chain was restored.','good');
+ });
 }
 function setBetterEnginesMod(enabled){
  if(gameRunning){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Better Engines.','bad');
   return false;
  }
- secretModBusy=true;secretModBusyTarget='engines';operationBusy=true;
- showSecretModFeedback(
-  enabled?'TUNING BETTER ENGINES...':'RESTORING ORIGINAL ENGINES...',
-  'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetBetterEnginesMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The Better Engines installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Better Engines could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretBetterEnginesInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(
-  secretBetterEnginesInstalled
-   ?'BETTER ENGINES INSTALLED - Electric power and level-5 Electric/Gas efficiency increased.'
-   :'BETTER ENGINES REMOVED - the original engine tables were restored.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();
- return true;
+ return runSingleGameModPatch('better-engines',enabled,'','engines',enabled?'TUNING BETTER ENGINES...':'RESTORING ORIGINAL ENGINES...','Better Engines could not be changed.',function(data){
+  secretBetterEnginesInstalled=!!data.Installed;
+  showSecretModFeedback(secretBetterEnginesInstalled?'BETTER ENGINES INSTALLED - Electric power and level-5 Electric/Gas efficiency increased.':'BETTER ENGINES REMOVED - the original engine tables were restored.','good');
+ });
 }
 function setFullSpeedCarryingMod(enabled){
  if(gameRunning){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Full-Speed Carrying.','bad');
   return false;
  }
- secretModBusy=true;secretModBusyTarget='carrying';operationBusy=true;
- showSecretModFeedback(
-  enabled?'PREPARING FULL-SPEED CARRYING...':'REMOVING FULL-SPEED CARRYING...',
-  'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetFullSpeedCarryingMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The Full-Speed Carrying installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Full-Speed Carrying could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretFullSpeedCarryingInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(
-  secretFullSpeedCarryingInstalled
-   ?'FULL-SPEED CARRYING INSTALLED - hand-carried objects and Lift-held creations now allow sprinting.'
-   :'FULL-SPEED CARRYING REMOVED - the original carry restrictions were restored.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();
- return true;
+ return runSingleGameModPatch('full-speed-carrying',enabled,'','carrying',enabled?'PREPARING FULL-SPEED CARRYING...':'REMOVING FULL-SPEED CARRYING...','Full-Speed Carrying could not be changed.',function(data){
+  secretFullSpeedCarryingInstalled=!!data.Installed;
+  showSecretModFeedback(secretFullSpeedCarryingInstalled?'FULL-SPEED CARRYING INSTALLED - hand-carried objects and Lift-held creations now allow sprinting.':'FULL-SPEED CARRYING REMOVED - the original carry restrictions were restored.','good');
+ });
 }
 function setRevivalBuffMod(enabled){
  if(gameRunning){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Revival Buff Recovery.','bad');
   return false;
  }
- secretModBusy=true;secretModBusyTarget='revival';operationBusy=true;
- showSecretModFeedback(
-  enabled?'PREPARING REVIVAL BUFF RECOVERY...':'REMOVING REVIVAL BUFF RECOVERY...',
-  'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetRevivalBuffMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The revival-buff installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Revival Buff Recovery could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretRevivalBuffInstalled=!!data.Installed;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(
-  secretRevivalBuffInstalled
-   ?'REVIVAL BUFF RECOVERY INSTALLED - Revival Baguettes now restore all pizza and veggie-burger buffs held at knockout.'
-   :'REVIVAL BUFF RECOVERY REMOVED - normal SurvivalPlayer behavior was restored.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();
- return true;
+ return runSingleGameModPatch('revival-buffs',enabled,'','revival',enabled?'PREPARING REVIVAL BUFF RECOVERY...':'REMOVING REVIVAL BUFF RECOVERY...','Revival Buff Recovery could not be changed.',function(data){
+  secretRevivalBuffInstalled=!!data.Installed;
+  showSecretModFeedback(secretRevivalBuffInstalled?'REVIVAL BUFF RECOVERY INSTALLED - Revival Baguettes now restore all pizza and veggie-burger buffs held at knockout.':'REVIVAL BUFF RECOVERY REMOVED - normal SurvivalPlayer behavior was restored.','good');
+ });
 }
 function setResourceLocatorMod(enabled){
  if(gameRunning){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Resource Locator Dots.','bad');
   return false;
  }
- secretModBusy=true;secretModBusyTarget='resource';operationBusy=true;
- showSecretModFeedback(
-  enabled?'PREPARING RESOURCE LOCATOR DOTS INSTALLATION...':'PREPARING RESOURCE LOCATOR DOTS REMOVAL...',
-  'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetResourceLocatorMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The secret-mod installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Resource Locator Dots could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretResourceLocatorInstalled=!!data.Installed;
- secretResourceLocatorNeedsUpdate=!!data.NeedsUpdate;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(
-  secretResourceLocatorInstalled
-   ?'RESOURCE LOCATOR DOTS INSTALLED — equip the Connect Tool to reveal nearby resource cores. The locator output stays inactive.'
-   :'RESOURCE LOCATOR DOTS REMOVED — the verified original HarvestCore script was restored.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();
- return true;
+ return runSingleGameModPatch('resource-locator',enabled,'','resource',enabled?'PREPARING RESOURCE LOCATOR DOTS INSTALLATION...':'PREPARING RESOURCE LOCATOR DOTS REMOVAL...','Resource Locator Dots could not be changed.',function(data){
+  secretResourceLocatorInstalled=!!data.Installed;
+  secretResourceLocatorNeedsUpdate=!!data.NeedsUpdate;
+  showSecretModFeedback(secretResourceLocatorInstalled?'RESOURCE LOCATOR DOTS INSTALLED — equip the Connect Tool to reveal nearby resource cores. The locator output stays inactive.':'RESOURCE LOCATOR DOTS REMOVED — the verified original HarvestCore script was restored.','good');
+ });
 }
 function toggleDeveloperCommandsMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy)return;
  if(secretDeveloperCommandsInstalled){setDeveloperCommandsMod(false);return;}
  openDeveloperCommandOptions();
 }
-function setDeveloperCommandsMod(enabled,mode){
+function setDeveloperCommandsMod(enabled,mode,completed){
  if(gameRunning){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Developer Commands.','bad');
   return false;
  }
  var selectedMode=mode==='everyone'?'everyone':'host';
- secretModBusy=true;secretModBusyTarget='commands';operationBusy=true;
- showSecretModFeedback(
-  enabled?'PREPARING DEVELOPER COMMAND ACCESS...':'PREPARING DEVELOPER COMMANDS REMOVAL...',
-  'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetDeveloperCommandsMod(enabled,selectedMode));}
- catch(e){data={Success:false,Error:e.message||'The developer-command installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Developer Commands could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretDeveloperCommandsInstalled=!!data.Installed;
- secretDeveloperCommandsMode=data.Mode==='everyone'?'everyone':selectedMode;
- secretDeveloperCommandsError='';
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(
-  secretDeveloperCommandsInstalled
-   ?(secretDeveloperCommandsMode==='everyone'
-     ?'DEVELOPER COMMANDS READY FOR EVERY PLAYER - all joined players receive the command list and /fly flight.'
-     :'DEVELOPER COMMANDS READY FOR HOST ONLY - open chat and enter /fly or a built-in command such as /unlimited.')
-   :'DEVELOPER COMMANDS REMOVED - the verified original SurvivalGame script was restored.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();
- return true;
+ return runSingleGameModPatch('developer-commands',enabled,selectedMode,'commands',enabled?'PREPARING DEVELOPER COMMAND ACCESS...':'PREPARING DEVELOPER COMMANDS REMOVAL...','Developer Commands could not be changed.',function(data){
+  secretDeveloperCommandsInstalled=!!data.Installed;
+  secretDeveloperCommandsMode=data.Mode==='everyone'?'everyone':selectedMode;
+  secretDeveloperCommandsError='';
+  showSecretModFeedback(secretDeveloperCommandsInstalled?(secretDeveloperCommandsMode==='everyone'?'DEVELOPER COMMANDS READY FOR EVERY PLAYER - all joined players receive the command list and /fly flight.':'DEVELOPER COMMANDS READY FOR HOST ONLY - open chat and enter /fly or a built-in command such as /unlimited.'):'DEVELOPER COMMANDS REMOVED - the verified original SurvivalGame script was restored.','good');
+ },completed);
 }
 function openDeveloperCommandOptions(){
  if(gameRunning){
@@ -3161,34 +3061,11 @@ function setChemicalFertilizerMod(enabled){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Chemical Fertilizer Splash.','bad');
   return false;
  }
- secretModBusy=true;secretModBusyTarget='chemical';operationBusy=true;
- showSecretModFeedback(
-  enabled?'PREPARING CHEMICAL FERTILIZER SPLASH INSTALLATION...':'PREPARING CHEMICAL FERTILIZER SPLASH REMOVAL...',
-  'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetChemicalFertilizerMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The secret-mod installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Chemical Fertilizer Splash could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretChemicalFertilizerInstalled=!!data.Installed;
- if(!secretChemicalFertilizerInstalled)secretDualFluidCannonInstalled=false;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(
-  secretChemicalFertilizerInstalled
-   ?'CHEMICAL FERTILIZER SPLASH INSTALLED - chemical hits fertilize directly; red Farmbot pesticide fertilizes a 2.5-block radius.'
-   :'CHEMICAL FERTILIZER SPLASH REMOVED - verified prior scripts were restored without removing other ScrapLab fixes.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();
- return true;
+ return runSingleGameModPatch('chemical-fertilizer',enabled,'','chemical',enabled?'PREPARING CHEMICAL FERTILIZER SPLASH INSTALLATION...':'PREPARING CHEMICAL FERTILIZER SPLASH REMOVAL...','Chemical Fertilizer Splash could not be changed.',function(data){
+  secretChemicalFertilizerInstalled=!!data.Installed;
+  if(!secretChemicalFertilizerInstalled)secretDualFluidCannonInstalled=false;
+  showSecretModFeedback(secretChemicalFertilizerInstalled?'CHEMICAL FERTILIZER SPLASH INSTALLED - chemical hits fertilize directly; red Farmbot pesticide fertilizes a 2.5-block radius.':'CHEMICAL FERTILIZER SPLASH REMOVED - verified prior scripts were restored without removing other ScrapLab fixes.','good');
+ });
 }
 function toggleDualFluidCannonMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy)return;
@@ -3204,35 +3081,12 @@ function setDualFluidCannonMod(enabled){
   showSecretModFeedback('Close Scrap Mechanic completely before changing Dual-Fluid Water Cannon.','bad');
   return false;
  }
- secretModBusy=true;secretModBusyTarget='cannon';operationBusy=true;
- showSecretModFeedback(
-  enabled?'PREPARING DUAL-FLUID WATER CANNON INSTALLATION...':'PREPARING DUAL-FLUID WATER CANNON REMOVAL...',
-  'working');
- renderSecretModsState();applyGameLock(gameRunning);
- var data;
- try{data=parseResult(window.external.SetDualFluidCannonMod(enabled));}
- catch(e){data={Success:false,Error:e.message||'The dual-fluid installer did not return a result.'};}
- secretModBusy=false;secretModBusyTarget='';operationBusy=false;
- if(data.Cancelled){
-  showSecretModFeedback('No changes were made because administrator permission was cancelled.','show');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- if(!data.Success){
-  showSecretModFeedback(data.Error||'Dual-Fluid Water Cannon could not be changed.','bad');
-  applyGameLock(gameRunning);renderSecretModsState();return false;
- }
- secretDualFluidCannonInstalled=!!data.Installed;
- secretDualFluidCannonError='';
- if(secretDualFluidCannonInstalled)secretChemicalFertilizerInstalled=true;
- if(data.BackupPath)lastGameBackupPath=data.BackupPath;
- loadSecretModsState();
- showSecretModFeedback(
-  secretDualFluidCannonInstalled
-   ?'DUAL-FLUID WATER CANNON INSTALLED - connect logic, water, and chemical; each pulse fires every available liquid.'
-   :'DUAL-FLUID WATER CANNON REMOVED - Chemical Fertilizer Splash remains installed.',
-  'good');
- applyGameLock(gameRunning);renderSecretModsState();
- return true;
+ return runSingleGameModPatch('dual-fluid-cannon',enabled,'','cannon',enabled?'PREPARING DUAL-FLUID WATER CANNON INSTALLATION...':'PREPARING DUAL-FLUID WATER CANNON REMOVAL...','Dual-Fluid Water Cannon could not be changed.',function(data){
+  secretDualFluidCannonInstalled=!!data.Installed;
+  secretDualFluidCannonError='';
+  if(secretDualFluidCannonInstalled)secretChemicalFertilizerInstalled=true;
+  showSecretModFeedback(secretDualFluidCannonInstalled?'DUAL-FLUID WATER CANNON INSTALLED - connect logic, water, and chemical; each pulse fires every available liquid.':'DUAL-FLUID WATER CANNON REMOVED - Chemical Fertilizer Splash remains installed.','good');
+ });
 }
 function openDependencyConfirm(action){
  if(gameRunning){

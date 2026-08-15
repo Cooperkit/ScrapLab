@@ -364,7 +364,8 @@ namespace RaidRescue
                 string path = GetReceiptPath(modKey);
                 if (File.Exists(path))
                     File.Delete(path);
-                string directory = GetReceiptFileDirectory(modKey);
+                string directory = Path.GetFullPath(
+                    GetReceiptFileDirectory(modKey));
                 if (Directory.Exists(directory))
                 {
                     DirectoryInfo info = new DirectoryInfo(directory);
@@ -603,7 +604,8 @@ namespace RaidRescue
                     relativePath.ToUpperInvariant())).Substring(0, 12);
             string path = Path.Combine(
                 directory,
-                Path.GetFileName(relativePath) + "." + identity + ".base");
+                Path.GetFileName(relativePath) + "." + identity + "." +
+                expectedHash.Substring(0, 12) + ".base");
             if (File.Exists(path))
             {
                 if (!String.Equals(
@@ -625,6 +627,51 @@ namespace RaidRescue
                     "The active adaptive base backup failed checksum verification.");
             }
             return path;
+        }
+
+        internal static void PruneUnreferencedBaseBackups(
+            string modKey, AdaptivePatchReceipt receipt)
+        {
+            try
+            {
+                string directory = Path.GetFullPath(
+                    GetReceiptFileDirectory(modKey));
+                if (!Directory.Exists(directory))
+                    return;
+
+                HashSet<string> active = new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase);
+                if (receipt != null && receipt.Files != null)
+                {
+                    foreach (AdaptivePatchReceiptFile file in receipt.Files)
+                    {
+                        if (file == null ||
+                            String.IsNullOrWhiteSpace(file.BackupPath))
+                            continue;
+                        string fullPath = Path.GetFullPath(file.BackupPath);
+                        if (String.Equals(
+                            Path.GetDirectoryName(fullPath), directory,
+                            StringComparison.OrdinalIgnoreCase))
+                            active.Add(fullPath);
+                    }
+                }
+
+                foreach (string path in Directory.GetFiles(
+                    directory, "*.base", SearchOption.TopDirectoryOnly))
+                {
+                    string fullPath = Path.GetFullPath(path);
+                    if (!active.Contains(fullPath))
+                    {
+                        try { File.Delete(fullPath); }
+                        catch { }
+                    }
+                }
+            }
+            catch
+            {
+                // Receipt-backed files remain authoritative. Cleanup is
+                // deliberately best-effort and must never fail a patch.
+            }
         }
 
         internal static string CaptureVersionedBaseBackup(

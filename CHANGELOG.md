@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 2.9.1 - 2026-08-15
+
+- Fixed save-sensitive custom-part mods failing to reinstall after Steam
+  verification with **The active adaptive base backup has an unexpected
+  checksum**. Adaptive bases are now content-addressed by source hash, so a
+  valid older receipt can coexist with a newly restored Steam source until the
+  replacement receipt is verified; unreferenced bases are then pruned safely.
+- Moved individual and **All Mods** patch transactions off the browser UI
+  thread. The Patch Catalog, animations, scrolling, and window controls remain
+  responsive while UAC, backup verification, file patching, and rollback run,
+  and successful results update the catalog without a second synchronous
+  twelve-mod status sweep.
+
 ## 2.9.0 - 2026-08-15
 
 - Reworked Wireless Vacuum Pipe performance using the completed dense 64-chest,

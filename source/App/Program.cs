@@ -279,6 +279,7 @@ namespace RaidRescue
             performanceScans;
         private int updateCheckActive;
         private int updateInstallActive;
+        private int gamePatchOperationActive;
 
         protected override CreateParams CreateParams
         {
@@ -341,8 +342,10 @@ namespace RaidRescue
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             if (e.CloseReason == CloseReason.UserClosing &&
-                Interlocked.CompareExchange(
-                    ref updateInstallActive, 0, 0) != 0)
+                (Interlocked.CompareExchange(
+                    ref updateInstallActive, 0, 0) != 0 ||
+                 Interlocked.CompareExchange(
+                    ref gamePatchOperationActive, 0, 0) != 0))
             {
                 e.Cancel = true;
                 return;
@@ -491,6 +494,93 @@ namespace RaidRescue
                     });
             });
             return true;
+        }
+
+        internal bool BeginGamePatchOperation(
+            string action, bool enabled, string mode,
+            string requestId)
+        {
+            mode = mode ?? String.Empty;
+            if (!PatchHelperProtocol.IsKnownAction(action) ||
+                !PatchHelperProtocol.IsValidMode(action, mode) ||
+                !IsValidPatchRequestId(requestId))
+                return false;
+            if (Interlocked.CompareExchange(
+                ref gamePatchOperationActive, 1, 0) != 0)
+                return false;
+
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                GamePatchResult result = PatchHelperClient.Execute(
+                    action, enabled, mode);
+                NotifyGamePatchScript(result, requestId);
+            });
+            return true;
+        }
+
+        private static bool IsValidPatchRequestId(string value)
+        {
+            if (String.IsNullOrEmpty(value) || value.Length > 32)
+                return false;
+            foreach (char character in value)
+            {
+                if (character < '0' || character > '9')
+                    return false;
+            }
+            return true;
+        }
+
+        private void NotifyGamePatchScript(
+            GamePatchResult result, string requestId)
+        {
+            string json;
+            try
+            {
+                json = new JavaScriptSerializer
+                {
+                    MaxJsonLength = Int32.MaxValue
+                }.Serialize(result);
+            }
+            catch (Exception exception)
+            {
+                json = "{\"Success\":false,\"Error\":\"" +
+                    EscapeJson(exception.Message) + "\"}";
+            }
+
+            try
+            {
+                if (IsDisposed || !IsHandleCreated)
+                {
+                    Interlocked.Exchange(
+                        ref gamePatchOperationActive, 0);
+                    return;
+                }
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    try
+                    {
+                        // Release the native gate before JavaScript receives
+                        // the result so a verified dependency sequence may
+                        // immediately start its next operation.
+                        Interlocked.Exchange(
+                            ref gamePatchOperationActive, 0);
+                        if (browser.Document != null)
+                            browser.Document.InvokeScript(
+                                "receiveGamePatchOperation",
+                                new object[] { json, requestId });
+                    }
+                    catch { }
+                    finally
+                    {
+                        Interlocked.Exchange(
+                            ref gamePatchOperationActive, 0);
+                    }
+                });
+            }
+            catch
+            {
+                Interlocked.Exchange(ref gamePatchOperationActive, 0);
+            }
         }
 
         private void NotifyUpdateScript(
@@ -709,6 +799,15 @@ namespace RaidRescue
                 assetUrl, digest,
                 patchAssetUrl, patchDigest,
                 latestVersion);
+        }
+
+        public bool BeginGamePatchOperation(
+            string action, bool enabled, string mode,
+            string requestId)
+        {
+            return owner.BeginGamePatchOperation(
+                action, enabled, mode ?? String.Empty,
+                requestId);
         }
 
         public string ConsumeUpdateStartupStatus()

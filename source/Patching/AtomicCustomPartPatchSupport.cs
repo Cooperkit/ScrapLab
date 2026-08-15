@@ -189,7 +189,11 @@ namespace RaidRescue
                 RestoreSnapshot(atlasBaseline, baselineExisted,
                     baselineBytes, modKey + "-atlas-baseline-rollback");
                 if (prior != null)
+                {
                     AdaptivePatchSupport.SaveReceipt(modKey, prior);
+                    AdaptivePatchSupport.PruneUnreferencedBaseBackups(
+                        modKey, prior);
+                }
                 else AdaptivePatchSupport.DeleteReceipt(modKey);
                 throw;
             }
@@ -233,6 +237,8 @@ namespace RaidRescue
                 });
             }
             AdaptivePatchSupport.SaveReceipt(modKey, receipt);
+            AdaptivePatchSupport.PruneUnreferencedBaseBackups(
+                modKey, receipt);
         }
 
         private static bool CanExactRestore(
