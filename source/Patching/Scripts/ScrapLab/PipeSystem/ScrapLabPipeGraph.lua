@@ -1,10 +1,10 @@
--- SCRAPLAB WIRELESS PIPE GRAPH v12
+-- SCRAPLAB WIRELESS PIPE GRAPH v13
 -- Cached virtual Link traversal layered over the native pipe graph. Native
 -- local results remain authoritative. Physical components persist until an
 -- affected body changes and are shared by every consumer on that component.
 
 ScrapLabPipeGraph = ScrapLabPipeGraph or {}
-ScrapLabPipeGraph.DEFINITION_VERSION = 12
+ScrapLabPipeGraph.DEFINITION_VERSION = 13
 
 local WIRELESS_PIPE_UUID = sm.uuid.new( "a34d9af0-4ba0-431d-b647-2d5435ecf138" )
 local MAX_PHYSICAL_SHAPES = 4096
@@ -112,6 +112,7 @@ local function managerAvailable()
 		and WirelessPipeManager.Sv_GetTerminalPeerEntries ~= nil
 		and WirelessPipeManager.Sv_GetTopologyRevision ~= nil
 		and WirelessPipeManager.Sv_RequestEndpointLeases ~= nil
+		and WirelessPipeManager.Sv_AreEndpointLeasesSettled ~= nil
 		and WirelessPipeManager.Sv_HasVirtualRoute ~= nil
 end
 
@@ -608,7 +609,7 @@ end
 
 local function getVirtualContainerShapes( startShape, requestedDirection )
 	if not managerAvailable() or not shapeExists( startShape ) or
-		not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then return {} end
+		not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then return {}, nil end
 	local tick = ensureCacheState()
 	local key = requestedDirection .. "|" .. shapeKey( startShape )
 	local cached = physicalCache.virtualQueries[key]
@@ -621,7 +622,7 @@ local function getVirtualContainerShapes( startShape, requestedDirection )
 		renewTrackerLeases( cached.tracker, "GRAPH" )
 		local result = {}
 		appendUniqueShapes( result, cached.shapes )
-		return result
+		return result, cached.tracker
 	elseif cached then
 		physicalCache.virtualQueries[key] = nil
 	end
@@ -642,7 +643,7 @@ local function getVirtualContainerShapes( startShape, requestedDirection )
 	renewTrackerLeases( tracker, "GRAPH" )
 	local output = {}
 	appendUniqueShapes( output, result )
-	return output
+	return output, tracker
 end
 
 local function getNativeShapeList( nativeFunction, startShape, requestedDirection )
@@ -669,13 +670,14 @@ local function extendNativeShapeList( nativeFunction, startShape, requestedDirec
 	local localResults = getNativeShapeList( nativeFunction, startShape, requestedDirection )
 	if not managerAvailable() or not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then
 		performance.fastPathReturns = performance.fastPathReturns + 1
-		return localResults
+		return localResults, nil
 	end
-	local ok, extended = pcall( function()
-		appendUniqueShapes( localResults, getVirtualContainerShapes( startShape, requestedDirection ) )
-		return localResults
+	local ok, extended, tracker = pcall( function()
+		local virtualShapes, queryTracker = getVirtualContainerShapes( startShape, requestedDirection )
+		appendUniqueShapes( localResults, virtualShapes )
+		return localResults, queryTracker
 	end )
-	return ok and extended or localResults
+	return ok and extended or localResults, ok and tracker or nil
 end
 
 function ScrapLabPipeGraph.getInputContainers( shape )
@@ -685,11 +687,21 @@ end
 -- Dedicated name keeps protected vanilla call counts stable while Crafter asks
 -- the server for authoritative GUI containers.
 function ScrapLabPipeGraph.getGuiInputContainers( shape )
-	return ScrapLabPipeGraph.getInputContainers( shape )
+	local shapes, tracker = extendNativeShapeList( sm.pipeGraph.getInputContainers, shape, "input" )
+	local pending = tracker ~= nil and #tracker.leaseEndpointIds > 0 and
+		not WirelessPipeManager.Sv_AreEndpointLeasesSettled( tracker.leaseEndpointIds )
+	return shapes, pending
 end
 
 function ScrapLabPipeGraph.getOutputContainers( shape )
 	return extendNativeShapeList( sm.pipeGraph.getOutputContainers, shape, "output" )
+end
+
+-- Consumers that retain a container list (rather than querying every action)
+-- can cheaply rebuild only when wireless topology or remote-cell readiness
+-- changes. No graph scan or lease request is performed here.
+function ScrapLabPipeGraph.getTopologyRevision()
+	return managerAvailable() and WirelessPipeManager.Sv_GetTopologyRevision() or nil
 end
 
 -- Local-only physical view for SEND/RECEIVE routing. It never follows a

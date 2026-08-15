@@ -213,7 +213,9 @@ Patch Bay armed, and stops before later removals if any mod cannot be restored.
 | **Dual-Fluid Water Cannon** | Fires connected water and chemical together on a logic pulse. |
 
 Every workshop action checks compatibility, creates verified backups, and
-rolls back failed changes. Backup retention is bounded.
+rolls back failed changes. Active uninstall state is stored separately from
+timestamped recovery history, so deleting old **Game Backups** cannot change
+whether a mod is installed or installable. Recovery retention is bounded.
 
 ### Custom parts
 
@@ -231,6 +233,10 @@ rolls back failed changes. Backup retention is bounded.
   Remote cells load on demand, stable topology is cached until it changes, and idle
   directional routes use a long backoff so a
   configured but unused cross-world channel does not stay fully simulated.
+  When a Craftbot opens before a requested cell finishes loading, a bounded
+  readiness refresh updates its recipe counts automatically instead of
+  requiring another storage UI to be opened first. Machines that retain a
+  container list refresh that list when wireless topology becomes ready.
   The Wireless Vacuum Pipe save warning must be followed before removal because
   worlds and creations can contain its custom UUID.
 - **Network Storage Chest** — UUID `bc7576a7-f226-459a-883c-e8460e955d63`.
@@ -238,7 +244,10 @@ rolls back failed changes. Backup retention is bounded.
   Boards. Browse connected storage with search, native colored-type filters,
   and deterministic type/name sorting, then route its three-slot tray with
   **Smart Sort** or **Nearest Empty**. Wireless Vacuum Pipe support is optional,
-  and connected players deposit through host-authoritative transactions.
+  and connected players deposit through host-authoritative transactions. Busy
+  Craftbots and pumps are indexed in the background: unchanged scans are not
+  redrawn, changed totals are coalesced, and live atomic withdrawals remain
+  available while unrelated containers are moving items.
 
 ScrapLab's Craftbot recipes are grouped immediately after the ordinary Vacuum
 Pipe recipe instead of being appended to the bottom. Raid Detector remains a
@@ -272,7 +281,16 @@ All custom icons share the verified **ScrapLab Icon Pack**.
 
 After a Steam update, ScrapLab offers **Update** or reinstall actions only when
 the protected game code is still compatible. Conflicts and partial patches are
-blocked without writing.
+blocked without writing. When Steam Verify cleanly removes a patch, ScrapLab
+automatically retires its old active receipt before reinstalling it. A compact
+superseded marker preserves save-sensitive warnings without allowing stale
+backup paths to affect the new transaction. Exact orphaned ScrapLab-owned files
+are adopted safely and removed again with the fresh installation.
+
+The shared custom-icon baseline belongs to active patch state, not recovery
+history. ScrapLab migrates older baselines automatically and can reconstruct
+only its managed transparent atlas tiles when that technical baseline is lost
+or corrupt; unrelated game pixels are left untouched.
 
 ## Updates and migration
 

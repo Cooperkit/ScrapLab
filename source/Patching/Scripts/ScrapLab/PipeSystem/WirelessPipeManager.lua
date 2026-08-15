@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v10
+-- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v11
 -- Persistent endpoint registry, Link topology, and the Phase 4 directional
 -- scheduler host. Inventory authority remains inside native transactions.
 
@@ -457,6 +457,27 @@ function WirelessPipeManager.sv_requestEndpointLeases( self, endpointIds, durati
 		end
 	end
 	return requested
+end
+
+-- A graph query can return before a demand-loaded endpoint cell has finished
+-- loading. Repeated machine queries naturally recover on a later fixed tick,
+-- but one-shot GUI queries need a bounded way to know when they should ask
+-- again. A missing/disabled endpoint and a cell rejected by the safety cap are
+-- terminal states; only a valid active endpoint that is still loading keeps a
+-- caller pending.
+function WirelessPipeManager.sv_areEndpointLeasesSettled( self, endpointIds )
+	for _, endpointId in ipairs( endpointIds or {} ) do
+		endpointId = tostring( endpointId or "" )
+		local record = self.sv.saved.endpoints[endpointId]
+		if record and record.enabled and self:sv_isActiveEndpoint( record ) then
+			local live = self.sv.live[endpointId]
+			local liveShape = live and live.shape or nil
+			local ready = liveShape ~= nil and sm.exists( liveShape )
+			local handle = self.sv.endpointHandleState[endpointId] or {}
+			if not ready and handle.limited ~= true then return false end
+		end
+	end
+	return true
 end
 
 function WirelessPipeManager.sv_buildDesiredCells( self )
@@ -1067,6 +1088,11 @@ function WirelessPipeManager.Sv_RequestEndpointLeases( endpointIds, durationTick
 	if not g_wirelessPipeManager then return 0 end
 	return g_wirelessPipeManager:sv_requestEndpointLeases(
 		endpointIds, durationTicks, purpose, priority )
+end
+
+function WirelessPipeManager.Sv_AreEndpointLeasesSettled( endpointIds )
+	if not g_wirelessPipeManager then return true end
+	return g_wirelessPipeManager:sv_areEndpointLeasesSettled( endpointIds )
 end
 
 function WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection )

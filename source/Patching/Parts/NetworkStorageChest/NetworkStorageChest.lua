@@ -38,6 +38,10 @@ local ITEM_TYPE_ORDER = {
 local SCAN_BUDGET_PER_TICK = 12
 local REVISION_POLL_INTERVAL_TICKS = 4
 local REVISION_POLL_BUDGET = 32
+-- Machine-driven inventories may change every fixed tick. Keep those changes
+-- authoritative internally, but never rebuild every open terminal more than a
+-- twice per second.
+local CATALOG_PUBLISH_INTERVAL_TICKS = 20
 local TOPOLOGY_POLL_INTERVAL_TICKS = 40
 local VIEW_DISTANCE = 16
 local MAX_LOCAL_PIPE_SHAPES = 4096
@@ -464,10 +468,17 @@ function NetworkStorageChest.server_onCreate( self )
 		scanReason = "",
 		scanStartedTick = 0,
 		indexing = false,
+		scanBlocking = false,
+		pendingScanDescriptors = {},
+		pendingScanReason = nil,
 		needsRescan = true,
 		revisionCursor = 1,
 		lastSignature = nil,
 		snapshot = nil,
+		pendingCatalogSnapshot = nil,
+		lastCatalogPublishTick = -CATALOG_PUBLISH_INTERVAL_TICKS,
+		lastPublishedSignature = nil,
+		lastPublishedTopologyGeneration = -1,
 		lastError = nil,
 		activitySerial = 0,
 		lastBufferRevision = buffer and buffer:getRevision() or -1,
@@ -591,6 +602,9 @@ function NetworkStorageChest.sv_endPhase1HarnessSession( self, player )
 		self.sv.sessions = {}
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
+		self.sv.pendingScanDescriptors = {}
+		self.sv.pendingScanReason = nil
+		self.sv.pendingCatalogSnapshot = nil
 		self.sv.qualificationLocked = nil
 		self.sv.qualificationRunId = nil
 		self.sv.phase1QualificationToken = nil
@@ -606,6 +620,9 @@ function NetworkStorageChest.sv_endPhase1HarnessSession( self, player )
 	if not hasEntries( self.sv.viewers ) then
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
+		self.sv.pendingScanDescriptors = {}
+		self.sv.pendingScanReason = nil
+		self.sv.pendingCatalogSnapshot = nil
 		self:sv_publishDiagnostics( "IDLE", 0, 0, 0 )
 	end
 end
@@ -624,6 +641,7 @@ function NetworkStorageChest.sv_indexingPayload( self )
 		scanTotal = #self.sv.scanQueue,
 		topologyGeneration = self.sv.topologyGeneration,
 		contentGeneration = self.sv.contentGeneration,
+		contentSignature = previous.contentSignature or self.sv.lastSignature,
 		localOnly = self.sv.routeState == nil or self.sv.routeState.localOnly ~= false,
 		wirelessInstalled = self.sv.routeState and self.sv.routeState.wirelessInstalled == true or false,
 		wirelessState = self.sv.routeState and self.sv.routeState.wirelessState or "LOCAL_ONLY",
@@ -632,6 +650,34 @@ function NetworkStorageChest.sv_indexingPayload( self )
 		crossWorld = self.sv.routeState and self.sv.routeState.crossWorld == true or false,
 		compatibilityReason = self.sv.routeState and self.sv.routeState.compatibilityReason or nil
 	}
+end
+
+function NetworkStorageChest.sv_publishCatalogSnapshot( self, snapshot, force )
+	if not snapshot then return end
+	local signatureChanged = snapshot.contentSignature ~= self.sv.lastPublishedSignature
+	local topologyChanged = snapshot.topologyGeneration ~= self.sv.lastPublishedTopologyGeneration
+	if not force and not signatureChanged and not topologyChanged then
+		self.sv.pendingCatalogSnapshot = nil
+		return
+	end
+	if not force and self.sv.tick - self.sv.lastCatalogPublishTick < CATALOG_PUBLISH_INTERVAL_TICKS then
+		-- Replace, rather than append, so a busy machine produces one latest-state
+		-- update instead of a transport backlog.
+		self.sv.pendingCatalogSnapshot = snapshot
+		return
+	end
+	self.sv.pendingCatalogSnapshot = nil
+	self.sv.lastCatalogPublishTick = self.sv.tick
+	self.sv.lastPublishedSignature = snapshot.contentSignature
+	self.sv.lastPublishedTopologyGeneration = snapshot.topologyGeneration
+	self:sv_sendToViewers( "cl_n_catalogSnapshot", snapshot )
+end
+
+function NetworkStorageChest.sv_flushCatalogSnapshot( self )
+	if self.sv.pendingCatalogSnapshot and
+			self.sv.tick - self.sv.lastCatalogPublishTick >= CATALOG_PUBLISH_INTERVAL_TICKS then
+		self:sv_publishCatalogSnapshot( self.sv.pendingCatalogSnapshot, true )
+	end
 end
 
 function NetworkStorageChest.sv_collectLocalContainers( self )
@@ -709,17 +755,40 @@ function NetworkStorageChest.sv_collectTopologySnapshot( self )
 end
 
 function NetworkStorageChest.sv_startScan( self, descriptors, reason )
+	reason = reason or "REFRESH"
+	local blocking = self.sv.snapshot == nil or reason == "TOPOLOGY" or reason == "QUALIFICATION"
+	if self.sv.indexing and not blocking then
+		-- A container may be touched again while an earlier chunked scan is still
+		-- running. Coalesce by container id and scan its latest revision once more
+		-- after the current pass instead of restarting the index.
+		for _, descriptor in ipairs( descriptors or {} ) do
+			if descriptor and descriptor.id then
+				self.sv.pendingScanDescriptors[descriptor.id] = descriptor
+			end
+		end
+		self.sv.pendingScanReason = reason
+		return
+	end
+
+	if blocking then
+		-- A real topology replacement invalidates the old scan queue.
+		self.sv.pendingScanDescriptors = {}
+		self.sv.pendingScanReason = nil
+	end
 	self.sv.scanQueue = descriptors or {}
 	self.sv.scanCursor = 1
-	self.sv.scanReason = reason or "REFRESH"
+	self.sv.scanReason = reason
 	self.sv.scanStartedTick = self.sv.tick
 	self.sv.scanCacheHits = 0
 	self.sv.scanContainerScans = 0
 	self.sv.scanSlotsScanned = 0
 	self.sv.indexing = true
-	self.sv.needsRescan = true
-	self:sv_publishDiagnostics( "INDEXING", 0, #self.sv.scanQueue, 0 )
-	self:sv_sendToViewers( "cl_n_catalogSnapshot", self:sv_indexingPayload() )
+	self.sv.scanBlocking = blocking
+	self.sv.needsRescan = blocking
+	self:sv_publishDiagnostics( blocking and "INDEXING" or "REFRESHING", 0, #self.sv.scanQueue, 0 )
+	if blocking then
+		self:sv_sendToViewers( "cl_n_catalogSnapshot", self:sv_indexingPayload() )
+	end
 	if #self.sv.scanQueue == 0 then self:sv_finishScan() end
 end
 
@@ -782,12 +851,15 @@ function NetworkStorageChest.sv_processScan( self )
 		end
 	end
 
-	self:sv_publishDiagnostics( "INDEXING", self.sv.scanCursor - 1, #self.sv.scanQueue,
+	self:sv_publishDiagnostics( self.sv.scanBlocking and "INDEXING" or "REFRESHING",
+		self.sv.scanCursor - 1, #self.sv.scanQueue,
 		self.sv.tick - self.sv.scanStartedTick )
 	if self.sv.scanCursor > #self.sv.scanQueue then self:sv_finishScan() end
 end
 
 function NetworkStorageChest.sv_finishScan( self )
+	local completedReason = self.sv.scanReason
+	local wasBlocking = self.sv.scanBlocking == true
 	local records = {}
 	for _, descriptor in ipairs( self.sv.containers ) do
 		local record = self.sv.records[descriptor.id]
@@ -812,13 +884,15 @@ function NetworkStorageChest.sv_finishScan( self )
 			end
 		end
 	end
-	if aggregate.signature ~= self.sv.lastSignature then
+	local aggregateChanged = aggregate.signature ~= self.sv.lastSignature
+	if aggregateChanged then
 		self.sv.contentGeneration = self.sv.contentGeneration + 1
 		self.sv.lastSignature = aggregate.signature
 	end
 
 	local duration = self.sv.tick - self.sv.scanStartedTick
 	self.sv.indexing = false
+	self.sv.scanBlocking = false
 	self.sv.needsRescan = false
 	self.sv.snapshot = {
 		status = "READY",
@@ -830,6 +904,7 @@ function NetworkStorageChest.sv_finishScan( self )
 		containerCount = #self.sv.containers,
 		topologyGeneration = self.sv.topologyGeneration,
 		contentGeneration = self.sv.contentGeneration,
+		contentSignature = aggregate.signature,
 		scanDurationTicks = duration,
 		scanReason = self.sv.scanReason,
 		qualificationRunId = self.sv.scanReason == "QUALIFICATION" and self.sv.qualificationRunId or nil,
@@ -851,13 +926,28 @@ function NetworkStorageChest.sv_finishScan( self )
 		compatibilityReason = self.sv.routeState.compatibilityReason
 	}
 	self:sv_publishDiagnostics( "READY", #self.sv.scanQueue, #self.sv.scanQueue, duration )
-	self:sv_sendToViewers( "cl_n_catalogSnapshot", self.sv.snapshot )
-	sm.log.info( PHASE1_PREFIX .. "index ready: containers=" .. tostring( #self.sv.containers ) ..
-		", unique=" .. tostring( aggregate.uniqueItems ) ..
-		", quantity=" .. tostring( aggregate.totalQuantity ) ..
-		", stacks=" .. tostring( aggregate.totalStacks ) ..
-		", ticks=" .. tostring( duration ) ..
-		", reason=" .. tostring( self.sv.scanReason ) )
+	local forcePublish = wasBlocking or completedReason == "WITHDRAWAL" or completedReason == "QUALIFICATION"
+	if aggregateChanged or forcePublish then
+		self:sv_publishCatalogSnapshot( self.sv.snapshot, forcePublish )
+	end
+	if aggregateChanged or wasBlocking then
+		sm.log.info( PHASE1_PREFIX .. "index ready: containers=" .. tostring( #self.sv.containers ) ..
+			", unique=" .. tostring( aggregate.uniqueItems ) ..
+			", quantity=" .. tostring( aggregate.totalQuantity ) ..
+			", stacks=" .. tostring( aggregate.totalStacks ) ..
+			", ticks=" .. tostring( duration ) ..
+			", reason=" .. tostring( completedReason ) )
+	end
+
+	local pending = {}
+	for _, descriptor in pairs( self.sv.pendingScanDescriptors or {} ) do
+		pending[#pending + 1] = descriptor
+	end
+	table.sort( pending, function( a, b ) return a.id < b.id end )
+	local pendingReason = self.sv.pendingScanReason or "COALESCED"
+	self.sv.pendingScanDescriptors = {}
+	self.sv.pendingScanReason = nil
+	if #pending > 0 then self:sv_startScan( pending, pendingReason ) end
 end
 
 function NetworkStorageChest.sv_pollRevisions( self )
@@ -908,6 +998,9 @@ function NetworkStorageChest.sv_validateViewers( self )
 	if not hasEntries( self.sv.viewers ) then
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
+		self.sv.pendingScanDescriptors = {}
+		self.sv.pendingScanReason = nil
+		self.sv.pendingCatalogSnapshot = nil
 		self:sv_publishDiagnostics( "IDLE", 0, 0, 0 )
 	end
 end
@@ -1139,7 +1232,7 @@ function NetworkStorageChest.sv_processDepositBuffer( self )
 	local rescans = {}
 	for _, descriptor in pairs( touched ) do rescans[#rescans + 1] = descriptor end
 	table.sort( rescans, function( a, b ) return a.id < b.id end )
-	if #rescans > 0 and hasEntries( self.sv.viewers ) and not self.sv.indexing then
+	if #rescans > 0 and hasEntries( self.sv.viewers ) then
 		self:sv_startScan( rescans, "DEPOSIT" )
 	end
 	local status = "READY"
@@ -1181,6 +1274,7 @@ function NetworkStorageChest.server_onFixedUpdate( self )
 	elseif self.sv.tick % REVISION_POLL_INTERVAL_TICKS == 0 then
 		self:sv_pollRevisions()
 	end
+	self:sv_flushCatalogSnapshot()
 
 	if self.sv.tick % 2400 == 0 then NetworkInventoryIndex.prune( self.sv.tick, 2400 ) end
 end
@@ -1299,17 +1393,26 @@ end
 
 function NetworkStorageChest.sv_collectWithdrawalSources( self, descriptors, itemUuid )
 	local wanted = tostring( itemUuid )
-	local sources, total = {}, 0
+	local sources, total, revisions, unstable = {}, 0, {}, {}
 	for _, descriptor in ipairs( descriptors or {} ) do
 		local container = descriptor.container
-		for slot = 0, container:getSize() - 1 do
-			local item = container:getItem( slot )
-			if item and item.uuid and tostring( item.uuid ) == wanted and ( item.quantity or 0 ) > 0 then
-				sources[#sources + 1] = {
-					container = container, descriptor = descriptor, slot = slot,
-					quantity = item.quantity
-				}
-				total = total + item.quantity
+		local before = NetworkInventoryIndex.getRevision( container )
+		if before < 0 then
+			unstable[#unstable + 1] = descriptor
+		else
+			revisions[descriptor.id] = before
+			for slot = 0, container:getSize() - 1 do
+				local item = container:getItem( slot )
+				if item and item.uuid and tostring( item.uuid ) == wanted and ( item.quantity or 0 ) > 0 then
+					sources[#sources + 1] = {
+						container = container, descriptor = descriptor, slot = slot,
+						quantity = item.quantity
+					}
+					total = total + item.quantity
+				end
+			end
+			if NetworkInventoryIndex.getRevision( container ) ~= before then
+				unstable[#unstable + 1] = descriptor
 			end
 		end
 	end
@@ -1324,11 +1427,12 @@ function NetworkStorageChest.sv_collectWithdrawalSources( self, descriptors, ite
 		if a.descriptor.id ~= b.descriptor.id then return a.descriptor.id < b.descriptor.id end
 		return a.slot < b.slot
 	end )
-	return sources, total
+	return sources, total, revisions, unstable
 end
 
 function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, destination )
-	if self.sv.indexing or not self.sv.snapshot or self.sv.snapshot.status ~= "READY" then
+	if ( self.sv.indexing and self.sv.scanBlocking ) or
+			not self.sv.snapshot or self.sv.snapshot.status ~= "READY" then
 		return false, "INDEXING", 0
 	end
 
@@ -1339,24 +1443,21 @@ function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, 
 		return false, "NETWORK_CHANGED", 0
 	end
 
-	local changed = {}
-	for _, descriptor in ipairs( descriptors ) do
-		local record = self.sv.records[descriptor.id]
-		local revision = NetworkInventoryIndex.getRevision( descriptor.container )
-		if not record or revision < 0 or revision ~= record.revision then changed[#changed + 1] = descriptor end
-	end
-	if #changed > 0 then
-		self:sv_refreshAfterWithdrawalConflict( changed, "WITHDRAWAL_STALE" )
-		return false, "NETWORK_CHANGED", 0
-	end
-
 	local uuidString = tostring( itemUuid )
 	local snapshotEntry = self:sv_findSnapshotEntry( uuidString )
 	if not snapshotEntry or ( snapshotEntry.quantity or 0 ) <= 0 then return false, "ITEM_UNAVAILABLE", 0 end
-	local sources, total = self:sv_collectWithdrawalSources( descriptors, itemUuid )
-	if total ~= snapshotEntry.quantity then
-		self:sv_refreshAfterWithdrawalConflict( descriptors, "WITHDRAWAL_STALE" )
+	-- The catalog is a view, not transaction authority. Read this selected item
+	-- live and tolerate unrelated Craftbot/pump revisions elsewhere in the
+	-- network. Only a source that changes while this request is being assembled
+	-- can invalidate the withdrawal.
+	local sources, total, sourceRevisions, unstable = self:sv_collectWithdrawalSources( descriptors, itemUuid )
+	if #unstable > 0 then
+		self:sv_refreshAfterWithdrawalConflict( unstable, "WITHDRAWAL_STALE" )
 		return false, "NETWORK_CHANGED", 0
+	end
+	if total <= 0 then
+		self:sv_startScan( descriptors, "WITHDRAWAL_STALE" )
+		return false, "ITEM_UNAVAILABLE", 0
 	end
 
 	local wanted = 1
@@ -1381,6 +1482,15 @@ function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, 
 	if remaining ~= 0 then
 		self:sv_refreshAfterWithdrawalConflict( descriptors, "WITHDRAWAL_STALE" )
 		return false, "NETWORK_CHANGED", 0
+	end
+	for id, descriptor in pairs( touched ) do
+		if NetworkInventoryIndex.getRevision( descriptor.container ) ~= sourceRevisions[id] then
+			local retry = {}
+			for _, changedDescriptor in pairs( touched ) do retry[#retry + 1] = changedDescriptor end
+			table.sort( retry, function( a, b ) return a.id < b.id end )
+			self:sv_refreshAfterWithdrawalConflict( retry, "WITHDRAWAL_RETRY" )
+			return false, "NETWORK_CHANGED", 0
+		end
 	end
 
 	if not sm.container.beginTransaction() then return false, "TRANSACTION_BUSY", 0 end
@@ -1423,8 +1533,10 @@ function NetworkStorageChest.sv_validateWithdrawalRequest( self, data, player )
 	if not WITHDRAW_ACTIONS[data.action] then return nil, nil, "INVALID_REQUEST" end
 	local itemUuid = safeItemUuid( data.uuid )
 	if not itemUuid then return nil, nil, "INVALID_REQUEST" end
-	if data.topologyGeneration ~= self.sv.topologyGeneration or
-		data.contentGeneration ~= self.sv.contentGeneration then
+	-- Content generations are intentionally allowed to lag while busy machines
+	-- are being coalesced. Topology must still match; the selected item and its
+	-- exact source slots are re-read authoritatively before the transaction.
+	if data.topologyGeneration ~= self.sv.topologyGeneration then
 		return nil, nil, "STALE_CATALOG"
 	end
 	session.lastRequestTick = tick
@@ -1485,7 +1597,7 @@ function NetworkStorageChest.sv_n_openCatalog( self, _, player )
 		self:sv_refreshTopology( true )
 	else
 		self:sv_refreshTopology( false )
-		if self.sv.indexing then
+		if self.sv.indexing and self.sv.scanBlocking then
 			self.network:sendToClient( player, "cl_n_catalogSnapshot", self:sv_indexingPayload() )
 		end
 	end
@@ -1604,6 +1716,9 @@ function NetworkStorageChest.sv_n_closeCatalog( self, _, player )
 	if not hasEntries( self.sv.viewers ) then
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
+		self.sv.pendingScanDescriptors = {}
+		self.sv.pendingScanReason = nil
+		self.sv.pendingCatalogSnapshot = nil
 		self:sv_publishDiagnostics( "IDLE", 0, 0, 0 )
 	end
 end
@@ -1622,6 +1737,8 @@ function NetworkStorageChest.client_onCreate( self )
 		playerInventoryVisibleCount = 0,
 		serverState = { phase = 2, bufferReady = false, bufferSize = 0 },
 		catalog = {},
+		catalogSignature = nil,
+		catalogTopologyGeneration = -1,
 		catalogState = {
 			status = "OFFLINE", uniqueItems = 0, totalQuantity = 0,
 			totalStacks = 0, containerCount = 0, topologyGeneration = 0,
@@ -1872,39 +1989,50 @@ end
 
 function NetworkStorageChest.cl_n_catalogSnapshot( self, data )
 	if not self.cl or type( data ) ~= "table" then return end
+	local sameCatalog = data.status == "READY" and data.contentSignature ~= nil and
+		data.contentSignature == self.cl.catalogSignature and
+		data.topologyGeneration == self.cl.catalogTopologyGeneration
+	local rebuildCatalog = data.status ~= "INDEXING" and not sameCatalog
 	local selectedUuid = self.cl.selected and self.cl.catalog[self.cl.selected]
 		and self.cl.catalog[self.cl.selected].uuid or nil
-	local catalog = {}
-	for _, source in ipairs( data.entries or {} ) do
-		if source.uuid and ( source.quantity or 0 ) > 0 then
-			local itemUuid = sm.uuid.new( source.uuid )
-			local title = sm.shape.getShapeTitle( itemUuid ) or source.uuid
-			local _, _, _, _, itemType = sm.gui.getItemIconFromUuid( itemUuid )
-			catalog[#catalog + 1] = {
-				uuid = source.uuid,
-				itemUuid = itemUuid,
-				title = title,
-				searchTitle = string.lower( title ),
-				itemType = normalizeItemType( itemType ),
-				quantity = source.quantity,
-				stacks = source.stacks or 0,
-				sources = source.sources or 0,
-				localSources = source.localSources or 0,
-				wirelessSources = source.wirelessSources or 0,
-				crossWorldSources = source.crossWorldSources or 0
-			}
+	if rebuildCatalog then
+		local catalog = {}
+		for _, source in ipairs( data.entries or {} ) do
+			if source.uuid and ( source.quantity or 0 ) > 0 then
+				local itemUuid = sm.uuid.new( source.uuid )
+				local title = sm.shape.getShapeTitle( itemUuid ) or source.uuid
+				local _, _, _, _, itemType = sm.gui.getItemIconFromUuid( itemUuid )
+				catalog[#catalog + 1] = {
+					uuid = source.uuid,
+					itemUuid = itemUuid,
+					title = title,
+					searchTitle = string.lower( title ),
+					itemType = normalizeItemType( itemType ),
+					quantity = source.quantity,
+					stacks = source.stacks or 0,
+					sources = source.sources or 0,
+					localSources = source.localSources or 0,
+					wirelessSources = source.wirelessSources or 0,
+					crossWorldSources = source.crossWorldSources or 0
+				}
+			end
+		end
+		self.cl.catalog = catalog
+		self.cl.selected = nil
+		if selectedUuid then
+			for index, entry in ipairs( catalog ) do
+				if entry.uuid == selectedUuid then self.cl.selected = index; break end
+			end
 		end
 	end
-	self.cl.catalog = catalog
 	self.cl.catalogState = data
-	self.cl.selected = nil
-	if selectedUuid then
-		for index, entry in ipairs( catalog ) do
-			if entry.uuid == selectedUuid then self.cl.selected = index; break end
-		end
+	if data.status == "READY" then
+		self.cl.catalogSignature = data.contentSignature
+		self.cl.catalogTopologyGeneration = data.topologyGeneration or -1
 	end
 	if self.cl.guiData and self.cl.scrollView then
-		self:cl_rebuildCatalog( false )
+		if rebuildCatalog then self:cl_rebuildCatalog( false )
+		else self:cl_refreshWithdrawalControls() end
 		self:cl_refreshStatus()
 		self.cl.guiDirty = true
 	end

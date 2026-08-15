@@ -266,8 +266,12 @@ namespace RaidRescue
                             "Full-Speed Carrying cannot be applied: " +
                             (String.IsNullOrEmpty(reason)
                                 ? "CarryTool.lua or SurvivalLift.lua changed protected carrying code."
-                                : reason));
+                            : reason));
                     }
+
+                    AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                        ModKey,
+                        "Steam Verify restored every protected Full-Speed Carrying target to a verified clean state.");
                 }
                 else if (installedCount != states.Count)
                 {

@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+- Fixed Network Storage Chests repeatedly flashing **INDEXING**, rebuilding the
+  item grid, and blocking withdrawals while Craftbots, loop crafting, or Vacuum
+  Pumps changed connected containers. Definition 8 now coalesces background
+  container revisions, suppresses unchanged snapshots, limits changed catalog
+  publications, and keeps the last verified catalog interactive. Withdrawals
+  re-read only the selected item's live sources and remain atomic, so unrelated
+  machine activity no longer makes the terminal difficult to use.
+- Fixed Craftbot recipe counts initially showing zero when matching Wireless
+  Vacuum Pipe storage was in an unloaded cell or another world. Definition 12
+  now reports demand-load readiness and runs a short, bounded GUI refresh until
+  the requested cells settle. Retained machine container lists also rebuild on
+  topology/readiness changes, without restoring permanent remote simulation.
+- Rebuilt secret-mod patch-state lifecycle handling. When Steam Verify removes
+  a compatible patch, ScrapLab now retires the stale active receipt before a
+  reinstall, preserves only a bounded superseded warning, and creates a fresh
+  uninstall receipt from the verified live files. A failed reinstall no longer
+  restores obsolete receipt authority, while a successful reinstall clears the
+  warning automatically.
+- Separated active patch authority from timestamped recovery history. The
+  shared custom-icon atlas baseline now lives with active Patch State, legacy
+  baselines migrate automatically, and an intact live icon catalog can safely
+  reconstruct corrupt or missing managed baseline tiles. Deleting **Game
+  Backups** therefore no longer changes mod compatibility or installation
+  state.
+- Made unreferenced corrupt adaptive base files self-healing while continuing
+  to block any checksum failure still referenced by an active receipt. Backup
+  rotation now also bounds definition-update and receipt-repair histories.
+- Moved Raid Detector installs and removals onto the common atomic custom-part
+  transaction path, including shared-state rollback and correct cleanup of
+  exact owned files left behind by Steam Verify.
+
 ## 2.9.1 - 2026-08-15
 
 - Fixed save-sensitive custom-part mods failing to reinstall after Steam

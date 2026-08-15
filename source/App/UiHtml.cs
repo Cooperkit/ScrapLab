@@ -1354,7 +1354,8 @@ button{font:inherit}
           <div class=""help-item""><b>HYBRID RESTORATION</b><p>Unchanged adaptive installs restore their exact pre-install bytes. If unrelated edits were added later, ScrapLab removes only its intact snippets. Edited, duplicated, or partial patch snippets block removal safely.</p></div>
           <div class=""help-item""><b>HOTFIX INDEPENDENCE</b><p>Chemical Fertilizer removal restores the exact state from before that mod. If the separate cumulative fertilizer hotfix was installed, that normal hotfix remains installed.</p></div>
           <div class=""help-item""><b>BLOCKED STATES</b><p><strong>Required Code Changed</strong>, <strong>Other Modification Detected</strong>, and <strong>Partial Patch</strong> identify unsafe files without writing. Steam Verify can restore official files, but changed protected features may require a ScrapLab update.</p></div>
-          <div class=""help-item""><b>BOUNDED RETENTION</b><p>ScrapLab keeps the two newest verified backups for each install, remove, or configure action. Superseded copies are removed only after a patch and its checksum verification succeed.</p></div>
+          <div class=""help-item""><b>ACTIVE STATE VS. RECOVERY HISTORY</b><p>Active uninstall receipts are separate from timestamped Game Backups. Deleting old recovery history cannot change whether a mod is installed or installable. ScrapLab keeps the two newest verified backups for each install, remove, configure, update, or receipt-repair action.</p></div>
+          <div class=""help-item""><b>STEAM VERIFY RECONCILIATION</b><p>When Steam cleanly replaces a mod, ScrapLab retires the old receipt before reinstalling and keeps only a bounded save-risk warning. Shared custom-icon state migrates automatically and can rebuild its managed transparent tiles without trusting stale backup history.</p></div>
           <div class=""help-item""><b>UNKNOWN FOLDERS ARE SAFE</b><p>Backup cleanup recognizes only ScrapLab and legacy Raid Rescue timestamped secret-mod folders. Other folders and manual backups are never removed.</p></div>
         </div>
       </div>
@@ -1418,7 +1419,7 @@ button{font:inherit}
           <div class=""help-item""><b>OPTIONAL LOGIC INPUT</b><p>No logic connection means enabled. A connected ON signal enables the endpoint; OFF disables it without deleting its saved identity or channel.</p></div>
           <div class=""help-item""><b>STATUS PANEL</b><p>Interact with the part to choose Link, Send, or Receive and review its channel, matching endpoints, connected worlds, and routing state.</p></div>
           <div class=""help-item""><b>BACKPRESSURE SAFETY</b><p>Empty Send networks and full or filtered Receive networks consume nothing. Transfers use fresh endpoint checks and one native container transaction.</p></div>
-          <div class=""help-item""><b>PERFORMANCE UPDATE</b><p>Definition 11 loads remote cells only while a machine, terminal, or transfer needs them. Stable and negative pipe-topology results persist until an affected body changes, storage terminals reuse route descriptors, and idle directional channels back off to lightweight inspections.</p></div>
+          <div class=""help-item""><b>PERFORMANCE &amp; READINESS</b><p>Definition 12 loads remote cells only while needed and keeps stable topology cached. Craftbot recipe counts and retained machine container lists refresh automatically when requested storage becomes ready.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes required registrations, reinstall before loading a world that may contain the part whenever ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
           <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Remove every pipe from all worlds, inventories, hotbars, containers, Lifts, and saved creations, save each world, and close the game before disabling.</p></div>
         </div>
@@ -1434,6 +1435,7 @@ button{font:inherit}
           <div class=""help-item""><b>THREE-SLOT ROUTING TRAY</b><p>Use the three-slot tray or click a player-inventory stack. The two-slot-wide control selects Smart Sort or Nearest mode for that terminal.</p></div>
           <div class=""help-item""><b>SMART OR NEAREST</b><p>Smart Sort groups exact items and matching item families. Turn it off to use the closest compatible same-world chest with an empty slot; cross-world destinations are considered afterward.</p></div>
           <div class=""help-item""><b>WIRELESS SUPPORT</b><p>With Wireless Vacuum Pipe installed, the catalog and sorter respect Link, Send, Receive, direct-only, full-network, and cross-world routes. Without it, the terminal remains fully usable on local pipes.</p></div>
+          <div class=""help-item""><b>LIVE MACHINE ACTIVITY</b><p>Craftbots, loop crafting, and pumps refresh in the background. Unchanged indexes are discarded, changed totals are grouped into smooth updates, and unrelated machine activity does not lock the Take controls.</p></div>
           <div class=""help-item""><b>TRANSFER SAFETY</b><p>Every move is validated and committed by the host through native atomic container transactions. A stale network, full destination, or concurrent edit never creates copied catalog items.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes a required registration, reinstall before opening a world containing the terminal when ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
           <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Empty every deposit tray, remove every terminal from worlds and inventories, save all affected worlds, and close Scrap Mechanic before disabling.</p></div>
@@ -2451,7 +2453,7 @@ function renderSecretModsState(){
     networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
     if(networkStorageUpdate){networkStorageUpdate.style.display=secretNetworkStorageChestNeedsUpdate?'block':'none';networkStorageUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;}
    networkStorageRow.className='secret-mod-row secret-mod-card'+(secretNetworkStorageChestInstalled?' enabled':'')+((!secretModsEnabled||!secretNetworkStorageChestCanApply)?' locked':'');
-    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'INTERFACE UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
+    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'LIVE INDEX UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
    renderCompatibilityReason('networkStorageChestReason',secretNetworkStorageChestInstalled,secretNetworkStorageChestCanApply,secretNetworkStorageChestReason);
   }
   var revival=document.getElementById('revivalBuffSwitch');
@@ -2892,9 +2894,9 @@ function applyGameplayBatchState(data){
 function setNetworkStorageChestMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
  var wasNetworkStorageUpdate=enabled&&secretNetworkStorageChestInstalled&&secretNetworkStorageChestNeedsUpdate;
- return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'POLISHING NETWORK STORAGE INTERFACE...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
+ return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'OPTIMIZING LIVE STORAGE INDEX...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
   secretNetworkStorageChestInstalled=!!data.Installed;
-  showSecretModFeedback(wasNetworkStorageUpdate?'INTERFACE UPDATED - readable single-line tooltips and matching type/sort text are ready.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+  showSecretModFeedback(wasNetworkStorageUpdate?'LIVE INDEX UPDATED - busy Craftbots and pumps refresh smoothly without locking withdrawals.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
  });
 }
 function setWirelessVacuumPipeMod(enabled){

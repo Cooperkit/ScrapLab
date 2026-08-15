@@ -242,8 +242,13 @@ namespace RaidRescue
                             " cannot be applied: " +
                             (String.IsNullOrEmpty(reason)
                                 ? "one or more protected targets changed."
-                                : reason));
+                            : reason));
                     }
+
+                    AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                        definition.ModKey,
+                        "Steam Verify restored every protected " +
+                        definition.DisplayName + " target to a verified clean state.");
                 }
                 else if (installedCount != states.Count)
                 {

@@ -341,6 +341,12 @@ namespace RaidRescue
                                 ? "the protected player-death and revival code is missing, duplicated, or edited."
                                 : reason));
                     }
+
+
+                    AdaptivePatchSupport
+                        .RetireVerifiedSupersededReceipt(
+                            ModKey,
+                            "Steam Verify restored the protected Revival Buff Recovery target to a verified clean state.");
                 }
                 else if (!installed)
                 {

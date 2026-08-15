@@ -38,20 +38,14 @@ namespace RaidRescue
                 (enabled ? "Install-" : "Remove-") + modKey + "-" + stamp);
             Directory.CreateDirectory(backupPath);
             result.BackupPath = backupPath;
-            string atlasBaseline = Path.Combine(backupRoot,
-                "ScrapLab-Shared-Icon-Atlas",
-                "IconMapSurvival.baseline.png");
-            string atlasMirror = Path.Combine(backupRoot,
-                "ScrapLab-Shared-Icon-Atlas", "atlas-receipt.json");
+            string atlasBaseline =
+                AdaptivePatchSupport.GetActiveSharedAtlasBaselinePath();
             string sharedStatePath =
                 AdaptivePatchSupport.GetSharedStatePath(
                     "ScrapLab-Icon-Pack.json");
             bool baselineExisted = File.Exists(atlasBaseline);
             byte[] baselineBytes = baselineExisted
                 ? File.ReadAllBytes(atlasBaseline) : null;
-            bool mirrorExisted = File.Exists(atlasMirror);
-            byte[] mirrorBytes = mirrorExisted
-                ? File.ReadAllBytes(atlasMirror) : null;
             bool sharedStateExisted = File.Exists(sharedStatePath);
             byte[] sharedStateBytes = sharedStateExisted
                 ? File.ReadAllBytes(sharedStatePath) : null;
@@ -184,8 +178,6 @@ namespace RaidRescue
                         plan.DisplayName + " rollback");
                 RestoreSnapshot(sharedStatePath, sharedStateExisted,
                     sharedStateBytes, modKey + "-shared-state-rollback");
-                RestoreSnapshot(atlasMirror, mirrorExisted, mirrorBytes,
-                    modKey + "-atlas-mirror-rollback");
                 RestoreSnapshot(atlasBaseline, baselineExisted,
                     baselineBytes, modKey + "-atlas-baseline-rollback");
                 if (prior != null)
@@ -194,7 +186,8 @@ namespace RaidRescue
                     AdaptivePatchSupport.PruneUnreferencedBaseBackups(
                         modKey, prior);
                 }
-                else AdaptivePatchSupport.DeleteReceipt(modKey);
+                else AdaptivePatchSupport.
+                    DeleteActiveReceiptPreservingSuperseded(modKey);
                 throw;
             }
 
@@ -265,7 +258,93 @@ namespace RaidRescue
             return true;
         }
 
-        private static void UpdateSharedAtlasState(
+        internal static void PrepareSharedAtlasState(
+            string gamePath, string backupRoot,
+            IList<ScrapLabIconAtlasCoordinator.IconAsset> catalog)
+        {
+            string xmlPath = Path.Combine(gamePath, "Survival", "Gui",
+                "IconMapSurvival.xml");
+            string atlasPath = Path.Combine(gamePath, "Survival", "Gui",
+                "IconMapSurvival.png");
+            LuaTextDocument xml = AdaptivePatchSupport.ReadLua(xmlPath);
+            string statePath = AdaptivePatchSupport.GetSharedStatePath(
+                "ScrapLab-Icon-Pack.json");
+            string activeBaseline =
+                AdaptivePatchSupport.GetActiveSharedAtlasBaselinePath();
+            string legacyDirectory = Path.Combine(backupRoot,
+                "ScrapLab-Shared-Icon-Atlas");
+            string legacyBaseline = Path.Combine(legacyDirectory,
+                "IconMapSurvival.baseline.png");
+            string legacyMirror = Path.Combine(legacyDirectory,
+                "atlas-receipt.json");
+
+            if (!ScrapLabIconAtlasCoordinator.AnyCatalogRegistration(
+                xml.NormalizedText, catalog))
+            {
+                TryDelete(statePath);
+                TryDelete(activeBaseline);
+                TryDelete(legacyMirror);
+                TryDelete(legacyBaseline);
+                TryDeleteEmptyDirectory(legacyDirectory);
+                return;
+            }
+
+            if (!File.Exists(atlasPath))
+                throw new FileNotFoundException(
+                    "IconMapSurvival.png was not found.", atlasPath);
+            byte[] atlas = File.ReadAllBytes(atlasPath);
+            ScrapLabIconAtlasCoordinator.SharedAtlasReceipt receipt =
+                ScrapLabIconAtlasCoordinator.LoadReceipt(statePath) ??
+                ScrapLabIconAtlasCoordinator.LoadReceipt(legacyMirror);
+            byte[] baseline = ReadVerifiedBaseline(
+                activeBaseline, receipt);
+            if (baseline == null && receipt != null)
+                baseline = ReadVerifiedBaseline(
+                    receipt.BaselinePath, receipt);
+            if (baseline == null)
+                baseline = ReadVerifiedBaseline(
+                    legacyBaseline, receipt);
+            if (baseline == null)
+            {
+                // The live registrations and icon pixels are the authority.
+                // Reconstruct only the managed transparent tiles instead of
+                // making a stale or corrupt backup block every future mod.
+                baseline = ScrapLabIconAtlasCoordinator.
+                    RemoveCatalogWhenUnused("", atlas, catalog, null);
+                if (ScrapLabIconAtlasCoordinator.ContainsAnyCatalogPixels(
+                    baseline, catalog))
+                    throw new InvalidDataException(
+                        "The shared ScrapLab icon baseline could not be reconstructed safely.");
+            }
+
+            WriteAtomic(activeBaseline, baseline,
+                "shared-atlas-active-baseline");
+            ScrapLabIconAtlasCoordinator.CatalogPlan live =
+                ScrapLabIconAtlasCoordinator.EnsureCatalog(
+                    xml.NormalizedText, atlas, catalog);
+            if (!live.AtlasChanged)
+            {
+                ScrapLabIconAtlasCoordinator.SharedAtlasReceipt rebuilt =
+                    ScrapLabIconAtlasCoordinator.CreateReceipt(
+                        xml.NormalizedText, atlas, baseline,
+                        activeBaseline, xml.OriginalHash, catalog);
+                WriteAtomic(statePath,
+                    ScrapLabIconAtlasCoordinator.SerializeReceipt(rebuilt),
+                    "shared-atlas-active-receipt");
+            }
+            TryDelete(legacyMirror);
+            TryDelete(legacyBaseline);
+            TryDeleteEmptyDirectory(legacyDirectory);
+        }
+
+        internal static byte[] ReadActiveAtlasBaseline()
+        {
+            string path =
+                AdaptivePatchSupport.GetActiveSharedAtlasBaselinePath();
+            return File.Exists(path) ? File.ReadAllBytes(path) : null;
+        }
+
+        internal static void UpdateSharedAtlasState(
             string gamePath, string backupRoot, string baselinePath,
             IList<ScrapLabIconAtlasCoordinator.IconAsset> catalog)
         {
@@ -276,14 +355,20 @@ namespace RaidRescue
             LuaTextDocument xml = AdaptivePatchSupport.ReadLua(xmlPath);
             string statePath = AdaptivePatchSupport.GetSharedStatePath(
                 "ScrapLab-Icon-Pack.json");
-            string mirrorPath = Path.Combine(backupRoot,
-                "ScrapLab-Shared-Icon-Atlas", "atlas-receipt.json");
+            string legacyDirectory = Path.Combine(backupRoot,
+                "ScrapLab-Shared-Icon-Atlas");
+            string legacyMirror = Path.Combine(
+                legacyDirectory, "atlas-receipt.json");
+            string legacyBaseline = Path.Combine(
+                legacyDirectory, "IconMapSurvival.baseline.png");
             if (!ScrapLabIconAtlasCoordinator.AnyCatalogRegistration(
                 xml.NormalizedText, catalog))
             {
                 TryDelete(statePath);
-                TryDelete(mirrorPath);
                 TryDelete(baselinePath);
+                TryDelete(legacyMirror);
+                TryDelete(legacyBaseline);
+                TryDeleteEmptyDirectory(legacyDirectory);
                 return;
             }
             if (!File.Exists(baselinePath))
@@ -298,9 +383,32 @@ namespace RaidRescue
                     xml.OriginalHash, catalog);
             byte[] json = ScrapLabIconAtlasCoordinator.SerializeReceipt(
                 receipt);
-            try { WriteAtomic(mirrorPath, json, "atlas-receipt-mirror"); }
-            catch { }
             WriteAtomic(statePath, json, "atlas-receipt");
+            TryDelete(legacyMirror);
+            TryDelete(legacyBaseline);
+            TryDeleteEmptyDirectory(legacyDirectory);
+        }
+
+        private static byte[] ReadVerifiedBaseline(
+            string path,
+            ScrapLabIconAtlasCoordinator.SharedAtlasReceipt receipt)
+        {
+            if (String.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                return null;
+            if (receipt == null ||
+                String.IsNullOrEmpty(receipt.BaselineHash))
+                return null;
+            try
+            {
+                byte[] bytes = File.ReadAllBytes(path);
+                if (!String.Equals(
+                        AdaptivePatchSupport.Sha256(bytes),
+                        receipt.BaselineHash,
+                        StringComparison.OrdinalIgnoreCase))
+                    return null;
+                return bytes;
+            }
+            catch { return null; }
         }
 
         internal static void WriteAtomic(
@@ -347,6 +455,17 @@ namespace RaidRescue
         private static void TryDelete(string path)
         {
             try { if (File.Exists(path)) File.Delete(path); }
+            catch { }
+        }
+
+        private static void TryDeleteEmptyDirectory(string path)
+        {
+            try
+            {
+                if (Directory.Exists(path) &&
+                    Directory.GetFileSystemEntries(path).Length == 0)
+                    Directory.Delete(path);
+            }
             catch { }
         }
 

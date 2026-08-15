@@ -10,7 +10,7 @@ namespace RaidRescue
     internal static class WirelessVacuumPipePatchService
     {
         private const string ModKey = "WirelessVacuumPipe";
-        private const string DefinitionVersion = "11";
+        private const string DefinitionVersion = "12";
         internal const string PartUuid =
             "a34d9af0-4ba0-431d-b647-2d5435ecf138";
         internal const string ManagerUuid =
@@ -34,6 +34,15 @@ namespace RaidRescue
             "-- END SCRAPLAB WIRELESS PIPE CRAFTER GUI BRIDGE";
         private const string CrafterGuiRequest =
             "self.network:sendToServer( \"sv_n_requestScrapLabGuiContainers\" )";
+        private const string CrafterRefreshCall =
+            "self:sv_scrapLabRefreshGuiContainers()";
+        private const string GarageChestTopologyAnchor =
+            "    if self.shape:getBody():hasChanged(self.sv.lastUpdatedTick) then";
+        private const string GarageChestTopologyBlock =
+            "    local scrapLabTopologyRevision = ScrapLabPipeGraph.getTopologyRevision()\n" +
+            "    local scrapLabTopologyChanged = self.sv.scrapLabTopologyRevision ~= scrapLabTopologyRevision\n" +
+            "    self.sv.scrapLabTopologyRevision = scrapLabTopologyRevision\n" +
+            "    if scrapLabTopologyChanged or self.shape:getBody():hasChanged(self.sv.lastUpdatedTick) then";
         private const string PipeEffectGuard =
             "if type( shapeList ) ~= \"table\" or #shapeList < 2 then return end -- SCRAPLAB WIRELESS PIPE VISUAL ROUTE GUARD";
 
@@ -168,8 +177,6 @@ namespace RaidRescue
             {
                 SteamBuildInfo build = ReadBuild(gamePath, result);
                 ProbeState state = Probe(gamePath);
-                AdaptivePatchReceipt receipt =
-                    AdaptivePatchSupport.LoadReceipt(ModKey);
                 if (state.AllInstalled)
                 {
                     result.Success = true;
@@ -192,7 +199,9 @@ namespace RaidRescue
                     bool canApply = CanApplyClean(state, build, out reason);
                     result.Success = true;
                     result.Installed = false;
-                    if (receipt != null && canApply)
+                    if (AdaptivePatchSupport.
+                        HasReceiptOrSupersededState(ModKey) &&
+                        canApply)
                     {
                         AdaptivePatchSupport.FillResult(result, build,
                             "REINSTALL REQUIRED - SAVE PART AT RISK",
@@ -253,6 +262,8 @@ namespace RaidRescue
                 if (enabled && state.AllInstalled &&
                     state.DefinitionUpdateAvailable)
                 {
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                     List<AtomicCustomPartFilePlan> updatePlans =
                         BuildDefinitionUpdatePlans(state);
                     ApplyDefinitionUpdate(updatePlans, result, gamePath,
@@ -261,17 +272,19 @@ namespace RaidRescue
                     result.Installed = true;
                     result.NeedsUpdate = false;
                     result.Changes.Add(
-                        "Added demand-loaded remote cells, persistent topology caches, cached storage-terminal routes, and safe local activity effects.");
+                        "Added readiness-aware remote-cell loading, bounded Craftbot resource refreshes, and topology-driven refreshes for retained machine container lists.");
                     AdaptivePatchSupport.FillResult(result, build,
                         PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
-                        "Wireless Vacuum Pipe definition 11 performance update was installed and verified.");
+                        "Wireless Vacuum Pipe definition 12 Craftbot resource refresh update was installed and verified.");
                     SecretModBackupRetention.Prune(
                         backupRoot, ModKey, result.BackupPath, result);
                     return result;
                 }
                 if (enabled && state.AllInstalled)
                 {
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                     if (AdaptivePatchSupport.RequiresBuildRefresh(
                         ModKey, build))
                     {
@@ -305,6 +318,7 @@ namespace RaidRescue
                         "Wireless Vacuum Pipe is already removed.");
                     return result;
                 }
+                bool retiredSupersededState = false;
                 if (enabled)
                 {
                     if (!state.AllClean)
@@ -314,12 +328,21 @@ namespace RaidRescue
                     if (!CanApplyClean(state, build, out reason))
                         throw new InvalidOperationException(
                             "Wireless Vacuum Pipe cannot be installed: " + reason);
+                    retiredSupersededState =
+                        AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                            ModKey,
+                            "Steam Verify removed the Wireless Vacuum Pipe registrations while leaving its old install receipt behind.");
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                 }
                 else if (!state.AllInstalled)
                 {
                     throw new InvalidOperationException(
                         "Wireless Vacuum Pipe cannot be removed because a protected patch or owned file was edited.");
                 }
+                else
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
 
                 List<AtomicCustomPartFilePlan> plans = enabled
                     ? BuildInstallPlans(state)
@@ -339,6 +362,9 @@ namespace RaidRescue
                 result.Changes.Add(enabled
                     ? "Registered the transparent icon through the shared bottom-of-atlas ScrapLab catalog."
                     : "Removed only the Wireless Vacuum Pipe icon registration while preserving other ScrapLab icons.");
+                if (retiredSupersededState)
+                    result.Changes.Add(
+                        "Automatically retired the Steam-overwritten Wireless Vacuum Pipe receipt before creating a fresh uninstall state.");
                 AdaptivePatchSupport.FillResult(result, build,
                     enabled
                         ? (state.AllKnownClean
@@ -386,7 +412,7 @@ namespace RaidRescue
             foreach (ConsumerDefinition consumer in Consumers)
             {
                 ConsumerDefinition captured = consumer;
-                state.Texts.Add(ReadText(gamePath,
+                TextState consumerState = ReadText(gamePath,
                     consumer.RelativePath, consumer.Kind,
                     consumer.KnownHash,
                     consumer.Kind == "PipeEffects"
@@ -398,7 +424,24 @@ namespace RaidRescue
                     delegate(string text)
                     {
                         return UnpatchConsumer(captured, text);
-                    }, false));
+                    }, false);
+                if (consumer.Kind == "Crafter" &&
+                    IsLegacyCrafterInstalled(
+                        consumerState.Document.NormalizedText))
+                {
+                    consumerState.Installed = true;
+                    consumerState.NeedsDefinitionUpdate = true;
+                }
+                if (consumer.Kind == "GarageChest" &&
+                    consumerState.CleanText != null &&
+                    AdaptivePatchSupport.Count(
+                        consumerState.Document.NormalizedText,
+                        GarageChestTopologyBlock) == 0)
+                {
+                    consumerState.Installed = true;
+                    consumerState.NeedsDefinitionUpdate = true;
+                }
+                state.Texts.Add(consumerState);
             }
 
             state.Texts.Add(ReadText(gamePath, IconXmlRelative,
@@ -733,7 +776,8 @@ namespace RaidRescue
                     "2EE306FA1303FDA36CC2CE64964CCD4E567CC27EA7D82D4F47B5B6CCE31BC321",
                     "3411D6804F6D874C4B9BD8D8C80C4109BF3CECFB0F44F31EDF49C0DF4F3D8DC8",
                     "B5F9739A83F5A7B708690665343050A215C257CE8BB43E0C9F2D648724698269",
-                    "863C038D5D3326A33AC8020482D6B8436550D7E0A8D634399A64C10B098A0908"
+                    "863C038D5D3326A33AC8020482D6B8436550D7E0A8D634399A64C10B098A0908",
+                    "D37FC304693ACC73207D775CCDBCB3F7511739840BBEEAFC6F244E7045922C50"
                 };
             else if (String.Equals(file, "ScrapLabPipeGraph.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -745,7 +789,8 @@ namespace RaidRescue
                     "D1E9A24346530DFA8344451475C9F35F8BA2F141A6A19130E8EFBBE408A1C9AC",
                     "8C8641F1069968D0750ABCDCB0C56261616D44B11E2C1814C4664222BED2BD2A",
                     "50EAFF546ECC80DFC2DDF6D3E49770E0A88704DBEDF5F85617EC2D95740B96F5",
-                    "847531571E5C7EE7B4DB6FBED507DA65C88091194817CB624A2738BC73969128"
+                    "847531571E5C7EE7B4DB6FBED507DA65C88091194817CB624A2738BC73969128",
+                    "2A39C08AF944066EEBDA11BD1701E31A0C3ADDD1D94E7447DDF4C3A1137482DC"
                 };
             else if (String.Equals(file, "WirelessPipeTransfer.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -807,7 +852,7 @@ namespace RaidRescue
             if (receipt == null)
                 throw new InvalidOperationException(
                     "The Wireless Vacuum Pipe installation receipt is missing or unreadable. " +
-                    "The performance update was not applied so the original uninstall backups remain protected.");
+                    "The definition update was not applied so the original uninstall backups remain protected.");
             string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss-fff");
             string backupPath = Path.Combine(backupRoot,
                 "Update-" + ModKey + "-" + stamp);
@@ -968,11 +1013,8 @@ namespace RaidRescue
             string xmlOutput = UnpatchIconXml(
                 iconXml.Document.NormalizedText, x, y);
             AddTextPlan(plans, iconXml, xmlOutput);
-            string baselinePath = Path.Combine(backupRoot,
-                "ScrapLab-Shared-Icon-Atlas",
-                "IconMapSurvival.baseline.png");
-            byte[] baseline = File.Exists(baselinePath)
-                ? File.ReadAllBytes(baselinePath) : null;
+            byte[] baseline =
+                AtomicCustomPartPatchSupport.ReadActiveAtlasBaseline();
             byte[] atlasOutput =
                 ScrapLabIconAtlasCoordinator.RemoveCatalogWhenUnused(
                     xmlOutput, state.AtlasBytes, state.IconCatalog,
@@ -1098,6 +1140,69 @@ namespace RaidRescue
             get
             {
                 return CrafterBridgeStart + "\n" +
+                    "local SCRAPLAB_CRAFTER_GUI_REFRESH_INTERVAL = 5\n" +
+                    "local SCRAPLAB_CRAFTER_GUI_REFRESH_TIMEOUT = 800\n\n" +
+                    "function Crafter.sv_scrapLabCollectGuiContainers( self )\n" +
+                    "\tlocal shapes, pending = ScrapLabPipeGraph.getGuiInputContainers( self.shape )\n" +
+                    "\tlocal containers, ids = {}, {}\n" +
+                    "\tfor _, shape in ipairs( shapes ) do\n" +
+                    "\t\tlocal ok, container = pcall( function() return GetPipeGraphObjectContainer( shape ) end )\n" +
+                    "\t\tif ok and container then\n" +
+                    "\t\t\tcontainers[#containers + 1] = container\n" +
+                    "\t\t\tlocal idOk, id = pcall( function() return sm.container.getId( container ) end )\n" +
+                    "\t\t\tif idOk and id ~= nil then ids[#ids + 1] = tostring( id ) end\n" +
+                    "\t\tend\n" +
+                    "\tend\n" +
+                    "\ttable.sort( ids )\n" +
+                    "\treturn containers, table.concat( ids, \"|\" ), pending == true\n" +
+                    "end\n\n" +
+                    "function Crafter.sv_n_requestScrapLabGuiContainers( self, _, player )\n" +
+                    "\tlocal containers, signature, pending = self:sv_scrapLabCollectGuiContainers()\n" +
+                    "\tself.network:sendToClient( player, \"cl_n_setScrapLabGuiContainers\", containers )\n" +
+                    "\tself.sv.scrapLabGuiRefreshes = self.sv.scrapLabGuiRefreshes or {}\n" +
+                    "\tlocal key = tostring( player.id )\n" +
+                    "\tif pending then\n" +
+                    "\t\tlocal tick = sm.game.getCurrentTick()\n" +
+                    "\t\tself.sv.scrapLabGuiRefreshes[key] = { player = player, signature = signature, nextTick = tick + SCRAPLAB_CRAFTER_GUI_REFRESH_INTERVAL, expiresAt = tick + SCRAPLAB_CRAFTER_GUI_REFRESH_TIMEOUT }\n" +
+                    "\telse\n" +
+                    "\t\tself.sv.scrapLabGuiRefreshes[key] = nil\n" +
+                    "\tend\n" +
+                    "end\n\n" +
+                    "function Crafter.sv_scrapLabRefreshGuiContainers( self )\n" +
+                    "\tlocal sessions = self.sv and self.sv.scrapLabGuiRefreshes or nil\n" +
+                    "\tif not sessions then return end\n" +
+                    "\tlocal tick = sm.game.getCurrentTick()\n" +
+                    "\tfor key, session in pairs( sessions ) do\n" +
+                    "\t\tlocal player = session.player\n" +
+                    "\t\tif not player or not sm.exists( player ) or tick >= session.expiresAt then\n" +
+                    "\t\t\tsessions[key] = nil\n" +
+                    "\t\telseif tick >= session.nextTick then\n" +
+                    "\t\t\tlocal containers, signature, pending = self:sv_scrapLabCollectGuiContainers()\n" +
+                    "\t\t\tif signature ~= session.signature then\n" +
+                    "\t\t\t\tself.network:sendToClient( player, \"cl_n_setScrapLabGuiContainers\", containers )\n" +
+                    "\t\t\t\tsession.signature = signature\n" +
+                    "\t\t\tend\n" +
+                    "\t\t\tif pending then session.nextTick = tick + SCRAPLAB_CRAFTER_GUI_REFRESH_INTERVAL else sessions[key] = nil end\n" +
+                    "\t\tend\n" +
+                    "\tend\n" +
+                    "end\n\n" +
+                    "function Crafter.cl_n_setScrapLabGuiContainers( self, containers )\n" +
+                    "\tif self.cl.guiInterface == nil then return end\n" +
+                    "\tlocal guiContainers = {}\n" +
+                    "\tfor _, container in ipairs( containers or {} ) do\n" +
+                    "\t\tif container then guiContainers[#guiContainers + 1] = container end\n" +
+                    "\tend\n" +
+                    "\tguiContainers[#guiContainers + 1] = sm.localPlayer.getPlayer():getInventory()\n" +
+                    "\tself.cl.guiInterface:setContainers( \"\", guiContainers )\n" +
+                    "end\n" + CrafterBridgeEnd;
+            }
+        }
+
+        private static string LegacyCrafterBridge
+        {
+            get
+            {
+                return CrafterBridgeStart + "\n" +
                     "function Crafter.sv_n_requestScrapLabGuiContainers( self, _, player )\n" +
                     "\tlocal shapes = ScrapLabPipeGraph.getGuiInputContainers( self.shape )\n" +
                     "\tlocal containers = {}\n" +
@@ -1150,6 +1255,15 @@ namespace RaidRescue
                 text = text.Replace(anchor, anchor + "\n\n\t" +
                     PipeEffectGuard);
             }
+            if (definition.Kind == "GarageChest")
+            {
+                RequireCount(text, GarageChestTopologyAnchor, 1,
+                    "Garage Chest topology refresh anchor changed");
+                RequireCount(text, GarageChestTopologyBlock, 0,
+                    "Garage Chest topology refresh already exists");
+                text = text.Replace(GarageChestTopologyAnchor,
+                    GarageChestTopologyBlock);
+            }
             text = LoaderBlock + "\n\n" + text;
             if (definition.Kind == "Crafter")
             {
@@ -1161,6 +1275,14 @@ namespace RaidRescue
                     "Crafter GUI request already exists");
                 text = text.Replace(requestAnchor, requestAnchor +
                     "\n\t\t" + CrafterGuiRequest);
+                const string fixedUpdateAnchor =
+                    "function Crafter.server_onFixedUpdate( self )";
+                RequireCount(text, fixedUpdateAnchor, 1,
+                    "Crafter GUI refresh anchor changed");
+                RequireCount(text, CrafterRefreshCall, 0,
+                    "Crafter GUI refresh already exists");
+                text = text.Replace(fixedUpdateAnchor,
+                    fixedUpdateAnchor + "\n\t" + CrafterRefreshCall);
                 const string classAnchor = "Workbench = class( Crafter )";
                 RequireCount(text, classAnchor, 1,
                     "Crafter subclass anchor changed");
@@ -1181,11 +1303,24 @@ namespace RaidRescue
                     definition.Kind + " pipe wrapper is missing, duplicated, or edited.");
             if (definition.Kind == "Crafter")
             {
-                text = RemoveUnique(text, CrafterBridge + "\n\n");
+                if (AdaptivePatchSupport.Count(text, CrafterBridge) == 1)
+                {
+                    text = RemoveUnique(text, CrafterBridge + "\n\n");
+                    text = RemoveUnique(text,
+                        "\n\t" + CrafterRefreshCall);
+                }
+                else
+                    text = RemoveUnique(text,
+                        LegacyCrafterBridge + "\n\n");
                 text = RemoveUnique(text, "\n\t\t" + CrafterGuiRequest);
             }
             if (definition.Kind == "PipeEffects")
                 text = RemoveUnique(text, "\n\n\t" + PipeEffectGuard);
+            if (definition.Kind == "GarageChest" &&
+                AdaptivePatchSupport.Count(
+                    text, GarageChestTopologyBlock) == 1)
+                text = text.Replace(GarageChestTopologyBlock,
+                    GarageChestTopologyAnchor);
             text = RemoveUnique(text, LoaderBlock + "\n\n");
             foreach (KeyValuePair<string, int> method in definition.Methods)
                 text = text.Replace(WrapperCall(method.Key),
@@ -1208,10 +1343,23 @@ namespace RaidRescue
                         NativeCall(method.Key)) != 0) return false;
             if (definition.Kind == "Crafter")
             {
-                if (AdaptivePatchSupport.Count(text, CrafterBridge) != 1 ||
-                    AdaptivePatchSupport.Count(text,
-                        CrafterGuiRequest) != 1) return false;
-                int bridge = text.IndexOf(CrafterBridge,
+                bool current = AdaptivePatchSupport.Count(
+                        text, CrafterBridge) == 1 &&
+                    AdaptivePatchSupport.Count(
+                        text, LegacyCrafterBridge) == 0 &&
+                    AdaptivePatchSupport.Count(
+                        text, CrafterRefreshCall) == 1;
+                bool legacy = AdaptivePatchSupport.Count(
+                        text, LegacyCrafterBridge) == 1 &&
+                    AdaptivePatchSupport.Count(
+                        text, CrafterBridge) == 0 &&
+                    AdaptivePatchSupport.Count(
+                        text, CrafterRefreshCall) == 0;
+                if ((!current && !legacy) || AdaptivePatchSupport.Count(
+                        text, CrafterGuiRequest) != 1) return false;
+                string installedBridge = current
+                    ? CrafterBridge : LegacyCrafterBridge;
+                int bridge = text.IndexOf(installedBridge,
                     StringComparison.Ordinal);
                 int subclasses = text.IndexOf(
                     "Workbench = class( Crafter )",
@@ -1223,6 +1371,15 @@ namespace RaidRescue
                 AdaptivePatchSupport.Count(text, PipeEffectGuard) != 1)
                 return false;
             return true;
+        }
+
+        private static bool IsLegacyCrafterInstalled(string text)
+        {
+            return AdaptivePatchSupport.Count(text, LoaderBlock) == 1 &&
+                AdaptivePatchSupport.Count(text, LegacyCrafterBridge) == 1 &&
+                AdaptivePatchSupport.Count(text, CrafterBridge) == 0 &&
+                AdaptivePatchSupport.Count(text, CrafterGuiRequest) == 1 &&
+                AdaptivePatchSupport.Count(text, CrafterRefreshCall) == 0;
         }
 
         private static string PatchShapesIndex(string text)

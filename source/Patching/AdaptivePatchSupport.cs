@@ -91,6 +91,18 @@ namespace RaidRescue
         public bool HasBom { get; set; }
     }
 
+    internal sealed class SupersededPatchReceipt
+    {
+        public string ModKey { get; set; }
+        public string DefinitionVersion { get; set; }
+        public string SteamBuildId { get; set; }
+        public string GameVersion { get; set; }
+        public string InstalledUtc { get; set; }
+        public string RetiredUtc { get; set; }
+        public string Reason { get; set; }
+        public int FileCount { get; set; }
+    }
+
     internal sealed class PatchBuildActivation
     {
         public string ModKey { get; set; }
@@ -345,6 +357,7 @@ namespace RaidRescue
                     File.Replace(temporary, path, null, true);
                 else
                     File.Move(temporary, path);
+                DeleteSupersededMarker(modKey);
             }
             finally
             {
@@ -358,6 +371,12 @@ namespace RaidRescue
         }
 
         internal static void DeleteReceipt(string modKey)
+        {
+            DeleteActiveReceipt(modKey);
+            DeleteSupersededMarker(modKey);
+        }
+
+        private static void DeleteActiveReceipt(string modKey)
         {
             try
             {
@@ -376,6 +395,57 @@ namespace RaidRescue
             catch { }
         }
 
+        internal static void DeleteActiveReceiptPreservingSuperseded(
+            string modKey)
+        {
+            DeleteActiveReceipt(modKey);
+        }
+
+        internal static bool HasReceiptOrSupersededState(string modKey)
+        {
+            try
+            {
+                return File.Exists(GetReceiptPath(modKey)) ||
+                    File.Exists(GetSupersededReceiptPath(modKey));
+            }
+            catch { return false; }
+        }
+
+        internal static bool RetireVerifiedSupersededReceipt(
+            string modKey, string reason)
+        {
+            AdaptivePatchReceipt receipt = LoadReceipt(modKey);
+            bool receiptFileExists = File.Exists(GetReceiptPath(modKey));
+            if (receipt == null && !receiptFileExists)
+                return false;
+
+            SupersededPatchReceipt retired = new SupersededPatchReceipt
+            {
+                ModKey = modKey,
+                DefinitionVersion = receipt == null
+                    ? "" : receipt.DefinitionVersion ?? "",
+                SteamBuildId = receipt == null
+                    ? "" : receipt.SteamBuildId ?? "",
+                GameVersion = receipt == null
+                    ? "" : receipt.GameVersion ?? "",
+                InstalledUtc = receipt == null
+                    ? "" : receipt.CreatedUtc ?? "",
+                RetiredUtc = DateTime.UtcNow.ToString("O"),
+                Reason = reason ??
+                    "The installed game files no longer contain this ScrapLab patch.",
+                FileCount = receipt == null || receipt.Files == null
+                    ? 0 : receipt.Files.Count
+            };
+            WriteSupersededMarker(modKey, retired);
+            DeleteActiveReceipt(modKey);
+            DeleteBuildActivation(modKey);
+            if (File.Exists(GetReceiptPath(modKey)))
+                throw new IOException(
+                    "ScrapLab could not retire the superseded " + modKey +
+                    " patch receipt.");
+            return true;
+        }
+
         internal static string GetSharedStatePath(string fileName)
         {
             if (String.IsNullOrEmpty(fileName) ||
@@ -392,7 +462,13 @@ namespace RaidRescue
             AdaptivePatchReceipt receipt = LoadReceipt(modKey);
             if (receipt == null || receipt.Files == null ||
                 receipt.Files.Count == 0)
+            {
+                if (File.Exists(GetReceiptPath(modKey)))
+                    RetireVerifiedSupersededReceipt(
+                        modKey,
+                        "Steam or a game update replaced every protected ScrapLab patch target.");
                 return;
+            }
 
             foreach (AdaptivePatchReceiptFile file in receipt.Files)
             {
@@ -410,8 +486,15 @@ namespace RaidRescue
             // ScrapLab snippet is absent. At that point a Steam update has
             // superseded the installed output and the bounded active receipt
             // is no longer a valid uninstall source.
-            DeleteReceipt(modKey);
-            DeleteBuildActivation(modKey);
+            RetireVerifiedSupersededReceipt(
+                modKey,
+                "Steam or a game update replaced every protected ScrapLab patch target.");
+        }
+
+        internal static string GetActiveSharedAtlasBaselinePath()
+        {
+            return GetSharedStatePath(
+                "ScrapLab-Icon-Pack.baseline.png");
         }
 
         internal static bool RequiresBuildRefresh(
@@ -612,10 +695,13 @@ namespace RaidRescue
                     Sha256(path), expectedHash,
                     StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new IOException(
-                        "The active adaptive base backup has an unexpected checksum.");
+                    if (IsActiveBackupReference(
+                        modKey, path))
+                        throw new IOException(
+                            "The active adaptive base backup has an unexpected checksum.");
+                    File.Delete(path);
                 }
-                return path;
+                else return path;
             }
             File.Copy(sourcePath, path, false);
             if (!String.Equals(
@@ -701,10 +787,13 @@ namespace RaidRescue
                     Sha256(path), expectedHash,
                     StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new IOException(
-                        "The versioned adaptive base backup has an unexpected checksum.");
+                    if (IsActiveBackupReference(
+                        modKey, path))
+                        throw new IOException(
+                            "The versioned adaptive base backup has an unexpected checksum.");
+                    File.Delete(path);
                 }
-                return path;
+                else return path;
             }
             File.WriteAllBytes(path, bytes);
             if (!String.Equals(
@@ -731,6 +820,30 @@ namespace RaidRescue
                     return file;
             }
             return null;
+        }
+
+        private static bool IsActiveBackupReference(
+            string modKey, string path)
+        {
+            AdaptivePatchReceipt receipt = LoadReceipt(modKey);
+            if (receipt == null || receipt.Files == null)
+                return false;
+            string fullPath = Path.GetFullPath(path);
+            foreach (AdaptivePatchReceiptFile file in receipt.Files)
+            {
+                if (file == null ||
+                    String.IsNullOrWhiteSpace(file.BackupPath))
+                    continue;
+                try
+                {
+                    if (String.Equals(
+                        Path.GetFullPath(file.BackupPath), fullPath,
+                        StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                catch { }
+            }
+            return false;
         }
 
         internal static void FillResult(
@@ -788,6 +901,55 @@ namespace RaidRescue
             return Path.Combine(
                 GetPatchStateRoot(),
                 modKey + ".json");
+        }
+
+        private static string GetSupersededReceiptPath(string modKey)
+        {
+            ValidateModKey(modKey);
+            return Path.Combine(
+                GetPatchStateRoot(), "Superseded", modKey + ".json");
+        }
+
+        private static void WriteSupersededMarker(
+            string modKey, SupersededPatchReceipt receipt)
+        {
+            string path = GetSupersededReceiptPath(modKey);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            string temporary = path + "." +
+                Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                File.WriteAllText(
+                    temporary,
+                    new JavaScriptSerializer().Serialize(receipt),
+                    new UTF8Encoding(false));
+                if (File.Exists(path))
+                    File.Replace(temporary, path, null, true);
+                else
+                    File.Move(temporary, path);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(temporary)) File.Delete(temporary);
+                }
+                catch { }
+            }
+        }
+
+        private static void DeleteSupersededMarker(string modKey)
+        {
+            try
+            {
+                string path = GetSupersededReceiptPath(modKey);
+                if (File.Exists(path)) File.Delete(path);
+                string directory = Path.GetDirectoryName(path);
+                if (Directory.Exists(directory) &&
+                    Directory.GetFileSystemEntries(directory).Length == 0)
+                    Directory.Delete(directory);
+            }
+            catch { }
         }
 
         private static string GetReceiptFileDirectory(string modKey)

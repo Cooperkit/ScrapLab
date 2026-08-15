@@ -11,7 +11,7 @@ namespace RaidRescue
     internal static class NetworkStorageChestPatchService
     {
         private const string ModKey = "NetworkStorageChest";
-        private const string DefinitionVersion = "7";
+        private const string DefinitionVersion = "8";
         private const string LegacyV1RuntimeHash = "453BB866D4B4D564C79BFF9F4A2997131BF9826496608DBEA7709BE2730FC596";
         private const string LegacyV1IndexHash = "F036925AFA22A028CFED0A82E89A691442FC77DEB851D0876F3DD92ED535D4EC";
         private const string LegacyV2RuntimeHash = "B42F99CA53E5D36188F8BFC352DCB0F560A649BD6783E31DAE38BC22ECC3FB49";
@@ -28,6 +28,7 @@ namespace RaidRescue
         private const string LegacyV5LocalizationHash = "29E54DE45BC6F727FF5B5245670BE812064A4B5024C977B66D110EF31FDDBC68";
         private const string LegacyV6RuntimeHash = "95F9A18C4B6DD668EED84FEB4D8F8CF2A5377C68D8B6082AA3A99A9CE9CE3BE5";
         private const string LegacyV6GuiHash = "9AB2D9C0F0134CF3D7615E53DC67B0BCB8A0B9E3A236AB85283D9ECF7805E0E5";
+        private const string LegacyV7RuntimeHash = "FFCF050028A72F09C0CEB10FBEEB73F5EE8C383EE3B0A20A54239E18E0C6B39E";
         internal const string PartUuid = "bc7576a7-f226-459a-883c-e8460e955d63";
         internal const string VerifiedSteamBuildId = "24529696";
         internal const string VerifiedGameVersion = "1.0.5.876";
@@ -112,7 +113,6 @@ namespace RaidRescue
             {
                 SteamBuildInfo build = ReadBuild(gamePath, result);
                 ProbeState state = Probe(gamePath);
-                AdaptivePatchReceipt receipt = AdaptivePatchSupport.LoadReceipt(ModKey);
                 result.Success = true;
                 if (state.AllInstalled)
                 {
@@ -132,7 +132,9 @@ namespace RaidRescue
                 {
                     string reason;
                     bool canApply = CanApplyClean(state, build, out reason);
-                    if (receipt != null && canApply)
+                    if (AdaptivePatchSupport.
+                        HasReceiptOrSupersededState(ModKey) &&
+                        canApply)
                         AdaptivePatchSupport.FillResult(result, build, "REINSTALL REQUIRED - SAVE PART AT RISK", true, true,
                             "Steam removed the Network Storage Chest registrations. Reinstall before loading a world that may contain the part.");
                     else
@@ -167,6 +169,8 @@ namespace RaidRescue
                 ProbeState state = Probe(gamePath);
                 if (enabled && state.AllInstalled && state.DefinitionUpdateAvailable)
                 {
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                     List<AtomicCustomPartFilePlan> updatePlans = BuildDefinitionUpdatePlans(state);
                     ApplyDefinitionUpdate(updatePlans, result, gamePath, backupRoot, build);
                     result.Success = true;
@@ -180,6 +184,8 @@ namespace RaidRescue
                 }
                 if (enabled && state.AllInstalled)
                 {
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                     result.Success = true; result.Installed = true; result.AlreadyPatched = true;
                     AdaptivePatchSupport.FillResult(result, build, PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true, "Network Storage Chest is already installed.");
@@ -196,14 +202,24 @@ namespace RaidRescue
                         !state.AllKnownClean, true, "Network Storage Chest is already removed.");
                     return result;
                 }
+                bool retiredSupersededState = false;
                 if (enabled)
                 {
                     if (!state.AllClean) throw new InvalidOperationException("Network Storage Chest cannot be installed because its protected state is partial or conflicting.");
                     string reason;
                     if (!CanApplyClean(state, build, out reason)) throw new InvalidOperationException("Network Storage Chest cannot be installed: " + reason);
+                    retiredSupersededState =
+                        AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                            ModKey,
+                            "Steam Verify removed the Network Storage Chest registrations while leaving its old install receipt behind.");
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                 }
                 else if (!state.AllInstalled)
                     throw new InvalidOperationException("Network Storage Chest cannot be removed because a protected registration, file, or icon was edited.");
+                else
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
 
                 List<AtomicCustomPartFilePlan> plans = enabled ? BuildInstallPlans(state) : BuildRemovePlans(state, backupRoot);
                 AtomicCustomPartPatchSupport.Apply(ModKey, "Network Storage Chest", DefinitionVersion,
@@ -215,6 +231,9 @@ namespace RaidRescue
                 result.Changes.Add(enabled
                     ? "Added the default-unlocked Craftbot recipe and optional Wireless Vacuum Pipe integration."
                     : "Preserved Wireless Vacuum Pipe and every other shared ScrapLab icon and patch.");
+                if (retiredSupersededState)
+                    result.Changes.Add(
+                        "Automatically retired the Steam-overwritten Network Storage Chest receipt before creating a fresh uninstall state.");
                 AdaptivePatchSupport.FillResult(result, build,
                     enabled ? (state.AllKnownClean ? PatchCompatibilityState.KnownInstalled : PatchCompatibilityState.AdaptiveInstalled)
                             : (state.AllKnownClean ? PatchCompatibilityState.KnownClean : PatchCompatibilityState.CompatibleUpdate),
@@ -397,8 +416,8 @@ namespace RaidRescue
             if (!ScrapLabIconAtlasCoordinator.TryGetEntry(xml.Document.NormalizedText, PartUuid, out x, out y)) throw new InvalidDataException("The Network Storage Chest icon entry is missing.");
             string xmlOutput = UnpatchIconXml(xml.Document.NormalizedText, x, y);
             AddTextPlan(plans, xml, xmlOutput);
-            string baselinePath = Path.Combine(backupRoot, "ScrapLab-Shared-Icon-Atlas", "IconMapSurvival.baseline.png");
-            byte[] baseline = File.Exists(baselinePath) ? File.ReadAllBytes(baselinePath) : null;
+            byte[] baseline =
+                AtomicCustomPartPatchSupport.ReadActiveAtlasBaseline();
             byte[] atlasOutput = ScrapLabIconAtlasCoordinator.RemoveCatalogWhenUnused(xmlOutput, state.AtlasBytes, state.IconCatalog, baseline);
             if (!BytesEqual(atlasOutput, state.AtlasBytes)) AddBinaryPlan(plans, IconPngRelative, "IconMapSurvival.png", state.AtlasPath, state.AtlasBytes, atlasOutput, true, false);
             foreach (OwnedAsset owned in state.Owned)
@@ -424,7 +443,8 @@ namespace RaidRescue
                     String.Equals(hash, LegacyV3RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV4RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV5RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(hash, LegacyV6RuntimeHash, StringComparison.OrdinalIgnoreCase);
+                    String.Equals(hash, LegacyV6RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV7RuntimeHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkInventoryIndex.lua", StringComparison.OrdinalIgnoreCase))
                 return String.Equals(hash, LegacyV1IndexHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkStorageChest.gui", StringComparison.OrdinalIgnoreCase))

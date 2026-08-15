@@ -85,6 +85,7 @@ namespace RaidRescue
             public string OutputHash;
             public string BackupFile;
             public bool SourceExists;
+            public bool ReceiptSourceMissing;
         }
 
         private sealed class TextState
@@ -125,6 +126,7 @@ namespace RaidRescue
             public bool AtlasKnown;
             public bool IconUpdateAvailable;
             public bool LogicUpdateAvailable;
+            public bool OrphanedOwnedAssets;
             public bool AllClean;
             public bool AllInstalled;
             public bool AllKnownClean;
@@ -174,7 +176,9 @@ namespace RaidRescue
                         out reason);
                     result.Success = true;
                     result.Installed = false;
-                    if (receipt != null && canApply)
+                    if (AdaptivePatchSupport.
+                        HasReceiptOrSupersededState(ModKey) &&
+                        canApply)
                     {
                         AdaptivePatchSupport.FillResult(result, build,
                             "REINSTALL REQUIRED - SAVE PART AT RISK",
@@ -246,6 +250,8 @@ namespace RaidRescue
                 if (enabled && state.AllInstalled &&
                     !UpdateAvailable(state))
                 {
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                     result.Success = true;
                     result.Installed = true;
                     result.AlreadyPatched = true;
@@ -258,6 +264,8 @@ namespace RaidRescue
                 if (enabled && state.AllInstalled &&
                     UpdateAvailable(state))
                 {
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                     List<FilePlan> updatePlans =
                         BuildDefinitionUpdatePlans(state);
                     ApplyPlans(updatePlans, result, gamePath, backupRoot,
@@ -296,6 +304,7 @@ namespace RaidRescue
                         "Raid Detector is already removed.");
                     return result;
                 }
+                bool retiredSupersededState = false;
                 if (enabled)
                 {
                     if (!state.AllClean)
@@ -305,12 +314,21 @@ namespace RaidRescue
                     if (!CanApplyClean(state, build, out reason))
                         throw new InvalidOperationException(
                             "Raid Detector cannot be installed: " + reason);
+                    retiredSupersededState =
+                        AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                            ModKey,
+                            "Steam Verify removed the Raid Detector registrations while leaving its old install receipt behind.");
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
                 }
                 else if (!state.AllInstalled)
                 {
                     throw new InvalidOperationException(
                         "Raid Detector cannot be removed because its protected files or icon were edited.");
                 }
+                else
+                    AtomicCustomPartPatchSupport.PrepareSharedAtlasState(
+                        gamePath, backupRoot, state.IconCatalog);
 
                 List<FilePlan> plans = enabled
                     ? BuildInstallPlans(state, build, backupRoot)
@@ -329,6 +347,9 @@ namespace RaidRescue
                 result.Changes.Add(enabled
                     ? "Installed the shared ScrapLab icon pack into verified bottom-of-atlas tiles and registered the Raid Detector icon."
                     : "Removed the Raid Detector icon registration and restored the shared atlas only when no custom-part mods remained.");
+                if (retiredSupersededState)
+                    result.Changes.Add(
+                        "Automatically retired the Steam-overwritten Raid Detector receipt before creating a fresh uninstall state.");
                 AdaptivePatchSupport.FillResult(result, build,
                     enabled
                         ? (state.AllKnownClean
@@ -486,6 +507,8 @@ namespace RaidRescue
             state.AllClean = textsClean && state.AtlasClean && state.OwnedClean;
             state.AllInstalled = textsInstalled && state.AtlasInstalled &&
                 state.OwnedInstalled;
+            state.OrphanedOwnedAssets = textsClean && state.AtlasClean &&
+                state.OwnedInstalled;
             state.AllKnownClean = known && state.AtlasKnown;
             return state;
         }
@@ -634,9 +657,11 @@ namespace RaidRescue
                     "IconMapSurvival.png", state.AtlasPath,
                     state.AtlasBytes, catalogPlan.AtlasBytes);
             AddOwnedPlan(plans, ScriptRelative, "RaidDetector.lua",
-                state.ScriptPath, state.ScriptBytes);
+                state.ScriptPath, state.ScriptBytes,
+                state.OrphanedOwnedAssets);
             AddOwnedPlan(plans, ShapeRelative, "RaidDetector.shapeset",
-                state.ShapePath, state.ShapeBytes);
+                state.ShapePath, state.ShapeBytes,
+                state.OrphanedOwnedAssets);
             return plans;
         }
 
@@ -661,17 +686,8 @@ namespace RaidRescue
             string xmlOutput = UnpatchIconXml(
                 iconXml.Document.NormalizedText, x, y);
             AddTextPlan(plans, iconXml, xmlOutput);
-            string baselinePath = SharedAtlasBaselinePath(backupRoot);
-            byte[] baseline = null;
-            if (File.Exists(baselinePath))
-            {
-                byte[] candidate = File.ReadAllBytes(baselinePath);
-                if (state.SharedAtlasReceipt != null &&
-                    String.Equals(state.SharedAtlasReceipt.BaselineHash,
-                        AdaptivePatchSupport.Sha256(candidate),
-                        StringComparison.OrdinalIgnoreCase))
-                    baseline = candidate;
-            }
+            byte[] baseline =
+                AtomicCustomPartPatchSupport.ReadActiveAtlasBaseline();
             byte[] atlasOutput =
                 ScrapLabIconAtlasCoordinator.RemoveCatalogWhenUnused(
                     xmlOutput, state.AtlasBytes, state.IconCatalog,
@@ -707,7 +723,7 @@ namespace RaidRescue
             }
             if (state.LogicUpdateAvailable)
                 AddOwnedPlan(plans, ScriptRelative, "RaidDetector.lua",
-                    state.ScriptPath, state.ScriptBytes);
+                    state.ScriptPath, state.ScriptBytes, false);
             return plans;
         }
 
@@ -732,15 +748,54 @@ namespace RaidRescue
             SteamBuildInfo build, bool enabled,
             bool preserveModReceipt)
         {
+            if (!preserveModReceipt)
+            {
+                List<AtomicCustomPartFilePlan> atomicPlans =
+                    new List<AtomicCustomPartFilePlan>();
+                foreach (FilePlan plan in plans)
+                {
+                    atomicPlans.Add(new AtomicCustomPartFilePlan
+                    {
+                        RelativePath = plan.RelativePath,
+                        DisplayName = plan.DisplayName,
+                        Path = plan.Path,
+                        SourceBytes = plan.SourceBytes,
+                        OutputBytes = plan.OutputBytes,
+                        SourceHash = plan.SourceHash,
+                        OutputHash = plan.OutputHash,
+                        SourceExists = plan.SourceExists,
+                        ReceiptSourceMissing = plan.ReceiptSourceMissing,
+                        ForceDeleteOnRemove = plan.OutputBytes == null,
+                        IsAtlas = IsAtlasPlan(plan)
+                    });
+                }
+                AtomicCustomPartPatchSupport.Apply(
+                    ModKey, "Raid Detector", DefinitionVersion,
+                    atomicPlans, result, gamePath, backupRoot, build,
+                    enabled, ScrapLabIconAtlasCoordinator.LoadCatalog());
+                return;
+            }
+
             AdaptivePatchReceipt prior =
                 AdaptivePatchSupport.LoadReceipt(ModKey);
+            if (prior == null || prior.Files == null)
+                throw new InvalidOperationException(
+                    "The original Raid Detector receipt is missing, so its definition cannot be updated safely.");
             string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss-fff");
             string backupPath = Path.Combine(backupRoot,
                 (enabled ? "Install-" : "Remove-") + ModKey + "-" + stamp);
             Directory.CreateDirectory(backupPath);
             result.BackupPath = backupPath;
             string sharedAtlasBaseline =
-                SharedAtlasBaselinePath(backupRoot);
+                AdaptivePatchSupport.GetActiveSharedAtlasBaselinePath();
+            string sharedStatePath = AdaptivePatchSupport.GetSharedStatePath(
+                "ScrapLab-Icon-Pack.json");
+            bool sharedStateExisted = File.Exists(sharedStatePath);
+            byte[] sharedStateBytes = sharedStateExisted
+                ? File.ReadAllBytes(sharedStatePath) : null;
+            bool baselineExisted = File.Exists(sharedAtlasBaseline);
+            byte[] baselineBytes = baselineExisted
+                ? File.ReadAllBytes(sharedAtlasBaseline) : null;
             List<AdaptivePatchReceiptFile> manifest =
                 new List<AdaptivePatchReceiptFile>();
             foreach (FilePlan plan in plans)
@@ -832,6 +887,21 @@ namespace RaidRescue
                 }
                 UpdateSharedAtlasState(
                     gamePath, backupRoot, sharedAtlasBaseline);
+                foreach (FilePlan plan in plans)
+                {
+                    AdaptivePatchReceiptFile file =
+                        AdaptivePatchSupport.FindReceiptFile(
+                            prior, plan.RelativePath);
+                    if (file == null)
+                        throw new InvalidOperationException(
+                            plan.DisplayName +
+                            " is missing from the Raid Detector install receipt.");
+                    file.OutputHash = plan.OutputHash;
+                }
+                prior.DefinitionVersion = DefinitionVersion;
+                AdaptivePatchSupport.SaveReceipt(ModKey, prior);
+                AdaptivePatchSupport.PruneUnreferencedBaseBackups(
+                    ModKey, prior);
             }
             catch
             {
@@ -856,48 +926,11 @@ namespace RaidRescue
                             "Raid Detector rollback could not remove " +
                             plan.DisplayName + ".");
                 }
+                RestoreSnapshot(sharedStatePath, sharedStateExisted,
+                    sharedStateBytes, ModKey + "-shared-state-rollback");
+                RestoreSnapshot(sharedAtlasBaseline, baselineExisted,
+                    baselineBytes, ModKey + "-atlas-baseline-rollback");
                 throw;
-            }
-
-            if (enabled && !preserveModReceipt)
-            {
-                AdaptivePatchReceipt receipt = new AdaptivePatchReceipt
-                {
-                    ModKey = ModKey,
-                    DefinitionVersion = DefinitionVersion,
-                    SteamBuildId = build == null ? "" : build.BuildId,
-                    GameVersion = result.GameVersion,
-                    CreatedUtc = DateTime.UtcNow.ToString("O"),
-                    Files = new List<AdaptivePatchReceiptFile>()
-                };
-                foreach (FilePlan plan in plans)
-                {
-                    string basePath = "";
-                    if (plan.SourceExists)
-                    {
-                        basePath = IsAtlasPlan(plan)
-                            ? plan.BackupFile
-                            : AdaptivePatchSupport.CaptureBaseBackup(
-                                ModKey, plan.RelativePath, plan.BackupFile,
-                                plan.SourceHash);
-                    }
-                    receipt.Files.Add(new AdaptivePatchReceiptFile
-                    {
-                        RelativePath = plan.RelativePath,
-                        SourceHash = plan.SourceExists
-                            ? plan.SourceHash : "MISSING",
-                        OutputHash = plan.OutputHash,
-                        BackupPath = basePath,
-                        Newline = "PRESERVED",
-                        HasBom = false
-                    });
-                }
-                AdaptivePatchSupport.SaveReceipt(ModKey, receipt);
-            }
-            else if (!enabled)
-            {
-                AdaptivePatchSupport.DeleteReceipt(ModKey);
-                AdaptivePatchSupport.DeleteBuildActivation(ModKey);
             }
         }
 
@@ -908,69 +941,13 @@ namespace RaidRescue
                 StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string SharedAtlasDirectoryPath(string backupRoot)
-        {
-            return Path.Combine(
-                backupRoot, "ScrapLab-Shared-Icon-Atlas");
-        }
-
-        private static string SharedAtlasBaselinePath(string backupRoot)
-        {
-            return Path.Combine(SharedAtlasDirectoryPath(backupRoot),
-                "IconMapSurvival.baseline.png");
-        }
-
-        private static string SharedAtlasMirrorReceiptPath(
-            string backupRoot)
-        {
-            return Path.Combine(SharedAtlasDirectoryPath(backupRoot),
-                "atlas-receipt.json");
-        }
-
         private static void UpdateSharedAtlasState(
             string gamePath, string backupRoot, string baselinePath)
         {
-            string xmlPath = Path.Combine(gamePath, IconXmlRelative);
-            string atlasPath = Path.Combine(gamePath, IconPngRelative);
-            LuaTextDocument xmlDocument =
-                AdaptivePatchSupport.ReadLua(xmlPath);
             List<ScrapLabIconAtlasCoordinator.IconAsset> catalog =
                 ScrapLabIconAtlasCoordinator.LoadCatalog();
-            string statePath = AdaptivePatchSupport.GetSharedStatePath(
-                "ScrapLab-Icon-Pack.json");
-            string mirrorPath = SharedAtlasMirrorReceiptPath(backupRoot);
-            if (!ScrapLabIconAtlasCoordinator.AnyCatalogRegistration(
-                xmlDocument.NormalizedText, catalog))
-            {
-                try { if (File.Exists(statePath)) File.Delete(statePath); }
-                catch { }
-                try { if (File.Exists(mirrorPath)) File.Delete(mirrorPath); }
-                catch { }
-                try { if (File.Exists(baselinePath)) File.Delete(baselinePath); }
-                catch { }
-                return;
-            }
-
-            if (!File.Exists(baselinePath))
-                throw new FileNotFoundException(
-                    "The shared ScrapLab icon atlas baseline is missing.",
-                    baselinePath);
-            byte[] baseline = File.ReadAllBytes(baselinePath);
-            byte[] atlas = File.ReadAllBytes(atlasPath);
-            ScrapLabIconAtlasCoordinator.SharedAtlasReceipt receipt =
-                ScrapLabIconAtlasCoordinator.CreateReceipt(
-                    xmlDocument.NormalizedText, atlas, baseline,
-                    baselinePath, xmlDocument.OriginalHash, catalog);
-            byte[] json =
-                ScrapLabIconAtlasCoordinator.SerializeReceipt(receipt);
-            try
-            {
-                WriteAtomic(mirrorPath, json,
-                    "ScrapLab-icon-pack-receipt-mirror");
-            }
-            catch { }
-            WriteAtomic(statePath, json,
-                "ScrapLab-icon-pack-receipt");
+            AtomicCustomPartPatchSupport.UpdateSharedAtlasState(
+                gamePath, backupRoot, baselinePath, catalog);
         }
 
         private static bool CanExactRestore(
@@ -1036,6 +1013,18 @@ namespace RaidRescue
             }
         }
 
+        private static void RestoreSnapshot(
+            string path, bool existed, byte[] bytes, string operation)
+        {
+            if (existed)
+                WriteAtomic(path, bytes, operation);
+            else
+            {
+                try { if (File.Exists(path)) File.Delete(path); }
+                catch { }
+            }
+        }
+
         private static void AddTextPlan(
             List<FilePlan> plans, TextState state, string output)
         {
@@ -1067,7 +1056,7 @@ namespace RaidRescue
 
         private static void AddOwnedPlan(
             List<FilePlan> plans, string relative, string display,
-            string path, byte[] output)
+            string path, byte[] output, bool restoreAsMissing)
         {
             bool exists = File.Exists(path);
             byte[] source = exists ? File.ReadAllBytes(path) : null;
@@ -1077,6 +1066,7 @@ namespace RaidRescue
                 DisplayName = display,
                 Path = path,
                 SourceExists = exists,
+                ReceiptSourceMissing = restoreAsMissing,
                 SourceBytes = source,
                 OutputBytes = output,
                 SourceHash = exists

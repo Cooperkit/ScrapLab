@@ -65,7 +65,7 @@ namespace RaidRescue
                     : Path.GetFullPath(currentBackupPath)
                         .TrimEnd(Path.DirectorySeparatorChar);
                 Regex allowed = new Regex(
-                    "^(Install|Remove|Configure)-" +
+                    "^(Install|Remove|Configure|Update|ReceiptRepair)-" +
                     Regex.Escape(modKey) +
                     "-\\d{8}-\\d{6}-\\d{3}$",
                     RegexOptions.CultureInvariant);
@@ -1535,6 +1535,9 @@ namespace RaidRescue
                             ? "the protected declaration is not an exact clean match."
                             : reason));
                 }
+                AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                    "ResourceLocator",
+                    "Steam Verify restored the protected Resource Locator target to a verified clean state.");
                 transformed = ReplaceUnique(
                     document.NormalizedText,
                     OriginalDeclaration, LocatorV2Declaration,
@@ -2926,6 +2929,9 @@ namespace RaidRescue
                             ? "one or more protected targets are not exact clean matches."
                             : reason));
                 }
+                AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                    "ChemicalFertilizerSplash",
+                    "Steam Verify restored every protected Chemical Fertilizer Splash target to a verified clean state.");
             }
             else if (installed != states.Count)
             {
@@ -4401,6 +4407,9 @@ namespace RaidRescue
                         "Dual-Fluid Water Cannon cannot be applied: " +
                         (state.Clean ? reason : state.Reason));
                 }
+                AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                    AdaptiveModKey,
+                    "Steam Verify restored the protected Dual-Fluid Water Cannon target to a verified clean state.");
                 transformed = Patch(document.NormalizedText);
             }
             else
@@ -6234,6 +6243,12 @@ namespace RaidRescue
                     build, new[] { path }, out reason))
                     throw new InvalidOperationException(
                         "Developer Commands cannot be applied: " + reason);
+                if (enabled)
+                {
+                    AdaptivePatchSupport.RetireVerifiedSupersededReceipt(
+                        "DeveloperCommands",
+                        "Steam Verify restored the protected Developer Commands target to a verified clean state.");
+                }
                 cleanText = document.NormalizedText;
             }
             else if (host)
