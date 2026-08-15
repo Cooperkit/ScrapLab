@@ -1027,9 +1027,9 @@ button{font:inherit}
           </div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""wirelessVacuumPipeRow"" data-category=""logistics automation machinery"" data-search=""wireless vacuum pipe logistics automation link send receive cross world overworld underground paint color channel craftbot save sensitive"">
-          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; PIPE AUTOMATION &middot; SAVE-SENSITIVE</span><strong>WIRELESS VACUUM PIPE</strong><span>Link painted networks, let Receive-side machines pull from Send sources, or actively transfer items with safe container scope.</span><em id=""wirelessVacuumPipeState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""wirelessVacuumPipeReason""></span></div>
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; PIPE AUTOMATION &middot; SAVE-SENSITIVE</span><strong>WIRELESS VACUUM PIPE</strong><span>Link painted networks or route machines and storage from Send to Receive, including pumps and cross-world systems.</span><em id=""wirelessVacuumPipeState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""wirelessVacuumPipeReason""></span></div>
           <div class=""secret-mod-actions"">
-            <button type=""button"" class=""secret-mod-options"" id=""wirelessVacuumPipeUpdate"" aria-label=""Update Wireless Vacuum Pipe recipe order"" onclick=""updateWirelessVacuumPipeMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-mod-options"" id=""wirelessVacuumPipeUpdate"" aria-label=""Update Wireless Vacuum Pipe"" onclick=""updateWirelessVacuumPipeMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-switch"" id=""wirelessVacuumPipeSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Wireless Vacuum Pipe"" onclick=""toggleWirelessVacuumPipeMod()"" disabled=""disabled"">
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
@@ -1412,13 +1412,13 @@ button{font:inherit}
           <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe sits beside the ordinary Vacuum Pipe and produces two Wireless Vacuum Pipes in 30 seconds from two Vacuum Pipes, two Component Kits, and four Circuit Boards.</p></div>
           <div class=""help-item""><b>PAINT IS THE CHANNEL</b><p>Paint endpoints the same color to join them. Different colors remain isolated, and repainting moves an endpoint to its new channel without replacing the part.</p></div>
           <div class=""help-item""><b>LINK MODE</b><p>Same-color Link endpoints behave as one bidirectional pipe network. Machines prefer local storage first, then discover connected storage through other endpoints.</p></div>
-          <div class=""help-item""><b>SEND / RECEIVE</b><p>Send actively routes items to matching Receive endpoints. Receive also acts as a pull gateway, so a local pump or machine can consume supplies stored behind matching Send endpoints.</p></div>
+          <div class=""help-item""><b>SEND / RECEIVE</b><p>Receive-side machines can pull supplies from matching Send storage. Producer machines on Send&mdash;including water pumps&mdash;can place output into matching Receive storage. Native local containers remain first priority.</p></div>
           <div class=""help-item""><b>SAFE TRANSFER SCOPE</b><p>Send and Receive default to <strong>Direct Container Only</strong>: only a container touching that endpoint can be drained or filled. Toggle it to <strong>Entire Pipe Network</strong> only when you intentionally want every attached container eligible.</p></div>
           <div class=""help-item""><b>CROSS-WORLD ROUTING</b><p>Channels work between the overworld and underground worlds. ScrapLab loads only required endpoint cells, shares handles, and stops new remote routes at the 64-cell safety limit.</p></div>
           <div class=""help-item""><b>OPTIONAL LOGIC INPUT</b><p>No logic connection means enabled. A connected ON signal enables the endpoint; OFF disables it without deleting its saved identity or channel.</p></div>
           <div class=""help-item""><b>STATUS PANEL</b><p>Interact with the part to choose Link, Send, or Receive and review its channel, matching endpoints, connected worlds, and routing state.</p></div>
           <div class=""help-item""><b>BACKPRESSURE SAFETY</b><p>Empty Send networks and full or filtered Receive networks consume nothing. Transfers use fresh endpoint checks and one native container transaction.</p></div>
-          <div class=""help-item""><b>PERFORMANCE UPDATE</b><p>Definition 3 shares short-lived physical-network scans between connected machines, skips Lua traversal when no route can apply, and backs off idle channels. Existing installations update without unregistering the custom part.</p></div>
+          <div class=""help-item""><b>PERFORMANCE UPDATE</b><p>Definition 11 loads remote cells only while a machine, terminal, or transfer needs them. Stable and negative pipe-topology results persist until an affected body changes, storage terminals reuse route descriptors, and idle directional channels back off to lightweight inspections.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes required registrations, reinstall before loading a world that may contain the part whenever ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
           <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Remove every pipe from all worlds, inventories, hotbars, containers, Lifts, and saved creations, save each world, and close the game before disabling.</p></div>
         </div>
@@ -2835,7 +2835,7 @@ function setWirelessVacuumPipeMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Wireless Vacuum Pipe.','bad');return false;}
  secretModBusy=true;secretModBusyTarget='wirelessPipe';operationBusy=true;
  var wasWirelessUpdate=enabled&&secretWirelessVacuumPipeInstalled&&secretWirelessVacuumPipeNeedsUpdate;
- showSecretModFeedback(wasWirelessUpdate?'GROUPING SCRAPLAB CRAFTBOT RECIPES...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
+  showSecretModFeedback(wasWirelessUpdate?'INSTALLING WIRELESS PERFORMANCE UPDATE...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
  renderSecretModsState();applyGameLock(gameRunning);
  var data;
  try{data=parseResult(window.external.SetWirelessVacuumPipeMod(enabled));}
@@ -2846,7 +2846,7 @@ function setWirelessVacuumPipeMod(enabled){
  secretWirelessVacuumPipeInstalled=!!data.Installed;
  if(data.BackupPath)lastGameBackupPath=data.BackupPath;
  loadSecretModsState();
- showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - ScrapLab custom-part recipes now sit together beside the ordinary Vacuum Pipe.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
+  showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - remote cells now load on demand and stable pipe routes stay cached.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
  applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function updateWirelessVacuumPipeMod(){

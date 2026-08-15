@@ -28,15 +28,11 @@ if (-not $compiler) {
     throw "The .NET Framework C# compiler was not found."
 }
 
-Add-Type -AssemblyName PresentationCore
-Add-Type -AssemblyName WindowsBase
-$presentationCore = [AppDomain]::CurrentDomain.GetAssemblies() |
-    Where-Object { $_.GetName().Name -eq 'PresentationCore' } |
-    Select-Object -First 1 -ExpandProperty Location
-$windowsBase = [AppDomain]::CurrentDomain.GetAssemblies() |
-    Where-Object { $_.GetName().Name -eq 'WindowsBase' } |
-    Select-Object -First 1 -ExpandProperty Location
-if (-not $presentationCore -or -not $windowsBase) {
+$frameworkWpf = Join-Path (Split-Path -Parent $compiler) 'WPF'
+$presentationCore = Join-Path $frameworkWpf 'PresentationCore.dll'
+$windowsBase = Join-Path $frameworkWpf 'WindowsBase.dll'
+if (-not (Test-Path -LiteralPath $presentationCore) -or
+    -not (Test-Path -LiteralPath $windowsBase)) {
     throw "The Windows PNG codec assemblies were not found."
 }
 
@@ -226,7 +222,7 @@ foreach ($name in $builtFiles) {
     Write-Host "Built $($file.FullName) ($($file.Length) bytes)"
 }
 
-$version = "2.8.0"
+$version = "2.9.0"
 $releaseRoot = Join-Path $root "release"
 $bundle = Join-Path $releaseRoot "ScrapLab-$version"
 New-Item -ItemType Directory -Path $bundle -Force | Out-Null

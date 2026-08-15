@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.8.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.9.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -222,9 +222,17 @@ rolls back failed changes. Backup retention is bounded.
   active raid is within 256 meters.
 - **Wireless Vacuum Pipe** — UUID `a34d9af0-4ba0-431d-b647-2d5435ecf138`.
   Craft two from two Vacuum Pipes, two Component Kits, and four Circuit Boards.
-  Matching colors link pipe systems or route Send to Receive, including across
-  worlds. Send and Receive default to **Direct Container Only**; switch to
-  **Entire Pipe Network** when wanted.
+  Matching colors use **Link** mode to join pipe systems, or route **Send** networks
+  to **Receive**, including across worlds. Send and Receive default to
+  **Direct Container Only**; switch to
+  **Entire Pipe Network** when wanted. Receive-side machines can pull from Send
+  storage, while producer machines on Send (including water pumps) can place
+  output into Receive storage. Cross-world routing retains its 64-cell cap.
+  Remote cells load on demand, stable topology is cached until it changes, and idle
+  directional routes use a long backoff so a
+  configured but unused cross-world channel does not stay fully simulated.
+  The Wireless Vacuum Pipe save warning must be followed before removal because
+  worlds and creations can contain its custom UUID.
 - **Network Storage Chest** — UUID `bc7576a7-f226-459a-883c-e8460e955d63`.
   Craft one from a piped Small Chest, ten Component Kits, and twenty Circuit
   Boards. Browse connected storage with search, native colored-type filters,
@@ -308,7 +316,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.8.0.zip
+release\ScrapLab-2.9.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

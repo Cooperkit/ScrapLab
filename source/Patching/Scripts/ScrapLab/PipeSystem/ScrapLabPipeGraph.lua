@@ -1,15 +1,18 @@
--- SCRAPLAB WIRELESS PIPE GRAPH v10
+-- SCRAPLAB WIRELESS PIPE GRAPH v12
 -- Cached virtual Link traversal layered over the native pipe graph. Native
--- local results remain authoritative. Physical components are scanned at most
--- once per short cache epoch and shared by every consumer on that component.
+-- local results remain authoritative. Physical components persist until an
+-- affected body changes and are shared by every consumer on that component.
 
 ScrapLabPipeGraph = ScrapLabPipeGraph or {}
-ScrapLabPipeGraph.DEFINITION_VERSION = 10
+ScrapLabPipeGraph.DEFINITION_VERSION = 12
 
 local WIRELESS_PIPE_UUID = sm.uuid.new( "a34d9af0-4ba0-431d-b647-2d5435ecf138" )
 local MAX_PHYSICAL_SHAPES = 4096
 local MAX_WIRELESS_ENDPOINTS = 256
 local CACHE_INTERVAL_TICKS = 10
+local CACHE_PRUNE_INTERVAL_TICKS = 400
+local CACHE_MAX_IDLE_TICKS = 1200
+local GRAPH_LEASE_TICKS = 80
 
 -- Shape:getPipeOffsets returns openings in the same order as the official
 -- shape-set definition. Preserve the engine's input/output boundary at every
@@ -46,15 +49,15 @@ local REGISTERED_CONTAINER_UUIDS = {
 
 local peerCache = { revision = nil, entries = {} }
 local physicalCache = {
-	epoch = nil,
 	revision = nil,
-	-- Scrap Mechanic's restricted Lua runtime does not expose setmetatable.
-	-- This ordinary table is safe because the whole physical cache is discarded
-	-- every CACHE_INTERVAL_TICKS rather than surviving for the game session.
+	lastPruneTick = 0,
+	-- Scrap Mechanic's restricted Lua runtime does not expose setmetatable, so
+	-- bounded age pruning prevents retained Shape keys from growing forever.
 	shapeKeys = {},
 	componentsByShape = {},
 	directByShape = {},
 	virtualQueries = {},
+	terminalQueries = {},
 	nativeQueries = {},
 	nextComponentId = 0
 }
@@ -66,7 +69,11 @@ local performance = {
 	physicalNodes = 0,
 	componentCacheHits = 0,
 	directCacheHits = 0,
-	virtualQueryHits = 0
+	virtualQueryHits = 0,
+	negativeVirtualCacheHits = 0,
+	terminalCacheHits = 0,
+	componentInvalidations = 0,
+	cachePrunes = 0
 }
 
 local function shapeExists( shape )
@@ -101,8 +108,10 @@ local function managerAvailable()
 		and WirelessPipeManager.Sv_GetEndpointIdForShape ~= nil
 		and WirelessPipeManager.Sv_GetLinkPeerEntries ~= nil
 		and WirelessPipeManager.Sv_GetDirectionalSourceEntries ~= nil
+		and WirelessPipeManager.Sv_GetDirectionalDestinationEntries ~= nil
 		and WirelessPipeManager.Sv_GetTerminalPeerEntries ~= nil
 		and WirelessPipeManager.Sv_GetTopologyRevision ~= nil
+		and WirelessPipeManager.Sv_RequestEndpointLeases ~= nil
 		and WirelessPipeManager.Sv_HasVirtualRoute ~= nil
 end
 
@@ -116,18 +125,25 @@ local function resetPhysicalEntries()
 	physicalCache.componentsByShape = {}
 	physicalCache.directByShape = {}
 	physicalCache.virtualQueries = {}
+	physicalCache.terminalQueries = {}
 	physicalCache.nativeQueries = {}
 	physicalCache.nextComponentId = 0
 end
 
-local function ensureCacheEpoch()
+local prunePhysicalEntries
+
+local function ensureCacheState()
 	local tick = currentTick()
-	local epoch = math.floor( tick / CACHE_INTERVAL_TICKS )
 	local revision = managerAvailable() and WirelessPipeManager.Sv_GetTopologyRevision() or nil
-	if physicalCache.epoch ~= epoch or physicalCache.revision ~= revision then
-		physicalCache.epoch = epoch
+	if physicalCache.revision ~= revision then
 		physicalCache.revision = revision
-		resetPhysicalEntries()
+		-- Wireless peers and handle readiness changed. Physical pipe bodies did
+		-- not necessarily change, so preserve their expensive component scans.
+		physicalCache.virtualQueries = {}
+		physicalCache.terminalQueries = {}
+	end
+	if prunePhysicalEntries and tick - ( physicalCache.lastPruneTick or 0 ) >= CACHE_PRUNE_INTERVAL_TICKS then
+		prunePhysicalEntries( tick )
 	end
 	return tick
 end
@@ -212,9 +228,19 @@ local function bodiesStillValid( bodies, createdTick, validationTick )
 end
 
 local function componentStillValid( component, tick )
-	if component.lastValidationTick == tick then return true end
+	if component.lastValidationTick and tick - component.lastValidationTick < CACHE_INTERVAL_TICKS then return true end
 	component.lastValidationTick = tick
 	return bodiesStillValid( component.bodies, component.createdTick, tick )
+end
+
+local function discardComponent( component )
+	if not component then return end
+	for _, member in ipairs( component.members or {} ) do
+		if physicalCache.componentsByShape[member.key] == component then
+			physicalCache.componentsByShape[member.key] = nil
+		end
+	end
+	performance.componentInvalidations = performance.componentInvalidations + 1
 end
 
 local function buildPhysicalComponent( rootShape, tick )
@@ -224,6 +250,7 @@ local function buildPhysicalComponent( rootShape, tick )
 		id = physicalCache.nextComponentId,
 		createdTick = tick,
 		lastValidationTick = tick,
+		lastAccessTick = tick,
 		shapes = {}, containers = {}, endpoints = {}, bodies = {}, members = {}
 	}
 	local bodyKeys = {}
@@ -265,15 +292,16 @@ end
 
 local function getPhysicalComponent( rootShape, tracker )
 	if not shapeExists( rootShape ) then return nil end
-	local tick = ensureCacheEpoch()
+	local tick = ensureCacheState()
 	local key = shapeKey( rootShape )
 	local component = physicalCache.componentsByShape[key]
 	if component and componentStillValid( component, tick ) then
 		performance.componentCacheHits = performance.componentCacheHits + 1
 	else
-		if component then invalidatePhysicalEntries(); ensureCacheEpoch(); key = shapeKey( rootShape ) end
+		if component then discardComponent( component ) end
 		component = buildPhysicalComponent( rootShape, tick )
 	end
+	component.lastAccessTick = tick
 	if tracker and not tracker.componentIds[component.id] then
 		tracker.componentIds[component.id] = true
 		tracker.components[#tracker.components + 1] = component
@@ -310,7 +338,7 @@ local function getPeerEntries( endpointId )
 	local cached = peerCache.entries[endpointId]
 	if cached then
 		for _, entry in ipairs( cached ) do
-			if not shapeExists( entry.shape ) then
+			if entry.shape and not shapeExists( entry.shape ) then
 				cached = nil
 				peerCache.entries[endpointId] = nil
 				break
@@ -318,7 +346,7 @@ local function getPeerEntries( endpointId )
 		end
 	end
 	if not cached then
-		cached = WirelessPipeManager.Sv_GetLinkPeerEntries( endpointId )
+		cached = WirelessPipeManager.Sv_GetLinkPeerEntries( endpointId, "GRAPH" )
 		table.sort( cached, function( a, b ) return tostring( a.endpointId ) < tostring( b.endpointId ) end )
 		peerCache.entries[endpointId] = cached
 	end
@@ -349,6 +377,19 @@ local function appendComponentEndpoints( queue, seen, components )
 	end
 end
 
+local function trackLeaseEndpoint( tracker, endpointId )
+	if not tracker or not endpointId or tracker.leaseEndpointSet[endpointId] then return end
+	tracker.leaseEndpointSet[endpointId] = true
+	tracker.leaseEndpointIds[#tracker.leaseEndpointIds + 1] = endpointId
+end
+
+local function renewTrackerLeases( tracker, purpose )
+	if not tracker or #tracker.leaseEndpointIds == 0 or not managerAvailable() then return end
+	WirelessPipeManager.Sv_RequestEndpointLeases(
+		tracker.leaseEndpointIds, purpose == "TERMINAL" and 120 or GRAPH_LEASE_TICKS,
+		purpose or "GRAPH", purpose == "TERMINAL" and 2 or 3 )
+end
+
 -- Returns remote Link endpoint shapes. Component caching means a bus with many
 -- endpoints is still physically scanned once, rather than once per endpoint.
 local function discoverRemoteEndpoints( startShape, requestedDirection, tracker )
@@ -372,6 +413,7 @@ local function discoverRemoteEndpoints( startShape, requestedDirection, tracker 
 		local origin = endpointQueue[endpointHead]
 		endpointHead = endpointHead + 1
 		for _, peer in ipairs( getPeerEntries( origin.endpointId ) ) do
+			trackLeaseEndpoint( tracker, peer.endpointId )
 			if peer.endpointId and not visitedEndpointIds[peer.endpointId] and shapeExists( peer.shape ) then
 				visitedEndpointIds[peer.endpointId] = true
 				local key = shapeKey( peer.shape )
@@ -418,21 +460,22 @@ local function getPhysicalContainerShapes( rootShape, tracker )
 end
 
 local function directEntryStillValid( entry, tick )
-	if entry.lastValidationTick == tick then return true end
+	if entry.lastValidationTick and tick - entry.lastValidationTick < CACHE_INTERVAL_TICKS then return true end
 	entry.lastValidationTick = tick
 	return bodiesStillValid( entry.bodies, entry.createdTick, tick )
 end
 
 local function getDirectContainerShapes( rootShape, tracker )
 	if not shapeExists( rootShape ) then return {} end
-	local tick = ensureCacheEpoch()
+	local tick = ensureCacheState()
 	local key = shapeKey( rootShape )
 	local entry = physicalCache.directByShape[key]
 	if entry and directEntryStillValid( entry, tick ) then
 		performance.directCacheHits = performance.directCacheHits + 1
 	else
-		if entry then invalidatePhysicalEntries(); ensureCacheEpoch(); key = shapeKey( rootShape ) end
-		entry = { createdTick = tick, lastValidationTick = tick, shapes = {}, bodies = {} }
+		if entry then physicalCache.directByShape[key] = nil end
+		entry = { createdTick = tick, lastValidationTick = tick, lastAccessTick = tick,
+			rootShape = rootShape, shapes = {}, bodies = {} }
 		local bodyKeys, seen = {}, {}
 		addBody( entry.bodies, bodyKeys, rootShape )
 		for _, shape in ipairs( unsortedNeighbours( rootShape ) ) do
@@ -445,6 +488,7 @@ local function getDirectContainerShapes( rootShape, tracker )
 		table.sort( entry.shapes, function( a, b ) return shapeKey( a ) < shapeKey( b ) end )
 		physicalCache.directByShape[key] = entry
 	end
+	entry.lastAccessTick = tick
 	if tracker and not tracker.directKeys[key] then
 		tracker.directKeys[key] = true
 		tracker.directEntries[#tracker.directEntries + 1] = entry
@@ -452,6 +496,43 @@ local function getDirectContainerShapes( rootShape, tracker )
 	local result = {}
 	appendUniqueShapes( result, entry.shapes )
 	return result
+end
+
+prunePhysicalEntries = function( tick )
+	physicalCache.lastPruneTick = tick
+	performance.cachePrunes = performance.cachePrunes + 1
+	local components = {}
+	for _, component in pairs( physicalCache.componentsByShape ) do
+		components[component.id] = component
+	end
+	for _, component in pairs( components ) do
+		if tick - ( component.lastAccessTick or component.createdTick or tick ) > CACHE_MAX_IDLE_TICKS or
+			not componentStillValid( component, tick ) then
+			discardComponent( component )
+		end
+	end
+	for key, entry in pairs( physicalCache.directByShape ) do
+		if tick - ( entry.lastAccessTick or entry.createdTick or tick ) > CACHE_MAX_IDLE_TICKS or
+			not directEntryStillValid( entry, tick ) then
+			physicalCache.directByShape[key] = nil
+		end
+	end
+	for key, entry in pairs( physicalCache.virtualQueries ) do
+		if tick - ( entry.lastAccessTick or tick ) > CACHE_MAX_IDLE_TICKS then
+			physicalCache.virtualQueries[key] = nil
+		end
+	end
+	for key, entry in pairs( physicalCache.terminalQueries ) do
+		if tick - ( entry.lastAccessTick or tick ) > CACHE_MAX_IDLE_TICKS then
+			physicalCache.terminalQueries[key] = nil
+		end
+	end
+	for key, entry in pairs( physicalCache.nativeQueries ) do
+		if entry.tick ~= tick then physicalCache.nativeQueries[key] = nil end
+	end
+	-- Shape objects are ordinary table keys in the restricted runtime. Clear
+	-- the auxiliary map periodically; active objects are repopulated lazily.
+	physicalCache.shapeKeys = {}
 end
 
 local function discoverDirectionalSourceEntries( startShape, requestedDirection, tracker )
@@ -462,7 +543,8 @@ local function discoverDirectionalSourceEntries( startShape, requestedDirection,
 	for _, endpoint in ipairs( discoverOriginEndpoints( startShape, requestedDirection, tracker ) ) do
 		local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( endpoint )
 		if endpointId then
-			for _, entry in ipairs( WirelessPipeManager.Sv_GetDirectionalSourceEntries( endpointId ) ) do
+			for _, entry in ipairs( WirelessPipeManager.Sv_GetDirectionalSourceEntries( endpointId, "GRAPH" ) ) do
+				trackLeaseEndpoint( tracker, entry.endpointId )
 				if entry.endpointId and not seen[entry.endpointId] and shapeExists( entry.shape ) then
 					seen[entry.endpointId] = true
 					result[#result + 1] = entry
@@ -480,6 +562,33 @@ local function getDirectionalSourceContainerShapes( entry, tracker )
 	return getPhysicalContainerShapes( entry.shape, tracker )
 end
 
+local function discoverDirectionalDestinationEntries( startShape, requestedDirection, tracker )
+	if not managerAvailable() or not shapeExists( startShape ) then return {} end
+	if requestedDirection ~= "output" then return {} end
+	if not WirelessPipeManager.Sv_HasVirtualRoute( "directional" ) then return {} end
+	local result, seen = {}, {}
+	for _, endpoint in ipairs( discoverOriginEndpoints( startShape, requestedDirection, tracker ) ) do
+		local endpointId = WirelessPipeManager.Sv_GetEndpointIdForShape( endpoint )
+		if endpointId then
+			for _, entry in ipairs( WirelessPipeManager.Sv_GetDirectionalDestinationEntries( endpointId, "GRAPH" ) ) do
+				trackLeaseEndpoint( tracker, entry.endpointId )
+				if entry.endpointId and not seen[entry.endpointId] and shapeExists( entry.shape ) then
+					seen[entry.endpointId] = true
+					result[#result + 1] = entry
+				end
+			end
+		end
+	end
+	table.sort( result, function( a, b ) return tostring( a.endpointId ) < tostring( b.endpointId ) end )
+	return result
+end
+
+local function getDirectionalDestinationContainerShapes( entry, tracker )
+	if not entry or not shapeExists( entry.shape ) then return {} end
+	if entry.directOnly ~= false then return getDirectContainerShapes( entry.shape, tracker ) end
+	return getPhysicalContainerShapes( entry.shape, tracker )
+end
+
 local function trackerStillValid( tracker, tick )
 	for _, component in ipairs( tracker.components or {} ) do
 		if not componentStillValid( component, tick ) then return false end
@@ -491,24 +600,30 @@ local function trackerStillValid( tracker, tick )
 end
 
 local function newTracker()
-	return { components = {}, componentIds = {}, directEntries = {}, directKeys = {} }
+	return {
+		components = {}, componentIds = {}, directEntries = {}, directKeys = {},
+		leaseEndpointIds = {}, leaseEndpointSet = {}
+	}
 end
 
 local function getVirtualContainerShapes( startShape, requestedDirection )
 	if not managerAvailable() or not shapeExists( startShape ) or
 		not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then return {} end
-	local tick = ensureCacheEpoch()
+	local tick = ensureCacheState()
 	local key = requestedDirection .. "|" .. shapeKey( startShape )
 	local cached = physicalCache.virtualQueries[key]
 	if cached and trackerStillValid( cached.tracker, tick ) then
 		performance.virtualQueryHits = performance.virtualQueryHits + 1
+		if #cached.shapes == 0 then
+			performance.negativeVirtualCacheHits = performance.negativeVirtualCacheHits + 1
+		end
+		cached.lastAccessTick = tick
+		renewTrackerLeases( cached.tracker, "GRAPH" )
 		local result = {}
 		appendUniqueShapes( result, cached.shapes )
 		return result
 	elseif cached then
-		invalidatePhysicalEntries()
-		ensureCacheEpoch()
-		key = requestedDirection .. "|" .. shapeKey( startShape )
+		physicalCache.virtualQueries[key] = nil
 	end
 
 	local tracker, result = newTracker(), {}
@@ -518,15 +633,20 @@ local function getVirtualContainerShapes( startShape, requestedDirection )
 		for _, entry in ipairs( discoverDirectionalSourceEntries( startShape, requestedDirection, tracker ) ) do
 			appendUniqueShapes( result, getDirectionalSourceContainerShapes( entry, tracker ) )
 		end
+	elseif requestedDirection == "output" then
+		for _, entry in ipairs( discoverDirectionalDestinationEntries( startShape, requestedDirection, tracker ) ) do
+			appendUniqueShapes( result, getDirectionalDestinationContainerShapes( entry, tracker ) )
+		end
 	end
-	physicalCache.virtualQueries[key] = { shapes = result, tracker = tracker }
+	physicalCache.virtualQueries[key] = { shapes = result, tracker = tracker, lastAccessTick = tick }
+	renewTrackerLeases( tracker, "GRAPH" )
 	local output = {}
 	appendUniqueShapes( output, result )
 	return output
 end
 
 local function getNativeShapeList( nativeFunction, startShape, requestedDirection )
-	local tick = ensureCacheEpoch()
+	local tick = ensureCacheState()
 	local key = requestedDirection .. "|" .. shapeKey( startShape )
 	local cached = physicalCache.nativeQueries[key]
 	if cached and cached.tick == tick then
@@ -642,18 +762,17 @@ local function terminalLocalWorld( shape )
 	return tostring( world.id or world ), label
 end
 
-local function buildTerminalContainers( startShape, requestedDirection )
-	local descriptors, byId = {}, {}
+local function buildTerminalContainersUncached( startShape, requestedDirection )
+	local descriptors, byId, tracker = {}, {}, newTracker()
 	if not shapeExists( startShape ) then
 		return descriptors, {
 			wirelessInstalled = true, managerAvailable = managerAvailable(),
 			wirelessState = "OFFLINE", compatibilityReason = "TERMINAL SHAPE UNAVAILABLE",
 			topologyGeneration = managerAvailable() and WirelessPipeManager.Sv_GetTopologyRevision() or 0,
 			worlds = {}, reachableWorlds = 0
-		}
+		}, tracker
 	end
 
-	local tracker = newTracker()
 	local localWorldId, localWorldLabel = terminalLocalWorld( startShape )
 	for _, component in ipairs( getStartComponents( startShape, requestedDirection, tracker ) ) do
 		appendTerminalShapes( descriptors, byId, component.containers, {
@@ -680,7 +799,7 @@ local function buildTerminalContainers( startShape, requestedDirection )
 	if not state.managerAvailable then
 		state.wirelessState = "OFFLINE"
 		state.compatibilityReason = "WIRELESS MANAGER UNAVAILABLE"
-		return descriptors, state
+		return descriptors, state, tracker
 	end
 
 	local worldLabels, worldIds = { [localWorldLabel] = true }, { [localWorldId] = true }
@@ -690,6 +809,7 @@ local function buildTerminalContainers( startShape, requestedDirection )
 		if endpointId then
 			for _, peer in ipairs( WirelessPipeManager.Sv_GetTerminalPeerEntries( endpointId, requestedDirection ) ) do
 				if peer.endpointId and not peerIds[peer.endpointId] then
+					trackLeaseEndpoint( tracker, peer.endpointId )
 					peerIds[peer.endpointId] = true
 					state.matchingEndpoints = state.matchingEndpoints + 1
 					if peer.limited then state.limitedEndpoints = state.limitedEndpoints + 1 end
@@ -733,21 +853,81 @@ local function buildTerminalContainers( startShape, requestedDirection )
 		if a.routeDistance ~= b.routeDistance then return a.routeDistance < b.routeDistance end
 		return a.id < b.id
 	end )
-	return descriptors, state
+	return descriptors, state, tracker
+end
+
+local function copyArray( values )
+	local result = {}
+	for index, value in ipairs( values or {} ) do result[index] = value end
+	return result
+end
+
+local function copyTerminalState( state )
+	local result = {}
+	for key, value in pairs( state or {} ) do
+		result[key] = type( value ) == "table" and copyArray( value ) or value
+	end
+	return result
+end
+
+local function copyTerminalDescriptors( descriptors )
+	local result = {}
+	for index, descriptor in ipairs( descriptors or {} ) do
+		local copy = {}
+		for key, value in pairs( descriptor ) do copy[key] = value end
+		result[index] = copy
+	end
+	return result
+end
+
+
+local function terminalEntryStillValid( entry, tick )
+	if not entry or not trackerStillValid( entry.tracker, tick ) then return false end
+	for _, descriptor in ipairs( entry.descriptors or {} ) do
+		if not shapeExists( descriptor.shape ) then return false end
+		local ok, exists = pcall( function()
+			return descriptor.container ~= nil and sm.exists( descriptor.container )
+		end )
+		if not ok or not exists then return false end
+	end
+	return true
+end
+
+local function getTerminalContainers( shape, requestedDirection )
+	local tick = ensureCacheState()
+	local key = "terminal|" .. requestedDirection .. "|" .. shapeKey( shape )
+	local cached = physicalCache.terminalQueries[key]
+	if cached and terminalEntryStillValid( cached, tick ) then
+		cached.lastAccessTick = tick
+		performance.terminalCacheHits = performance.terminalCacheHits + 1
+		renewTrackerLeases( cached.tracker, "TERMINAL" )
+		return copyTerminalDescriptors( cached.descriptors ), copyTerminalState( cached.state )
+	elseif cached then
+		physicalCache.terminalQueries[key] = nil
+	end
+	local descriptors, state, tracker = buildTerminalContainersUncached( shape, requestedDirection )
+	physicalCache.terminalQueries[key] = {
+		descriptors = descriptors,
+		state = state,
+		tracker = tracker,
+		lastAccessTick = tick
+	}
+	renewTrackerLeases( tracker, "TERMINAL" )
+	return copyTerminalDescriptors( descriptors ), copyTerminalState( state )
 end
 
 -- Storage terminals use these descriptor queries instead of duplicating pipe
 -- traversal. Spend follows local/Link plus RECEIVE <- SEND routes; collect
 -- follows local/Link plus SEND -> RECEIVE routes.
 function ScrapLabPipeGraph.getTerminalSpendContainers( shape )
-	local ok, descriptors, state = pcall( buildTerminalContainers, shape, "input" )
+	local ok, descriptors, state = pcall( getTerminalContainers, shape, "input" )
 	if ok then return descriptors, state end
 	return {}, { wirelessInstalled = true, managerAvailable = managerAvailable(), wirelessState = "OFFLINE",
 		compatibilityReason = tostring( descriptors ), topologyGeneration = 0, worlds = {}, reachableWorlds = 0, localOnly = true }
 end
 
 function ScrapLabPipeGraph.getTerminalCollectContainers( shape )
-	local ok, descriptors, state = pcall( buildTerminalContainers, shape, "output" )
+	local ok, descriptors, state = pcall( getTerminalContainers, shape, "output" )
 	if ok then return descriptors, state end
 	return {}, { wirelessInstalled = true, managerAvailable = managerAvailable(), wirelessState = "OFFLINE",
 		compatibilityReason = tostring( descriptors ), topologyGeneration = 0, worlds = {}, reachableWorlds = 0, localOnly = true }
@@ -925,6 +1105,11 @@ function ScrapLabPipeGraph.debugGetDirectionalSourceEntries( shape, requestedDir
 	return ok and result or {}
 end
 
+function ScrapLabPipeGraph.debugGetDirectionalDestinationEntries( shape, requestedDirection )
+	local ok, result = pcall( function() return discoverDirectionalDestinationEntries( shape, requestedDirection or "output" ) end )
+	return ok and result or {}
+end
+
 function ScrapLabPipeGraph.debugGetPerformanceSnapshot()
 	return {
 		cacheIntervalTicks = CACHE_INTERVAL_TICKS,
@@ -935,7 +1120,11 @@ function ScrapLabPipeGraph.debugGetPerformanceSnapshot()
 		physicalNodes = performance.physicalNodes,
 		componentCacheHits = performance.componentCacheHits,
 		directCacheHits = performance.directCacheHits,
-		virtualQueryHits = performance.virtualQueryHits
+		virtualQueryHits = performance.virtualQueryHits,
+		negativeVirtualCacheHits = performance.negativeVirtualCacheHits,
+		terminalCacheHits = performance.terminalCacheHits,
+		componentInvalidations = performance.componentInvalidations,
+		cachePrunes = performance.cachePrunes
 	}
 end
 
@@ -945,8 +1134,8 @@ end
 
 function ScrapLabPipeGraph.debugClearTopologyCache()
 	peerCache = { revision = nil, entries = {} }
-	physicalCache.epoch = nil
 	physicalCache.revision = nil
+	physicalCache.lastPruneTick = 0
 	resetPhysicalEntries()
 end
 

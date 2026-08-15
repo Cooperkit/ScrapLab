@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v8
+-- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v10
 -- Persistent endpoint registry, Link topology, and the Phase 4 directional
 -- scheduler host. Inventory authority remains inside native transactions.
 
@@ -14,9 +14,12 @@ local ENDPOINT_RECORD_VERSION = 2
 local WIRELESS_PIPE_UUID = "a34d9af0-4ba0-431d-b647-2d5435ecf138"
 local MAX_ACTIVE_ENDPOINT_CELLS = 64
 local MANAGER_UPDATE_TICKS = 10
-local HANDLE_IDLE_GRACE_TICKS = 200
+local HANDLE_IDLE_GRACE_TICKS = 20
 local RECONCILE_CONFIRM_TICKS = 80
 local RECONCILE_RETRY_TICKS = 400
+local MIN_DEMAND_LEASE_TICKS = 10
+local MAX_DEMAND_LEASE_TICKS = 400
+local DEFAULT_DEMAND_LEASE_TICKS = 80
 
 local VALID_MODES = { LINK = true, SEND = true, RECEIVE = true }
 local MODE_ORDER = { "LINK", "SEND", "RECEIVE" }
@@ -116,6 +119,8 @@ function WirelessPipeManager.server_onCreate( self )
 	self.sv.recentlyUnloaded = {}
 	self.sv.groups = { LINK = {}, SEND = {}, RECEIVE = {} }
 	self.sv.handles = {}
+	self.sv.demandLeases = {}
+	self.sv.handleUpdateRequested = false
 	self.sv.endpointHandleState = {}
 	self.sv.reconcile = {}
 	self.sv.updateTicks = 0
@@ -164,6 +169,10 @@ end
 
 function WirelessPipeManager.server_onFixedUpdate( self )
 	WirelessPipeTransfer.Sv_ServerOnFixedUpdate( self )
+	if self.sv.handleUpdateRequested then
+		self.sv.handleUpdateRequested = false
+		self:sv_updateHandleOwnership()
+	end
 	self.sv.updateTicks = self.sv.updateTicks + 1
 	if self.sv.updateTicks < MANAGER_UPDATE_TICKS then return end
 	self.sv.updateTicks = 0
@@ -322,6 +331,7 @@ function WirelessPipeManager.sv_unregisterEndpoint( self, endpointId, shape, gen
 	self.sv.saved.endpoints[endpointId] = nil
 	self.sv.reconcile[endpointId] = nil
 	self.sv.endpointHandleState[endpointId] = nil
+	self.sv.demandLeases[endpointId] = nil
 	self.sv.directionalDebugModes[endpointId] = nil
 	self.sv.directionalDebugScopes[endpointId] = nil
 	WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
@@ -358,7 +368,7 @@ function WirelessPipeManager.sv_rebuildGroups( self )
 		link = hasLink,
 		directional = hasDirectional,
 		input = hasLink or hasDirectional,
-		output = hasLink
+		output = hasLink or hasDirectional
 	}
 	self.sv.groupsDirty = false
 	self:sv_bumpTopologyRevision()
@@ -411,13 +421,47 @@ function WirelessPipeManager.sv_isActiveEndpoint( self, record )
 	return self:sv_getMatchingCount( record ) > 0
 end
 
+-- Remote cells are loaded only while a real graph, terminal, or transfer
+-- consumer needs them. Repeated requests renew at half-life rather than
+-- rewriting the lease table on every fixed-tick machine query.
+function WirelessPipeManager.sv_requestEndpointLeases( self, endpointIds, durationTicks, purpose, priority )
+	if self.sv.groupsDirty then self:sv_rebuildGroups() end
+	local tick = sm.game.getCurrentTick()
+	durationTicks = math.max( MIN_DEMAND_LEASE_TICKS,
+		math.min( MAX_DEMAND_LEASE_TICKS, math.floor( tonumber( durationTicks ) or DEFAULT_DEMAND_LEASE_TICKS ) ) )
+	priority = math.max( 1, math.min( 5, math.floor( tonumber( priority ) or 3 ) ) )
+	purpose = tostring( purpose or "GRAPH" )
+	local requested = 0
+	for _, rawEndpointId in ipairs( endpointIds or {} ) do
+		local endpointId = tostring( rawEndpointId or "" )
+		local record = self.sv.saved.endpoints[endpointId]
+		if record and record.enabled and self:sv_isActiveEndpoint( record ) then
+			local lease = self.sv.demandLeases[endpointId]
+			if lease and ( lease.expiresAt or 0 ) <= tick then lease = nil end
+			local renewAt = tick + math.max( 1, math.floor( durationTicks / 2 ) )
+			if not lease or ( lease.expiresAt or 0 ) <= renewAt or priority < ( lease.priority or 5 ) then
+				self.sv.demandLeases[endpointId] = {
+					expiresAt = math.max( lease and lease.expiresAt or 0, tick + durationTicks ),
+					priority = lease and math.min( lease.priority or priority, priority ) or priority,
+					purpose = purpose
+				}
+			end
+			local live = self.sv.live[endpointId]
+			local liveShape = live and live.shape or nil
+			local liveReady = liveShape ~= nil and sm.exists( liveShape )
+			local recordKey = cellKey( record.worldId, record.cellX, record.cellY )
+			if not liveReady and self.sv.handles[recordKey] == nil then
+				self.sv.handleUpdateRequested = true
+			end
+			requested = requested + 1
+		end
+	end
+	return requested
+end
+
 function WirelessPipeManager.sv_buildDesiredCells( self )
 	local desired = {}
-	local activeIds = {}
-	for endpointId, record in pairs( self.sv.saved.endpoints ) do
-		if self:sv_isActiveEndpoint( record ) then activeIds[#activeIds + 1] = endpointId end
-	end
-	table.sort( activeIds )
+	local tick = sm.game.getCurrentTick()
 
 	local function add( endpointId, purpose, priority )
 		local record = self.sv.saved.endpoints[endpointId]
@@ -440,7 +484,22 @@ function WirelessPipeManager.sv_buildDesiredCells( self )
 		value.priority = math.min( value.priority, priority )
 	end
 
-	for _, endpointId in ipairs( activeIds ) do add( endpointId, "ACTIVE", 1 ) end
+	for endpointId, lease in pairs( self.sv.demandLeases ) do
+		if not lease or ( lease.expiresAt or 0 ) <= tick or not self.sv.saved.endpoints[endpointId] then
+			self.sv.demandLeases[endpointId] = nil
+		else
+			local record = self.sv.saved.endpoints[endpointId]
+			local live = self.sv.live[endpointId]
+			local liveShape = live and live.shape or nil
+			local liveReady = liveShape ~= nil and sm.exists( liveShape )
+			local key = cellKey( record.worldId, record.cellX, record.cellY )
+			-- Retain a handle that made the endpoint live. A cell already owned by
+			-- normal player streaming needs no duplicate ScrapLab handle.
+			if self.sv.handles[key] ~= nil or not liveReady then
+				add( endpointId, "DEMAND", lease.priority or 3 )
+			end
+		end
+	end
 	for _, endpointId in ipairs( sortedKeys( self.sv.reconcile ) ) do
 		local state = self.sv.reconcile[endpointId]
 		if state and state.state ~= "CONFIRMED" and sm.game.getCurrentTick() >= ( state.nextAttemptTick or 0 ) then
@@ -466,7 +525,13 @@ function WirelessPipeManager.sv_updateHandleOwnership( self )
 	end
 
 	for endpointId in pairs( self.sv.saved.endpoints ) do
-		self.sv.endpointHandleState[endpointId] = { limited = false, ready = false, key = nil }
+		local live = self.sv.live[endpointId]
+		local liveShape = live and live.shape or nil
+		self.sv.endpointHandleState[endpointId] = {
+			limited = false,
+			ready = liveShape ~= nil and sm.exists( liveShape ),
+			key = nil
+		}
 	end
 	for _, entry in ipairs( ordered ) do
 		for endpointId in pairs( entry.endpointIds ) do
@@ -494,7 +559,10 @@ function WirelessPipeManager.sv_updateHandleOwnership( self )
 			self:sv_tryAcquireHandle( current )
 		end
 		for endpointId in pairs( wanted.endpointIds ) do
-			self.sv.endpointHandleState[endpointId].ready = current.ready == true
+			local live = self.sv.live[endpointId]
+			local liveShape = live and live.shape or nil
+			self.sv.endpointHandleState[endpointId].ready = current.ready == true or
+				( liveShape ~= nil and sm.exists( liveShape ) )
 			local reconcile = self.sv.reconcile[endpointId]
 			if current.ready and reconcile and reconcile.state ~= "CELL_LOADED" then
 				reconcile.state = "CELL_LOADED"
@@ -505,6 +573,7 @@ function WirelessPipeManager.sv_updateHandleOwnership( self )
 
 	for key, current in pairs( self.sv.handles ) do
 		if not admitted[key] then
+			current.refCount = 0
 			current.releaseAt = current.releaseAt or ( tick + HANDLE_IDLE_GRACE_TICKS )
 			if tick >= current.releaseAt then
 				if current.handle then pcall( function() current.handle:release() end ) end
@@ -663,7 +732,7 @@ function WirelessPipeManager.sv_getEndpointStatus( self, endpointId )
 end
 
 function WirelessPipeManager.sv_getDebugSnapshot( self )
-	local handles, ready, limited = 0, 0, 0
+	local handles, ready, limited, demandLeases = 0, 0, 0, 0
 	for _, entry in pairs( self.sv.handles ) do
 		handles = handles + 1
 		if entry.ready then ready = ready + 1 end
@@ -671,6 +740,7 @@ function WirelessPipeManager.sv_getDebugSnapshot( self )
 	for _, state in pairs( self.sv.endpointHandleState ) do
 		if state.limited then limited = limited + 1 end
 	end
+	for _ in pairs( self.sv.demandLeases ) do demandLeases = demandLeases + 1 end
 	local reconciling = 0
 	for _ in pairs( self.sv.reconcile ) do reconciling = reconciling + 1 end
 	local snapshot = {
@@ -680,6 +750,7 @@ function WirelessPipeManager.sv_getDebugSnapshot( self )
 		handles = handles,
 		readyHandles = ready,
 		limitedEndpoints = limited,
+		demandLeases = demandLeases,
 		reconciling = reconciling,
 		maxHandles = MAX_ACTIVE_ENDPOINT_CELLS
 	}
@@ -700,25 +771,31 @@ function WirelessPipeManager.sv_getEndpointIdForShape( self, shape )
 	return nil
 end
 
-function WirelessPipeManager.sv_getLinkPeerEntries( self, endpointId )
+function WirelessPipeManager.sv_getLinkPeerEntries( self, endpointId, purpose )
 	endpointId = tostring( endpointId or "" )
 	local record = self.sv.saved.endpoints[endpointId]
 	if not record or record.mode ~= "LINK" or not record.enabled then return {} end
+	local peerIds = self:sv_getMatchingIds( record )
+	self:sv_requestEndpointLeases( peerIds, DEFAULT_DEMAND_LEASE_TICKS, purpose or "GRAPH", 3 )
 	local result = {}
-	for _, peerId in ipairs( self:sv_getMatchingIds( record ) ) do
+	for _, peerId in ipairs( peerIds ) do
 		local peer = self.sv.saved.endpoints[peerId]
 		local live = self.sv.live[peerId]
 		-- A valid live shape proves that its world cell is loaded. Do not reject it
 		-- merely because the independently-updated handle snapshot has not caught
 		-- up yet; that produced a false delay until a player revisited the world.
-		if peer and live and live.shape and sm.exists( live.shape ) then
+		if peer then
+			local liveShape = live and live.shape or nil
+			local ready = liveShape ~= nil and sm.exists( liveShape )
 			result[#result + 1] = {
 				endpointId = peerId,
-				shape = live.shape,
+				shape = ready and liveShape or nil,
 				worldId = peer.worldId,
 				cellX = peer.cellX,
 				cellY = peer.cellY,
-				channel = peer.channel
+				channel = peer.channel,
+				ready = ready,
+				loading = not ready
 			}
 		end
 	end
@@ -730,23 +807,63 @@ end
 -- endpoints are exposed, and each source carries its own safe transfer scope.
 -- This is intentionally one hop: directional channels never recurse into Link
 -- buses or another directional channel.
-function WirelessPipeManager.sv_getDirectionalSourceEntries( self, endpointId )
+function WirelessPipeManager.sv_getDirectionalSourceEntries( self, endpointId, purpose )
 	endpointId = tostring( endpointId or "" )
 	local record = self.sv.saved.endpoints[endpointId]
 	if not record or record.mode ~= "RECEIVE" or not record.enabled then return {} end
+	local peerIds = self:sv_getMatchingIds( record )
+	self:sv_requestEndpointLeases( peerIds, DEFAULT_DEMAND_LEASE_TICKS, purpose or "GRAPH", 3 )
 	local result = {}
-	for _, peerId in ipairs( self:sv_getMatchingIds( record ) ) do
+	for _, peerId in ipairs( peerIds ) do
 		local peer = self.sv.saved.endpoints[peerId]
 		local live = self.sv.live[peerId]
-		if peer and peer.mode == "SEND" and peer.enabled and live and live.shape and sm.exists( live.shape ) then
+		if peer and peer.mode == "SEND" and peer.enabled then
+			local liveShape = live and live.shape or nil
+			local ready = liveShape ~= nil and sm.exists( liveShape )
 			result[#result + 1] = {
 				endpointId = peerId,
-				shape = live.shape,
+				shape = ready and liveShape or nil,
 				worldId = peer.worldId,
 				cellX = peer.cellX,
 				cellY = peer.cellY,
 				channel = peer.channel,
-				directOnly = peer.directOnly ~= false
+				directOnly = peer.directOnly ~= false,
+				ready = ready,
+				loading = not ready
+			}
+		end
+	end
+	table.sort( result, function( a, b ) return a.endpointId < b.endpointId end )
+	return result
+end
+
+-- SEND acts as a push gateway for local producer machines. Matching RECEIVE
+-- endpoints are exposed as destinations and each receiver controls whether
+-- only its touching container or its complete physical pipe network is used.
+-- Like the pull gateway above, this is deliberately one hop.
+function WirelessPipeManager.sv_getDirectionalDestinationEntries( self, endpointId, purpose )
+	endpointId = tostring( endpointId or "" )
+	local record = self.sv.saved.endpoints[endpointId]
+	if not record or record.mode ~= "SEND" or not record.enabled then return {} end
+	local peerIds = self:sv_getMatchingIds( record )
+	self:sv_requestEndpointLeases( peerIds, DEFAULT_DEMAND_LEASE_TICKS, purpose or "GRAPH", 3 )
+	local result = {}
+	for _, peerId in ipairs( peerIds ) do
+		local peer = self.sv.saved.endpoints[peerId]
+		local live = self.sv.live[peerId]
+		if peer and peer.mode == "RECEIVE" and peer.enabled then
+			local liveShape = live and live.shape or nil
+			local ready = liveShape ~= nil and sm.exists( liveShape )
+			result[#result + 1] = {
+				endpointId = peerId,
+				shape = ready and liveShape or nil,
+				worldId = peer.worldId,
+				cellX = peer.cellX,
+				cellY = peer.cellY,
+				channel = peer.channel,
+				directOnly = peer.directOnly ~= false,
+				ready = ready,
+				loading = not ready
 			}
 		end
 	end
@@ -770,8 +887,10 @@ function WirelessPipeManager.sv_getTerminalPeerEntries( self, endpointId, reques
 		or ( requestedDirection == "output" and record.mode == "SEND" )
 	if not allowed then return {} end
 
+	local peerIds = self:sv_getMatchingIds( record )
+	self:sv_requestEndpointLeases( peerIds, 120, "TERMINAL", 2 )
 	local result = {}
-	for _, peerId in ipairs( self:sv_getMatchingIds( record ) ) do
+	for _, peerId in ipairs( peerIds ) do
 		local peer = self.sv.saved.endpoints[peerId]
 		local live = self.sv.live[peerId]
 		local handle = self.sv.endpointHandleState[peerId] or {}
@@ -794,7 +913,8 @@ function WirelessPipeManager.sv_getTerminalPeerEntries( self, endpointId, reques
 				channel = peer.channel,
 				ready = ready,
 				limited = limited,
-				loading = not ready and not limited and handle.key ~= nil
+				loading = not ready and not limited and
+					( handle.key ~= nil or self.sv.demandLeases[peerId] ~= nil )
 			}
 		end
 	end
@@ -913,14 +1033,19 @@ function WirelessPipeManager.Sv_GetEndpointIdForShape( shape )
 	return g_wirelessPipeManager:sv_getEndpointIdForShape( shape )
 end
 
-function WirelessPipeManager.Sv_GetLinkPeerEntries( endpointId )
+function WirelessPipeManager.Sv_GetLinkPeerEntries( endpointId, purpose )
 	if not g_wirelessPipeManager then return {} end
-	return g_wirelessPipeManager:sv_getLinkPeerEntries( endpointId )
+	return g_wirelessPipeManager:sv_getLinkPeerEntries( endpointId, purpose )
 end
 
-function WirelessPipeManager.Sv_GetDirectionalSourceEntries( endpointId )
+function WirelessPipeManager.Sv_GetDirectionalSourceEntries( endpointId, purpose )
 	if not g_wirelessPipeManager then return {} end
-	return g_wirelessPipeManager:sv_getDirectionalSourceEntries( endpointId )
+	return g_wirelessPipeManager:sv_getDirectionalSourceEntries( endpointId, purpose )
+end
+
+function WirelessPipeManager.Sv_GetDirectionalDestinationEntries( endpointId, purpose )
+	if not g_wirelessPipeManager then return {} end
+	return g_wirelessPipeManager:sv_getDirectionalDestinationEntries( endpointId, purpose )
 end
 
 function WirelessPipeManager.Sv_GetTerminalPeerEntries( endpointId, requestedDirection )
@@ -936,6 +1061,12 @@ end
 function WirelessPipeManager.Sv_GetTopologyRevision()
 	if not g_wirelessPipeManager then return nil end
 	return g_wirelessPipeManager.sv.topologyRevision
+end
+
+function WirelessPipeManager.Sv_RequestEndpointLeases( endpointIds, durationTicks, purpose, priority )
+	if not g_wirelessPipeManager then return 0 end
+	return g_wirelessPipeManager:sv_requestEndpointLeases(
+		endpointIds, durationTicks, purpose, priority )
 end
 
 function WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection )
@@ -963,5 +1094,7 @@ ScrapLabWirelessPipeManagerConstants = {
 	recordVersion = ENDPOINT_RECORD_VERSION,
 	partUuid = WIRELESS_PIPE_UUID,
 	maxActiveEndpointCells = MAX_ACTIVE_ENDPOINT_CELLS,
+	demandLeaseTicks = DEFAULT_DEMAND_LEASE_TICKS,
+	handleIdleGraceTicks = HANDLE_IDLE_GRACE_TICKS,
 	modeOrder = MODE_ORDER
 }

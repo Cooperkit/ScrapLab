@@ -16,6 +16,7 @@ WirelessVacuumPipe.colorHighlight = sm.color.new( 0xeeeeeeff )
 local PART_UUID = "a34d9af0-4ba0-431d-b647-2d5435ecf138"
 local ENDPOINT_STORAGE_VERSION = 2
 local POLL_INTERVAL_TICKS = 10
+local ACTIVITY_VISUAL_RANGE = 64
 local MODE_ORDER = { "LINK", "SEND", "RECEIVE" }
 
 local MODE_EXPLANATIONS = {
@@ -29,6 +30,7 @@ local STATUS_COLORS = {
 	["CROSS-WORLD LINKED"] = "48C6E8FF",
 	["SENDING"] = "65C466FF",
 	["READY TO RECEIVE"] = "65C466FF",
+	["LOADING ROUTE"] = "48C6E8FF",
 	["UNPAIRED"] = "F2B134FF",
 	["CHANNEL EMPTY"] = "F2B134FF",
 	["DISABLED BY LOGIC"] = "777777FF",
@@ -305,12 +307,23 @@ end
 function WirelessVacuumPipe.sv_onDirectionalActivity( self, role, itemUuid, containerShape, crossWorld )
 	if role ~= "SEND" and role ~= "RECEIVE" then return end
 	if not containerShape or not sm.exists( containerShape ) then return end
-	self.network:sendToClients( "cl_n_directionalActivity", {
+	local data = {
 		role = role,
 		itemUuid = itemUuid,
 		containerShape = containerShape,
 		crossWorld = crossWorld == true
-	} )
+	}
+	local shapeWorld = self.shape:getBody():getWorld()
+	local shapePosition = self.shape.worldPosition
+	for _, player in ipairs( sm.player.getAllPlayers() ) do
+		local character = player and player:getCharacter() or nil
+		if character and sm.exists( character ) and character:getWorld() == shapeWorld and
+			( character.worldPosition - shapePosition ):length2() <= ACTIVITY_VISUAL_RANGE * ACTIVITY_VISUAL_RANGE then
+			-- A server-loaded cross-world cell may have no client Shape script.
+			-- Address only nearby clients that can actually own this visual instance.
+			self.network:sendToClient( player, "cl_n_directionalActivity", data )
+		end
+	end
 end
 
 function WirelessVacuumPipe.client_onCreate( self )

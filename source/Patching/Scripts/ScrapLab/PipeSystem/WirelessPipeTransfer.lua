@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE DIRECTIONAL TRANSFER v4
+-- SCRAPLAB WIRELESS VACUUM PIPE DIRECTIONAL TRANSFER v5
 -- Server-authoritative SEND -> RECEIVE scheduling. Selection and commit are
 -- deliberately separated by one fixed tick so no cached Container reference
 -- can survive an endpoint destruction or world-unload boundary.
@@ -13,7 +13,9 @@ local WIRELESS_PIPE_UUID = sm.uuid.new( "a34d9af0-4ba0-431d-b647-2d5435ecf138" )
 local ATTEMPT_INTERVAL_TICKS = 4
 local COMMIT_DELAY_TICKS = 1
 local MAX_GROUPS_PER_TICK = 64
-local MAX_IDLE_BACKOFF_TICKS = 40
+local MAX_IDLE_BACKOFF_TICKS = 400
+local SOURCE_INSPECTION_LEASE_TICKS = 40
+local ACTIVE_TRANSFER_LEASE_TICKS = 80
 
 local function shapeExists( shape )
 	return shape ~= nil and sm.exists( shape )
@@ -173,12 +175,10 @@ end
 local function liveEndpoint( manager, endpointId, expectedMode, expectedChannel, expectedGeneration, expectedDirectOnly )
 	local record = manager.sv.saved.endpoints[endpointId]
 	local live = manager.sv.live[endpointId]
-	local handle = manager.sv.endpointHandleState[endpointId]
 	if not record or not live or not record.enabled then return nil, nil, "endpoint unavailable" end
 	if record.mode ~= expectedMode or record.channel ~= expectedChannel then return nil, nil, "endpoint route changed" end
 	if expectedDirectOnly ~= nil and ( record.directOnly ~= false ) ~= expectedDirectOnly then return nil, nil, "endpoint scope changed" end
 	if expectedGeneration and live.generation ~= expectedGeneration then return nil, nil, "endpoint generation changed" end
-	if not handle or handle.limited or not handle.ready then return nil, nil, "endpoint cell not ready" end
 	if not shapeExists( live.shape ) or live.shape:getShapeUuid() ~= WIRELESS_PIPE_UUID then return nil, nil, "endpoint shape unavailable" end
 	return record, live, nil
 end
@@ -334,18 +334,29 @@ local function scheduleGroup( manager, channel, senders, receivers, tick )
 	local cursor = manager.sv.saved.directionalCursors[channel] or {}
 	local orderedSenders = orderedFromCursor( senders, cursor.senderId )
 	local orderedReceivers = orderedFromCursor( receivers, cursor.receiverId )
+	manager:sv_requestEndpointLeases(
+		orderedSenders, SOURCE_INSPECTION_LEASE_TICKS, "DIRECTIONAL_INSPECT", 4 )
 	local sawSource, sawDestination = false, false
+	local senderLoading, receiverLoading = false, false
 
 	for _, senderId in ipairs( orderedSenders ) do
-		local senderRecord, senderLive = liveEndpoint( manager, senderId, "SEND", channel, nil )
+		local senderRecord, senderLive, senderError = liveEndpoint( manager, senderId, "SEND", channel, nil )
+		if not senderLive and senderError == "endpoint unavailable" and manager.sv.saved.endpoints[senderId] then
+			senderLoading = true
+		end
 		if senderLive then
 			local senderDirectOnly = senderRecord.directOnly ~= false
 			local source = findSourceCandidate( senderLive.shape, senderDirectOnly )
 			if source then
 				sawSource = true
+				manager:sv_requestEndpointLeases(
+					orderedReceivers, ACTIVE_TRANSFER_LEASE_TICKS, "TRANSFER_ACTIVE", 1 )
 				local itemUuid = sm.uuid.new( source.itemUuid )
 				for _, receiverId in ipairs( orderedReceivers ) do
-					local receiverRecord, receiverLive = liveEndpoint( manager, receiverId, "RECEIVE", channel, nil )
+					local receiverRecord, receiverLive, receiverError = liveEndpoint( manager, receiverId, "RECEIVE", channel, nil )
+					if not receiverLive and receiverError == "endpoint unavailable" and manager.sv.saved.endpoints[receiverId] then
+						receiverLoading = true
+					end
 					if receiverLive then
 						local receiverDirectOnly = receiverRecord.directOnly ~= false
 						local destination = findDestinationCandidate( receiverLive.shape, itemUuid, source.quantity, receiverDirectOnly )
@@ -379,6 +390,11 @@ local function scheduleGroup( manager, channel, senders, receivers, tick )
 		end
 	end
 
+	if senderLoading or ( sawSource and receiverLoading ) then
+		for _, senderId in ipairs( senders ) do setStatus( manager, senderId, "LOADING ROUTE" ) end
+		resetBackoff( runtime, channel, tick )
+		return
+	end
 	for _, senderId in ipairs( senders ) do
 		setStatus( manager, senderId, not sawSource and "CHANNEL EMPTY" or ( not sawDestination and "DESTINATION FULL" or "SENDING" ) )
 	end
@@ -469,5 +485,7 @@ ScrapLabWirelessPipeTransferConstants = {
 	attemptIntervalTicks = ATTEMPT_INTERVAL_TICKS,
 	commitDelayTicks = COMMIT_DELAY_TICKS,
 	maxIdleBackoffTicks = MAX_IDLE_BACKOFF_TICKS,
+	sourceInspectionLeaseTicks = SOURCE_INSPECTION_LEASE_TICKS,
+	activeTransferLeaseTicks = ACTIVE_TRANSFER_LEASE_TICKS,
 	quantityPerTransfer = 1
 }

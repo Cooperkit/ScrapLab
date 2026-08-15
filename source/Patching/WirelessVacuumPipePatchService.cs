@@ -10,7 +10,7 @@ namespace RaidRescue
     internal static class WirelessVacuumPipePatchService
     {
         private const string ModKey = "WirelessVacuumPipe";
-        private const string DefinitionVersion = "9";
+        private const string DefinitionVersion = "11";
         internal const string PartUuid =
             "a34d9af0-4ba0-431d-b647-2d5435ecf138";
         internal const string ManagerUuid =
@@ -261,11 +261,11 @@ namespace RaidRescue
                     result.Installed = true;
                     result.NeedsUpdate = false;
                     result.Changes.Add(
-                        "Grouped every installed ScrapLab custom-part recipe beside the vanilla Vacuum Pipe recipe.");
+                        "Added demand-loaded remote cells, persistent topology caches, cached storage-terminal routes, and safe local activity effects.");
                     AdaptivePatchSupport.FillResult(result, build,
                         PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
-                        "Wireless Vacuum Pipe definition 9 recipe ordering was installed and verified.");
+                        "Wireless Vacuum Pipe definition 11 performance update was installed and verified.");
                     SecretModBackupRetention.Prune(
                         backupRoot, ModKey, result.BackupPath, result);
                     return result;
@@ -731,7 +731,9 @@ namespace RaidRescue
                     "7BBCB858591D3903FEF650626B3B0BBE58F0C1D9E28A9551888DAC7FC3730AF4",
                     "C1F0FA66477AB6189A47F40BEA377991A13E3FE2E99BB077D0CE6A6665E43B57",
                     "2EE306FA1303FDA36CC2CE64964CCD4E567CC27EA7D82D4F47B5B6CCE31BC321",
-                    "3411D6804F6D874C4B9BD8D8C80C4109BF3CECFB0F44F31EDF49C0DF4F3D8DC8"
+                    "3411D6804F6D874C4B9BD8D8C80C4109BF3CECFB0F44F31EDF49C0DF4F3D8DC8",
+                    "B5F9739A83F5A7B708690665343050A215C257CE8BB43E0C9F2D648724698269",
+                    "863C038D5D3326A33AC8020482D6B8436550D7E0A8D634399A64C10B098A0908"
                 };
             else if (String.Equals(file, "ScrapLabPipeGraph.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -741,21 +743,25 @@ namespace RaidRescue
                     "2F19CA25EC83596931C369624A691C09DF7E9A8903736171AE4192311B21813A",
                     "7EC649701A334452B8E4CD6B96403C977B1E6EB3AE5D7057B46B506D79537F4D",
                     "D1E9A24346530DFA8344451475C9F35F8BA2F141A6A19130E8EFBBE408A1C9AC",
-                    "8C8641F1069968D0750ABCDCB0C56261616D44B11E2C1814C4664222BED2BD2A"
+                    "8C8641F1069968D0750ABCDCB0C56261616D44B11E2C1814C4664222BED2BD2A",
+                    "50EAFF546ECC80DFC2DDF6D3E49770E0A88704DBEDF5F85617EC2D95740B96F5",
+                    "847531571E5C7EE7B4DB6FBED507DA65C88091194817CB624A2738BC73969128"
                 };
             else if (String.Equals(file, "WirelessPipeTransfer.lua",
                 StringComparison.OrdinalIgnoreCase))
                 hashes = new string[]
                 {
                     "ED9507FEFFA91C280C5B6AAEC720EE773993B6E9E56A47F7CE274606AFC680BA",
-                    "CC64EEFFFA602B4A6CC670A15ECF9DE99805C3AC394C4D46149FFEA00CE6B561"
+                    "CC64EEFFFA602B4A6CC670A15ECF9DE99805C3AC394C4D46149FFEA00CE6B561",
+                    "DDE109885C46B246FC6037BDC96DB7C6FF825499E31B8D196C1CA0DF6C680DD4"
                 };
             else if (String.Equals(file, "WirelessVacuumPipe.lua",
                 StringComparison.OrdinalIgnoreCase))
                 hashes = new string[]
                 {
                     "25F6D11E19C3514FE2E06DA72FC5A60C45BE21471B49D35198F2E143EF8377D6",
-                    "338FAB44E130D36A51D90EC5EC8079DA472C67A4C51900E92B36C3727FD67BED"
+                    "338FAB44E130D36A51D90EC5EC8079DA472C67A4C51900E92B36C3727FD67BED",
+                    "89F39FC8B9B093C87479D7B36330D7FE2DE64E603FD67B9DA1911567A7455FCB"
                 };
             else if (String.Equals(file, "WirelessVacuumPipe.layout",
                 StringComparison.OrdinalIgnoreCase))
@@ -798,6 +804,10 @@ namespace RaidRescue
         {
             AdaptivePatchReceipt receipt =
                 AdaptivePatchSupport.LoadReceipt(ModKey);
+            if (receipt == null)
+                throw new InvalidOperationException(
+                    "The Wireless Vacuum Pipe installation receipt is missing or unreadable. " +
+                    "The performance update was not applied so the original uninstall backups remain protected.");
             string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss-fff");
             string backupPath = Path.Combine(backupRoot,
                 "Update-" + ModKey + "-" + stamp);

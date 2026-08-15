@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 2.9.0 - 2026-08-15
+
+- Reworked Wireless Vacuum Pipe performance using the completed dense 64-chest,
+  1,152-stack benchmark. Remote endpoint cells now use demand-renewed leases
+  instead of remaining simulated merely because colors match; stable physical
+  and negative pipe components persist until their bodies change; Network
+  Storage Chest terminal routes reuse cached descriptors; and idle directional
+  channels back off to occasional source inspections.
+- Fixed cross-world directional activity pulses targeting client Shape scripts
+  that do not exist in server-only remote cells. Visual pulses are now sent
+  only to nearby players in the endpoint's world, while item transactions remain
+  fully server-authoritative.
+- Fixed directional Wireless Vacuum Pipes so producer machines attached to a
+  **Send** endpoint can place output into storage behind matching **Receive**
+  endpoints. This includes water pumps, preserves native local-storage
+  priority, and respects the receiver's Direct Container Only setting.
+
 ## 2.8.0 - 2026-08-15
 
 - Added a native colored-item-type filter to Network Storage Chest. Its new
