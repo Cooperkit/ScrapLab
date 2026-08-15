@@ -12,9 +12,18 @@
     "catalog": "NETWORK CATALOG",
     "showing": "SHOWING %d OF %d",
     "sort": "SORT: %s",
+    "sortType": "TYPE",
     "sortName": "NAME",
     "sortCount": "QUANTITY",
     "sortStacks": "STACKS",
+    "filter": "TYPE: %s",
+    "filterAll": "ALL",
+    "filterBlocks": "BLOCKS",
+    "filterInteractive": "INTERACTIVE",
+    "filterParts": "PARTS",
+    "filterTools": "TOOLS",
+    "filterConsumables": "CONSUMABLES",
+    "filterHint": "Filter by the same colored item type shown on every slot.",
     "clear": "CLEAR",
     "selectedItem": "SELECTED ITEM",
     "none": "NONE",
@@ -51,7 +60,7 @@
     "localSource": "LOCAL",
     "remoteSource": "WIRELESS",
     "mixedSource": "LOCAL + WIRELESS",
-    "tooltip": "%s\n%d ITEMS | %d STACKS | %d SOURCES | %s",
+    "tooltip": "%s  x%d | %d STACKS | %d SOURCES | %s",
     "summary": "%s | %d CONTAINERS | %d ITEMS | %d WORLD%s",
     "depositReady": "%d-SLOT AUTO-SORT TRAY READY",
     "depositSorted": "SORTED | %d ITEMS ROUTED",
@@ -90,7 +99,7 @@
     "inventoryDescription": "Veja todos os conteineres conectados, retire itens de um catalogo e organize depositos automaticamente no melhor bau. O Tubo de Vacuo Sem Fio permite acesso sem fio e entre mundos.",
     "title": "BAU DE ARMAZENAMENTO EM REDE",
     "localNetwork": "REDE LOCAL", "wirelessNetwork": "REDE SEM FIO", "limitedNetwork": "REDE SEM FIO LIMITADA", "localFallback": "ACESSO LOCAL", "secureWithdrawals": "RETIRADAS SEGURAS",
-    "catalog": "CATALOGO DA REDE", "showing": "MOSTRANDO %d DE %d", "sort": "ORDENAR: %s", "sortName": "NOME", "sortCount": "QUANTIDADE", "sortStacks": "PILHAS", "clear": "LIMPAR",
+    "catalog": "CATALOGO DA REDE", "showing": "MOSTRANDO %d DE %d", "sort": "ORDENAR: %s", "sortType": "TIPO", "sortName": "NOME", "sortCount": "QUANTIDADE", "sortStacks": "PILHAS", "filter": "TIPO: %s", "filterAll": "TODOS", "filterBlocks": "BLOCOS", "filterInteractive": "INTERATIVOS", "filterParts": "PECAS", "filterTools": "FERRAMENTAS", "filterConsumables": "CONSUMIVEIS", "clear": "LIMPAR",
     "selectedItem": "ITEM SELECIONADO", "none": "NENHUM", "playerInventory": "INVENTARIO DO JOGADOR", "backpack": "MOCHILA", "hotbar": "BARRA", "depositBuffer": "BANDEJA DE DEPOSITO - 5 ESPACOS", "depositHelp": "Coloque itens aqui - o ScrapLab organiza automaticamente.",
     "takeOne": "PEGAR 1", "takeStack": "PEGAR PILHA", "takeAll": "PEGAR TUDO QUE COUBER", "selectPrompt": "SELECIONE UM ITEM PARA INSPECIONAR", "indexingPrompt": "INDEXANDO A REDE DE ARMAZENAMENTO", "noItems": "NENHUM ITEM ENCONTRADO",
     "localSource": "LOCAL", "remoteSource": "SEM FIO", "mixedSource": "LOCAL + SEM FIO", "waiting": "AGUARDANDO O INDICE DA REDE", "networkOffline": "REDE DE ARMAZENAMENTO OFFLINE", "openInteraction": "ABRIR REDE DE ARMAZENAMENTO"
@@ -98,7 +107,7 @@
   "Chinese": {
     "inventoryTitle": "网络储物箱", "inventoryUpper": "网络储物箱", "inventoryDescription": "浏览所有可访问的管道容器，从统一目录取出物品，并自动把存入的物品分配到最合适的箱子。安装无线真空管后可无线及跨世界访问。",
     "title": "网络储物箱", "localNetwork": "本地网络", "wirelessNetwork": "无线网络", "limitedNetwork": "受限无线网络", "localFallback": "本地备用", "secureWithdrawals": "安全取物",
-    "catalog": "网络目录", "showing": "显示 %d / %d", "sort": "排序：%s", "sortName": "名称", "sortCount": "数量", "sortStacks": "堆叠", "clear": "清除",
+    "catalog": "网络目录", "showing": "显示 %d / %d", "sort": "排序：%s", "sortType": "类型", "sortName": "名称", "sortCount": "数量", "sortStacks": "堆叠", "filter": "类型：%s", "filterAll": "全部", "filterBlocks": "方块", "filterInteractive": "交互件", "filterParts": "零件", "filterTools": "工具", "filterConsumables": "消耗品", "clear": "清除",
     "selectedItem": "已选物品", "none": "无", "playerInventory": "玩家物品栏", "backpack": "背包", "hotbar": "快捷栏", "depositBuffer": "5 格存入托盘", "depositHelp": "把物品放在这里，ScrapLab 会自动分配。",
     "takeOne": "取 1 个", "takeStack": "取一组", "takeAll": "尽量全部取出", "selectPrompt": "选择物品查看详情", "indexingPrompt": "正在索引储物网络", "noItems": "未找到物品",
     "localSource": "本地", "remoteSource": "无线", "mixedSource": "本地 + 无线", "waiting": "正在等待网络索引", "networkOffline": "储物网络离线", "openInteraction": "打开储物网络"
@@ -106,7 +115,7 @@
   "French": {
     "inventoryTitle": "Coffre de stockage reseau", "inventoryUpper": "COFFRE DE STOCKAGE RESEAU", "inventoryDescription": "Parcourez tous les conteneurs relies, retirez des objets depuis un catalogue unique et triez automatiquement les depots dans le coffre adapte. Le Tuyau a vide sans fil permet l'acces distant et inter-mondes.",
     "title": "COFFRE DE STOCKAGE RESEAU", "localNetwork": "RESEAU LOCAL", "wirelessNetwork": "RESEAU SANS FIL", "limitedNetwork": "RESEAU SANS FIL LIMITE", "localFallback": "SECOURS LOCAL", "secureWithdrawals": "RETRAITS SECURISES",
-    "catalog": "CATALOGUE RESEAU", "showing": "AFFICHAGE %d SUR %d", "sort": "TRI : %s", "sortName": "NOM", "sortCount": "QUANTITE", "sortStacks": "PILES", "clear": "EFFACER",
+    "catalog": "CATALOGUE RESEAU", "showing": "AFFICHAGE %d SUR %d", "sort": "TRI : %s", "sortType": "TYPE", "sortName": "NOM", "sortCount": "QUANTITE", "sortStacks": "PILES", "filter": "TYPE : %s", "filterAll": "TOUS", "filterBlocks": "BLOCS", "filterInteractive": "INTERACTIFS", "filterParts": "PIECES", "filterTools": "OUTILS", "filterConsumables": "CONSOMMABLES", "clear": "EFFACER",
     "selectedItem": "OBJET SELECTIONNE", "none": "AUCUN", "playerInventory": "INVENTAIRE DU JOUEUR", "backpack": "SAC A DOS", "hotbar": "RACCOURCIS", "depositBuffer": "BAC DE DEPOT A 5 CASES", "depositHelp": "Deposez les objets ici - ScrapLab les trie automatiquement.",
     "takeOne": "PRENDRE 1", "takeStack": "PRENDRE UNE PILE", "takeAll": "PRENDRE TOUT CE QUI TIENT", "selectPrompt": "SELECTIONNEZ UN OBJET", "indexingPrompt": "INDEXATION DU RESEAU", "noItems": "AUCUN OBJET TROUVE",
     "localSource": "LOCAL", "remoteSource": "SANS FIL", "mixedSource": "LOCAL + SANS FIL", "waiting": "ATTENTE DE L'INDEX RESEAU", "networkOffline": "RESEAU DE STOCKAGE HORS LIGNE", "openInteraction": "OUVRIR LE RESEAU"
@@ -114,7 +123,7 @@
   "German": {
     "inventoryTitle": "Netzwerk-Lagerkiste", "inventoryUpper": "NETZWERK-LAGERKISTE", "inventoryDescription": "Durchsuche alle erreichbaren Rohrbehalter, entnimm Gegenstande aus einem Katalog und sortiere Einlagerungen automatisch in die passende Kiste. Das drahtlose Vakuumrohr ermoglicht Funk- und Weltzugriff.",
     "title": "NETZWERK-LAGERKISTE", "localNetwork": "LOKALES NETZWERK", "wirelessNetwork": "DRAHTLOSES NETZWERK", "limitedNetwork": "EINGESCHRANKTES FUNKNETZ", "localFallback": "LOKALER ERSATZ", "secureWithdrawals": "SICHERE ENTNAHME",
-    "catalog": "NETZWERK-KATALOG", "showing": "%d VON %d", "sort": "SORTIEREN: %s", "sortName": "NAME", "sortCount": "MENGE", "sortStacks": "STAPEL", "clear": "LOSCHEN",
+    "catalog": "NETZWERK-KATALOG", "showing": "%d VON %d", "sort": "SORTIEREN: %s", "sortType": "TYP", "sortName": "NAME", "sortCount": "MENGE", "sortStacks": "STAPEL", "filter": "TYP: %s", "filterAll": "ALLE", "filterBlocks": "BLOCKE", "filterInteractive": "INTERAKTIV", "filterParts": "TEILE", "filterTools": "WERKZEUGE", "filterConsumables": "VERBRAUCH", "clear": "LOSCHEN",
     "selectedItem": "AUSGEWAHLTER GEGENSTAND", "none": "KEINER", "playerInventory": "SPIELERINVENTAR", "backpack": "RUCKSACK", "hotbar": "LEISTE", "depositBuffer": "5-PLATZ-EINLAGEFACH", "depositHelp": "Gegenstande hier ablegen - ScrapLab sortiert automatisch.",
     "takeOne": "1 NEHMEN", "takeStack": "STAPEL NEHMEN", "takeAll": "ALLES PASSENDE NEHMEN", "selectPrompt": "GEGENSTAND AUSWAHLEN", "indexingPrompt": "LAGERNETZ WIRD INDIZIERT", "noItems": "KEINE GEGENSTANDE GEFUNDEN",
     "localSource": "LOKAL", "remoteSource": "DRAHTLOS", "mixedSource": "LOKAL + DRAHTLOS", "waiting": "WARTE AUF NETZWERKINDEX", "networkOffline": "LAGERNETZ OFFLINE", "openInteraction": "LAGERNETZ OFFNEN"
@@ -122,7 +131,7 @@
   "Italian": {
     "inventoryTitle": "Cassa di stoccaggio in rete", "inventoryUpper": "CASSA DI STOCCAGGIO IN RETE", "inventoryDescription": "Esplora tutti i contenitori collegati, ritira oggetti da un unico catalogo e smista automaticamente i depositi nella cassa migliore. Il Tubo a vuoto wireless abilita accesso remoto e tra mondi.",
     "title": "CASSA DI STOCCAGGIO IN RETE", "localNetwork": "RETE LOCALE", "wirelessNetwork": "RETE WIRELESS", "limitedNetwork": "RETE WIRELESS LIMITATA", "localFallback": "RISERVA LOCALE", "secureWithdrawals": "PRELIEVI SICURI",
-    "catalog": "CATALOGO DI RETE", "showing": "%d DI %d", "sort": "ORDINA: %s", "sortName": "NOME", "sortCount": "QUANTITA", "sortStacks": "PILE", "clear": "CANCELLA",
+    "catalog": "CATALOGO DI RETE", "showing": "%d DI %d", "sort": "ORDINA: %s", "sortType": "TIPO", "sortName": "NOME", "sortCount": "QUANTITA", "sortStacks": "PILE", "filter": "TIPO: %s", "filterAll": "TUTTI", "filterBlocks": "BLOCCHI", "filterInteractive": "INTERATTIVI", "filterParts": "PARTI", "filterTools": "ATTREZZI", "filterConsumables": "CONSUMABILI", "clear": "CANCELLA",
     "selectedItem": "OGGETTO SELEZIONATO", "none": "NESSUNO", "playerInventory": "INVENTARIO GIOCATORE", "backpack": "ZAINO", "hotbar": "RAPIDA", "depositBuffer": "VASSOIO DEPOSITO DA 5 SLOT", "depositHelp": "Metti qui gli oggetti - ScrapLab li smista automaticamente.",
     "takeOne": "PRENDI 1", "takeStack": "PRENDI PILA", "takeAll": "PRENDI TUTTO IL POSSIBILE", "selectPrompt": "SELEZIONA UN OGGETTO", "indexingPrompt": "INDICIZZAZIONE DELLA RETE", "noItems": "NESSUN OGGETTO TROVATO",
     "localSource": "LOCALE", "remoteSource": "WIRELESS", "mixedSource": "LOCALE + WIRELESS", "waiting": "ATTESA INDICE DI RETE", "networkOffline": "RETE DI STOCCAGGIO OFFLINE", "openInteraction": "APRI RETE DI STOCCAGGIO"
@@ -130,7 +139,7 @@
   "Japanese": {
     "inventoryTitle": "ネットワーク収納箱", "inventoryUpper": "ネットワーク収納箱", "inventoryDescription": "接続された全コンテナを一覧表示し、1つのカタログから取り出し、預けたアイテムを最適な箱へ自動整理します。ワイヤレス真空パイプ導入時は遠隔・ワールド間アクセスにも対応します。",
     "title": "ネットワーク収納箱", "localNetwork": "ローカルネットワーク", "wirelessNetwork": "ワイヤレスネットワーク", "limitedNetwork": "制限付きワイヤレス", "localFallback": "ローカル予備", "secureWithdrawals": "安全な取り出し",
-    "catalog": "ネットワークカタログ", "showing": "%d / %d 表示", "sort": "並べ替え：%s", "sortName": "名前", "sortCount": "数量", "sortStacks": "スタック", "clear": "クリア",
+    "catalog": "ネットワークカタログ", "showing": "%d / %d 表示", "sort": "並べ替え：%s", "sortType": "種類", "sortName": "名前", "sortCount": "数量", "sortStacks": "スタック", "filter": "種類：%s", "filterAll": "すべて", "filterBlocks": "ブロック", "filterInteractive": "インタラクト", "filterParts": "パーツ", "filterTools": "ツール", "filterConsumables": "消耗品", "clear": "クリア",
     "selectedItem": "選択中のアイテム", "none": "なし", "playerInventory": "プレイヤーインベントリ", "backpack": "バックパック", "hotbar": "ホットバー", "depositBuffer": "5スロット投入トレイ", "depositHelp": "ここに入れると ScrapLab が自動整理します。",
     "takeOne": "1個取る", "takeStack": "1スタック取る", "takeAll": "入るだけ取る", "selectPrompt": "アイテムを選択してください", "indexingPrompt": "収納ネットワークを索引中", "noItems": "アイテムが見つかりません",
     "localSource": "ローカル", "remoteSource": "ワイヤレス", "mixedSource": "ローカル + ワイヤレス", "waiting": "ネットワーク索引を待機中", "networkOffline": "収納ネットワークはオフライン", "openInteraction": "収納ネットワークを開く"
@@ -138,7 +147,7 @@
   "Korean": {
     "inventoryTitle": "네트워크 보관 상자", "inventoryUpper": "네트워크 보관 상자", "inventoryDescription": "연결된 모든 컨테이너를 한 목록에서 확인하고 아이템을 꺼내며, 넣은 아이템을 가장 알맞은 상자로 자동 분류합니다. 무선 진공 파이프를 설치하면 무선 및 월드 간 접근을 사용할 수 있습니다.",
     "title": "네트워크 보관 상자", "localNetwork": "로컬 네트워크", "wirelessNetwork": "무선 네트워크", "limitedNetwork": "제한된 무선 네트워크", "localFallback": "로컬 대체", "secureWithdrawals": "안전한 꺼내기",
-    "catalog": "네트워크 목록", "showing": "%d / %d 표시", "sort": "정렬: %s", "sortName": "이름", "sortCount": "수량", "sortStacks": "묶음", "clear": "지우기",
+    "catalog": "네트워크 목록", "showing": "%d / %d 표시", "sort": "정렬: %s", "sortType": "유형", "sortName": "이름", "sortCount": "수량", "sortStacks": "묶음", "filter": "유형: %s", "filterAll": "전체", "filterBlocks": "블록", "filterInteractive": "상호작용", "filterParts": "부품", "filterTools": "도구", "filterConsumables": "소모품", "clear": "지우기",
     "selectedItem": "선택한 아이템", "none": "없음", "playerInventory": "플레이어 인벤토리", "backpack": "배낭", "hotbar": "단축바", "depositBuffer": "5칸 투입 트레이", "depositHelp": "여기에 넣으면 ScrapLab이 자동 분류합니다.",
     "takeOne": "1개 꺼내기", "takeStack": "한 묶음 꺼내기", "takeAll": "가능한 만큼 꺼내기", "selectPrompt": "아이템을 선택하세요", "indexingPrompt": "보관 네트워크 인덱싱 중", "noItems": "아이템을 찾을 수 없음",
     "localSource": "로컬", "remoteSource": "무선", "mixedSource": "로컬 + 무선", "waiting": "네트워크 인덱스 대기 중", "networkOffline": "보관 네트워크 오프라인", "openInteraction": "보관 네트워크 열기"
@@ -146,7 +155,7 @@
   "Polish": {
     "inventoryTitle": "Sieciowa skrzynia magazynowa", "inventoryUpper": "SIECIOWA SKRZYNIA MAGAZYNOWA", "inventoryDescription": "Przegladaj wszystkie dostepne pojemniki rurowe, wyjmuj przedmioty z jednego katalogu i automatycznie sortuj depozyty do najlepiej dopasowanej skrzyni. Bezprzewodowa rura prozniowa wlacza dostep zdalny i miedzy swiatami.",
     "title": "SIECIOWA SKRZYNIA MAGAZYNOWA", "localNetwork": "SIEC LOKALNA", "wirelessNetwork": "SIEC BEZPRZEWODOWA", "limitedNetwork": "OGRANICZONA SIEC", "localFallback": "TRYB LOKALNY", "secureWithdrawals": "BEZPIECZNE WYJMOWANIE",
-    "catalog": "KATALOG SIECIOWY", "showing": "%d Z %d", "sort": "SORTUJ: %s", "sortName": "NAZWA", "sortCount": "ILOSC", "sortStacks": "STOSY", "clear": "WYCZYSC",
+    "catalog": "KATALOG SIECIOWY", "showing": "%d Z %d", "sort": "SORTUJ: %s", "sortType": "TYP", "sortName": "NAZWA", "sortCount": "ILOSC", "sortStacks": "STOSY", "filter": "TYP: %s", "filterAll": "WSZYSTKO", "filterBlocks": "BLOKI", "filterInteractive": "INTERAKTYWNE", "filterParts": "CZESCI", "filterTools": "NARZEDZIA", "filterConsumables": "ZUŻYWALNE", "clear": "WYCZYSC",
     "selectedItem": "WYBRANY PRZEDMIOT", "none": "BRAK", "playerInventory": "EKWIPUNEK GRACZA", "backpack": "PLECAK", "hotbar": "PASEK", "depositBuffer": "TACA DEPOZYTOWA - 5 POL", "depositHelp": "Umiesc tu przedmioty - ScrapLab posortuje je automatycznie.",
     "takeOne": "WEZ 1", "takeStack": "WEZ STOS", "takeAll": "WEZ ILE SIE ZMIESCI", "selectPrompt": "WYBIERZ PRZEDMIOT", "indexingPrompt": "INDEKSOWANIE SIECI", "noItems": "NIE ZNALEZIONO PRZEDMIOTOW",
     "localSource": "LOKALNE", "remoteSource": "BEZPRZEWODOWE", "mixedSource": "LOKALNE + BEZPRZEWODOWE", "waiting": "OCZEKIWANIE NA INDEKS", "networkOffline": "SIEC MAGAZYNOWA OFFLINE", "openInteraction": "OTWORZ SIEC MAGAZYNOWA"
@@ -154,7 +163,7 @@
   "Russian": {
     "inventoryTitle": "Сетевой сундук", "inventoryUpper": "СЕТЕВОЙ СУНДУК", "inventoryDescription": "Просматривайте все доступные трубные контейнеры, забирайте предметы из единого каталога и автоматически сортируйте вложения по подходящим сундукам. Беспроводная вакуумная труба добавляет удаленный доступ и связь между мирами.",
     "title": "СЕТЕВОЙ СУНДУК", "localNetwork": "ЛОКАЛЬНАЯ СЕТЬ", "wirelessNetwork": "БЕСПРОВОДНАЯ СЕТЬ", "limitedNetwork": "ОГРАНИЧЕННАЯ СЕТЬ", "localFallback": "ЛОКАЛЬНЫЙ РЕЖИМ", "secureWithdrawals": "БЕЗОПАСНОЕ ИЗВЛЕЧЕНИЕ",
-    "catalog": "СЕТЕВОЙ КАТАЛОГ", "showing": "%d ИЗ %d", "sort": "СОРТИРОВКА: %s", "sortName": "ИМЯ", "sortCount": "КОЛИЧЕСТВО", "sortStacks": "СТОПКИ", "clear": "ОЧИСТИТЬ",
+    "catalog": "СЕТЕВОЙ КАТАЛОГ", "showing": "%d ИЗ %d", "sort": "СОРТИРОВКА: %s", "sortType": "ТИП", "sortName": "ИМЯ", "sortCount": "КОЛИЧЕСТВО", "sortStacks": "СТОПКИ", "filter": "ТИП: %s", "filterAll": "ВСЕ", "filterBlocks": "БЛОКИ", "filterInteractive": "ИНТЕРАКТИВ", "filterParts": "ДЕТАЛИ", "filterTools": "ИНСТРУМЕНТЫ", "filterConsumables": "РАСХОДНИКИ", "clear": "ОЧИСТИТЬ",
     "selectedItem": "ВЫБРАННЫЙ ПРЕДМЕТ", "none": "НЕТ", "playerInventory": "ИНВЕНТАРЬ ИГРОКА", "backpack": "РЮКЗАК", "hotbar": "ПАНЕЛЬ", "depositBuffer": "ЛОТОК НА 5 ЯЧЕЕК", "depositHelp": "Положите предметы сюда - ScrapLab распределит их автоматически.",
     "takeOne": "ВЗЯТЬ 1", "takeStack": "ВЗЯТЬ СТОПКУ", "takeAll": "ВЗЯТЬ СКОЛЬКО ПОМЕСТИТСЯ", "selectPrompt": "ВЫБЕРИТЕ ПРЕДМЕТ", "indexingPrompt": "ИНДЕКСАЦИЯ СЕТИ", "noItems": "ПРЕДМЕТЫ НЕ НАЙДЕНЫ",
     "localSource": "ЛОКАЛЬНО", "remoteSource": "БЕСПРОВОДНО", "mixedSource": "ЛОКАЛЬНО + БЕСПРОВОДНО", "waiting": "ОЖИДАНИЕ ИНДЕКСА СЕТИ", "networkOffline": "СЕТЬ ХРАНЕНИЯ ОТКЛЮЧЕНА", "openInteraction": "ОТКРЫТЬ СЕТЬ ХРАНЕНИЯ"
@@ -162,7 +171,7 @@
   "Spanish": {
     "inventoryTitle": "Cofre de almacenamiento en red", "inventoryUpper": "COFRE DE ALMACENAMIENTO EN RED", "inventoryDescription": "Explora todos los contenedores conectados, retira objetos desde un catalogo unico y ordena automaticamente los depositos en el cofre mas adecuado. El Tubo de vacio inalambrico permite acceso remoto y entre mundos.",
     "title": "COFRE DE ALMACENAMIENTO EN RED", "localNetwork": "RED LOCAL", "wirelessNetwork": "RED INALAMBRICA", "limitedNetwork": "RED INALAMBRICA LIMITADA", "localFallback": "RESPALDO LOCAL", "secureWithdrawals": "RETIRADAS SEGURAS",
-    "catalog": "CATALOGO DE RED", "showing": "MOSTRANDO %d DE %d", "sort": "ORDENAR: %s", "sortName": "NOMBRE", "sortCount": "CANTIDAD", "sortStacks": "PILAS", "clear": "LIMPIAR",
+    "catalog": "CATALOGO DE RED", "showing": "MOSTRANDO %d DE %d", "sort": "ORDENAR: %s", "sortType": "TIPO", "sortName": "NOMBRE", "sortCount": "CANTIDAD", "sortStacks": "PILAS", "filter": "TIPO: %s", "filterAll": "TODOS", "filterBlocks": "BLOQUES", "filterInteractive": "INTERACTIVOS", "filterParts": "PIEZAS", "filterTools": "HERRAMIENTAS", "filterConsumables": "CONSUMIBLES", "clear": "LIMPIAR",
     "selectedItem": "OBJETO SELECCIONADO", "none": "NINGUNO", "playerInventory": "INVENTARIO DEL JUGADOR", "backpack": "MOCHILA", "hotbar": "BARRA", "depositBuffer": "BANDEJA DE 5 ESPACIOS", "depositHelp": "Coloca objetos aqui - ScrapLab los ordena automaticamente.",
     "takeOne": "TOMAR 1", "takeStack": "TOMAR PILA", "takeAll": "TOMAR TODO LO POSIBLE", "selectPrompt": "SELECCIONA UN OBJETO", "indexingPrompt": "INDEXANDO LA RED", "noItems": "NO SE ENCONTRARON OBJETOS",
     "localSource": "LOCAL", "remoteSource": "INALAMBRICO", "mixedSource": "LOCAL + INALAMBRICO", "waiting": "ESPERANDO EL INDICE DE RED", "networkOffline": "RED DE ALMACENAMIENTO SIN CONEXION", "openInteraction": "ABRIR RED DE ALMACENAMIENTO"

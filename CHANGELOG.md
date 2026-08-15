@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## 2.8.0 - 2026-08-15
+
+- Added a native colored-item-type filter to Network Storage Chest. Its new
+  default **TYPE** sort groups blocks, interactives, parts, tools, and
+  consumables, then alphabetizes each group; quantity and stack sorts now use
+  deterministic type/name tie-breakers.
+- Rebuilt Network Storage Chest hover text as readable single-line tooltips that
+  fit Scrap Mechanic's fixed-height tooltip skin. Removed redundant Backpack and
+  Hotbar location labels, and matched the Type button's font size to Sort.
+- Expanded the item-type control so long localized labels no longer collide
+  with its colored type indicator, and compacted the unified player inventory
+  to show occupied hotbar/backpack stacks without rendering empty slots.
+- Moved installed and newly added ScrapLab Craftbot recipes into one stable
+  group immediately after the vanilla Vacuum Pipe recipe. Existing Network
+  Storage Chest and Wireless Vacuum Pipe installs receive one-click definition
+  updates without unregistering either save-sensitive UUID.
+- Fixed connected multiplayer clients being unable to deposit through a
+  Network Storage Chest, especially with cross-world Wireless Vacuum Pipe
+  routes. Definition 4 no longer compares a delayed client inventory revision
+  against the host; the server re-reads the requested slot and commits the
+  player-to-tray move atomically using authoritative inventory state.
+- Network Storage Chest deposit results now remain visible briefly instead of
+  being immediately replaced by the automatic routing status. Optional routing
+  diagnostics also record the player, result, and moved quantity.
+
 ## 2.7.1 - 2026-08-14
 
 - Replaced every native and one-off app scrollbar with one ScrapLab machinery

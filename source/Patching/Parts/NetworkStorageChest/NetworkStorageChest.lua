@@ -25,7 +25,16 @@ local GUI_TEMPLATE = dofile( GUI_PATH )
 local ITEM_TEMPLATE = dofile( ITEM_PATH )
 local LOCALIZATION = sm.json.open( LOCALIZATION_PATH )
 
-local SORT_MODES = { "NAME", "COUNT", "STACKS" }
+local SORT_MODES = { "TYPE", "NAME", "COUNT", "STACKS" }
+local ITEM_FILTERS = { "ALL", "BLOCK", "INTERACTIVE", "PART", "TOOL", "CONSUMABLE" }
+local ITEM_TYPE_ORDER = {
+	block = 1,
+	interactive = 2,
+	part = 3,
+	tool = 4,
+	consumable = 5,
+	other = 6
+}
 local SCAN_BUDGET_PER_TICK = 12
 local REVISION_POLL_INTERVAL_TICKS = 4
 local REVISION_POLL_BUDGET = 32
@@ -117,20 +126,37 @@ local function sourceKind( entry )
 	return localizedText( "localSource" )
 end
 
-local function buildVisibleCatalog( catalog, searchValue, sortMode )
+local function normalizeItemType( value )
+	local normalized = string.lower( tostring( value or "" ) )
+	return ITEM_TYPE_ORDER[normalized] and normalized or "other"
+end
+
+local function itemTypeRank( item )
+	return ITEM_TYPE_ORDER[normalizeItemType( item and item.itemType )] or ITEM_TYPE_ORDER.other
+end
+
+local function buildVisibleCatalog( catalog, searchValue, sortMode, filterType )
 	local search = normalizeSearch( searchValue )
+	local filter = string.lower( tostring( filterType or "ALL" ) )
 	local entries = {}
 	for index, item in ipairs( catalog or {} ) do
-		if search == "" or string.find( item.searchTitle, search, 1, true ) ~= nil then
+		local typeMatches = filter == "all" or normalizeItemType( item.itemType ) == filter
+		if typeMatches and ( search == "" or string.find( item.searchTitle, search, 1, true ) ~= nil ) then
 			entries[#entries + 1] = { index = index, item = item }
 		end
 	end
 	table.sort( entries, function( a, b )
-		if sortMode == "COUNT" and a.item.quantity ~= b.item.quantity then
+		if sortMode == "TYPE" and itemTypeRank( a.item ) ~= itemTypeRank( b.item ) then
+			return itemTypeRank( a.item ) < itemTypeRank( b.item )
+		elseif sortMode == "COUNT" and a.item.quantity ~= b.item.quantity then
 			return a.item.quantity > b.item.quantity
 		elseif sortMode == "STACKS" and a.item.stacks ~= b.item.stacks then
 			return a.item.stacks > b.item.stacks
-		elseif a.item.searchTitle ~= b.item.searchTitle then
+		end
+		if sortMode ~= "NAME" and sortMode ~= "TYPE" and itemTypeRank( a.item ) ~= itemTypeRank( b.item ) then
+			return itemTypeRank( a.item ) < itemTypeRank( b.item )
+		end
+		if a.item.searchTitle ~= b.item.searchTitle then
 			return a.item.searchTitle < b.item.searchTitle
 		end
 		return a.item.uuid < b.item.uuid
@@ -1193,6 +1219,11 @@ function NetworkStorageChest.sv_sendInventoryDepositResult( self, player, status
 		status = status,
 		moved = moved or 0
 	} )
+	if self.sv and self.sv.depositDebug then
+		sm.log.info( PHASE1_PREFIX .. "inventory deposit result: player=" ..
+			tostring( playerKey( player ) or "UNKNOWN" ) .. ", status=" ..
+			tostring( status ) .. ", moved=" .. tostring( moved or 0 ) )
+	end
 end
 
 function NetworkStorageChest.sv_n_stageInventorySlot( self, data, player )
@@ -1220,18 +1251,20 @@ function NetworkStorageChest.sv_n_stageInventorySlot( self, data, player )
 		self:sv_sendInventoryDepositResult( player, "INVENTORY_UNAVAILABLE", 0 )
 		return
 	end
-	if inventory:getRevision() ~= tonumber( data.revision ) then
-		self:sv_sendInventoryDepositResult( player, "INVENTORY_CHANGED", 0 )
-		return
-	end
+	-- A connected client's replicated container revision can legitimately lag
+	-- behind the server, especially while another world is being kept alive by
+	-- a wireless route. Never use that client-side revision as transaction
+	-- authority. The slot and UUID are only an intent hint; the server reads the
+	-- current slot and the native transaction performs the final concurrency
+	-- check without trusting a client-provided quantity or revision.
 	local item = inventory:getItem( slot )
 	local requestedUuid = safeItemUuid( data.uuid )
-	if not requestedUuid or playerSlotIsEmpty( item ) or tostring( item.uuid ) ~= tostring( requestedUuid ) or
-		( tonumber( data.quantity ) or -1 ) ~= ( tonumber( item.quantity ) or 0 ) then
+	if not requestedUuid or playerSlotIsEmpty( item ) or tostring( item.uuid ) ~= tostring( requestedUuid ) then
 		self:sv_sendInventoryDepositResult( player, "INVENTORY_CHANGED", 0 )
 		return
 	end
-	local moved = maxCollectableQuantity( buffer, item.uuid, item.quantity )
+	local authoritativeQuantity = math.max( 0, math.floor( tonumber( item.quantity ) or 0 ) )
+	local moved = maxCollectableQuantity( buffer, item.uuid, authoritativeQuantity )
 	if moved <= 0 then
 		self:sv_sendInventoryDepositResult( player, "BUFFER_FULL", 0 )
 		return
@@ -1586,6 +1619,7 @@ function NetworkStorageChest.client_onCreate( self )
 		inventoryScrollView = nil,
 		playerInventory = nil,
 		playerInventorySlots = {},
+		playerInventoryVisibleCount = 0,
 		serverState = { phase = 2, bufferReady = false, bufferSize = 0 },
 		catalog = {},
 		catalogState = {
@@ -1596,6 +1630,7 @@ function NetworkStorageChest.client_onCreate( self )
 		},
 		search = "",
 		sortMode = 1,
+		typeFilter = 1,
 		selected = nil,
 		visibleCount = 0,
 		guiDirty = false,
@@ -1607,6 +1642,7 @@ function NetworkStorageChest.client_onCreate( self )
 		withdrawStatus = nil,
 		inventoryDepositBusy = false,
 		inventoryDepositStatus = nil,
+		inventoryDepositStatusUntil = 0,
 		routingBusy = false,
 		legacyBuffer = false,
 		depositState = { status = "READY", moved = 0, remaining = 0 }
@@ -1641,6 +1677,13 @@ function NetworkStorageChest.client_onUpdate( self )
 		self.cl.lastInventoryRevision = inventoryRevision
 		self:cl_rebuildPlayerInventory( false )
 	end
+	if self.cl.inventoryDepositStatus and ( self.cl.inventoryDepositStatusUntil or 0 ) > 0 and
+			sm.game.getCurrentTick() >= self.cl.inventoryDepositStatusUntil then
+		self.cl.inventoryDepositStatus = nil
+		self.cl.inventoryDepositStatusUntil = 0
+		self:cl_refreshStatus()
+		self.cl.guiDirty = true
+	end
 	if self.cl.guiDirty then
 		self.cl.guiDirty = false
 		self.cl.gui:render( self.cl.guiData )
@@ -1671,6 +1714,7 @@ function NetworkStorageChest.cl_applyLocalization( self )
 	findRequiredWidget( self.cl.guiData, "DepositLabel" ).Caption = localizedText( "depositBuffer3" )
 	findRequiredWidget( self.cl.guiData, "SelectedName" ).Caption = localizedText( "none" )
 	findRequiredWidget( self.cl.guiData, "SelectionStatus" ).Caption = localizedText( "selectPrompt" )
+	findRequiredWidget( self.cl.guiData, "TypeFilterButton" ).ToolTip.Text = localizedText( "filterHint" )
 end
 
 function NetworkStorageChest.cl_openGui( self )
@@ -1732,12 +1776,16 @@ function NetworkStorageChest.cl_openGui( self )
 	self.cl.inventoryScrollView:setScrollStrength( 1 )
 	self.cl.playerInventory = inventory
 	self.cl.playerInventorySlots = {}
+	self.cl.playerInventoryVisibleCount = 0
 	self.cl.search = ""
+	self.cl.sortMode = 1
+	self.cl.typeFilter = 1
 	self.cl.selected = nil
 	self.cl.sessionToken = nil
 	self.cl.withdrawBusy = false
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
+	self.cl.inventoryDepositStatusUntil = 0
 	self.cl.routingBusy = false
 	self.cl.legacyBuffer = legacyBuffer
 	self.cl.withdrawStatus = nil
@@ -1771,11 +1819,13 @@ function NetworkStorageChest.cl_destroyGui( self )
 	self.cl.inventoryScrollView = nil
 	self.cl.playerInventory = nil
 	self.cl.playerInventorySlots = {}
+	self.cl.playerInventoryVisibleCount = 0
 	self.cl.guiDirty = false
 	self.cl.sessionToken = nil
 	self.cl.withdrawBusy = false
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
+	self.cl.inventoryDepositStatusUntil = 0
 	self.cl.routingBusy = false
 	self.cl.legacyBuffer = false
 	if gui and sm.exists( gui ) and gui:isActive() then gui:close() end
@@ -1790,11 +1840,13 @@ function NetworkStorageChest.cl_onGuiClosed( self )
 	self.cl.inventoryScrollView = nil
 	self.cl.playerInventory = nil
 	self.cl.playerInventorySlots = {}
+	self.cl.playerInventoryVisibleCount = 0
 	self.cl.guiDirty = false
 	self.cl.sessionToken = nil
 	self.cl.withdrawBusy = false
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
+	self.cl.inventoryDepositStatusUntil = 0
 	self.cl.routingBusy = false
 	self.cl.legacyBuffer = false
 end
@@ -1812,7 +1864,6 @@ end
 function NetworkStorageChest.cl_n_depositStatus( self, data )
 	if not self.cl or type( data ) ~= "table" then return end
 	self.cl.depositState = data
-	self.cl.inventoryDepositStatus = nil
 	if self.cl.guiData then
 		self:cl_refreshStatus()
 		self.cl.guiDirty = true
@@ -1828,11 +1879,13 @@ function NetworkStorageChest.cl_n_catalogSnapshot( self, data )
 		if source.uuid and ( source.quantity or 0 ) > 0 then
 			local itemUuid = sm.uuid.new( source.uuid )
 			local title = sm.shape.getShapeTitle( itemUuid ) or source.uuid
+			local _, _, _, _, itemType = sm.gui.getItemIconFromUuid( itemUuid )
 			catalog[#catalog + 1] = {
 				uuid = source.uuid,
 				itemUuid = itemUuid,
 				title = title,
 				searchTitle = string.lower( title ),
+				itemType = normalizeItemType( itemType ),
 				quantity = source.quantity,
 				stacks = source.stacks or 0,
 				sources = source.sources or 0,
@@ -1935,6 +1988,7 @@ function NetworkStorageChest.cl_restorePlayerInventoryScroll( self, offset )
 end
 
 function NetworkStorageChest.cl_makePlayerInventorySlot( self, slot, containerItem )
+	if playerSlotIsEmpty( containerItem ) then return nil, nil end
 	local card = DeepCopy( ITEM_TEMPLATE )
 	local root = findRequiredWidget( card, "CatalogItem" )
 	local image = findRequiredWidget( card, "CatalogItemImage" )
@@ -1942,37 +1996,25 @@ function NetworkStorageChest.cl_makePlayerInventorySlot( self, slot, containerIt
 	local keyItemWidget = findRequiredWidget( card, "CatalogItemKey" )
 	local typeWidget = findRequiredWidget( card, "CatalogItemType" )
 	local slotWidget = findRequiredWidget( card, "CatalogItemRoute" )
-	local empty = playerSlotIsEmpty( containerItem )
 	local binding = hotbarBinding( slot )
 	root.Name = "PlayerInventoryItem_" .. tostring( slot )
 	root.onClick = "cl_onPlayerInventoryItemClick"
 	setMouseWheelCallback( root, "cl_onPlayerInventoryMouseWheel" )
 	slotWidget.Caption = binding
 	slotWidget.TextColour = binding ~= "" and "1 0.78 0.12 1" or "0.35 0.85 1 0"
-	if empty then
-		root.ToolTip.Text = binding ~= "" and
-			( localizedText( "hotbar" ) .. " " .. binding .. " - " .. localizedText( "none" ) ) or ""
-		image.ImageResource, image.ImageGroup, image.ImageName = "", "", ""
-		quantity.Caption = ""
-		keyItemWidget.ImageTexture = ""
-		typeWidget.ImageName = ""
-	else
-		local resource, group, imageName, keyItem, itemType = sm.gui.getItemIconFromUuid( containerItem.uuid )
-		local title = sm.shape.getShapeTitle( containerItem.uuid ) or tostring( containerItem.uuid )
-		local location = binding ~= "" and ( localizedText( "hotbar" ) .. " " .. binding )
-			or ( localizedText( "backpack" ) .. " " .. tostring( slot - 9 ) )
-		root.ToolTip.Text = title .. "  x" .. tostring( containerItem.quantity ) .. "\n" .. location ..
-			"\n" .. localizedText( "inventoryDepositClick" )
-		image.ImageResource, image.ImageGroup, image.ImageName = resource, group, imageName
-		quantity.Caption = ( tonumber( containerItem.quantity ) or 0 ) > 1 and
-			( "x" .. tostring( containerItem.quantity ) ) or ""
-		keyItemWidget.ImageTexture = keyItem
-		typeWidget.ImageName = itemType
-	end
+	local resource, group, imageName, keyItem, itemType = sm.gui.getItemIconFromUuid( containerItem.uuid )
+	local title = sm.shape.getShapeTitle( containerItem.uuid ) or tostring( containerItem.uuid )
+	root.ToolTip.Text = title .. "  x" .. tostring( containerItem.quantity ) ..
+		"  |  " .. localizedText( "inventoryDepositClick" )
+	image.ImageResource, image.ImageGroup, image.ImageName = resource, group, imageName
+	quantity.Caption = ( tonumber( containerItem.quantity ) or 0 ) > 1 and
+		( "x" .. tostring( containerItem.quantity ) ) or ""
+	keyItemWidget.ImageTexture = keyItem
+	typeWidget.ImageName = itemType
 	return card, {
 		slot = slot,
-		uuid = empty and nil or tostring( containerItem.uuid ),
-		quantity = empty and 0 or ( tonumber( containerItem.quantity ) or 0 ),
+		uuid = tostring( containerItem.uuid ),
+		quantity = tonumber( containerItem.quantity ) or 0,
 		hotbar = slot < 10,
 		binding = binding
 	}
@@ -1985,12 +2027,16 @@ function NetworkStorageChest.cl_rebuildPlayerInventory( self, resetScroll )
 	local previousOffset = resetScroll and 0 or self:cl_getPlayerInventoryScrollOffset()
 	self:cl_resetPlayerInventoryScroll()
 	self.cl.playerInventorySlots = {}
+	self.cl.playerInventoryVisibleCount = 0
 	local size = math.max( tonumber( inventory:getSize() ) or 0, 0 )
 	for slot = 0, size - 1 do
 		local item = inventory:getItem( slot )
-		local card, snapshot = self:cl_makePlayerInventorySlot( slot, item )
-		view:addGridItem( card )
-		self.cl.playerInventorySlots[slot + 1] = snapshot
+		if not playerSlotIsEmpty( item ) then
+			local card, snapshot = self:cl_makePlayerInventorySlot( slot, item )
+			view:addGridItem( card )
+			self.cl.playerInventorySlots[slot + 1] = snapshot
+			self.cl.playerInventoryVisibleCount = self.cl.playerInventoryVisibleCount + 1
+		end
 	end
 	self:cl_restorePlayerInventoryScroll( previousOffset )
 	self.cl.guiDirty = true
@@ -2024,17 +2070,28 @@ function NetworkStorageChest.cl_rebuildCatalog( self, resetScroll )
 	if not self.cl.scrollView or not self.cl.guiData then return end
 	local search = normalizeSearch( self.cl.search )
 	local sortMode = SORT_MODES[self.cl.sortMode]
-	local entries = buildVisibleCatalog( self.cl.catalog, search, sortMode )
+	local filterType = ITEM_FILTERS[self.cl.typeFilter] or "ALL"
+	local entries = buildVisibleCatalog( self.cl.catalog, search, sortMode, filterType )
 	local previousOffset = resetScroll and 0 or self:cl_getCatalogScrollOffset()
 
 	self:cl_resetCatalogScroll()
 	for _, entry in ipairs( entries ) do self.cl.scrollView:addGridItem( self:cl_makeCatalogItem( entry ) ) end
 	self:cl_restoreCatalogScroll( previousOffset )
 	self.cl.visibleCount = #entries
-	local sortLabels = { NAME = localizedText( "sortName" ), COUNT = localizedText( "sortCount" ),
+	local sortLabels = { TYPE = localizedText( "sortType" ), NAME = localizedText( "sortName" ), COUNT = localizedText( "sortCount" ),
 		STACKS = localizedText( "sortStacks" ) }
 	findRequiredWidget( self.cl.guiData, "SortButton" ).Caption =
 		localizedText( "sort", sortLabels[sortMode] or sortMode )
+	local filterLabels = {
+		ALL = localizedText( "filterAll" ), BLOCK = localizedText( "filterBlocks" ),
+		INTERACTIVE = localizedText( "filterInteractive" ), PART = localizedText( "filterParts" ),
+		TOOL = localizedText( "filterTools" ), CONSUMABLE = localizedText( "filterConsumables" )
+	}
+	local filterButton = findRequiredWidget( self.cl.guiData, "TypeFilterButton" )
+	filterButton.Caption = localizedText( "filter", filterLabels[filterType] or filterType )
+	local filterDot = findRequiredWidget( self.cl.guiData, "TypeFilterDot" )
+	filterDot.Visible = filterType ~= "ALL"
+	filterDot.ImageName = filterType ~= "ALL" and string.lower( filterType ) or ""
 
 	local selection = findRequiredWidget( self.cl.guiData, "SelectionStatus" )
 	if self.cl.withdrawStatus then
@@ -2185,7 +2242,8 @@ function NetworkStorageChest.cl_n_runPhase5UiQualification( self, data )
 		for _, language in ipairs( required ) do
 			local entry = LOCALIZATION[language]
 			if not entry or not entry.inventoryTitle or not entry.inventoryDescription or
-				not entry.title or not entry.catalog or not entry.takeAll then
+				not entry.title or not entry.catalog or not entry.takeAll or
+				not entry.sortType or not entry.filterAll then
 				return false, "missing required text for " .. language
 			end
 		end
@@ -2195,7 +2253,7 @@ function NetworkStorageChest.cl_n_runPhase5UiQualification( self, data )
 	protected( "gui-widget-contract", function()
 		local guiData = DeepCopy( GUI_TEMPLATE )
 		ReplaceSubLayouts( guiData )
-		local required = { "SearchInput", "SortButton", "ClearSearch", "CatalogScrollHost",
+		local required = { "SearchInput", "TypeFilterButton", "TypeFilterDot", "SortButton", "ClearSearch", "CatalogScrollHost",
 			"IndexProgressHolder", "IndexProgressFill", "SelectionStatus", "TakeOneButton",
 			"TakeStackButton", "TakeAllButton", "SelectedIconImage", "SelectedDetail",
 			"PlayerInventoryScrollHost", "DepositBox", "DepositHelp" }
@@ -2208,6 +2266,7 @@ function NetworkStorageChest.cl_n_runPhase5UiQualification( self, data )
 		local guiData = DeepCopy( GUI_TEMPLATE )
 		local progress = findRequiredWidget( guiData, "IndexProgressFill" )
 		local focus = findRequiredWidget( guiData, "SearchInput" ).NeedKey and
+			findRequiredWidget( guiData, "TypeFilterButton" ).NeedKey and
 			findRequiredWidget( guiData, "SortButton" ).NeedKey and
 			findRequiredWidget( guiData, "ClearSearch" ).NeedKey and
 			findRequiredWidget( guiData, "TakeOneButton" ).NeedKey and
@@ -2224,9 +2283,10 @@ function NetworkStorageChest.cl_n_runPhase5UiQualification( self, data )
 		for index = 1, 60 do
 			local title = index % 3 == 0 and ( "metal " .. tostring( index ) ) or ( "part " .. tostring( index ) )
 			sample[#sample + 1] = { uuid = string.format( "%04d", index ), title = title,
-				searchTitle = title, quantity = 61 - index, stacks = index % 7 + 1 }
+				searchTitle = title, quantity = 61 - index, stacks = index % 7 + 1,
+				itemType = index % 2 == 0 and "block" or "interactive" }
 		end
-		local filtered = buildVisibleCatalog( sample, "metal", "NAME" )
+		local filtered = buildVisibleCatalog( sample, "metal", "NAME", "ALL" )
 		for index, entry in ipairs( filtered ) do
 			if not entry or not entry.item or string.find( entry.item.searchTitle, "metal", 1, true ) == nil then
 				return false, "gap or unrelated result at " .. tostring( index )
@@ -2237,19 +2297,23 @@ function NetworkStorageChest.cl_n_runPhase5UiQualification( self, data )
 
 	protected( "all-sort-modes", function()
 		local sample = {
-			{ uuid = "b", searchTitle = "beta", quantity = 4, stacks = 8 },
-			{ uuid = "a", searchTitle = "alpha", quantity = 9, stacks = 2 }
+			{ uuid = "b", searchTitle = "beta", quantity = 4, stacks = 8, itemType = "interactive" },
+			{ uuid = "a", searchTitle = "alpha", quantity = 9, stacks = 2, itemType = "block" }
 		}
-		return buildVisibleCatalog( sample, "", "NAME" )[1].item.uuid == "a" and
-			buildVisibleCatalog( sample, "", "COUNT" )[1].item.quantity == 9 and
-			buildVisibleCatalog( sample, "", "STACKS" )[1].item.stacks == 8, "name, quantity, stacks"
+		return buildVisibleCatalog( sample, "", "TYPE", "ALL" )[1].item.itemType == "block" and
+			buildVisibleCatalog( sample, "", "NAME", "ALL" )[1].item.uuid == "a" and
+			buildVisibleCatalog( sample, "", "COUNT", "ALL" )[1].item.quantity == 9 and
+			buildVisibleCatalog( sample, "", "STACKS", "ALL" )[1].item.stacks == 8 and
+			#buildVisibleCatalog( sample, "", "TYPE", "interactive" ) == 1,
+			"type/name grouping, type filter, quantity, and stacks"
 	end )
 
 	protected( "catalog-card-detail", function()
 		local knownUuid = sm.uuid.new( "ad35f7e6-af8f-40fa-aef4-77d827ac8a8a" )
 		local card = self:cl_makeCatalogItem( { index = 1, item = {
 			uuid = tostring( knownUuid ), itemUuid = knownUuid, title = "Test Item", quantity = 42,
-			stacks = 3, sources = 2, localSources = 1, wirelessSources = 1, crossWorldSources = 0
+			stacks = 3, sources = 2, localSources = 1, wirelessSources = 1,
+			crossWorldSources = 0, itemType = "interactive"
 		} } )
 		return card.Name == "CatalogItem_1" and card.NeedMouse == true and
 			findRequiredWidget( card, "CatalogItemRoute" ).Caption == "M" and
@@ -2273,7 +2337,8 @@ function NetworkStorageChest.cl_n_runPhase5UiQualification( self, data )
 				uuid = tostring( knownUuid ) .. tostring( index ), itemUuid = knownUuid,
 				title = "Test Item " .. tostring( index ), searchTitle = string.format( "test item %03d", index ),
 				quantity = index, stacks = 1, sources = 1, localSources = 1,
-				wirelessSources = 0, crossWorldSources = 0
+				wirelessSources = 0, crossWorldSources = 0,
+				itemType = index % 2 == 0 and "block" or "interactive"
 			}
 		end
 		self.cl.catalogState.status = "READY"
@@ -2285,22 +2350,29 @@ function NetworkStorageChest.cl_n_runPhase5UiQualification( self, data )
 			self:cl_getCatalogScrollOffset() == beforeSelection and self.cl.selected == 25
 		local inventory = sm.localPlayer.getInventory()
 		local size = inventory:getSize()
-		local slotAccurate = self.cl.inventoryScrollView ~= nil and #self.cl.playerInventorySlots == size
+		local visibleSlots = 0
+		local slotAccurate = self.cl.inventoryScrollView ~= nil
 		for slot = 0, size - 1 do
 			local actual = inventory:getItem( slot )
 			local shown = self.cl.playerInventorySlots[slot + 1]
 			local empty = playerSlotIsEmpty( actual )
-			if not shown or shown.slot ~= slot or shown.hotbar ~= ( slot < 10 ) or
-				shown.binding ~= hotbarBinding( slot ) or
-				shown.quantity ~= ( empty and 0 or ( tonumber( actual.quantity ) or 0 ) ) or
-				shown.uuid ~= ( empty and nil or tostring( actual.uuid ) ) then
-				slotAccurate = false
-				break
+			if empty then
+				if shown ~= nil then slotAccurate = false break end
+			else
+				visibleSlots = visibleSlots + 1
+				if not shown or shown.slot ~= slot or shown.hotbar ~= ( slot < 10 ) or
+					shown.binding ~= hotbarBinding( slot ) or
+					shown.quantity ~= ( tonumber( actual.quantity ) or 0 ) or
+					shown.uuid ~= tostring( actual.uuid ) then
+					slotAccurate = false
+					break
+				end
 			end
 		end
+		slotAccurate = slotAccurate and self.cl.playerInventoryVisibleCount == visibleSlots
 		self:cl_destroyGui()
 		return rendered and selectionPreservedScroll and slotAccurate,
-			"real containers + stable catalog scroll + slot-accurate hotbar/backpack grid"
+			"real containers + stable catalog scroll + compact occupied-slot inventory grid"
 	end )
 
 	self.network:sendToServer( "sv_n_phase5ClientQualificationAck", {
@@ -2364,6 +2436,10 @@ function NetworkStorageChest.cl_onControlClick( self, widgetName )
 		findRequiredWidget( self.cl.guiData, "SearchInput" ).Caption = ""
 	elseif widgetName == "SortButton" then
 		self.cl.sortMode = self.cl.sortMode % #SORT_MODES + 1
+		self.cl.selected = nil
+		self.cl.withdrawStatus = nil
+	elseif widgetName == "TypeFilterButton" then
+		self.cl.typeFilter = self.cl.typeFilter % #ITEM_FILTERS + 1
 		self.cl.selected = nil
 		self.cl.withdrawStatus = nil
 	elseif widgetName == "TakeOneButton" then
@@ -2475,14 +2551,13 @@ function NetworkStorageChest.cl_onPlayerInventoryItemClick( self, widgetName )
 		not self.cl.sessionToken then return end
 	self.cl.inventoryDepositBusy = true
 	self.cl.inventoryDepositStatus = localizedText( "inventoryDepositWorking" )
+	self.cl.inventoryDepositStatusUntil = 0
 	self:cl_refreshStatus()
 	self.cl.guiDirty = true
 	self.network:sendToServer( "sv_n_stageInventorySlot", {
 		token = self.cl.sessionToken,
 		slot = slot,
-		uuid = snapshot.uuid,
-		quantity = snapshot.quantity,
-		revision = inventory:getRevision()
+		uuid = snapshot.uuid
 	} )
 end
 
@@ -2500,6 +2575,7 @@ function NetworkStorageChest.cl_n_inventoryDepositResult( self, data )
 		SESSION_EXPIRED = localizedText( "sessionError" )
 	}
 	self.cl.inventoryDepositStatus = messages[data.status] or localizedText( "inventoryDepositChanged" )
+	self.cl.inventoryDepositStatusUntil = sm.game.getCurrentTick() + 100
 	if data.status == "SESSION_EXPIRED" then self.cl.sessionToken = nil end
 	self:cl_refreshStatus()
 	self.cl.guiDirty = true

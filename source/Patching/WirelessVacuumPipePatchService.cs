@@ -10,7 +10,7 @@ namespace RaidRescue
     internal static class WirelessVacuumPipePatchService
     {
         private const string ModKey = "WirelessVacuumPipe";
-        private const string DefinitionVersion = "8";
+        private const string DefinitionVersion = "9";
         internal const string PartUuid =
             "a34d9af0-4ba0-431d-b647-2d5435ecf138";
         internal const string ManagerUuid =
@@ -97,6 +97,7 @@ namespace RaidRescue
             public bool Clean;
             public bool Installed;
             public bool Known;
+            public bool NeedsDefinitionUpdate;
         }
 
         private sealed class OwnedAsset
@@ -260,11 +261,11 @@ namespace RaidRescue
                     result.Installed = true;
                     result.NeedsUpdate = false;
                     result.Changes.Add(
-                        "Installed compatible pipe-graph caching and corrected one-way Craftbot Link routing.");
+                        "Grouped every installed ScrapLab custom-part recipe beside the vanilla Vacuum Pipe recipe.");
                     AdaptivePatchSupport.FillResult(result, build,
                         PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
-                        "Wireless Vacuum Pipe definition 5 Craftbot routing update was installed and verified.");
+                        "Wireless Vacuum Pipe definition 9 recipe ordering was installed and verified.");
                     SecretModBackupRetention.Prune(
                         backupRoot, ModKey, result.BackupPath, result);
                     return result;
@@ -513,8 +514,11 @@ namespace RaidRescue
                 state.OwnedInstalled &= owned.Exact || owned.LegacyExact;
                 anyLegacyOwned |= owned.LegacyExact;
             }
+            bool anyTextUpdate = false;
+            foreach (TextState text in state.Texts)
+                anyTextUpdate |= text.NeedsDefinitionUpdate;
             state.DefinitionUpdateAvailable =
-                state.OwnedInstalled && anyLegacyOwned;
+                state.OwnedInstalled && (anyLegacyOwned || anyTextUpdate);
             state.RegistrationsClean = textsClean && state.AtlasClean;
             state.OrphanedOwnedAssets = state.RegistrationsClean &&
                 state.OwnedInstalled;
@@ -682,13 +686,13 @@ namespace RaidRescue
             else if (markerCount == 1 &&
                 AdaptivePatchSupport.Count(text, RecipeEntry) == 1)
             {
-                // Craftbot recipes are another shared append-only JSON array.
-                // A later ScrapLab recipe may follow this exact entry without
-                // changing or partially applying the Wireless recipe itself.
                 state.CleanText = UnpatchRecipe(text);
-                state.PatchedText = text;
+                state.PatchedText = PatchRecipe(state.CleanText);
                 state.Installed = AdaptivePatchSupport.Count(
                     state.CleanText, PartUuid) == 0;
+                state.NeedsDefinitionUpdate = state.Installed &&
+                    !String.Equals(state.PatchedText, text,
+                        StringComparison.Ordinal);
             }
             return state;
         }
@@ -778,9 +782,12 @@ namespace RaidRescue
             foreach (OwnedAsset owned in state.Owned)
                 if (owned.LegacyExact)
                     AddOwnedPlan(plans, owned, false);
+            foreach (TextState text in state.Texts)
+                if (text.NeedsDefinitionUpdate)
+                    AddTextPlan(plans, text, text.PatchedText);
             if (plans.Count == 0)
                 throw new InvalidOperationException(
-                    "No verified Wireless Vacuum Pipe legacy runtime files were found.");
+                    "No verified Wireless Vacuum Pipe definition targets were found.");
             return plans;
         }
 
@@ -1269,45 +1276,18 @@ namespace RaidRescue
         {
             get
             {
-                return "\t{\n" +
-                    "\t\t\"itemId\": \"" + PartUuid + "\",\n" +
-                    "\t\t\"quantity\": 2,\n" +
-                    "\t\t\"craftTime\": 30,\n" +
-                    "\t\t\"ingredientList\": [\n" +
-                    "\t\t\t{\n" +
-                    "\t\t\t\t\"quantity\": 2,\n" +
-                    "\t\t\t\t\"itemId\": \"9b8f2abd-265c-4750-b8b9-fe6cb564633c\"\n" +
-                    "\t\t\t},\n" +
-                    "\t\t\t{\n" +
-                    "\t\t\t\t\"quantity\": 2,\n" +
-                    "\t\t\t\t\"itemId\": \"5530e6a0-4748-4926-b134-50ca9ecb9dcf\"\n" +
-                    "\t\t\t},\n" +
-                    "\t\t\t{\n" +
-                    "\t\t\t\t\"quantity\": 4,\n" +
-                    "\t\t\t\t\"itemId\": \"f152e4df-bc40-44fb-8d20-3b3ff70cdfe3\"\n" +
-                    "\t\t\t}\n" +
-                    "\t\t]\n" +
-                    "\t}";
+                return ScrapLabCraftbotRecipeOrder.WirelessVacuumPipeRecipe;
             }
         }
 
         private static string PatchRecipe(string text)
         {
-            if (AdaptivePatchSupport.Count(text, PartUuid) != 0)
-                throw new InvalidDataException(
-                    "The Wireless Vacuum Pipe recipe already exists or conflicts.");
-            int end = text.LastIndexOf("\n]", StringComparison.Ordinal);
-            if (end < 0 || !String.IsNullOrWhiteSpace(
-                text.Substring(end + 2)))
-                throw new InvalidDataException(
-                    "craftbot_core.json has an unexpected ending.");
-            return text.Substring(0, end) + ",\n" + RecipeEntry +
-                text.Substring(end);
+            return ScrapLabCraftbotRecipeOrder.PlaceRecipe(text, PartUuid);
         }
 
         private static string UnpatchRecipe(string text)
         {
-            return RemoveUnique(text, ",\n" + RecipeEntry);
+            return ScrapLabCraftbotRecipeOrder.RemoveRecipe(text, PartUuid);
         }
 
         private static string PatchRecipeManager(string text)

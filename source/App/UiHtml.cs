@@ -1029,16 +1029,16 @@ button{font:inherit}
         <div class=""secret-mod-row secret-mod-card locked"" id=""wirelessVacuumPipeRow"" data-category=""logistics automation machinery"" data-search=""wireless vacuum pipe logistics automation link send receive cross world overworld underground paint color channel craftbot save sensitive"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; PIPE AUTOMATION &middot; SAVE-SENSITIVE</span><strong>WIRELESS VACUUM PIPE</strong><span>Link painted networks, let Receive-side machines pull from Send sources, or actively transfer items with safe container scope.</span><em id=""wirelessVacuumPipeState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""wirelessVacuumPipeReason""></span></div>
           <div class=""secret-mod-actions"">
-            <button type=""button"" class=""secret-mod-options"" id=""wirelessVacuumPipeUpdate"" aria-label=""Update Wireless Vacuum Pipe performance"" onclick=""updateWirelessVacuumPipeMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-mod-options"" id=""wirelessVacuumPipeUpdate"" aria-label=""Update Wireless Vacuum Pipe recipe order"" onclick=""updateWirelessVacuumPipeMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-switch"" id=""wirelessVacuumPipeSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Wireless Vacuum Pipe"" onclick=""toggleWirelessVacuumPipeMod()"" disabled=""disabled"">
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
           </div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""networkStorageChestRow"" data-category=""logistics automation"" data-search=""network storage chest inventory catalog sorting deposit wireless cross world logistics craftbot save sensitive"">
-          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; INVENTORY &middot; SAVE-SENSITIVE</span><strong>NETWORK STORAGE CHEST</strong><span>Browse reachable storage and choose Smart Sort or nearest-empty-chest deposit routing.</span><em id=""networkStorageChestState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""networkStorageChestReason""></span></div>
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; INVENTORY &middot; SAVE-SENSITIVE</span><strong>NETWORK STORAGE CHEST</strong><span>Browse, search, and filter reachable storage by native item type, then route deposits automatically.</span><em id=""networkStorageChestState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""networkStorageChestReason""></span></div>
           <div class=""secret-mod-actions"">
-            <button type=""button"" class=""secret-mod-options"" id=""networkStorageChestUpdate"" aria-label=""Update Network Storage Chest smart routing"" onclick=""updateNetworkStorageChestMod()"" style=""display:none"">UPDATE</button>
+            <button type=""button"" class=""secret-mod-options"" id=""networkStorageChestUpdate"" aria-label=""Update Network Storage Chest catalog"" onclick=""updateNetworkStorageChestMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-switch"" id=""networkStorageChestSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Network Storage Chest"" onclick=""toggleNetworkStorageChestMod()"" disabled=""disabled"">
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
@@ -1409,7 +1409,7 @@ button{font:inherit}
       <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; WIRELESS VACUUM PIPE</div>
         <div class=""help-grid"">
-          <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe produces two Wireless Vacuum Pipes in 30 seconds from two Vacuum Pipes, two Component Kits, and four Circuit Boards.</p></div>
+          <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe sits beside the ordinary Vacuum Pipe and produces two Wireless Vacuum Pipes in 30 seconds from two Vacuum Pipes, two Component Kits, and four Circuit Boards.</p></div>
           <div class=""help-item""><b>PAINT IS THE CHANNEL</b><p>Paint endpoints the same color to join them. Different colors remain isolated, and repainting moves an endpoint to its new channel without replacing the part.</p></div>
           <div class=""help-item""><b>LINK MODE</b><p>Same-color Link endpoints behave as one bidirectional pipe network. Machines prefer local storage first, then discover connected storage through other endpoints.</p></div>
           <div class=""help-item""><b>SEND / RECEIVE</b><p>Send actively routes items to matching Receive endpoints. Receive also acts as a pull gateway, so a local pump or machine can consume supplies stored behind matching Send endpoints.</p></div>
@@ -1428,12 +1428,13 @@ button{font:inherit}
       <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; NETWORK STORAGE CHEST</div>
         <div class=""help-grid"">
-          <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe uses one piped Small Chest, ten Component Kits, and twenty Circuit Boards. Crafting takes 30 seconds.</p></div>
+          <div class=""help-item""><b>HOW TO GET IT</b><p>Find the recipe with ScrapLab's pipes beside the ordinary Vacuum Pipe. It uses one piped Small Chest, ten Component Kits, and twenty Circuit Boards and takes 30 seconds.</p></div>
+          <div class=""help-item""><b>TYPE FILTER &amp; SORT</b><p>The type control uses the same colored categories as item slots. TYPE sort groups blocks, interactives, parts, tools, and consumables, then sorts every group by name.</p></div>
           <div class=""help-item""><b>ONE STORAGE CATALOG</b><p>Open the terminal to browse every reachable input container. Search and sort the catalog, then use Take controls to withdraw safely from one or several source chests.</p></div>
           <div class=""help-item""><b>THREE-SLOT ROUTING TRAY</b><p>Use the three-slot tray or click a player-inventory stack. The two-slot-wide control selects Smart Sort or Nearest mode for that terminal.</p></div>
           <div class=""help-item""><b>SMART OR NEAREST</b><p>Smart Sort groups exact items and matching item families. Turn it off to use the closest compatible same-world chest with an empty slot; cross-world destinations are considered afterward.</p></div>
           <div class=""help-item""><b>WIRELESS SUPPORT</b><p>With Wireless Vacuum Pipe installed, the catalog and sorter respect Link, Send, Receive, direct-only, full-network, and cross-world routes. Without it, the terminal remains fully usable on local pipes.</p></div>
-          <div class=""help-item""><b>TRANSFER SAFETY</b><p>Every move is server-authoritative and revision checked. A stale network, full destination, or concurrent edit moves nothing partially and never creates copied catalog items.</p></div>
+          <div class=""help-item""><b>TRANSFER SAFETY</b><p>Every move is validated and committed by the host through native atomic container transactions. A stale network, full destination, or concurrent edit never creates copied catalog items.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes a required registration, reinstall before opening a world containing the terminal when ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
           <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Empty every deposit tray, remove every terminal from worlds and inventories, save all affected worlds, and close Scrap Mechanic before disabling.</p></div>
         </div>
@@ -2412,9 +2413,9 @@ function renderSecretModsState(){
     else if(wirelessReason.indexOf('atlas')>=0||wirelessReason.indexOf('icon')>=0)wirelessLabel='UNSUPPORTED ICON ATLAS';
     else if(secretWirelessVacuumPipeCompatibility!=='PARTIAL PATCH - REPAIR REQUIRED')wirelessLabel='UNSUPPORTED PIPE CODE';
    }
-   wirelessPipeState.innerText=secretModBusy&&secretModBusyTarget==='wirelessPipe'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretWirelessVacuumPipeNeedsUpdate?'ROUTING UPDATE AVAILABLE':wirelessLabel));
+   wirelessPipeState.innerText=secretModBusy&&secretModBusyTarget==='wirelessPipe'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretWirelessVacuumPipeNeedsUpdate?'RECIPE ORDER UPDATE AVAILABLE':wirelessLabel));
    renderCompatibilityReason('wirelessVacuumPipeReason',secretWirelessVacuumPipeInstalled,secretWirelessVacuumPipeCanApply,secretWirelessVacuumPipeReason);
-   if(secretWirelessVacuumPipeNeedsUpdate){var wirelessUpdateReason=document.getElementById('wirelessVacuumPipeReason');wirelessUpdateReason.className='secret-compat-reason show';wirelessUpdateReason.innerText=secretWirelessVacuumPipeReason||'Receive-side pull routing and safe transfer scope are ready.';}
+   if(secretWirelessVacuumPipeNeedsUpdate){var wirelessUpdateReason=document.getElementById('wirelessVacuumPipeReason');wirelessUpdateReason.className='secret-compat-reason show';wirelessUpdateReason.innerText=secretWirelessVacuumPipeReason||'Custom-part recipes can now be grouped beside the ordinary Vacuum Pipe.';}
   }
    var networkStorage=document.getElementById('networkStorageChestSwitch');
    var networkStorageUpdate=document.getElementById('networkStorageChestUpdate');
@@ -2426,7 +2427,7 @@ function renderSecretModsState(){
     networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
     if(networkStorageUpdate){networkStorageUpdate.style.display=secretNetworkStorageChestNeedsUpdate?'block':'none';networkStorageUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;}
    networkStorageRow.className='secret-mod-row secret-mod-card'+(secretNetworkStorageChestInstalled?' enabled':'')+((!secretModsEnabled||!secretNetworkStorageChestCanApply)?' locked':'');
-   networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'ROUTING MODE UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
+    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'INTERFACE UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
    renderCompatibilityReason('networkStorageChestReason',secretNetworkStorageChestInstalled,secretNetworkStorageChestCanApply,secretNetworkStorageChestReason);
   }
   var revival=document.getElementById('revivalBuffSwitch');
@@ -2816,7 +2817,7 @@ function setNetworkStorageChestMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
  var wasNetworkStorageUpdate=enabled&&secretNetworkStorageChestInstalled&&secretNetworkStorageChestNeedsUpdate;
  secretModBusy=true;secretModBusyTarget='networkStorage';operationBusy=true;
- showSecretModFeedback(wasNetworkStorageUpdate?'UPGRADING DEPOSIT ROUTING MODES...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','working');
+ showSecretModFeedback(wasNetworkStorageUpdate?'POLISHING NETWORK STORAGE INTERFACE...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','working');
  renderSecretModsState();applyGameLock(gameRunning);
  var data;
  try{data=parseResult(window.external.SetNetworkStorageChestMod(enabled));}
@@ -2827,14 +2828,14 @@ function setNetworkStorageChestMod(enabled){
  secretNetworkStorageChestInstalled=!!data.Installed;
  if(data.BackupPath)lastGameBackupPath=data.BackupPath;
  loadSecretModsState();
- showSecretModFeedback(wasNetworkStorageUpdate?'ROUTING UPDATED - the three-slot tray now switches between Smart Sort and nearest-empty routing.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+ showSecretModFeedback(wasNetworkStorageUpdate?'INTERFACE UPDATED - readable single-line tooltips and matching type/sort text are ready.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
  applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function setWirelessVacuumPipeMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Wireless Vacuum Pipe.','bad');return false;}
  secretModBusy=true;secretModBusyTarget='wirelessPipe';operationBusy=true;
  var wasWirelessUpdate=enabled&&secretWirelessVacuumPipeInstalled&&secretWirelessVacuumPipeNeedsUpdate;
- showSecretModFeedback(wasWirelessUpdate?'OPTIMIZING WIRELESS PIPE NETWORKS...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
+ showSecretModFeedback(wasWirelessUpdate?'GROUPING SCRAPLAB CRAFTBOT RECIPES...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'working');
  renderSecretModsState();applyGameLock(gameRunning);
  var data;
  try{data=parseResult(window.external.SetWirelessVacuumPipeMod(enabled));}
@@ -2845,7 +2846,7 @@ function setWirelessVacuumPipeMod(enabled){
  secretWirelessVacuumPipeInstalled=!!data.Installed;
  if(data.BackupPath)lastGameBackupPath=data.BackupPath;
  loadSecretModsState();
- showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - dense networks now share cached graph scans and idle channels back off automatically.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
+ showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - ScrapLab custom-part recipes now sit together beside the ordinary Vacuum Pipe.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
  applyGameLock(gameRunning);renderSecretModsState();return true;
 }
 function updateWirelessVacuumPipeMod(){

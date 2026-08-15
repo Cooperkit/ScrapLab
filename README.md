@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.7.1.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.8.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -227,8 +227,15 @@ rolls back failed changes. Backup retention is bounded.
   **Entire Pipe Network** when wanted.
 - **Network Storage Chest** — UUID `bc7576a7-f226-459a-883c-e8460e955d63`.
   Craft one from a piped Small Chest, ten Component Kits, and twenty Circuit
-  Boards. Browse connected storage and route its three-slot tray with **Smart
-  Sort** or **Nearest Empty**. Wireless Vacuum Pipe support is optional.
+  Boards. Browse connected storage with search, native colored-type filters,
+  and deterministic type/name sorting, then route its three-slot tray with
+  **Smart Sort** or **Nearest Empty**. Wireless Vacuum Pipe support is optional,
+  and connected players deposit through host-authoritative transactions.
+
+ScrapLab's Craftbot recipes are grouped immediately after the ordinary Vacuum
+Pipe recipe instead of being appended to the bottom. Raid Detector remains a
+Hideout trade and advanced Plasma Drills remain upgrade-only, so neither has a
+Craftbot recipe to move.
 
 All custom icons share the verified **ScrapLab Icon Pack**.
 
@@ -301,7 +308,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.7.1.zip
+release\ScrapLab-2.8.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

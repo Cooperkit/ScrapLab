@@ -11,12 +11,23 @@ namespace RaidRescue
     internal static class NetworkStorageChestPatchService
     {
         private const string ModKey = "NetworkStorageChest";
-        private const string DefinitionVersion = "3";
+        private const string DefinitionVersion = "7";
         private const string LegacyV1RuntimeHash = "453BB866D4B4D564C79BFF9F4A2997131BF9826496608DBEA7709BE2730FC596";
         private const string LegacyV1IndexHash = "F036925AFA22A028CFED0A82E89A691442FC77DEB851D0876F3DD92ED535D4EC";
         private const string LegacyV2RuntimeHash = "B42F99CA53E5D36188F8BFC352DCB0F560A649BD6783E31DAE38BC22ECC3FB49";
         private const string LegacyV2GuiHash = "999B00353C31FBCA9EE94BF9B816132C8F773890BBC489B155236F028D6D5A37";
         private const string LegacyV2LocalizationHash = "4FF131F150F0FF472786CA49A701AFD05D3E04375A89C710A9412417A80A010F";
+        private const string LegacyV3RuntimeHash = "10995F436F9126BCE80A990DB5449B92AD4443CCF4097F067238A3097562ED8B";
+        private const string LegacyV4RuntimeHash = "90AAAA8A3D19F5D5CF301853166983FCFFA8EF4F9CBD3B3BDED4C4A28CA6CC13";
+        private const string LegacyV4GuiHash = "2F37A3843B1FFE4BF4E2CE77DE486BE23276BBEB1EDC3DCE18E01E85FE429989";
+        private const string LegacyV4ItemGuiHash = "22298C1EA57814283B9DA43CF358B127D0EB6B7A54EC1319334E342BB574EC08";
+        private const string LegacyV4LocalizationHash = "7911651F5754AAE34D1F31A79497521EF60F2034105080DA1A38D9A165EDE281";
+        private const string LegacyV5RuntimeHash = "2664371FB39424A7447DF8D2EB792C196DD946F34863D1D350D4DD608D142159";
+        private const string LegacyV5GuiHash = "39878EA7472D42E899538279A46C5F114091F2FBBE2B1C5E14EA28BA888638A8";
+        private const string LegacyV5ItemGuiHash = "88959FCB37EAABAD341558811FC95A016D5E6308495236B3CF840F700C7E9A2F";
+        private const string LegacyV5LocalizationHash = "29E54DE45BC6F727FF5B5245670BE812064A4B5024C977B66D110EF31FDDBC68";
+        private const string LegacyV6RuntimeHash = "95F9A18C4B6DD668EED84FEB4D8F8CF2A5377C68D8B6082AA3A99A9CE9CE3BE5";
+        private const string LegacyV6GuiHash = "9AB2D9C0F0134CF3D7615E53DC67B0BCB8A0B9E3A236AB85283D9ECF7805E0E5";
         internal const string PartUuid = "bc7576a7-f226-459a-883c-e8460e955d63";
         internal const string VerifiedSteamBuildId = "24529696";
         internal const string VerifiedGameVersion = "1.0.5.876";
@@ -57,7 +68,7 @@ namespace RaidRescue
         {
             public string RelativePath, DisplayName, KnownHash, Path, PatchedText, CleanText;
             public LuaTextDocument Document;
-            public bool Clean, Installed, Known, IsIconXml;
+            public bool Clean, Installed, Known, IsIconXml, NeedsDefinitionUpdate;
         }
 
         private sealed class OwnedAsset
@@ -113,7 +124,7 @@ namespace RaidRescue
                         state.AllKnownClean ? PatchCompatibilityState.KnownInstalled : PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
                         state.DefinitionUpdateAvailable
-                            ? "A verified three-slot routing-mode update is ready."
+                            ? "A verified Network Storage interface update is ready."
                             : "The Network Storage Chest part, recipe, runtime, localization, and icon are intact.");
                     return result;
                 }
@@ -161,9 +172,9 @@ namespace RaidRescue
                     result.Success = true;
                     result.Installed = true;
                     result.NeedsUpdate = false;
-                    result.Changes.Add("Installed the three-slot tray with per-terminal Smart Sort and Nearest Empty routing modes.");
+                    result.Changes.Add("Installed the expanded type control and a compact player inventory that hides empty slots.");
                     AdaptivePatchSupport.FillResult(result, build, PatchCompatibilityState.AdaptiveInstalled,
-                        !state.AllKnownClean, true, "Network Storage Chest routing definition 3 was installed and verified.");
+                        !state.AllKnownClean, true, "Network Storage Chest definition 7 was installed and verified.");
                     SecretModBackupRetention.Prune(backupRoot, ModKey, result.BackupPath, result);
                     return result;
                 }
@@ -221,7 +232,7 @@ namespace RaidRescue
             state.Texts.Add(ReadText(gamePath, ShapesIndexRelative, "shapesets.json", "FF30F988FCDF775604AA54E1AF3E97CBCC4AE45F7EDCAB7B528694933D7E2511", ShapeSetPath, PatchShapes, UnpatchShapes, false));
             state.Texts.Add(ReadText(gamePath, ItemsRelative, "survival_items.lua", "ACDAD2CF9163655F87796D996A58DDE381AC1221B1337AEF049E38066B199789", PartUuid, PatchItems, UnpatchItems, false));
             state.Texts.Add(ReadText(gamePath, PipesRelative, "pipes.lua", "9E494D72BE3CDB8E666F4B1B2AFD34C2105CA2E653468251ABE8D302180F8146", "obj_container_network_storage_chest", PatchPipes, UnpatchPipes, false));
-            state.Texts.Add(ReadText(gamePath, RecipesRelative, "craftbot_core.json", "7AE14EA8224965276835A3E1C7FCFA7366EC91810F8FEE339C7E584A0022157E", PartUuid, PatchRecipe, UnpatchRecipe, false));
+            state.Texts.Add(ReadRecipe(gamePath));
             state.Texts.Add(ReadText(gamePath, RecipeManagerRelative, "RecipeManager.lua", "4290B7B0FF9370B5C6E4D3E98DD3AC62B3934A80DAB36A6EA7EE18D2C62400B5", "Network Storage Chest default unlock", PatchRecipeManager, UnpatchRecipeManager, false));
             state.Texts.Add(ReadText(gamePath, IconXmlRelative, "IconMapSurvival.xml", "5DA34EF427C912BDF64BD1993834A78DBD86F11DFF16FD63B61F3FA9C1ECDDDB", PartUuid, delegate(string text) { return text; }, delegate(string text) { return text; }, true));
 
@@ -268,7 +279,9 @@ namespace RaidRescue
                 state.OwnedInstalled &= owned.Exact || owned.LegacyExact;
                 anyLegacyOwned |= owned.LegacyExact;
             }
-            state.DefinitionUpdateAvailable = state.OwnedInstalled && anyLegacyOwned;
+            bool anyTextUpdate = false;
+            foreach (TextState text in state.Texts) anyTextUpdate |= text.NeedsDefinitionUpdate;
+            state.DefinitionUpdateAvailable = state.OwnedInstalled && (anyLegacyOwned || anyTextUpdate);
             bool textsClean = true, textsInstalled = true, known = state.AtlasKnown;
             foreach (TextState text in state.Texts)
             {
@@ -312,6 +325,40 @@ namespace RaidRescue
             string relative = Path.Combine("Survival", "Gui", "Language", language, "inventoryDescriptions.json");
             return ReadText(gamePath, relative, language + " inventory descriptions", knownHash, PartUuid,
                 delegate(string text) { return PatchLanguage(text, entry); }, delegate(string text) { return UnpatchLanguage(text, entry); }, false);
+        }
+
+        private static TextState ReadRecipe(string gamePath)
+        {
+            string path = Path.Combine(gamePath, RecipesRelative);
+            if (!File.Exists(path)) throw new FileNotFoundException("craftbot_core.json was not found.", path);
+            LuaTextDocument document = AdaptivePatchSupport.ReadLua(path);
+            AdaptivePatchSupport.RequireAdaptiveFormat(document, "craftbot_core.json");
+            string text = document.NormalizedText;
+            int markerCount = AdaptivePatchSupport.Count(text, PartUuid);
+            TextState state = new TextState
+            {
+                RelativePath = RecipesRelative,
+                DisplayName = "craftbot_core.json",
+                KnownHash = "7AE14EA8224965276835A3E1C7FCFA7366EC91810F8FEE339C7E584A0022157E",
+                Path = path,
+                Document = document,
+                Known = String.Equals(document.OriginalHash, "7AE14EA8224965276835A3E1C7FCFA7366EC91810F8FEE339C7E584A0022157E", StringComparison.OrdinalIgnoreCase) ||
+                    IsTrustedExistingOutput(RecipesRelative, document.OriginalHash)
+            };
+            if (markerCount == 0)
+            {
+                state.PatchedText = PatchRecipe(text);
+                state.Clean = true;
+            }
+            else if (markerCount == 1 && AdaptivePatchSupport.Count(text, RecipeEntry) == 1)
+            {
+                state.CleanText = UnpatchRecipe(text);
+                state.PatchedText = PatchRecipe(state.CleanText);
+                state.Installed = AdaptivePatchSupport.Count(state.CleanText, PartUuid) == 0;
+                state.NeedsDefinitionUpdate = state.Installed &&
+                    !String.Equals(state.PatchedText, text, StringComparison.Ordinal);
+            }
+            return state;
         }
 
         private static bool CanApplyClean(ProbeState state, SteamBuildInfo build, out string reason)
@@ -373,25 +420,39 @@ namespace RaidRescue
             string file = Path.GetFileName(relative);
             if (String.Equals(file, "NetworkStorageChest.lua", StringComparison.OrdinalIgnoreCase))
                 return String.Equals(hash, LegacyV1RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(hash, LegacyV2RuntimeHash, StringComparison.OrdinalIgnoreCase);
+                    String.Equals(hash, LegacyV2RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV3RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV4RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV5RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV6RuntimeHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkInventoryIndex.lua", StringComparison.OrdinalIgnoreCase))
                 return String.Equals(hash, LegacyV1IndexHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkStorageChest.gui", StringComparison.OrdinalIgnoreCase))
-                return String.Equals(hash, LegacyV2GuiHash, StringComparison.OrdinalIgnoreCase);
+                return String.Equals(hash, LegacyV2GuiHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV4GuiHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV5GuiHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV6GuiHash, StringComparison.OrdinalIgnoreCase);
+            if (String.Equals(file, "NetworkStorageChestItem.gui", StringComparison.OrdinalIgnoreCase))
+                return String.Equals(hash, LegacyV4ItemGuiHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV5ItemGuiHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkStorageChest.localization.json", StringComparison.OrdinalIgnoreCase))
-                return String.Equals(hash, LegacyV2LocalizationHash, StringComparison.OrdinalIgnoreCase);
+                return String.Equals(hash, LegacyV2LocalizationHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV4LocalizationHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV5LocalizationHash, StringComparison.OrdinalIgnoreCase);
             return false;
         }
 
         private static List<AtomicCustomPartFilePlan> BuildDefinitionUpdatePlans(ProbeState state)
         {
             if (state == null || !state.DefinitionUpdateAvailable)
-                throw new InvalidOperationException("The Network Storage Chest routing-mode update is not available.");
+                throw new InvalidOperationException("The Network Storage Chest definition update is not available.");
             List<AtomicCustomPartFilePlan> plans = new List<AtomicCustomPartFilePlan>();
             foreach (OwnedAsset owned in state.Owned)
                 if (owned.LegacyExact) AddOwnedPlan(plans, owned, owned.Bytes, false);
+            foreach (TextState text in state.Texts)
+                if (text.NeedsDefinitionUpdate) AddTextPlan(plans, text, text.PatchedText);
             if (plans.Count == 0)
-                throw new InvalidOperationException("No verified legacy Network Storage Chest runtime files were found.");
+                throw new InvalidOperationException("No verified Network Storage Chest definition targets were found.");
             return plans;
         }
 
@@ -404,7 +465,10 @@ namespace RaidRescue
             foreach (AtomicCustomPartFilePlan plan in plans)
             {
                 AdaptivePatchReceiptFile file = AdaptivePatchSupport.FindReceiptFile(receipt, plan.RelativePath);
-                if (file == null || !String.Equals(file.OutputHash, plan.SourceHash, StringComparison.OrdinalIgnoreCase))
+                bool receiptMatch = file != null && String.Equals(file.OutputHash, plan.SourceHash, StringComparison.OrdinalIgnoreCase);
+                bool trustedSharedRecipe = String.Equals(plan.RelativePath, RecipesRelative, StringComparison.OrdinalIgnoreCase) &&
+                    IsTrustedExistingOutput(plan.RelativePath, plan.SourceHash);
+                if (!receiptMatch && !trustedSharedRecipe)
                     throw new InvalidOperationException(plan.DisplayName + " no longer matches its verified install receipt.");
             }
 
@@ -430,7 +494,7 @@ namespace RaidRescue
                 });
             }
             AdaptivePatchSupport.WriteBackupManifest(backupPath, "Network Storage Chest",
-                "Routing Mode Definition Update", gamePath, build, DefinitionVersion, manifest);
+                "Catalog and Recipe Definition Update", gamePath, build, DefinitionVersion, manifest);
 
             List<AtomicCustomPartFilePlan> changed = new List<AtomicCustomPartFilePlan>();
             try
@@ -499,9 +563,9 @@ namespace RaidRescue
         private static string PatchPipes(string text) { return ReplaceUnique(text, "\tobj_container_smallchest_pipe\n}", "\tobj_container_smallchest_pipe,\n\t-- SCRAPLAB PART: Network Storage Chest pipe container.\n\tobj_container_network_storage_chest\n}"); }
         private static string UnpatchPipes(string text) { return ReplaceUnique(text, "\tobj_container_smallchest_pipe,\n\t-- SCRAPLAB PART: Network Storage Chest pipe container.\n\tobj_container_network_storage_chest\n}", "\tobj_container_smallchest_pipe\n}"); }
 
-        private static string RecipeEntry { get { return "\t{\n\t\t\"itemId\": \"" + PartUuid + "\",\n\t\t\"quantity\": 1,\n\t\t\"craftTime\": 30,\n\t\t\"ingredientList\": [\n\t\t\t{ \"quantity\": 1, \"itemId\": \"4c474cff-3f6a-4306-93d1-c4c74578afd2\" },\n\t\t\t{ \"quantity\": 10, \"itemId\": \"5530e6a0-4748-4926-b134-50ca9ecb9dcf\" },\n\t\t\t{ \"quantity\": 20, \"itemId\": \"f152e4df-bc40-44fb-8d20-3b3ff70cdfe3\" }\n\t\t]\n\t}"; } }
-        private static string PatchRecipe(string text) { int end = text.LastIndexOf("\n]", StringComparison.Ordinal); if (end < 0) throw new InvalidDataException("craftbot_core.json ending changed."); return text.Substring(0, end) + ",\n" + RecipeEntry + text.Substring(end); }
-        private static string UnpatchRecipe(string text) { return RemoveUnique(text, ",\n" + RecipeEntry); }
+        private static string RecipeEntry { get { return ScrapLabCraftbotRecipeOrder.NetworkStorageChestRecipe; } }
+        private static string PatchRecipe(string text) { return ScrapLabCraftbotRecipeOrder.PlaceRecipe(text, PartUuid); }
+        private static string UnpatchRecipe(string text) { return ScrapLabCraftbotRecipeOrder.RemoveRecipe(text, PartUuid); }
         private static string PatchRecipeManager(string text) { return InsertAfterUnique(text, "\tITEMS.obj_container_smallchest_pipe,", "\n\t-- SCRAPLAB PART: Network Storage Chest default unlock.\n\tITEMS.obj_container_network_storage_chest,"); }
         private static string UnpatchRecipeManager(string text) { return RemoveUnique(text, "\n\t-- SCRAPLAB PART: Network Storage Chest default unlock.\n\tITEMS.obj_container_network_storage_chest,"); }
 

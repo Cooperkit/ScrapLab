@@ -80,6 +80,7 @@
   "NeedMouse": true,
   "Skin": "ContainerItemBackground",
   "ToolTip": {
+    "FontName": "SM_Text",
     "Text": ""
   },
   "Type": "Button",

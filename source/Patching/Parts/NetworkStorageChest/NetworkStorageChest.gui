@@ -40,7 +40,7 @@
               "height": 28,
               "onTextEdit": "cl_onTextEdit",
               "onTextEnter": "cl_onTextEnter",
-              "width": 326,
+              "width": 194,
               "x": 12,
               "y": 6
             }
@@ -51,7 +51,7 @@
           "Skin": "SearchBarBackground",
           "Type": "Widget",
           "height": 40,
-          "width": 350,
+          "width": 218,
           "x": 18,
           "y": 14
         },
@@ -67,8 +67,44 @@
           "Type": "Button",
           "height": 40,
           "onClick": "cl_onControlClick",
-          "width": 150,
-          "x": 380,
+          "width": 132,
+          "x": 428,
+          "y": 14
+        },
+        {
+          "Caption": "TYPE: ALL",
+          "Childs": [
+            {
+              "Childs": [],
+              "ImageName": "block",
+              "ImageResource": "ItemTypeSet",
+              "Name": "TypeFilterDot",
+              "NeedKey": false,
+              "NeedMouse": false,
+              "Skin": "ImageBox",
+              "Type": "ImageBox",
+              "Visible": false,
+              "height": 8,
+              "width": 8,
+              "x": 158,
+              "y": 16
+            }
+          ],
+          "FontName": "SM_Button",
+          "Name": "TypeFilterButton",
+          "NeedKey": true,
+          "NeedMouse": true,
+          "Skin": "SecondaryButton",
+          "TextAlign": "Center",
+          "ToolTip": {
+            "FontName": "SM_Text",
+            "Text": "Filter by the same colored item type shown on every slot."
+          },
+          "Type": "Button",
+          "height": 40,
+          "onClick": "cl_onControlClick",
+          "width": 176,
+          "x": 244,
           "y": 14
         },
         {
@@ -83,8 +119,8 @@
           "Type": "Button",
           "height": 40,
           "onClick": "cl_onControlClick",
-          "width": 150,
-          "x": 540,
+          "width": 124,
+          "x": 568,
           "y": 14
         },
         {
@@ -448,6 +484,7 @@
           "TextAlign": "Center",
           "TextColour": "1 0.80 0.25 1",
           "ToolTip": {
+            "FontName": "SM_Text",
             "Text": "Smart Sort groups matching items. Turn it off to use the nearest compatible chest with an empty slot."
           },
           "Type": "Button",
