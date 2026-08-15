@@ -1436,7 +1436,7 @@ button{font:inherit}
           <div class=""help-item""><b>SMART OR NEAREST</b><p>Smart Sort groups exact items and matching item families. Turn it off to use the closest compatible same-world chest with an empty slot; cross-world destinations are considered afterward.</p></div>
           <div class=""help-item""><b>WIRELESS SUPPORT</b><p>With Wireless Vacuum Pipe installed, the catalog and sorter respect Link, Send, Receive, direct-only, full-network, and cross-world routes. Without it, the terminal remains fully usable on local pipes.</p></div>
           <div class=""help-item""><b>LIVE MACHINE ACTIVITY</b><p>Craftbots, loop crafting, and pumps refresh in the background. Unchanged indexes are discarded, changed totals are grouped into smooth updates, and unrelated machine activity does not lock the Take controls.</p></div>
-          <div class=""help-item""><b>TRANSFER SAFETY</b><p>Every move is validated and committed by the host through native atomic container transactions. A stale network, full destination, or concurrent edit never creates copied catalog items.</p></div>
+          <div class=""help-item""><b>CONFLICT-RESISTANT WITHDRAWALS</b><p>The host targets live item slots and lets Scrap Mechanic's atomic transaction decide the transfer. Unrelated chest changes are ignored; short item or route conflicts retry automatically without duplicating anything.</p></div>
           <div class=""help-item""><b>AFTER A STEAM UPDATE</b><p>If Steam removes a required registration, reinstall before opening a world containing the terminal when ScrapLab reports <strong>Reinstall Required - Save Part at Risk</strong>.</p></div>
           <div class=""help-item""><b>SAVE-SENSITIVE REMOVAL</b><p>Empty every deposit tray, remove every terminal from worlds and inventories, save all affected worlds, and close Scrap Mechanic before disabling.</p></div>
         </div>
@@ -2453,7 +2453,7 @@ function renderSecretModsState(){
     networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
     if(networkStorageUpdate){networkStorageUpdate.style.display=secretNetworkStorageChestNeedsUpdate?'block':'none';networkStorageUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;}
    networkStorageRow.className='secret-mod-row secret-mod-card'+(secretNetworkStorageChestInstalled?' enabled':'')+((!secretModsEnabled||!secretNetworkStorageChestCanApply)?' locked':'');
-    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'LIVE INDEX UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
+    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'WITHDRAWAL UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
    renderCompatibilityReason('networkStorageChestReason',secretNetworkStorageChestInstalled,secretNetworkStorageChestCanApply,secretNetworkStorageChestReason);
   }
   var revival=document.getElementById('revivalBuffSwitch');
@@ -2894,9 +2894,9 @@ function applyGameplayBatchState(data){
 function setNetworkStorageChestMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
  var wasNetworkStorageUpdate=enabled&&secretNetworkStorageChestInstalled&&secretNetworkStorageChestNeedsUpdate;
- return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'OPTIMIZING LIVE STORAGE INDEX...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
+ return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'HARDENING LIVE WITHDRAWALS...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
   secretNetworkStorageChestInstalled=!!data.Installed;
-  showSecretModFeedback(wasNetworkStorageUpdate?'LIVE INDEX UPDATED - busy Craftbots and pumps refresh smoothly without locking withdrawals.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+  showSecretModFeedback(wasNetworkStorageUpdate?'WITHDRAWALS UPDATED - busy machines no longer cause false whole-chest conflicts, and real slot conflicts retry safely.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
  });
 }
 function setWirelessVacuumPipeMod(enabled){

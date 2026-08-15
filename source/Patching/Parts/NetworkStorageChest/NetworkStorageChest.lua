@@ -46,6 +46,9 @@ local TOPOLOGY_POLL_INTERVAL_TICKS = 40
 local VIEW_DISTANCE = 16
 local MAX_LOCAL_PIPE_SHAPES = 4096
 local WITHDRAW_RATE_LIMIT_TICKS = 6
+local WITHDRAW_RETRY_LIMIT = 4
+local WITHDRAW_RETRY_WINDOW_TICKS = 20
+local WITHDRAW_RETRY_DELAYS = { 1, 2, 4, 4 }
 local INVENTORY_DEPOSIT_RATE_LIMIT_TICKS = 3
 local ROUTING_MODE_RATE_LIMIT_TICKS = 10
 local WITHDRAW_ACTIONS = { TAKE_ONE = true, TAKE_STACK = true, TAKE_ALL = true }
@@ -480,6 +483,12 @@ function NetworkStorageChest.server_onCreate( self )
 		lastPublishedSignature = nil,
 		lastPublishedTopologyGeneration = -1,
 		lastError = nil,
+		pendingWithdrawals = {},
+		withdrawalSerial = 0,
+		withdrawalStats = {
+			requests = 0, retries = 0, successes = 0, failures = 0,
+			topologyWaits = 0, transactionBusy = 0, slotConflicts = 0
+		},
 		activitySerial = 0,
 		lastBufferRevision = buffer and buffer:getRevision() or -1,
 		depositDirty = buffer and not buffer:isEmpty() or false,
@@ -533,6 +542,14 @@ function NetworkStorageChest.sv_publishDiagnostics( self, status, scanned, total
 		containerScans = stats.containerScans,
 		slotsScanned = stats.slotsScanned,
 		activitySerial = self.sv and self.sv.activitySerial or 0,
+		pendingWithdrawals = countTable( self.sv and self.sv.pendingWithdrawals ),
+		withdrawalRequests = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.requests or 0,
+		withdrawalRetries = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.retries or 0,
+		withdrawalSuccesses = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.successes or 0,
+		withdrawalFailures = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.failures or 0,
+		withdrawalTopologyWaits = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.topologyWaits or 0,
+		withdrawalTransactionBusy = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.transactionBusy or 0,
+		withdrawalSlotConflicts = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.slotConflicts or 0,
 		smartRouting = not self.sv or self.sv.smartRouting ~= false,
 		bufferSize = self.interactable:getContainer( 0 ) and self.interactable:getContainer( 0 ):getSize() or 0,
 		qualificationLocked = self.sv and self.sv.qualificationLocked == true or false,
@@ -600,6 +617,7 @@ function NetworkStorageChest.sv_endPhase1HarnessSession( self, player )
 	if wasQualification then
 		self.sv.viewers = {}
 		self.sv.sessions = {}
+		self.sv.pendingWithdrawals = {}
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
 		self.sv.pendingScanDescriptors = {}
@@ -615,9 +633,12 @@ function NetworkStorageChest.sv_endPhase1HarnessSession( self, player )
 		self.sv.revisionCursor = 1
 		self.sv.needsRescan = true
 	elseif player then
-		self.sv.viewers[playerKey( player )] = nil
+		local key = playerKey( player )
+		self.sv.viewers[key] = nil
+		self.sv.pendingWithdrawals[key] = nil
 	end
 	if not hasEntries( self.sv.viewers ) then
+		self.sv.pendingWithdrawals = {}
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
 		self.sv.pendingScanDescriptors = {}
@@ -993,9 +1014,11 @@ function NetworkStorageChest.sv_validateViewers( self )
 		if not validViewer( player, self.shape ) then
 			self.sv.viewers[id] = nil
 			self.sv.sessions[id] = nil
+			self.sv.pendingWithdrawals[id] = nil
 		end
 	end
 	if not hasEntries( self.sv.viewers ) then
+		self.sv.pendingWithdrawals = {}
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
 		self.sv.pendingScanDescriptors = {}
@@ -1274,6 +1297,7 @@ function NetworkStorageChest.server_onFixedUpdate( self )
 	elseif self.sv.tick % REVISION_POLL_INTERVAL_TICKS == 0 then
 		self:sv_pollRevisions()
 	end
+	self:sv_processPendingWithdrawals()
 	self:sv_flushCatalogSnapshot()
 
 	if self.sv.tick % 2400 == 0 then NetworkInventoryIndex.prune( self.sv.tick, 2400 ) end
@@ -1391,85 +1415,98 @@ function NetworkStorageChest.sv_refreshAfterWithdrawalConflict( self, descriptor
 	self:sv_startScan( descriptors or self.sv.containers, reason or "WITHDRAWAL_RETRY" )
 end
 
-function NetworkStorageChest.sv_collectWithdrawalSources( self, descriptors, itemUuid )
+function NetworkStorageChest.sv_orderWithdrawalDescriptors( self, descriptors, itemUuid )
 	local wanted = tostring( itemUuid )
-	local sources, total, revisions, unstable = {}, 0, {}, {}
+	local indexed, fallback = {}, {}
 	for _, descriptor in ipairs( descriptors or {} ) do
-		local container = descriptor.container
-		local before = NetworkInventoryIndex.getRevision( container )
-		if before < 0 then
-			unstable[#unstable + 1] = descriptor
-		else
-			revisions[descriptor.id] = before
-			for slot = 0, container:getSize() - 1 do
-				local item = container:getItem( slot )
-				if item and item.uuid and tostring( item.uuid ) == wanted and ( item.quantity or 0 ) > 0 then
-					sources[#sources + 1] = {
-						container = container, descriptor = descriptor, slot = slot,
-						quantity = item.quantity
-					}
-					total = total + item.quantity
-				end
-			end
-			if NetworkInventoryIndex.getRevision( container ) ~= before then
-				unstable[#unstable + 1] = descriptor
-			end
-		end
+		local record = self.sv.records[descriptor.id]
+		local entry = record and record.byUuid and record.byUuid[wanted] or nil
+		local candidate = { descriptor = descriptor, indexedQuantity = entry and entry.quantity or 0 }
+		if candidate.indexedQuantity > 0 then indexed[#indexed + 1] = candidate
+		else fallback[#fallback + 1] = candidate end
 	end
-	table.sort( sources, function( a, b )
-		if a.quantity ~= b.quantity then return a.quantity < b.quantity end
+	local function less( a, b )
 		local aPriority = a.descriptor.routePriority or ( a.descriptor.wireless and 1 or 0 )
 		local bPriority = b.descriptor.routePriority or ( b.descriptor.wireless and 1 or 0 )
 		if aPriority ~= bPriority then return aPriority < bPriority end
+		if a.indexedQuantity ~= b.indexedQuantity then return a.indexedQuantity > b.indexedQuantity end
 		if ( a.descriptor.routeDistance or 0 ) ~= ( b.descriptor.routeDistance or 0 ) then
 			return ( a.descriptor.routeDistance or 0 ) < ( b.descriptor.routeDistance or 0 )
 		end
-		if a.descriptor.id ~= b.descriptor.id then return a.descriptor.id < b.descriptor.id end
-		return a.slot < b.slot
-	end )
-	return sources, total, revisions, unstable
+		return a.descriptor.id < b.descriptor.id
+	end
+	table.sort( indexed, less )
+	table.sort( fallback, less )
+	local ordered = {}
+	for _, candidate in ipairs( indexed ) do ordered[#ordered + 1] = candidate.descriptor end
+	for _, candidate in ipairs( fallback ) do ordered[#ordered + 1] = candidate.descriptor end
+	return ordered
 end
 
-function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, destination )
+function NetworkStorageChest.sv_collectWithdrawalSources( self, descriptors, itemUuid, required, scanAll )
+	local wanted = tostring( itemUuid )
+	local sources, total, scanFailed = {}, 0, false
+	for _, descriptor in ipairs( descriptors or {} ) do
+		local ok, descriptorSources = pcall( function()
+			local found = {}
+			local container = descriptor.container
+			if not container or not sm.exists( container ) then return found end
+			for slot = 0, container:getSize() - 1 do
+				local item = container:getItem( slot )
+				if item and item.uuid and tostring( item.uuid ) == wanted and ( item.quantity or 0 ) > 0 then
+					found[#found + 1] = {
+						container = container, descriptor = descriptor, slot = slot,
+						quantity = item.quantity
+					}
+				end
+			end
+			table.sort( found, function( a, b )
+				if a.quantity ~= b.quantity then return a.quantity > b.quantity end
+				return a.slot < b.slot
+			end )
+			return found
+		end )
+		if ok then
+			for _, source in ipairs( descriptorSources ) do
+				sources[#sources + 1] = source
+				total = total + source.quantity
+			end
+		else
+			scanFailed = true
+		end
+		if not scanAll and total >= required then break end
+	end
+	return sources, total, scanFailed
+end
+
+function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, destination, descriptors )
 	if ( self.sv.indexing and self.sv.scanBlocking ) or
 			not self.sv.snapshot or self.sv.snapshot.status ~= "READY" then
-		return false, "INDEXING", 0
-	end
-
-	local descriptors, _, _, topologyFailure, currentTopologyKey = self:sv_collectTopologySnapshot()
-	if not descriptors then return false, "NETWORK_OFFLINE", 0, topologyFailure end
-	if currentTopologyKey ~= self.sv.topologyKey then
-		self:sv_refreshTopology( true )
-		return false, "NETWORK_CHANGED", 0
-	end
-
-	local uuidString = tostring( itemUuid )
-	local snapshotEntry = self:sv_findSnapshotEntry( uuidString )
-	if not snapshotEntry or ( snapshotEntry.quantity or 0 ) <= 0 then return false, "ITEM_UNAVAILABLE", 0 end
-	-- The catalog is a view, not transaction authority. Read this selected item
-	-- live and tolerate unrelated Craftbot/pump revisions elsewhere in the
-	-- network. Only a source that changes while this request is being assembled
-	-- can invalidate the withdrawal.
-	local sources, total, sourceRevisions, unstable = self:sv_collectWithdrawalSources( descriptors, itemUuid )
-	if #unstable > 0 then
-		self:sv_refreshAfterWithdrawalConflict( unstable, "WITHDRAWAL_STALE" )
-		return false, "NETWORK_CHANGED", 0
-	end
-	if total <= 0 then
-		self:sv_startScan( descriptors, "WITHDRAWAL_STALE" )
-		return false, "ITEM_UNAVAILABLE", 0
+		return false, "INDEXING", 0, nil, true, false
 	end
 
 	local wanted = 1
 	if action == "TAKE_STACK" then
 		local ok, stackSize = pcall( sm.item.getStackSize, itemUuid )
 		wanted = ok and type( stackSize ) == "number" and math.max( 1, stackSize ) or 1
-	elseif action == "TAKE_ALL" then
-		wanted = total
 	end
+	local scanAll = action == "TAKE_ALL"
+	if not scanAll then
+		wanted = maxCollectableQuantity( destination, itemUuid, wanted )
+		if wanted <= 0 then return false, "INVENTORY_FULL", 0, nil, false, true end
+	end
+	local ordered = self:sv_orderWithdrawalDescriptors( descriptors, itemUuid )
+	local sources, total, scanFailed = self:sv_collectWithdrawalSources( ordered, itemUuid, wanted, scanAll )
+	if scanFailed and ( scanAll or total <= 0 ) then
+		self.sv.withdrawalStats.topologyWaits = self.sv.withdrawalStats.topologyWaits + 1
+		self:sv_refreshTopology( true )
+		return false, "NETWORK_REFRESHING", 0, "SOURCE CONTAINER CHANGED", true, false
+	end
+	if total <= 0 then return false, "ITEM_UNAVAILABLE", 0, nil, false, true end
+	if scanAll then wanted = total end
 	wanted = math.min( wanted, total )
 	local quantity = maxCollectableQuantity( destination, itemUuid, wanted )
-	if quantity <= 0 then return false, "INVENTORY_FULL", 0 end
+	if quantity <= 0 then return false, "INVENTORY_FULL", 0, nil, false, true end
 
 	local allocation, remaining, touched = {}, quantity, {}
 	for _, source in ipairs( sources ) do
@@ -1480,20 +1517,12 @@ function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, 
 		remaining = remaining - take
 	end
 	if remaining ~= 0 then
-		self:sv_refreshAfterWithdrawalConflict( descriptors, "WITHDRAWAL_STALE" )
-		return false, "NETWORK_CHANGED", 0
-	end
-	for id, descriptor in pairs( touched ) do
-		if NetworkInventoryIndex.getRevision( descriptor.container ) ~= sourceRevisions[id] then
-			local retry = {}
-			for _, changedDescriptor in pairs( touched ) do retry[#retry + 1] = changedDescriptor end
-			table.sort( retry, function( a, b ) return a.id < b.id end )
-			self:sv_refreshAfterWithdrawalConflict( retry, "WITHDRAWAL_RETRY" )
-			return false, "NETWORK_CHANGED", 0
-		end
+		return false, "ITEM_MOVED", 0, nil, true, true
 	end
 
-	if not sm.container.beginTransaction() then return false, "TRANSACTION_BUSY", 0 end
+	if not sm.container.beginTransaction() then
+		return false, "TRANSACTION_BUSY", 0, nil, true, true
+	end
 	for _, entry in ipairs( allocation ) do
 		sm.container.spendFromSlot( entry.source.container, entry.source.slot, itemUuid, entry.quantity, true )
 	end
@@ -1503,7 +1532,7 @@ function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, 
 		for _, descriptor in pairs( touched ) do retry[#retry + 1] = descriptor end
 		table.sort( retry, function( a, b ) return a.id < b.id end )
 		self:sv_refreshAfterWithdrawalConflict( retry, "WITHDRAWAL_RETRY" )
-		return false, "NETWORK_CHANGED", 0
+		return false, "ITEM_MOVED", 0, nil, true, true
 	end
 
 	local rescans = {}
@@ -1513,7 +1542,102 @@ function NetworkStorageChest.sv_executeLocalWithdrawal( self, itemUuid, action, 
 	end
 	table.sort( rescans, function( a, b ) return a.id < b.id end )
 	self:sv_startScan( rescans, "WITHDRAWAL" )
-	return true, "SUCCESS", quantity
+	return true, "SUCCESS", quantity, nil, false, true
+end
+
+function NetworkStorageChest.sv_sendWithdrawalProgress( self, job, reason )
+	if not job or not job.player then return end
+	self.network:sendToClient( job.player, "cl_n_withdrawProgress", {
+		status = "RETRYING", reason = reason,
+		attempt = job.attempts, limit = WITHDRAW_RETRY_LIMIT
+	} )
+end
+
+function NetworkStorageChest.sv_completeWithdrawalJob( self, job, status, moved, detail )
+	if not job or self.sv.pendingWithdrawals[job.playerKey] ~= job then return end
+	self.sv.pendingWithdrawals[job.playerKey] = nil
+	if status == "SUCCESS" then self.sv.withdrawalStats.successes = self.sv.withdrawalStats.successes + 1
+	else self.sv.withdrawalStats.failures = self.sv.withdrawalStats.failures + 1 end
+	self:sv_sendWithdrawalResult( job.player, status, moved, detail )
+	self:sv_publishDiagnostics( self.sv.indexing and
+		( self.sv.scanBlocking and "INDEXING" or "REFRESHING" ) or "READY", 0, 0, 0 )
+end
+
+function NetworkStorageChest.sv_finalWithdrawalStatus( self, reason )
+	if reason == "NETWORK_REFRESHING" or reason == "NETWORK_OFFLINE" or reason == "INDEXING" then
+		return "ROUTE_UNAVAILABLE"
+	end
+	if reason == "TRANSACTION_BUSY" then return "STORAGE_BUSY" end
+	return "ITEM_IN_USE"
+end
+
+function NetworkStorageChest.sv_tryWithdrawalJob( self, job )
+	if self.sv.indexing and self.sv.scanBlocking then
+		return false, "INDEXING", 0, nil, true, false
+	end
+	local descriptors, _, _, topologyFailure, currentTopologyKey = self:sv_collectTopologySnapshot()
+	if not descriptors then
+		return false, "NETWORK_OFFLINE", 0, topologyFailure, true, false
+	end
+	if currentTopologyKey ~= self.sv.topologyKey then
+		self.sv.withdrawalStats.topologyWaits = self.sv.withdrawalStats.topologyWaits + 1
+		self:sv_refreshTopology( true )
+		return false, "NETWORK_REFRESHING", 0, nil, true, false
+	end
+	return self:sv_executeLocalWithdrawal( job.itemUuid, job.action, job.destination, descriptors )
+end
+
+function NetworkStorageChest.sv_runWithdrawalJob( self, job )
+	if not job or self.sv.pendingWithdrawals[job.playerKey] ~= job or
+			self.sv.tick < ( job.nextAttemptTick or 0 ) then return end
+	local session = self.sv.sessions[job.playerKey]
+	if not session or session.token ~= job.sessionToken or
+			not self.sv.viewers[job.playerKey] or not validViewer( job.player, self.shape ) then
+		self:sv_completeWithdrawalJob( job, "SESSION_EXPIRED", 0 )
+		return
+	end
+	local inventory = job.player:getInventory()
+	if not inventory or not sm.exists( inventory ) then
+		self:sv_completeWithdrawalJob( job, "INVENTORY_UNAVAILABLE", 0 )
+		return
+	end
+	job.destination = inventory
+	local success, status, moved, detail, retryable, consumesAttempt = self:sv_tryWithdrawalJob( job )
+	if success then
+		self:sv_completeWithdrawalJob( job, "SUCCESS", moved, detail )
+		return
+	end
+	if consumesAttempt then job.attempts = job.attempts + 1 end
+	job.lastReason = status
+	if status == "TRANSACTION_BUSY" then
+		self.sv.withdrawalStats.transactionBusy = self.sv.withdrawalStats.transactionBusy + 1
+	elseif status == "ITEM_MOVED" then
+		self.sv.withdrawalStats.slotConflicts = self.sv.withdrawalStats.slotConflicts + 1
+	end
+	if not retryable then
+		self:sv_completeWithdrawalJob( job, status, moved, detail )
+		return
+	end
+	-- WITHDRAW_RETRY_LIMIT counts retries after the initial attempt. A successful
+	-- commit always completes the job above, so it is never replayed.
+	if self.sv.tick >= job.deadlineTick or job.attempts > WITHDRAW_RETRY_LIMIT then
+		self:sv_completeWithdrawalJob( job, self:sv_finalWithdrawalStatus( status ), 0, detail )
+		return
+	end
+	self.sv.withdrawalStats.retries = self.sv.withdrawalStats.retries + 1
+	local delayIndex = math.max( 1, math.min( #WITHDRAW_RETRY_DELAYS, job.attempts ) )
+	job.nextAttemptTick = self.sv.tick + WITHDRAW_RETRY_DELAYS[delayIndex]
+	if not job.progressSent then
+		job.progressSent = true
+		self:sv_sendWithdrawalProgress( job, status )
+	end
+end
+
+function NetworkStorageChest.sv_processPendingWithdrawals( self )
+	local jobs = {}
+	for _, job in pairs( self.sv.pendingWithdrawals or {} ) do jobs[#jobs + 1] = job end
+	table.sort( jobs, function( a, b ) return a.serial < b.serial end )
+	for _, job in ipairs( jobs ) do self:sv_runWithdrawalJob( job ) end
 end
 
 function NetworkStorageChest.sv_validateWithdrawalRequest( self, data, player )
@@ -1533,12 +1657,9 @@ function NetworkStorageChest.sv_validateWithdrawalRequest( self, data, player )
 	if not WITHDRAW_ACTIONS[data.action] then return nil, nil, "INVALID_REQUEST" end
 	local itemUuid = safeItemUuid( data.uuid )
 	if not itemUuid then return nil, nil, "INVALID_REQUEST" end
-	-- Content generations are intentionally allowed to lag while busy machines
-	-- are being coalesced. Topology must still match; the selected item and its
-	-- exact source slots are re-read authoritatively before the transaction.
-	if data.topologyGeneration ~= self.sv.topologyGeneration then
-		return nil, nil, "STALE_CATALOG"
-	end
+	-- Catalog and topology generations are display hints. The client requests
+	-- only an item UUID and action; the server resolves the current reachable
+	-- sources and native slot transactions remain the sole transfer authority.
 	session.lastRequestTick = tick
 	local inventory = player:getInventory()
 	if not inventory or not sm.exists( inventory ) then return nil, nil, "INVENTORY_UNAVAILABLE" end
@@ -1554,8 +1675,24 @@ function NetworkStorageChest.sv_n_withdraw( self, data, player )
 		end
 		return
 	end
-	local success, status, moved, detail = self:sv_executeLocalWithdrawal( itemUuid, data.action, inventory )
-	self:sv_sendWithdrawalResult( player, status, moved, detail )
+	local key = playerKey( player )
+	local existing = key and self.sv.pendingWithdrawals[key] or nil
+	if existing then
+		self:sv_sendWithdrawalProgress( existing, existing.lastReason or "RETRYING" )
+		return
+	end
+	self.sv.withdrawalSerial = self.sv.withdrawalSerial + 1
+	self.sv.withdrawalStats.requests = self.sv.withdrawalStats.requests + 1
+	local session = self.sv.sessions[key]
+	local job = {
+		serial = self.sv.withdrawalSerial,
+		player = player, playerKey = key, sessionToken = session.token,
+		itemUuid = itemUuid, action = data.action, destination = inventory,
+		startedTick = self.sv.tick, deadlineTick = self.sv.tick + WITHDRAW_RETRY_WINDOW_TICKS,
+		nextAttemptTick = self.sv.tick, attempts = 0, progressSent = false
+	}
+	self.sv.pendingWithdrawals[key] = job
+	self:sv_runWithdrawalJob( job )
 end
 
 function NetworkStorageChest.sv_n_openCatalog( self, _, player )
@@ -1712,8 +1849,10 @@ function NetworkStorageChest.sv_n_closeCatalog( self, _, player )
 		local key = playerKey( player )
 		self.sv.viewers[key] = nil
 		self.sv.sessions[key] = nil
+		self.sv.pendingWithdrawals[key] = nil
 	end
 	if not hasEntries( self.sv.viewers ) then
+		self.sv.pendingWithdrawals = {}
 		self.sv.indexing = false
 		self.sv.scanQueue = {}
 		self.sv.pendingScanDescriptors = {}
@@ -2530,6 +2669,16 @@ function NetworkStorageChest.cl_requestWithdrawal( self, action )
 	} )
 end
 
+function NetworkStorageChest.cl_n_withdrawProgress( self, data )
+	if not self.cl or type( data ) ~= "table" then return end
+	self.cl.withdrawBusy = true
+	self.cl.withdrawStatus = localizedText( "withdrawRetrying" )
+	if self.cl.guiData then
+		self:cl_refreshStatus()
+		self.cl.guiDirty = true
+	end
+end
+
 function NetworkStorageChest.cl_n_withdrawResult( self, data )
 	if not self.cl or type( data ) ~= "table" then return end
 	self.cl.withdrawBusy = false
@@ -2540,6 +2689,9 @@ function NetworkStorageChest.cl_n_withdrawResult( self, data )
 		ITEM_UNAVAILABLE = localizedText( "itemUnavailable" ),
 		STALE_CATALOG = localizedText( "staleCatalog" ),
 		NETWORK_CHANGED = localizedText( "networkChanged" ),
+		ITEM_IN_USE = localizedText( "itemInUse" ),
+		ROUTE_UNAVAILABLE = localizedText( "routeUnavailable" ),
+		STORAGE_BUSY = localizedText( "storageBusy" ),
 		INDEXING = localizedText( "indexingError" ),
 		NETWORK_OFFLINE = localizedText( "offlineError" ),
 		TRANSACTION_BUSY = localizedText( "busyError" ),

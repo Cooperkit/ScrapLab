@@ -11,7 +11,7 @@ namespace RaidRescue
     internal static class NetworkStorageChestPatchService
     {
         private const string ModKey = "NetworkStorageChest";
-        private const string DefinitionVersion = "8";
+        private const string DefinitionVersion = "9";
         private const string LegacyV1RuntimeHash = "453BB866D4B4D564C79BFF9F4A2997131BF9826496608DBEA7709BE2730FC596";
         private const string LegacyV1IndexHash = "F036925AFA22A028CFED0A82E89A691442FC77DEB851D0876F3DD92ED535D4EC";
         private const string LegacyV2RuntimeHash = "B42F99CA53E5D36188F8BFC352DCB0F560A649BD6783E31DAE38BC22ECC3FB49";
@@ -29,6 +29,8 @@ namespace RaidRescue
         private const string LegacyV6RuntimeHash = "95F9A18C4B6DD668EED84FEB4D8F8CF2A5377C68D8B6082AA3A99A9CE9CE3BE5";
         private const string LegacyV6GuiHash = "9AB2D9C0F0134CF3D7615E53DC67B0BCB8A0B9E3A236AB85283D9ECF7805E0E5";
         private const string LegacyV7RuntimeHash = "FFCF050028A72F09C0CEB10FBEEB73F5EE8C383EE3B0A20A54239E18E0C6B39E";
+        private const string LegacyV8RuntimeHash = "3F034EA042DC6A1F4BBA1A1C0202BD7166EC71BDD3D8C29BCBF4FF24F19D5F10";
+        private const string LegacyV8LocalizationHash = "B26B15812FDE24CB983F4509FDC2898D9CD248474F3FA9DFD2FC979D75A3DDCB";
         internal const string PartUuid = "bc7576a7-f226-459a-883c-e8460e955d63";
         internal const string VerifiedSteamBuildId = "24529696";
         internal const string VerifiedGameVersion = "1.0.5.876";
@@ -444,7 +446,8 @@ namespace RaidRescue
                     String.Equals(hash, LegacyV4RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV5RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV6RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(hash, LegacyV7RuntimeHash, StringComparison.OrdinalIgnoreCase);
+                    String.Equals(hash, LegacyV7RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV8RuntimeHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkInventoryIndex.lua", StringComparison.OrdinalIgnoreCase))
                 return String.Equals(hash, LegacyV1IndexHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkStorageChest.gui", StringComparison.OrdinalIgnoreCase))
@@ -458,7 +461,8 @@ namespace RaidRescue
             if (String.Equals(file, "NetworkStorageChest.localization.json", StringComparison.OrdinalIgnoreCase))
                 return String.Equals(hash, LegacyV2LocalizationHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV4LocalizationHash, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(hash, LegacyV5LocalizationHash, StringComparison.OrdinalIgnoreCase);
+                    String.Equals(hash, LegacyV5LocalizationHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV8LocalizationHash, StringComparison.OrdinalIgnoreCase);
             return false;
         }
 

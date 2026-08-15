@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.9.1.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.9.2.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -246,8 +246,10 @@ whether a mod is installed or installable. Recovery retention is bounded.
   **Smart Sort** or **Nearest Empty**. Wireless Vacuum Pipe support is optional,
   and connected players deposit through host-authoritative transactions. Busy
   Craftbots and pumps are indexed in the background: unchanged scans are not
-  redrawn, changed totals are coalesced, and live atomic withdrawals remain
-  available while unrelated containers are moving items.
+  redrawn and changed totals are coalesced. Withdrawals prefer fuller local
+  source stacks and commit against exact live slots, so unrelated changes in the
+  same chest do not cancel the request. Short item, route, or transaction races
+  retry safely under the original click without duplicating or losing items.
 
 ScrapLab's Craftbot recipes are grouped immediately after the ordinary Vacuum
 Pipe recipe instead of being appended to the bottom. Raid Detector remains a
@@ -334,7 +336,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.9.1.zip
+release\ScrapLab-2.9.2.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

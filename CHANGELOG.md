@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 2.9.2 - 2026-08-15
+
+- Made Network Storage Chest withdrawals resilient to continuously moving
+  Craftbot, pump, and loop-crafting inventories. Definition 9 selects likely
+  source chests from the live index, prefers fuller local stacks, and lets the
+  native exact-slot transaction—not an unrelated whole-chest revision—decide
+  whether a transfer is valid. Brief slot, route, and transaction conflicts now
+  retry silently for up to half a second under one UI request, with precise
+  final messages if a machine keeps the item busy or the route disappears.
 - Fixed Network Storage Chests repeatedly flashing **INDEXING**, rebuilding the
   item grid, and blocking withdrawals while Craftbots, loop crafting, or Vacuum
   Pumps changed connected containers. Definition 8 now coalesces background
