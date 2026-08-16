@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.9.2.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.10.0.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -230,9 +230,17 @@ whether a mod is installed or installable. Recovery retention is bounded.
   **Entire Pipe Network** when wanted. Receive-side machines can pull from Send
   storage, while producer machines on Send (including water pumps) can place
   output into Receive storage. Cross-world routing retains its 64-cell cap.
-  Remote cells load on demand, stable topology is cached until it changes, and idle
+  Remote cells load on demand, stable ordered container selections are cached
+  within hard memory limits until their bodies or wireless route change, and idle
   directional routes use a long backoff so a
   configured but unused cross-world channel does not stay fully simulated.
+  Vacuum Pumps retain unchanged input/output route topology for no more than
+  five ticks, bound packing-station geometry and item-source probes, and avoid
+  scanning an inactive intake trigger. Wireless topology changes invalidate
+  the snapshot immediately; item quantities and native container transactions
+  remain live and authoritative. Prospectors with no matching input or a full
+  output now honor their native 0.4-second retry delay instead of rescanning a
+  large unchanged container route on every server tick.
   When a Craftbot opens before a requested cell finishes loading, a bounded
   readiness refresh updates its recipe counts automatically instead of
   requiring another storage UI to be opened first. Machines that retain a
@@ -336,7 +344,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.9.2.zip
+release\ScrapLab-2.10.0.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,

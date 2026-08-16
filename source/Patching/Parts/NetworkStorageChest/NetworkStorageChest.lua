@@ -478,6 +478,9 @@ function NetworkStorageChest.server_onCreate( self )
 		revisionCursor = 1,
 		lastSignature = nil,
 		snapshot = nil,
+		aggregateByUuid = {},
+		aggregateTotalQuantity = 0,
+		aggregateTotalStacks = 0,
 		pendingCatalogSnapshot = nil,
 		lastCatalogPublishTick = -CATALOG_PUBLISH_INTERVAL_TICKS,
 		lastPublishedSignature = nil,
@@ -524,40 +527,41 @@ end
 function NetworkStorageChest.sv_publishDiagnostics( self, status, scanned, total, durationTicks )
 	local stats = NetworkInventoryIndex.getStatistics()
 	self.interactable.publicData = self.interactable.publicData or {}
-	self.interactable.publicData.scrapLabStoragePhase1 = {
-		status = status,
-		viewers = countTable( self.sv and self.sv.viewers ),
-		containers = #( self.sv and self.sv.containers or {} ),
-		uniqueItems = self.sv and self.sv.snapshot and self.sv.snapshot.uniqueItems or 0,
-		totalQuantity = self.sv and self.sv.snapshot and self.sv.snapshot.totalQuantity or 0,
-		topologyGeneration = self.sv and self.sv.topologyGeneration or 0,
-		wirelessState = self.sv and self.sv.routeState and self.sv.routeState.wirelessState or "LOCAL_ONLY",
-		reachableWorlds = self.sv and self.sv.routeState and self.sv.routeState.reachableWorlds or 1,
-		contentGeneration = self.sv and self.sv.contentGeneration or 0,
-		scanned = scanned or 0,
-		scanTotal = total or 0,
-		durationTicks = durationTicks or 0,
-		cachedEntries = stats.cachedEntries,
-		cacheHits = stats.cacheHits,
-		containerScans = stats.containerScans,
-		slotsScanned = stats.slotsScanned,
-		activitySerial = self.sv and self.sv.activitySerial or 0,
-		pendingWithdrawals = countTable( self.sv and self.sv.pendingWithdrawals ),
-		withdrawalRequests = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.requests or 0,
-		withdrawalRetries = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.retries or 0,
-		withdrawalSuccesses = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.successes or 0,
-		withdrawalFailures = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.failures or 0,
-		withdrawalTopologyWaits = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.topologyWaits or 0,
-		withdrawalTransactionBusy = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.transactionBusy or 0,
-		withdrawalSlotConflicts = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.slotConflicts or 0,
-		smartRouting = not self.sv or self.sv.smartRouting ~= false,
-		bufferSize = self.interactable:getContainer( 0 ) and self.interactable:getContainer( 0 ):getSize() or 0,
-		qualificationLocked = self.sv and self.sv.qualificationLocked == true or false,
-		sessions = countTable( self.sv and self.sv.sessions ),
-		lastError = self.sv and self.sv.lastError or nil
-	}
-	self.interactable.publicData.scrapLabStoragePhase1.depositStatus = self.sv and self.sv.depositStatus or "READY"
-	self.interactable.publicData.scrapLabStoragePhase1.depositDebug = self.sv and self.sv.depositDebug == true or false
+	local diagnostics = self.interactable.publicData.scrapLabStoragePhase1 or {}
+	diagnostics.status = status
+	diagnostics.viewers = countTable( self.sv and self.sv.viewers )
+	diagnostics.containers = #( self.sv and self.sv.containers or {} )
+	diagnostics.uniqueItems = self.sv and self.sv.snapshot and self.sv.snapshot.uniqueItems or 0
+	diagnostics.totalQuantity = self.sv and self.sv.snapshot and self.sv.snapshot.totalQuantity or 0
+	diagnostics.topologyGeneration = self.sv and self.sv.topologyGeneration or 0
+	diagnostics.wirelessState = self.sv and self.sv.routeState and self.sv.routeState.wirelessState or "LOCAL_ONLY"
+	diagnostics.reachableWorlds = self.sv and self.sv.routeState and self.sv.routeState.reachableWorlds or 1
+	diagnostics.contentGeneration = self.sv and self.sv.contentGeneration or 0
+	diagnostics.scanned = scanned or 0
+	diagnostics.scanTotal = total or 0
+	diagnostics.durationTicks = durationTicks or 0
+	diagnostics.cachedEntries = stats.cachedEntries
+	diagnostics.cacheLimit = stats.cacheLimit
+	diagnostics.cacheHits = stats.cacheHits
+	diagnostics.containerScans = stats.containerScans
+	diagnostics.slotsScanned = stats.slotsScanned
+	diagnostics.activitySerial = self.sv and self.sv.activitySerial or 0
+	diagnostics.pendingWithdrawals = countTable( self.sv and self.sv.pendingWithdrawals )
+	diagnostics.withdrawalRequests = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.requests or 0
+	diagnostics.withdrawalRetries = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.retries or 0
+	diagnostics.withdrawalSuccesses = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.successes or 0
+	diagnostics.withdrawalFailures = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.failures or 0
+	diagnostics.withdrawalTopologyWaits = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.topologyWaits or 0
+	diagnostics.withdrawalTransactionBusy = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.transactionBusy or 0
+	diagnostics.withdrawalSlotConflicts = self.sv and self.sv.withdrawalStats and self.sv.withdrawalStats.slotConflicts or 0
+	diagnostics.smartRouting = not self.sv or self.sv.smartRouting ~= false
+	diagnostics.bufferSize = self.interactable:getContainer( 0 ) and self.interactable:getContainer( 0 ):getSize() or 0
+	diagnostics.qualificationLocked = self.sv and self.sv.qualificationLocked == true or false
+	diagnostics.sessions = countTable( self.sv and self.sv.sessions )
+	diagnostics.lastError = self.sv and self.sv.lastError or nil
+	diagnostics.depositStatus = self.sv and self.sv.depositStatus or "READY"
+	diagnostics.depositDebug = self.sv and self.sv.depositDebug == true or false
+	self.interactable.publicData.scrapLabStoragePhase1 = diagnostics
 end
 
 function NetworkStorageChest.sv_sendToViewers( self, callback, payload )
@@ -630,6 +634,9 @@ function NetworkStorageChest.sv_endPhase1HarnessSession( self, player )
 		self.sv.topologyKey = ""
 		self.sv.containers = {}
 		self.sv.records = {}
+		self.sv.aggregateByUuid = {}
+		self.sv.aggregateTotalQuantity = 0
+		self.sv.aggregateTotalStacks = 0
 		self.sv.revisionCursor = 1
 		self.sv.needsRescan = true
 	elseif player then
@@ -745,10 +752,19 @@ function NetworkStorageChest.sv_collectNetworkContainers( self, kind )
 				local existsOk, containerExists = pcall( function() return descriptor.container and sm.exists( descriptor.container ) end )
 				if id and id ~= bufferId and not seen[id] and uuid and LOCAL_STORAGE_UUIDS[uuid] and existsOk and containerExists then
 					seen[id] = true
-					descriptor.id = tostring( id )
-					descriptor.routePriority = descriptor.routePriority or ( descriptor.wireless and 1 or 0 )
-					descriptor.routeDistance = descriptor.routeDistance or 0
-					safe[#safe + 1] = descriptor
+					-- Graph descriptors are shared read-only cache entries. Current graph
+					-- definitions already provide normalized route data; only allocate a
+					-- fallback copy for an older compatible graph that omits it.
+					if descriptor.id and descriptor.routePriority ~= nil and descriptor.routeDistance ~= nil then
+						safe[#safe + 1] = descriptor
+					else
+						local normalized = {}
+						for key, value in pairs( descriptor ) do normalized[key] = value end
+						normalized.id = tostring( id )
+						normalized.routePriority = normalized.routePriority or ( normalized.wireless and 1 or 0 )
+						normalized.routeDistance = normalized.routeDistance or 0
+						safe[#safe + 1] = normalized
+					end
 				end
 			end
 			table.sort( safe, function( a, b )
@@ -805,12 +821,82 @@ function NetworkStorageChest.sv_startScan( self, descriptors, reason )
 	self.sv.scanSlotsScanned = 0
 	self.sv.indexing = true
 	self.sv.scanBlocking = blocking
+	self.sv.scanIncremental = not blocking and self.sv.snapshot ~= nil and self.sv.aggregateByUuid ~= nil
 	self.sv.needsRescan = blocking
 	self:sv_publishDiagnostics( blocking and "INDEXING" or "REFRESHING", 0, #self.sv.scanQueue, 0 )
 	if blocking then
 		self:sv_sendToViewers( "cl_n_catalogSnapshot", self:sv_indexingPayload() )
 	end
 	if #self.sv.scanQueue == 0 then self:sv_finishScan() end
+end
+
+function NetworkStorageChest.sv_adjustAggregateRecord( self, descriptor, record, direction )
+	if not record or direction == 0 then return end
+	self.sv.aggregateByUuid = self.sv.aggregateByUuid or {}
+	for _, item in ipairs( record.items or {} ) do
+		local entry = self.sv.aggregateByUuid[item.uuid]
+		if not entry and direction > 0 then
+			entry = {
+			uuid = item.uuid, quantity = 0, stacks = 0, sources = 0,
+				localSources = 0, wirelessSources = 0, crossWorldSources = 0
+			}
+			self.sv.aggregateByUuid[item.uuid] = entry
+		end
+		if entry then
+			entry.quantity = entry.quantity + direction * ( item.quantity or 0 )
+			entry.stacks = entry.stacks + direction * ( item.stacks or 0 )
+			entry.sources = entry.sources + direction
+			if descriptor.wireless then entry.wirelessSources = entry.wirelessSources + direction
+			else entry.localSources = entry.localSources + direction end
+			if descriptor.crossWorld then entry.crossWorldSources = entry.crossWorldSources + direction end
+			if entry.quantity <= 0 or entry.stacks <= 0 or entry.sources <= 0 then
+				self.sv.aggregateByUuid[item.uuid] = nil
+			end
+		end
+		self.sv.aggregateTotalQuantity = ( self.sv.aggregateTotalQuantity or 0 ) + direction * ( item.quantity or 0 )
+		self.sv.aggregateTotalStacks = ( self.sv.aggregateTotalStacks or 0 ) + direction * ( item.stacks or 0 )
+	end
+	self.sv.aggregateTotalQuantity = math.max( 0, self.sv.aggregateTotalQuantity or 0 )
+	self.sv.aggregateTotalStacks = math.max( 0, self.sv.aggregateTotalStacks or 0 )
+end
+
+function NetworkStorageChest.sv_rebuildAggregateState( self )
+	self.sv.aggregateByUuid = {}
+	self.sv.aggregateTotalQuantity = 0
+	self.sv.aggregateTotalStacks = 0
+	for _, descriptor in ipairs( self.sv.containers or {} ) do
+		self:sv_adjustAggregateRecord( descriptor, self.sv.records[descriptor.id], 1 )
+	end
+end
+
+function NetworkStorageChest.sv_buildAggregateSnapshot( self )
+	local entries = {}
+	for _, source in pairs( self.sv.aggregateByUuid or {} ) do
+		entries[#entries + 1] = {
+			uuid = source.uuid,
+			quantity = source.quantity,
+			stacks = source.stacks,
+			sources = source.sources,
+			localSources = source.localSources,
+			wirelessSources = source.wirelessSources,
+			crossWorldSources = source.crossWorldSources
+		}
+	end
+	table.sort( entries, function( a, b ) return a.uuid < b.uuid end )
+	local signatureParts = {}
+	for _, entry in ipairs( entries ) do
+		signatureParts[#signatureParts + 1] = entry.uuid .. ":" .. tostring( entry.quantity ) ..
+			":" .. tostring( entry.stacks ) .. ":" .. tostring( entry.sources ) ..
+			":" .. tostring( entry.localSources ) .. ":" .. tostring( entry.wirelessSources ) ..
+			":" .. tostring( entry.crossWorldSources )
+	end
+	return {
+		entries = entries,
+		uniqueItems = #entries,
+		totalQuantity = self.sv.aggregateTotalQuantity or 0,
+		totalStacks = self.sv.aggregateTotalStacks or 0,
+		signature = table.concat( signatureParts, "|" )
+	}
 end
 
 function NetworkStorageChest.sv_refreshTopology( self, force )
@@ -855,7 +941,9 @@ function NetworkStorageChest.sv_processScan( self )
 		local descriptor = self.sv.scanQueue[self.sv.scanCursor]
 		self.sv.scanCursor = self.sv.scanCursor + 1
 		processed = processed + 1
-		local record, cached, failure = NetworkInventoryIndex.read( descriptor.container, self.sv.tick )
+		local previous = self.sv.records[descriptor.id]
+		if self.sv.scanIncremental then self:sv_adjustAggregateRecord( descriptor, previous, -1 ) end
+		local record, cached, failure = NetworkInventoryIndex.read( descriptor.container )
 		self.sv.activitySerial = ( self.sv.activitySerial or 0 ) + 1
 		if record then
 			if cached then
@@ -865,6 +953,7 @@ function NetworkStorageChest.sv_processScan( self )
 				self.sv.scanSlotsScanned = self.sv.scanSlotsScanned + ( descriptor.container:getSize() or 0 )
 			end
 			self.sv.records[descriptor.id] = record
+			if self.sv.scanIncremental then self:sv_adjustAggregateRecord( descriptor, record, 1 ) end
 		else
 			self.sv.records[descriptor.id] = nil
 			self.sv.lastError = failure or "CONTAINER SCAN FAILED"
@@ -881,30 +970,8 @@ end
 function NetworkStorageChest.sv_finishScan( self )
 	local completedReason = self.sv.scanReason
 	local wasBlocking = self.sv.scanBlocking == true
-	local records = {}
-	for _, descriptor in ipairs( self.sv.containers ) do
-		local record = self.sv.records[descriptor.id]
-		if record then records[#records + 1] = record end
-	end
-	local aggregate = NetworkInventoryIndex.aggregate( records )
-	local aggregateByUuid = {}
-	for _, entry in ipairs( aggregate.entries ) do
-		entry.localSources = 0
-		entry.wirelessSources = 0
-		entry.crossWorldSources = 0
-		aggregateByUuid[entry.uuid] = entry
-	end
-	for _, descriptor in ipairs( self.sv.containers ) do
-		local record = self.sv.records[descriptor.id]
-		for _, item in ipairs( record and record.items or {} ) do
-			local entry = aggregateByUuid[item.uuid]
-			if entry then
-				if descriptor.wireless then entry.wirelessSources = entry.wirelessSources + 1
-				else entry.localSources = entry.localSources + 1 end
-				if descriptor.crossWorld then entry.crossWorldSources = entry.crossWorldSources + 1 end
-			end
-		end
-	end
+	if not self.sv.scanIncremental then self:sv_rebuildAggregateState() end
+	local aggregate = self:sv_buildAggregateSnapshot()
 	local aggregateChanged = aggregate.signature ~= self.sv.lastSignature
 	if aggregateChanged then
 		self.sv.contentGeneration = self.sv.contentGeneration + 1
@@ -914,6 +981,7 @@ function NetworkStorageChest.sv_finishScan( self )
 	local duration = self.sv.tick - self.sv.scanStartedTick
 	self.sv.indexing = false
 	self.sv.scanBlocking = false
+	self.sv.scanIncremental = false
 	self.sv.needsRescan = false
 	self.sv.snapshot = {
 		status = "READY",
@@ -1009,6 +1077,30 @@ function NetworkStorageChest.sv_pollRevisions( self )
 	end
 end
 
+function NetworkStorageChest.sv_releaseCatalogState( self )
+	-- A closed terminal does not need to retain an entire local/cross-world
+	-- descriptor graph and aggregate. Deposit routing performs its own fresh,
+	-- transaction-authoritative query, so releasing this read-only view is safe.
+	self.sv.indexing = false
+	self.sv.scanBlocking = false
+	self.sv.scanQueue = {}
+	self.sv.pendingScanDescriptors = {}
+	self.sv.pendingScanReason = nil
+	self.sv.pendingCatalogSnapshot = nil
+	self.sv.containers = {}
+	self.sv.records = {}
+	self.sv.aggregateByUuid = {}
+	self.sv.aggregateTotalQuantity = 0
+	self.sv.aggregateTotalStacks = 0
+	self.sv.snapshot = nil
+	self.sv.lastSignature = nil
+	self.sv.topologyInitialized = false
+	self.sv.topologyKey = ""
+	self.sv.routeState = localRouteState( false )
+	self.sv.revisionCursor = 1
+	self.sv.needsRescan = true
+end
+
 function NetworkStorageChest.sv_validateViewers( self )
 	for id, player in pairs( self.sv.viewers ) do
 		if not validViewer( player, self.shape ) then
@@ -1019,11 +1111,7 @@ function NetworkStorageChest.sv_validateViewers( self )
 	end
 	if not hasEntries( self.sv.viewers ) then
 		self.sv.pendingWithdrawals = {}
-		self.sv.indexing = false
-		self.sv.scanQueue = {}
-		self.sv.pendingScanDescriptors = {}
-		self.sv.pendingScanReason = nil
-		self.sv.pendingCatalogSnapshot = nil
+		self:sv_releaseCatalogState()
 		self:sv_publishDiagnostics( "IDLE", 0, 0, 0 )
 	end
 end
@@ -1081,7 +1169,7 @@ function NetworkStorageChest.sv_planDepositSlot( self, itemUuid, quantity, descr
 	for _, descriptor in ipairs( descriptors or {} ) do
 		local capacity = maxCollectableQuantity( descriptor.container, itemUuid, quantity )
 		if capacity > 0 then
-			local record = NetworkInventoryIndex.read( descriptor.container, self.sv and self.sv.tick or nil )
+			local record = NetworkInventoryIndex.read( descriptor.container )
 			local emptySlot = destinationHasEmptySlot( descriptor.container, record )
 			local hasItem, fullestPartial, occupiedStacks = false, 0, 0
 			local familyStacks, categoryStacks = 0, 0
@@ -1269,6 +1357,7 @@ end
 function NetworkStorageChest.server_onFixedUpdate( self )
 	if not self.sv then return end
 	self.sv.tick = self.sv.tick + 1
+	NetworkInventoryIndex.heartbeat()
 	local buffer = self:sv_tryMigrateDepositBuffer()
 	local bufferRevision = buffer and buffer:getRevision() or -1
 	if not self.sv.depositRoutingSuspended and bufferRevision ~= self.sv.lastBufferRevision then
@@ -1300,7 +1389,6 @@ function NetworkStorageChest.server_onFixedUpdate( self )
 	self:sv_processPendingWithdrawals()
 	self:sv_flushCatalogSnapshot()
 
-	if self.sv.tick % 2400 == 0 then NetworkInventoryIndex.prune( self.sv.tick, 2400 ) end
 end
 
 function NetworkStorageChest.sv_createSession( self, player )
@@ -1853,11 +1941,7 @@ function NetworkStorageChest.sv_n_closeCatalog( self, _, player )
 	end
 	if not hasEntries( self.sv.viewers ) then
 		self.sv.pendingWithdrawals = {}
-		self.sv.indexing = false
-		self.sv.scanQueue = {}
-		self.sv.pendingScanDescriptors = {}
-		self.sv.pendingScanReason = nil
-		self.sv.pendingCatalogSnapshot = nil
+		self:sv_releaseCatalogState()
 		self:sv_publishDiagnostics( "IDLE", 0, 0, 0 )
 	end
 end
@@ -1878,6 +1962,8 @@ function NetworkStorageChest.client_onCreate( self )
 		catalog = {},
 		catalogSignature = nil,
 		catalogTopologyGeneration = -1,
+		catalogLayoutSignature = nil,
+		catalogWidgetsByUuid = {},
 		catalogState = {
 			status = "OFFLINE", uniqueItems = 0, totalQuantity = 0,
 			totalStacks = 0, containerCount = 0, topologyGeneration = 0,
@@ -2065,6 +2151,18 @@ function NetworkStorageChest.cl_endServerSession( self )
 	end
 end
 
+function NetworkStorageChest.cl_releaseCatalogState( self )
+	if not self.cl then return end
+	self.cl.catalog = {}
+	self.cl.catalogSignature = nil
+	self.cl.catalogTopologyGeneration = -1
+	self.cl.catalogLayoutSignature = nil
+	self.cl.catalogWidgetsByUuid = {}
+	self.cl.catalogState = { status = "IDLE", entries = {} }
+	self.cl.selected = nil
+	self.cl.visibleCount = 0
+end
+
 function NetworkStorageChest.cl_destroyGui( self )
 	if not self.cl then return end
 	self:cl_endServerSession()
@@ -2084,6 +2182,7 @@ function NetworkStorageChest.cl_destroyGui( self )
 	self.cl.inventoryDepositStatusUntil = 0
 	self.cl.routingBusy = false
 	self.cl.legacyBuffer = false
+	self:cl_releaseCatalogState()
 	if gui and sm.exists( gui ) and gui:isActive() then gui:close() end
 end
 
@@ -2105,6 +2204,7 @@ function NetworkStorageChest.cl_onGuiClosed( self )
 	self.cl.inventoryDepositStatusUntil = 0
 	self.cl.routingBusy = false
 	self.cl.legacyBuffer = false
+	self:cl_releaseCatalogState()
 end
 
 function NetworkStorageChest.cl_n_sessionState( self, data )
@@ -2128,32 +2228,36 @@ end
 
 function NetworkStorageChest.cl_n_catalogSnapshot( self, data )
 	if not self.cl or type( data ) ~= "table" then return end
-	local sameCatalog = data.status == "READY" and data.contentSignature ~= nil and
-		data.contentSignature == self.cl.catalogSignature and
-		data.topologyGeneration == self.cl.catalogTopologyGeneration
-	local rebuildCatalog = data.status ~= "INDEXING" and not sameCatalog
 	local selectedUuid = self.cl.selected and self.cl.catalog[self.cl.selected]
 		and self.cl.catalog[self.cl.selected].uuid or nil
-	if rebuildCatalog then
+	local catalogChanged = data.status ~= "INDEXING" and
+		( data.contentSignature ~= self.cl.catalogSignature or
+		data.topologyGeneration ~= self.cl.catalogTopologyGeneration )
+	if catalogChanged then
+		local previous = {}
+		for _, entry in ipairs( self.cl.catalog or {} ) do previous[entry.uuid] = entry end
 		local catalog = {}
 		for _, source in ipairs( data.entries or {} ) do
 			if source.uuid and ( source.quantity or 0 ) > 0 then
-				local itemUuid = sm.uuid.new( source.uuid )
-				local title = sm.shape.getShapeTitle( itemUuid ) or source.uuid
-				local _, _, _, _, itemType = sm.gui.getItemIconFromUuid( itemUuid )
-				catalog[#catalog + 1] = {
-					uuid = source.uuid,
-					itemUuid = itemUuid,
-					title = title,
-					searchTitle = string.lower( title ),
-					itemType = normalizeItemType( itemType ),
-					quantity = source.quantity,
-					stacks = source.stacks or 0,
-					sources = source.sources or 0,
-					localSources = source.localSources or 0,
-					wirelessSources = source.wirelessSources or 0,
-					crossWorldSources = source.crossWorldSources or 0
-				}
+				local entry = previous[source.uuid]
+				if not entry then
+					local itemUuid = sm.uuid.new( source.uuid )
+					local title = sm.shape.getShapeTitle( itemUuid ) or source.uuid
+					local resource, group, imageName, keyItem, itemType = sm.gui.getItemIconFromUuid( itemUuid )
+					entry = {
+						uuid = source.uuid, itemUuid = itemUuid, title = title,
+						searchTitle = string.lower( title ), itemType = normalizeItemType( itemType ),
+						iconResource = resource, iconGroup = group, iconName = imageName,
+						iconKey = keyItem, iconType = itemType
+					}
+				end
+				entry.quantity = source.quantity
+				entry.stacks = source.stacks or 0
+				entry.sources = source.sources or 0
+				entry.localSources = source.localSources or 0
+				entry.wirelessSources = source.wirelessSources or 0
+				entry.crossWorldSources = source.crossWorldSources or 0
+				catalog[#catalog + 1] = entry
 			end
 		end
 		self.cl.catalog = catalog
@@ -2165,12 +2269,12 @@ function NetworkStorageChest.cl_n_catalogSnapshot( self, data )
 		end
 	end
 	self.cl.catalogState = data
-	if data.status == "READY" then
+	if data.status ~= "INDEXING" then
 		self.cl.catalogSignature = data.contentSignature
 		self.cl.catalogTopologyGeneration = data.topologyGeneration or -1
 	end
 	if self.cl.guiData and self.cl.scrollView then
-		if rebuildCatalog then self:cl_rebuildCatalog( false )
+		if catalogChanged then self:cl_refreshCatalogWidgets( false )
 		else self:cl_refreshWithdrawalControls() end
 		self:cl_refreshStatus()
 		self.cl.guiDirty = true
@@ -2309,28 +2413,59 @@ function NetworkStorageChest.cl_rebuildPlayerInventory( self, resetScroll )
 	self.cl.guiDirty = true
 end
 
-function NetworkStorageChest.cl_makeCatalogItem( self, entry )
-	local item = DeepCopy( ITEM_TEMPLATE )
-	local root = findRequiredWidget( item, "CatalogItem" )
-	local image = findRequiredWidget( item, "CatalogItemImage" )
-	local quantity = findRequiredWidget( item, "CatalogItemQuantity" )
-	local keyItemWidget = findRequiredWidget( item, "CatalogItemKey" )
-	local typeWidget = findRequiredWidget( item, "CatalogItemType" )
-	local routeWidget = findRequiredWidget( item, "CatalogItemRoute" )
-	local resource, group, imageName, keyItem, itemType = sm.gui.getItemIconFromUuid( entry.item.itemUuid )
+local function catalogLayoutSignature( entries )
+	local ids = {}
+	for _, entry in ipairs( entries or {} ) do ids[#ids + 1] = entry.item.uuid end
+	return table.concat( ids, "|" )
+end
+
+function NetworkStorageChest.cl_applyCatalogItem( self, widgets, entry )
+	local root = widgets.root
 	root.Name = "CatalogItem_" .. tostring( entry.index )
 	root.ToolTip.Text = localizedText( "tooltip", entry.item.title, entry.item.quantity,
 		entry.item.stacks, entry.item.sources, sourceKind( entry.item ) )
-	image.ImageResource = resource
-	image.ImageGroup = group
-	image.ImageName = imageName
-	quantity.Caption = "x" .. tostring( entry.item.quantity )
-	keyItemWidget.ImageTexture = keyItem
-	typeWidget.ImageName = itemType
-	routeWidget.Caption = entry.item.crossWorldSources > 0 and "X"
+	widgets.image.ImageResource = entry.item.iconResource
+	widgets.image.ImageGroup = entry.item.iconGroup
+	widgets.image.ImageName = entry.item.iconName
+	widgets.quantity.Caption = "x" .. tostring( entry.item.quantity )
+	widgets.keyItem.ImageTexture = entry.item.iconKey
+	widgets.itemType.ImageName = entry.item.iconType
+	widgets.route.Caption = entry.item.crossWorldSources > 0 and "X"
 		or ( entry.item.localSources > 0 and entry.item.wirelessSources > 0 and "M" )
 		or ( entry.item.wirelessSources > 0 and "W" ) or "L"
-	return item
+end
+
+function NetworkStorageChest.cl_makeCatalogItem( self, entry )
+	local item = DeepCopy( ITEM_TEMPLATE )
+	local widgets = {
+		item = item,
+		root = findRequiredWidget( item, "CatalogItem" ),
+		image = findRequiredWidget( item, "CatalogItemImage" ),
+		quantity = findRequiredWidget( item, "CatalogItemQuantity" ),
+		keyItem = findRequiredWidget( item, "CatalogItemKey" ),
+		itemType = findRequiredWidget( item, "CatalogItemType" ),
+		route = findRequiredWidget( item, "CatalogItemRoute" )
+	}
+	self:cl_applyCatalogItem( widgets, entry )
+	return item, widgets
+end
+
+function NetworkStorageChest.cl_refreshCatalogWidgets( self, resetScroll )
+	if not self.cl.scrollView or not self.cl.guiData then return end
+	local entries = buildVisibleCatalog( self.cl.catalog, normalizeSearch( self.cl.search ),
+		SORT_MODES[self.cl.sortMode], ITEM_FILTERS[self.cl.typeFilter] or "ALL" )
+	local signature = catalogLayoutSignature( entries )
+	if signature ~= self.cl.catalogLayoutSignature then
+		self:cl_rebuildCatalog( resetScroll )
+		return
+	end
+	for _, entry in ipairs( entries ) do
+		local widgets = self.cl.catalogWidgetsByUuid and self.cl.catalogWidgetsByUuid[entry.item.uuid]
+		if not widgets then self:cl_rebuildCatalog( resetScroll ); return end
+		self:cl_applyCatalogItem( widgets, entry )
+	end
+	self.cl.visibleCount = #entries
+	self.cl.guiDirty = true
 end
 
 function NetworkStorageChest.cl_rebuildCatalog( self, resetScroll )
@@ -2342,9 +2477,15 @@ function NetworkStorageChest.cl_rebuildCatalog( self, resetScroll )
 	local previousOffset = resetScroll and 0 or self:cl_getCatalogScrollOffset()
 
 	self:cl_resetCatalogScroll()
-	for _, entry in ipairs( entries ) do self.cl.scrollView:addGridItem( self:cl_makeCatalogItem( entry ) ) end
+	self.cl.catalogWidgetsByUuid = {}
+	for _, entry in ipairs( entries ) do
+		local item, widgets = self:cl_makeCatalogItem( entry )
+		self.cl.scrollView:addGridItem( item )
+		self.cl.catalogWidgetsByUuid[entry.item.uuid] = widgets
+	end
 	self:cl_restoreCatalogScroll( previousOffset )
 	self.cl.visibleCount = #entries
+	self.cl.catalogLayoutSignature = catalogLayoutSignature( entries )
 	local sortLabels = { TYPE = localizedText( "sortType" ), NAME = localizedText( "sortName" ), COUNT = localizedText( "sortCount" ),
 		STACKS = localizedText( "sortStacks" ) }
 	findRequiredWidget( self.cl.guiData, "SortButton" ).Caption =

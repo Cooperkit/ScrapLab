@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE DIRECTIONAL TRANSFER v5
+-- SCRAPLAB WIRELESS VACUUM PIPE DIRECTIONAL TRANSFER v6
 -- Server-authoritative SEND -> RECEIVE scheduling. Selection and commit are
 -- deliberately separated by one fixed tick so no cached Container reference
 -- can survive an endpoint destruction or world-unload boundary.
@@ -16,6 +16,9 @@ local MAX_GROUPS_PER_TICK = 64
 local MAX_IDLE_BACKOFF_TICKS = 400
 local SOURCE_INSPECTION_LEASE_TICKS = 40
 local ACTIVE_TRANSFER_LEASE_TICKS = 80
+local MAX_TRANSFER_QUANTITY = 100
+local CURSOR_SAVE_INTERVAL_TICKS = 200
+local RUNTIME_PRUNE_INTERVAL_TICKS = 400
 
 local function shapeExists( shape )
 	return shape ~= nil and sm.exists( shape )
@@ -95,6 +98,23 @@ local function canCollect( container, itemUuid, quantity )
 	return ok and accepted == true
 end
 
+local function maximumCollectable( container, itemUuid, limit )
+	limit = math.max( 0, math.floor( tonumber( limit ) or 0 ) )
+	if limit <= 0 then return 0 end
+	if canCollect( container, itemUuid, limit ) then return limit end
+	local low, high, best = 1, limit - 1, 0
+	while low <= high do
+		local middle = math.floor( ( low + high ) / 2 )
+		if canCollect( container, itemUuid, middle ) then
+			best = middle
+			low = middle + 1
+		else
+			high = middle - 1
+		end
+	end
+	return best
+end
+
 local function sortedKeys( values )
 	local keys = {}
 	for key in pairs( values or {} ) do keys[#keys + 1] = key end
@@ -138,6 +158,9 @@ local function ensureRuntime( manager )
 		activity = {},
 		nextAttempt = {},
 		idleDelay = {},
+		cursorDirty = false,
+		nextCursorSaveTick = sm.game.getCurrentTick() + CURSOR_SAVE_INTERVAL_TICKS,
+		nextRuntimePruneTick = sm.game.getCurrentTick() + RUNTIME_PRUNE_INTERVAL_TICKS,
 		metrics = {
 			attempts = 0, selected = 0, committed = 0, rejected = 0,
 			transactionFailures = 0, staleGuardRejects = 0,
@@ -146,6 +169,16 @@ local function ensureRuntime( manager )
 	}
 	manager.sv.directional.nextAttempt = manager.sv.directional.nextAttempt or {}
 	manager.sv.directional.idleDelay = manager.sv.directional.idleDelay or {}
+	if manager.sv.directional.cursors == nil then
+		manager.sv.directional.cursors = {}
+		for channel, cursor in pairs( manager.sv.saved.directionalCursors or {} ) do
+			manager.sv.directional.cursors[channel] = { senderId = cursor.senderId, receiverId = cursor.receiverId }
+		end
+	end
+	manager.sv.directional.nextCursorSaveTick = manager.sv.directional.nextCursorSaveTick or
+		( sm.game.getCurrentTick() + CURSOR_SAVE_INTERVAL_TICKS )
+	manager.sv.directional.nextRuntimePruneTick = manager.sv.directional.nextRuntimePruneTick or
+		( sm.game.getCurrentTick() + RUNTIME_PRUNE_INTERVAL_TICKS )
 	manager.sv.directional.metrics.idleBackoffs = manager.sv.directional.metrics.idleBackoffs or 0
 	manager.sv.directional.metrics.backoffSkips = manager.sv.directional.metrics.backoffSkips or 0
 	manager.sv.saved.directionalCursors = manager.sv.saved.directionalCursors or {}
@@ -192,12 +225,15 @@ local function findSourceCandidate( endpointShape, directOnly )
 				for slot = 0, size - 1 do
 					local itemOk, item = pcall( function() return container:getItem( slot ) end )
 					local quantity = itemOk and item and tonumber( item.quantity ) or 0
-					if quantity > 0 and item.uuid and canSpend( container, item.uuid, 1 ) then
+					local stackOk, stackSize = false, quantity
+					if item and item.uuid then stackOk, stackSize = pcall( sm.item.getStackSize, item.uuid ) end
+					local batch = math.min( quantity, stackOk and math.max( 1, stackSize or 1 ) or quantity, MAX_TRANSFER_QUANTITY )
+					if batch > 0 and item.uuid and canSpend( container, item.uuid, batch ) then
 						return {
 							shapeId = shapeId( candidateShape ),
 							containerIndex = 0,
 							itemUuid = tostring( item.uuid ),
-							quantity = 1
+							quantity = batch
 						}
 					end
 				end
@@ -210,8 +246,9 @@ end
 local function findDestinationCandidate( endpointShape, itemUuid, quantity, directOnly )
 	for _, candidateShape in ipairs( nativeContainerShapes( endpointShape, "RECEIVE", directOnly ) ) do
 		local container = containerAt( candidateShape, 0 )
-		if container and canCollect( container, itemUuid, quantity ) then
-			return { shapeId = shapeId( candidateShape ), containerIndex = 0 }
+		local accepted = container and maximumCollectable( container, itemUuid, quantity ) or 0
+		if accepted > 0 then
+			return { shapeId = shapeId( candidateShape ), containerIndex = 0, quantity = accepted }
 		end
 	end
 	return nil
@@ -225,11 +262,43 @@ local function findFreshContainerShape( endpointShape, mode, wantedShapeId, dire
 end
 
 local function recordSuccessfulCursor( manager, channel, senderId, receiverId )
-	manager.sv.saved.directionalCursors[channel] = {
+	local runtime = ensureRuntime( manager )
+	runtime.cursors[channel] = {
 		senderId = senderId,
 		receiverId = receiverId
 	}
+	runtime.cursorDirty = true
+end
+
+local function flushCursors( manager, force )
+	local runtime = ensureRuntime( manager )
+	local tick = sm.game.getCurrentTick()
+	if not runtime.cursorDirty or ( not force and tick < runtime.nextCursorSaveTick ) then return end
+	local saved = {}
+	for channel, cursor in pairs( runtime.cursors ) do
+		saved[channel] = { senderId = cursor.senderId, receiverId = cursor.receiverId }
+	end
+	manager.sv.saved.directionalCursors = saved
 	manager.sv.saveDirty = true
+	runtime.cursorDirty = false
+	runtime.nextCursorSaveTick = tick + CURSOR_SAVE_INTERVAL_TICKS
+end
+
+local function pruneRuntimeChannels( manager, tick )
+	local runtime = ensureRuntime( manager )
+	if tick < runtime.nextRuntimePruneTick then return end
+	runtime.nextRuntimePruneTick = tick + RUNTIME_PRUNE_INTERVAL_TICKS
+	local active = {}
+	for key, senders in pairs( manager.sv.groups.SEND or {} ) do
+		local channel = channelFromGroupKey( key )
+		local receivers = channel and manager.sv.groups.RECEIVE["RECEIVE|" .. channel] or nil
+		if channel and #senders > 0 and receivers and #receivers > 0 then active[channel] = true end
+	end
+	for channel in pairs( runtime.nextAttempt ) do if not active[channel] then runtime.nextAttempt[channel] = nil end end
+	for channel in pairs( runtime.idleDelay ) do if not active[channel] then runtime.idleDelay[channel] = nil end end
+	for channel in pairs( runtime.cursors ) do
+		if not active[channel] then runtime.cursors[channel] = nil; runtime.cursorDirty = true end
+	end
 end
 
 local function queueActivity( manager, endpointId, generation, role, itemUuid, containerShape, crossWorld )
@@ -331,7 +400,7 @@ local function scheduleGroup( manager, channel, senders, receivers, tick )
 	local key = directionalGroupKey( channel )
 	if runtime.locks[key] or runtime.pending[key] then return end
 	runtime.metrics.attempts = runtime.metrics.attempts + 1
-	local cursor = manager.sv.saved.directionalCursors[channel] or {}
+	local cursor = runtime.cursors[channel] or {}
 	local orderedSenders = orderedFromCursor( senders, cursor.senderId )
 	local orderedReceivers = orderedFromCursor( receivers, cursor.receiverId )
 	manager:sv_requestEndpointLeases(
@@ -379,7 +448,7 @@ local function scheduleGroup( manager, channel, senders, receivers, tick )
 								destinationShapeId = destination.shapeId,
 								destinationContainerIndex = destination.containerIndex,
 								itemUuid = source.itemUuid,
-								quantity = source.quantity
+								quantity = destination.quantity
 							}
 							runtime.metrics.selected = runtime.metrics.selected + 1
 							return
@@ -408,6 +477,8 @@ end
 function WirelessPipeTransfer.Sv_ServerOnFixedUpdate( manager )
 	local runtime = ensureRuntime( manager )
 	local tick = sm.game.getCurrentTick()
+	pruneRuntimeChannels( manager, tick )
+	flushCursors( manager, false )
 	for _, key in ipairs( sortedKeys( runtime.pending ) ) do
 		local pending = runtime.pending[key]
 		if pending and tick >= pending.commitTick then commitPending( manager, key, pending ) end
@@ -444,6 +515,10 @@ function WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( manager, endpointId 
 	end
 end
 
+function WirelessPipeTransfer.Sv_FlushCursors( manager )
+	flushCursors( manager, true )
+end
+
 function WirelessPipeTransfer.Sv_ConsumeEndpointActivity( manager, endpointId, generation )
 	local runtime = ensureRuntime( manager )
 	endpointId = tostring( endpointId or "" )
@@ -477,7 +552,9 @@ function WirelessPipeTransfer.Sv_GetDebugSnapshot( manager )
 		staleGuardRejects = runtime.metrics.staleGuardRejects,
 		idleBackoffs = runtime.metrics.idleBackoffs,
 		backoffSkips = runtime.metrics.backoffSkips,
-		maxIdleBackoffTicks = MAX_IDLE_BACKOFF_TICKS
+		maxIdleBackoffTicks = MAX_IDLE_BACKOFF_TICKS,
+		maxTransferQuantity = MAX_TRANSFER_QUANTITY,
+		cursorSaveIntervalTicks = CURSOR_SAVE_INTERVAL_TICKS
 	}
 end
 
@@ -487,5 +564,6 @@ ScrapLabWirelessPipeTransferConstants = {
 	maxIdleBackoffTicks = MAX_IDLE_BACKOFF_TICKS,
 	sourceInspectionLeaseTicks = SOURCE_INSPECTION_LEASE_TICKS,
 	activeTransferLeaseTicks = ACTIVE_TRANSFER_LEASE_TICKS,
-	quantityPerTransfer = 1
+	maxTransferQuantity = MAX_TRANSFER_QUANTITY,
+	cursorSaveIntervalTicks = CURSOR_SAVE_INTERVAL_TICKS
 }

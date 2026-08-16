@@ -15,7 +15,8 @@ WirelessVacuumPipe.colorHighlight = sm.color.new( 0xeeeeeeff )
 
 local PART_UUID = "a34d9af0-4ba0-431d-b647-2d5435ecf138"
 local ENDPOINT_STORAGE_VERSION = 2
-local POLL_INTERVAL_TICKS = 10
+local POLL_INTERVAL_TICKS = 20
+local ACTIVITY_POLL_INTERVAL_TICKS = 2
 local ACTIVITY_VISUAL_RANGE = 64
 local MODE_ORDER = { "LINK", "SEND", "RECEIVE" }
 
@@ -78,7 +79,7 @@ local function positionsDiffer( a, b )
 end
 
 function WirelessVacuumPipe.server_onCreate( self )
-	self.sv = { pollTicks = 0, generation = nil, registered = false, managerReason = nil, unloaded = false }
+	self.sv = { pollTicks = 0, activityPollTicks = 0, generation = nil, registered = false, managerReason = nil, unloaded = false }
 	self.sv.saved = self.storage:load()
 	if type( self.sv.saved ) ~= "table" then
 		self.sv.saved = {
@@ -106,7 +107,9 @@ function WirelessVacuumPipe.server_onRefresh( self )
 end
 
 function WirelessVacuumPipe.server_onFixedUpdate( self )
-	if self.sv.registered then
+	self.sv.activityPollTicks = self.sv.activityPollTicks + 1
+	if self.sv.registered and self.sv.activityPollTicks >= ACTIVITY_POLL_INTERVAL_TICKS then
+		self.sv.activityPollTicks = 0
 		local activity = WirelessPipeManager.Sv_ConsumeEndpointActivity( self.sv.saved.endpointId, self.sv.generation )
 		if activity then
 			self:sv_onDirectionalActivity( activity.role, activity.itemUuid, activity.containerShape, activity.crossWorld )
@@ -333,8 +336,10 @@ function WirelessVacuumPipe.client_onCreate( self )
 		guiDirty = false,
 		activityTicks = 0
 	}
-	self.cl.pipeEffectPlayer = PipeEffectPlayer()
-	self.cl.pipeEffectPlayer:onCreate()
+	-- Most endpoints are idle. Allocate the relatively heavy path-effect player
+	-- only when an actual directional transfer needs it.
+	self.cl.pipeEffectPlayer = nil
+	self.cl.lastAppliedGlow = 0
 	self.interactable:setUvFrameIndex( 0 )
 	self.interactable:setGlowMultiplier( 0 )
 end
@@ -366,15 +371,26 @@ function WirelessVacuumPipe.client_onFixedUpdate( self )
 	local target = ( state == "LINKED" or state == "CROSS-WORLD LINKED" or state == "SENDING" or state == "READY TO RECEIVE" ) and 0.55 or 0
 	if self.cl.activityTicks > 0 then target = self.cl.activityTicks % 4 < 2 and 1.0 or 0.35 end
 	self.cl.glow = self.cl.glow + ( target - self.cl.glow ) * 0.2
-	self.interactable:setUvFrameIndex( 0 )
-	self.interactable:setGlowMultiplier( self.cl.glow )
+	if target == 0 and self.cl.glow < 0.005 then self.cl.glow = 0 end
+	if math.abs( self.cl.glow - ( self.cl.lastAppliedGlow or 0 ) ) >= 0.01 or
+			( self.cl.glow == 0 and self.cl.lastAppliedGlow ~= 0 ) then
+		self.cl.lastAppliedGlow = self.cl.glow
+		self.interactable:setGlowMultiplier( self.cl.glow )
+	end
+end
+
+function WirelessVacuumPipe.cl_ensurePipeEffectPlayer( self )
+	if self.cl.pipeEffectPlayer then return self.cl.pipeEffectPlayer end
+	self.cl.pipeEffectPlayer = PipeEffectPlayer()
+	self.cl.pipeEffectPlayer:onCreate()
+	return self.cl.pipeEffectPlayer
 end
 
 function WirelessVacuumPipe.cl_n_directionalActivity( self, data )
 	if type( data ) ~= "table" or ( data.role ~= "SEND" and data.role ~= "RECEIVE" ) then return end
 	self.cl.activityTicks = data.crossWorld and 16 or 10
 	local containerShape = data.containerShape
-	if not self.cl.pipeEffectPlayer or not containerShape or not sm.exists( containerShape ) then return end
+	if not containerShape or not sm.exists( containerShape ) then return end
 	if containerShape:getBody():getWorld() ~= self.shape:getBody():getWorld() then return end
 	local direction = data.role == "SEND" and sm.pipeGraph.direction.incoming or sm.pipeGraph.direction.outgoing
 	local ok, nativePath = pcall( function()
@@ -390,7 +406,7 @@ function WirelessVacuumPipe.cl_n_directionalActivity( self, data )
 		for _, shape in ipairs( nativePath ) do path[#path + 1] = shape end
 	end
 	if #path >= 2 then
-		self.cl.pipeEffectPlayer:pushShapeEffectTask( path, data.itemUuid )
+		self:cl_ensurePipeEffectPlayer():pushShapeEffectTask( path, data.itemUuid )
 	end
 end
 

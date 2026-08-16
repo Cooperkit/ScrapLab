@@ -2439,9 +2439,9 @@ function renderSecretModsState(){
     else if(wirelessReason.indexOf('atlas')>=0||wirelessReason.indexOf('icon')>=0)wirelessLabel='UNSUPPORTED ICON ATLAS';
     else if(secretWirelessVacuumPipeCompatibility!=='PARTIAL PATCH - REPAIR REQUIRED')wirelessLabel='UNSUPPORTED PIPE CODE';
    }
-   wirelessPipeState.innerText=secretModBusy&&secretModBusyTarget==='wirelessPipe'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretWirelessVacuumPipeNeedsUpdate?'RECIPE ORDER UPDATE AVAILABLE':wirelessLabel));
+   wirelessPipeState.innerText=secretModBusy&&secretModBusyTarget==='wirelessPipe'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretWirelessVacuumPipeNeedsUpdate?'MACHINE PERFORMANCE UPDATE AVAILABLE':wirelessLabel));
    renderCompatibilityReason('wirelessVacuumPipeReason',secretWirelessVacuumPipeInstalled,secretWirelessVacuumPipeCanApply,secretWirelessVacuumPipeReason);
-   if(secretWirelessVacuumPipeNeedsUpdate){var wirelessUpdateReason=document.getElementById('wirelessVacuumPipeReason');wirelessUpdateReason.className='secret-compat-reason show';wirelessUpdateReason.innerText=secretWirelessVacuumPipeReason||'Custom-part recipes can now be grouped beside the ordinary Vacuum Pipe.';}
+   if(secretWirelessVacuumPipeNeedsUpdate){var wirelessUpdateReason=document.getElementById('wirelessVacuumPipeReason');wirelessUpdateReason.className='secret-compat-reason show';wirelessUpdateReason.innerText=secretWirelessVacuumPipeReason||'A verified Vacuum Pump hot-path optimization is ready.';}
   }
    var networkStorage=document.getElementById('networkStorageChestSwitch');
    var networkStorageUpdate=document.getElementById('networkStorageChestUpdate');
@@ -2453,7 +2453,7 @@ function renderSecretModsState(){
     networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
     if(networkStorageUpdate){networkStorageUpdate.style.display=secretNetworkStorageChestNeedsUpdate?'block':'none';networkStorageUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;}
    networkStorageRow.className='secret-mod-row secret-mod-card'+(secretNetworkStorageChestInstalled?' enabled':'')+((!secretModsEnabled||!secretNetworkStorageChestCanApply)?' locked':'');
-    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'WITHDRAWAL UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
+    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'PERFORMANCE UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
    renderCompatibilityReason('networkStorageChestReason',secretNetworkStorageChestInstalled,secretNetworkStorageChestCanApply,secretNetworkStorageChestReason);
   }
   var revival=document.getElementById('revivalBuffSwitch');
@@ -2894,7 +2894,7 @@ function applyGameplayBatchState(data){
 function setNetworkStorageChestMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
  var wasNetworkStorageUpdate=enabled&&secretNetworkStorageChestInstalled&&secretNetworkStorageChestNeedsUpdate;
- return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'HARDENING LIVE WITHDRAWALS...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
+ return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'INSTALLING STORAGE PERFORMANCE UPDATE...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
   secretNetworkStorageChestInstalled=!!data.Installed;
   showSecretModFeedback(wasNetworkStorageUpdate?'WITHDRAWALS UPDATED - busy machines no longer cause false whole-chest conflicts, and real slot conflicts retry safely.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
  });
@@ -2902,9 +2902,9 @@ function setNetworkStorageChestMod(enabled){
 function setWirelessVacuumPipeMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Wireless Vacuum Pipe.','bad');return false;}
  var wasWirelessUpdate=enabled&&secretWirelessVacuumPipeInstalled&&secretWirelessVacuumPipeNeedsUpdate;
- return runSingleGameModPatch('wireless-vacuum-pipe',enabled,'','wirelessPipe',wasWirelessUpdate?'INSTALLING WIRELESS PERFORMANCE UPDATE...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'Wireless Vacuum Pipe could not be changed.',function(data){
+ return runSingleGameModPatch('wireless-vacuum-pipe',enabled,'','wirelessPipe',wasWirelessUpdate?'INSTALLING MACHINE PERFORMANCE UPDATE...':(enabled?'LINKING WIRELESS VACUUM PIPE NETWORKS...':'REMOVING WIRELESS VACUUM PIPE REGISTRATIONS...'),'Wireless Vacuum Pipe could not be changed.',function(data){
   secretWirelessVacuumPipeInstalled=!!data.Installed;
-  showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - remote cells now load on demand and stable pipe routes stay cached.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
+  showSecretModFeedback(secretWirelessVacuumPipeInstalled?(wasWirelessUpdate?'WIRELESS VACUUM PIPE UPDATED - Vacuum Pump topology, packing-station, and inactive intake work is now bounded.':'WIRELESS VACUUM PIPE INSTALLED - Link and Send/Receive channels are ready across worlds.'):'WIRELESS VACUUM PIPE REMOVED - its runtime, recipe, registrations, languages, and icon entry were restored.','good');
  });
 }
 function updateWirelessVacuumPipeMod(){

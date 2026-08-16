@@ -1,6 +1,48 @@
 # Changelog
 
-## Unreleased
+## 2.10.0 - 2026-08-15
+
+- Added Wireless Vacuum Pipe definition 17 after repeated definition-16
+  benchmarks isolated Prospectors as the next machine-side hot path. Empty
+  input networks and full output networks now honor the game's existing
+  0.4-second collection retry delay instead of rescanning the same large pipe
+  graph every fixed tick. Inventory contents and native transactions remain
+  live, and intact definition-16 installations receive the change through the
+  verified one-click update path without replacing their uninstall backups.
+- Added Wireless Vacuum Pipe definition 16 after the definition-15 benchmark
+  proved that unchanged Vacuum input/output routes were still copied every
+  fixed tick. Each Vacuum now retains direction-specific container topology
+  for at most five ticks, refreshes immediately when wireless topology changes,
+  and continues to read item quantities and perform native transactions live.
+  Exact definition-14 and definition-15 installations both migrate through the
+  verified one-click update path without replacing their clean uninstall base.
+- Added Wireless Vacuum Pipe definition 15 from the caller-attribution
+  benchmark. Vacuum Pumps now reuse one input topology snapshot per fixed
+  update, briefly cache topology-checked spend sources with live item
+  validation, throttle repeated packing-station ray/sphere probes, and skip
+  incoming area scans while unpowered. Existing definition-14 installations
+  receive the change through the normal verified one-click update path.
+- Added Wireless Vacuum Pipe definition 14 after the clean dense benchmark
+  isolated repeated full container selection as the remaining cross-world hot
+  path. Exact native-plus-wireless results now use a bounded per-caller cache
+  with body, topology, direction, and remote-readiness invalidation. Item
+  contents and transactions stay live, native ordering is preserved, callers
+  receive safe copies, hot lease renewals are throttled, and new diagnostics
+  expose cache size, hits, invalidations, and trims.
+- Reduced dense Wireless Vacuum Pipe overhead. Directional routes now move a
+  bounded item batch per transaction, checkpoint round-robin cursors instead
+  of saving after every item, prune inactive channel state, maintain remote
+  cell handles on changes and deadlines, share read-only terminal topology
+  views, and avoid allocating path-effect players for idle endpoints.
+- Bounded Network Storage Chest memory and update cost. The shared inventory
+  cache now uses the game-wide clock, expires old entries even when no terminal
+  is open, and enforces a hard entry limit. Closing the final viewer releases
+  retained server/client catalogs and topology state. Open catalogs update
+  changed aggregate records and existing widgets in place instead of rebuilding
+  the entire network inventory for quantity-only changes.
+- Added safe one-click definition updates for Wireless Vacuum Pipe definition
+  16 and Network Storage Chest definition 10. Existing verified owned files are
+  recognized by their released hashes and keep their original uninstall bases.
 
 ## 2.9.2 - 2026-08-15
 

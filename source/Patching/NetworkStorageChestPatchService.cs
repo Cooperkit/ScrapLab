@@ -11,7 +11,7 @@ namespace RaidRescue
     internal static class NetworkStorageChestPatchService
     {
         private const string ModKey = "NetworkStorageChest";
-        private const string DefinitionVersion = "9";
+        private const string DefinitionVersion = "10";
         private const string LegacyV1RuntimeHash = "453BB866D4B4D564C79BFF9F4A2997131BF9826496608DBEA7709BE2730FC596";
         private const string LegacyV1IndexHash = "F036925AFA22A028CFED0A82E89A691442FC77DEB851D0876F3DD92ED535D4EC";
         private const string LegacyV2RuntimeHash = "B42F99CA53E5D36188F8BFC352DCB0F560A649BD6783E31DAE38BC22ECC3FB49";
@@ -31,6 +31,8 @@ namespace RaidRescue
         private const string LegacyV7RuntimeHash = "FFCF050028A72F09C0CEB10FBEEB73F5EE8C383EE3B0A20A54239E18E0C6B39E";
         private const string LegacyV8RuntimeHash = "3F034EA042DC6A1F4BBA1A1C0202BD7166EC71BDD3D8C29BCBF4FF24F19D5F10";
         private const string LegacyV8LocalizationHash = "B26B15812FDE24CB983F4509FDC2898D9CD248474F3FA9DFD2FC979D75A3DDCB";
+        private const string LegacyV9RuntimeHash = "ED1B1D0C8B03C98A32129784680229DD09E5192668EBB8AEEE49C4E2F99DD31B";
+        private const string LegacyV9IndexHash = "B8FC29D4E85319FE64D9E706A9ACB5F4BACE9CD37EAC684539DFDD85007B91E8";
         internal const string PartUuid = "bc7576a7-f226-459a-883c-e8460e955d63";
         internal const string VerifiedSteamBuildId = "24529696";
         internal const string VerifiedGameVersion = "1.0.5.876";
@@ -126,7 +128,7 @@ namespace RaidRescue
                         state.AllKnownClean ? PatchCompatibilityState.KnownInstalled : PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
                         state.DefinitionUpdateAvailable
-                            ? "A verified Network Storage interface update is ready."
+                            ? "A verified Network Storage performance update is ready."
                             : "The Network Storage Chest part, recipe, runtime, localization, and icon are intact.");
                     return result;
                 }
@@ -178,9 +180,9 @@ namespace RaidRescue
                     result.Success = true;
                     result.Installed = true;
                     result.NeedsUpdate = false;
-                    result.Changes.Add("Installed the expanded type control and a compact player inventory that hides empty slots.");
+                    result.Changes.Add("Installed bounded global inventory caching, incremental server aggregation, incremental catalog rendering, and closed-terminal memory cleanup.");
                     AdaptivePatchSupport.FillResult(result, build, PatchCompatibilityState.AdaptiveInstalled,
-                        !state.AllKnownClean, true, "Network Storage Chest definition 7 was installed and verified.");
+                        !state.AllKnownClean, true, "Network Storage Chest definition 10 performance update was installed and verified.");
                     SecretModBackupRetention.Prune(backupRoot, ModKey, result.BackupPath, result);
                     return result;
                 }
@@ -447,9 +449,11 @@ namespace RaidRescue
                     String.Equals(hash, LegacyV5RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV6RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV7RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(hash, LegacyV8RuntimeHash, StringComparison.OrdinalIgnoreCase);
+                    String.Equals(hash, LegacyV8RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV9RuntimeHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkInventoryIndex.lua", StringComparison.OrdinalIgnoreCase))
-                return String.Equals(hash, LegacyV1IndexHash, StringComparison.OrdinalIgnoreCase);
+                return String.Equals(hash, LegacyV1IndexHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV9IndexHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkStorageChest.gui", StringComparison.OrdinalIgnoreCase))
                 return String.Equals(hash, LegacyV2GuiHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV4GuiHash, StringComparison.OrdinalIgnoreCase) ||
@@ -518,7 +522,7 @@ namespace RaidRescue
                 });
             }
             AdaptivePatchSupport.WriteBackupManifest(backupPath, "Network Storage Chest",
-                "Catalog and Recipe Definition Update", gamePath, build, DefinitionVersion, manifest);
+                "Runtime Performance Definition Update", gamePath, build, DefinitionVersion, manifest);
 
             List<AtomicCustomPartFilePlan> changed = new List<AtomicCustomPartFilePlan>();
             try

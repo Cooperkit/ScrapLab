@@ -7,8 +7,10 @@ end
 
 local NetworkInventoryIndex = {
 	cache = {},
+	cacheCount = 0,
 	itemProfiles = {},
 	catalogReady = false,
+	nextPruneTick = 0,
 	statistics = {
 		cacheHits = 0,
 		containerScans = 0,
@@ -19,6 +21,11 @@ local NetworkInventoryIndex = {
 		catalogFailures = 0
 	}
 }
+
+local CACHE_PRUNE_INTERVAL_TICKS = 400
+local CACHE_MAX_AGE_TICKS = 2400
+local CACHE_MAX_ENTRIES = 4096
+local CACHE_TRIM_TARGET_ENTRIES = 3584
 
 local SHAPESET_REGISTRY = "$SURVIVAL_DATA/Objects/Database/shapesets.json"
 
@@ -219,8 +226,37 @@ function NetworkInventoryIndex.getRevision( container )
 	return containerRevision( container )
 end
 
-function NetworkInventoryIndex.read( container, tick )
-	tick = tick or currentTick()
+local function removeCacheEntry( id )
+	if NetworkInventoryIndex.cache[id] ~= nil then
+		NetworkInventoryIndex.cache[id] = nil
+		NetworkInventoryIndex.cacheCount = math.max( 0, NetworkInventoryIndex.cacheCount - 1 )
+	end
+end
+
+local function trimCacheToLimit()
+	if NetworkInventoryIndex.cacheCount <= CACHE_MAX_ENTRIES then return end
+	local ordered = {}
+	for id, record in pairs( NetworkInventoryIndex.cache ) do
+		ordered[#ordered + 1] = { id = id, tick = record.lastUsedTick or 0 }
+	end
+	table.sort( ordered, function( a, b )
+		if a.tick ~= b.tick then return a.tick < b.tick end
+		return a.id < b.id
+	end )
+	-- Remove a batch instead of sorting the entire cache again for every new
+	-- container once a very large world crosses the hard limit.
+	local removeCount = NetworkInventoryIndex.cacheCount - CACHE_TRIM_TARGET_ENTRIES
+	for index = 1, removeCount do
+		removeCacheEntry( ordered[index].id )
+		NetworkInventoryIndex.statistics.expiredEntries = NetworkInventoryIndex.statistics.expiredEntries + 1
+	end
+end
+
+function NetworkInventoryIndex.read( container )
+	-- This cache is shared by every Network Storage Chest. Never accept an
+	-- instance-local clock here: terminals can load hours apart, which used to
+	-- make entries appear to come from the future or expire immediately.
+	local tick = currentTick()
 	local id = containerId( container )
 	if not id then return nil, false, "CONTAINER ID UNAVAILABLE" end
 	local revision = containerRevision( container )
@@ -235,13 +271,17 @@ function NetworkInventoryIndex.read( container, tick )
 
 	local ok, decoded = pcall( decodeContainer, container, id, revision, tick )
 	if not ok then return nil, false, tostring( decoded ) end
+	if NetworkInventoryIndex.cache[id] == nil then
+		NetworkInventoryIndex.cacheCount = NetworkInventoryIndex.cacheCount + 1
+	end
 	NetworkInventoryIndex.cache[id] = decoded
+	trimCacheToLimit()
 	return decoded, false
 end
 
 function NetworkInventoryIndex.invalidate( containerOrId )
 	local id = type( containerOrId ) == "string" and containerOrId or containerId( containerOrId )
-	if id then NetworkInventoryIndex.cache[id] = nil end
+	if id then removeCacheEntry( id ) end
 end
 
 function NetworkInventoryIndex.aggregate( records )
@@ -283,22 +323,29 @@ function NetworkInventoryIndex.aggregate( records )
 	}
 end
 
-function NetworkInventoryIndex.prune( tick, maxAgeTicks )
-	tick = tick or currentTick()
+function NetworkInventoryIndex.prune( maxAgeTicks )
+	local tick = currentTick()
 	maxAgeTicks = maxAgeTicks or 2400
 	for id, record in pairs( NetworkInventoryIndex.cache ) do
 		if tick - ( record.lastUsedTick or 0 ) > maxAgeTicks then
-			NetworkInventoryIndex.cache[id] = nil
+			removeCacheEntry( id )
 			NetworkInventoryIndex.statistics.expiredEntries = NetworkInventoryIndex.statistics.expiredEntries + 1
 		end
 	end
+	trimCacheToLimit()
+end
+
+function NetworkInventoryIndex.heartbeat()
+	local tick = currentTick()
+	if tick < ( NetworkInventoryIndex.nextPruneTick or 0 ) then return end
+	NetworkInventoryIndex.nextPruneTick = tick + CACHE_PRUNE_INTERVAL_TICKS
+	NetworkInventoryIndex.prune( CACHE_MAX_AGE_TICKS )
 end
 
 function NetworkInventoryIndex.getStatistics()
-	local cachedEntries = 0
-	for _ in pairs( NetworkInventoryIndex.cache ) do cachedEntries = cachedEntries + 1 end
 	return {
-		cachedEntries = cachedEntries,
+		cachedEntries = NetworkInventoryIndex.cacheCount,
+		cacheLimit = CACHE_MAX_ENTRIES,
 		cacheHits = NetworkInventoryIndex.statistics.cacheHits,
 		containerScans = NetworkInventoryIndex.statistics.containerScans,
 		slotsScanned = NetworkInventoryIndex.statistics.slotsScanned,

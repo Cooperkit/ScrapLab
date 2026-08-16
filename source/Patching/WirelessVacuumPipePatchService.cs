@@ -10,7 +10,7 @@ namespace RaidRescue
     internal static class WirelessVacuumPipePatchService
     {
         private const string ModKey = "WirelessVacuumPipe";
-        private const string DefinitionVersion = "12";
+        private const string DefinitionVersion = "17";
         internal const string PartUuid =
             "a34d9af0-4ba0-431d-b647-2d5435ecf138";
         internal const string ManagerUuid =
@@ -45,6 +45,265 @@ namespace RaidRescue
             "    if scrapLabTopologyChanged or self.shape:getBody():hasChanged(self.sv.lastUpdatedTick) then";
         private const string PipeEffectGuard =
             "if type( shapeList ) ~= \"table\" or #shapeList < 2 then return end -- SCRAPLAB WIRELESS PIPE VISUAL ROUTE GUARD";
+        private const string ProspectorInputRetryAnchor =
+            "\tif ( sm.game.getCurrentTick() - self.sv.lastCollectionTick ) >= CollectionTickDelay then\n" +
+            "\t\tlocal inputContainers = ScrapLabPipeGraph.getInputContainers( self.shape )";
+        private const string ProspectorInputRetryBlock =
+            "\tif ( sm.game.getCurrentTick() - self.sv.lastCollectionTick ) >= CollectionTickDelay then\n" +
+            "\t\t-- SCRAPLAB PROSPECTOR RETRY THROTTLE: empty networks keep the declared delay.\n" +
+            "\t\tself.sv.lastCollectionTick = sm.game.getCurrentTick()\n" +
+            "\t\tlocal inputContainers = ScrapLabPipeGraph.getInputContainers( self.shape )";
+        private const string ProspectorOutputRetryAnchor =
+            "\t\tif productionData.doneTick and ( sm.game.getCurrentTick() - productionData.doneTick ) >= CollectionTickDelay then\n" +
+            "\t\t\tlocal outputContainers = ScrapLabPipeGraph.getOutputContainers( self.shape )";
+        private const string ProspectorOutputRetryBlock =
+            "\t\tif productionData.doneTick and ( sm.game.getCurrentTick() - productionData.doneTick ) >= CollectionTickDelay then\n" +
+            "\t\t\t-- SCRAPLAB PROSPECTOR RETRY THROTTLE: full outputs retry at the declared delay.\n" +
+            "\t\t\tproductionData.doneTick = sm.game.getCurrentTick()\n" +
+            "\t\t\tlocal outputContainers = ScrapLabPipeGraph.getOutputContainers( self.shape )";
+        private const string VacuumOptimizationStart =
+            "-- SCRAPLAB WIRELESS PIPE VACUUM HOT PATH";
+        private const string VacuumOptimizationEnd =
+            "-- END SCRAPLAB WIRELESS PIPE VACUUM HOT PATH";
+        private const string VacuumInputCall =
+            "ScrapLabVacuumGetInputContainers( self )";
+        private const string VacuumOutputCall =
+            "ScrapLabVacuumGetOutputContainers( self )";
+        private const string VacuumSpendCall =
+            "ScrapLabVacuumGetSpendContainer( self,";
+        private const string VacuumValidationCall =
+            "\tlocal interfacingWithPackingStation, inputUuid, packingStationPublicData = ScrapLabVacuumValidatePackingStationInteraction( self )";
+        private const string VacuumNativeValidationCall =
+            "\tlocal interfacingWithPackingStation, inputUuid, packingStationPublicData = ValidatePackingStationInteraction( self )";
+        private const string VacuumAreaAnchor =
+            "\t\tlocal areaContent = self.sv.areaTrigger:getContents()";
+        private const string VacuumAreaOptimization =
+            "\t\tlocal scrapLabIncomingParent = self.shape:getInteractable():getSingleParent()\n" +
+            "\t\tlocal areaContent = scrapLabIncomingParent and scrapLabIncomingParent.active\n" +
+            "\t\t\tand self.sv.areaTrigger:getContents() or {}";
+        private const string VacuumFixedUpdateAnchor =
+            "function Vacuum.server_onFixedUpdate( self )";
+        private const string LegacyV15VacuumInputCall =
+            "scrapLabGetInputContainers()";
+        private const string LegacyV15VacuumFixedUpdateBlock =
+            "function Vacuum.server_onFixedUpdate( self )\n\n" +
+            "\tlocal scrapLabInputContainerSnapshot = nil\n" +
+            "\tlocal function scrapLabGetInputContainers()\n" +
+            "\t\tif scrapLabInputContainerSnapshot == nil then\n" +
+            "\t\t\tscrapLabInputContainerSnapshot = ScrapLabPipeGraph.getInputContainers( self.shape )\n" +
+            "\t\tend\n" +
+            "\t\treturn scrapLabInputContainerSnapshot\n" +
+            "\tend";
+        private const string LegacyV15VacuumOptimizationBlock =
+            VacuumOptimizationStart + "\n" +
+            "local SCRAPLAB_VACUUM_PROBE_INTERVAL_TICKS = 5\n" +
+            "local SCRAPLAB_VACUUM_NEGATIVE_PROBE_TICKS = 2\n\n" +
+            "local function ScrapLabVacuumRuntime( self )\n" +
+            "\tif sm.isServerMode() then return self.sv end\n" +
+            "\treturn self.cl\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumPackingStationData( packingStation )\n" +
+            "\tif not packingStation or not sm.exists( packingStation ) then return nil end\n" +
+            "\tif sm.isServerMode() then return packingStation:getPublicData() end\n" +
+            "\treturn packingStation:getClientPublicData()\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumValidatePackingStationInteraction( self )\n" +
+            "\tlocal runtime = ScrapLabVacuumRuntime( self )\n" +
+            "\tlocal publicData = sm.isServerMode() and self.interactable:getPublicData()\n" +
+            "\t\tor self.interactable:getClientPublicData()\n" +
+            "\tif not publicData or not publicData.isInsidePackingStationArea then\n" +
+            "\t\tif runtime then runtime.scrapLabPackingStationProbe = nil end\n" +
+            "\t\treturn false, nil, nil\n" +
+            "\tend\n\n" +
+            "\tlocal tick = sm.game.getCurrentTick()\n" +
+            "\tlocal cached = runtime and runtime.scrapLabPackingStationProbe or nil\n" +
+            "\tlocal packingStation = cached and cached.packingStation or nil\n" +
+            "\tif not cached or tick >= cached.nextProbeTick\n" +
+            "\t\tor ( packingStation and not sm.exists( packingStation ) ) then\n" +
+            "\t\tpackingStation = nil\n" +
+            "\t\tlocal result = self:findPackingStation( StationRaycastDistance )\n" +
+            "\t\tif result then\n" +
+            "\t\t\tlocal areaTrigger = result:getAreaTrigger()\n" +
+            "\t\t\tlocal candidate = areaTrigger and areaTrigger:getHostInteractable()\n" +
+            "\t\t\tif candidate and sm.exists( candidate ) then\n" +
+            "\t\t\t\tlocal stationData = ScrapLabVacuumPackingStationData( candidate )\n" +
+            "\t\t\t\tlocal inputUuid = stationData and stationData.inputUuid\n" +
+            "\t\t\t\tif inputUuid then\n" +
+            "\t\t\t\t\tlocal projectileEntry = UuidToProjectile[tostring( inputUuid )]\n" +
+            "\t\t\t\t\tlocal projectileUuid = projectileEntry and projectileEntry.uuid or inputUuid\n" +
+            "\t\t\t\t\tlocal start = self.shape:getWorldPosition()\n" +
+            "\t\t\t\t\tlocal dir = ( result.pointWorld - start ):normalize()\n" +
+            "\t\t\t\t\tlocal radius = sm.projectile.getProjectileRadius( projectileUuid )\n" +
+            "\t\t\t\t\tlocal obstructed = sm.physics.spherecast( start + dir * radius,\n" +
+            "\t\t\t\t\t\tresult.pointWorld, radius, self.shape, nil, nil )\n" +
+            "\t\t\t\t\tif not obstructed and sm.vec3.dot( self.shape.at,\n" +
+            "\t\t\t\t\t\tcandidate:getShape().up ) > 0 then packingStation = candidate end\n" +
+            "\t\t\t\tend\n" +
+            "\t\t\tend\n" +
+            "\t\tend\n" +
+            "\t\tif runtime then\n" +
+            "\t\t\truntime.scrapLabPackingStationProbe = {\n" +
+            "\t\t\t\tpackingStation = packingStation,\n" +
+            "\t\t\t\tnextProbeTick = tick + ( packingStation\n" +
+            "\t\t\t\t\tand SCRAPLAB_VACUUM_PROBE_INTERVAL_TICKS\n" +
+            "\t\t\t\t\tor SCRAPLAB_VACUUM_NEGATIVE_PROBE_TICKS )\n" +
+            "\t\t\t}\n" +
+            "\t\tend\n" +
+            "\tend\n\n" +
+            "\tlocal stationData = ScrapLabVacuumPackingStationData( packingStation )\n" +
+            "\tif stationData and stationData.state == \"filling\" and stationData.inputUuid then\n" +
+            "\t\treturn true, stationData.inputUuid, stationData\n" +
+            "\tend\n" +
+            "\treturn false, nil, nil\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumCachedShapeCanSpend( shape, itemUuid, quantity )\n" +
+            "\tif not shape or not sm.exists( shape ) then return false end\n" +
+            "\tlocal ok, container = pcall( function() return GetPipeGraphObjectContainer( shape ) end )\n" +
+            "\treturn ok and container and sm.container.canSpend( container, itemUuid, quantity )\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumGetSpendContainer( self, itemUuid, quantity )\n" +
+            "\tlocal runtime = ScrapLabVacuumRuntime( self )\n" +
+            "\tif not runtime then\n" +
+            "\t\treturn ScrapLabPipeGraph.getContainerShapeToSpendFrom( self.shape, itemUuid, quantity )\n" +
+            "\tend\n" +
+            "\tlocal tick = sm.game.getCurrentTick()\n" +
+            "\tlocal topology = ScrapLabPipeGraph.getTopologyRevision()\n" +
+            "\tlocal itemKey = tostring( itemUuid )\n" +
+            "\tlocal cached = runtime.scrapLabSpendSelection\n" +
+            "\tif cached and cached.itemKey == itemKey and cached.quantity == quantity\n" +
+            "\t\tand cached.topology == topology and tick < cached.nextProbeTick then\n" +
+            "\t\tif cached.shape == nil then return nil end\n" +
+            "\t\tif ScrapLabVacuumCachedShapeCanSpend( cached.shape, itemUuid, quantity ) then\n" +
+            "\t\t\treturn cached.shape\n" +
+            "\t\tend\n" +
+            "\tend\n" +
+            "\tlocal shape = ScrapLabPipeGraph.getContainerShapeToSpendFrom( self.shape, itemUuid, quantity )\n" +
+            "\truntime.scrapLabSpendSelection = { itemKey = itemKey, quantity = quantity,\n" +
+            "\t\ttopology = topology, shape = shape,\n" +
+            "\t\tnextProbeTick = tick + SCRAPLAB_VACUUM_PROBE_INTERVAL_TICKS }\n" +
+            "\treturn shape\n" +
+            "end\n" + VacuumOptimizationEnd;
+        private const string VacuumOptimizationBlock =
+            VacuumOptimizationStart + "\n" +
+            "local SCRAPLAB_VACUUM_PROBE_INTERVAL_TICKS = 5\n" +
+            "local SCRAPLAB_VACUUM_NEGATIVE_PROBE_TICKS = 2\n" +
+            "local SCRAPLAB_VACUUM_CONTAINER_SNAPSHOT_TICKS = 5\n\n" +
+            "local function ScrapLabVacuumRuntime( self )\n" +
+            "\tif sm.isServerMode() then return self.sv end\n" +
+            "\treturn self.cl\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumResolveContainers( self, direction )\n" +
+            "\tif direction == \"input\" then\n" +
+            "\t\treturn ScrapLabPipeGraph.getInputContainers( self.shape )\n" +
+            "\tend\n" +
+            "\treturn ScrapLabPipeGraph.getOutputContainers( self.shape )\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumGetContainerSnapshot( self, direction )\n" +
+            "\tlocal runtime = ScrapLabVacuumRuntime( self )\n" +
+            "\tif not runtime then\n" +
+            "\t\treturn ScrapLabVacuumResolveContainers( self, direction )\n" +
+            "\tend\n" +
+            "\tlocal tick = sm.game.getCurrentTick()\n" +
+            "\tlocal topology = ScrapLabPipeGraph.getTopologyRevision()\n" +
+            "\truntime.scrapLabContainerSnapshots = runtime.scrapLabContainerSnapshots or {}\n" +
+            "\tlocal cached = runtime.scrapLabContainerSnapshots[direction]\n" +
+            "\tif cached and cached.topology == topology and tick < cached.nextProbeTick then\n" +
+            "\t\treturn cached.shapes\n" +
+            "\tend\n" +
+            "\tlocal shapes = ScrapLabVacuumResolveContainers( self, direction )\n" +
+            "\truntime.scrapLabContainerSnapshots[direction] = {\n" +
+            "\t\ttopology = topology, shapes = shapes,\n" +
+            "\t\tnextProbeTick = tick + SCRAPLAB_VACUUM_CONTAINER_SNAPSHOT_TICKS\n" +
+            "\t}\n" +
+            "\treturn shapes\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumGetInputContainers( self )\n" +
+            "\treturn ScrapLabVacuumGetContainerSnapshot( self, \"input\" )\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumGetOutputContainers( self )\n" +
+            "\treturn ScrapLabVacuumGetContainerSnapshot( self, \"output\" )\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumPackingStationData( packingStation )\n" +
+            "\tif not packingStation or not sm.exists( packingStation ) then return nil end\n" +
+            "\tif sm.isServerMode() then return packingStation:getPublicData() end\n" +
+            "\treturn packingStation:getClientPublicData()\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumValidatePackingStationInteraction( self )\n" +
+            "\tlocal runtime = ScrapLabVacuumRuntime( self )\n" +
+            "\tlocal publicData = sm.isServerMode() and self.interactable:getPublicData()\n" +
+            "\t\tor self.interactable:getClientPublicData()\n" +
+            "\tif not publicData or not publicData.isInsidePackingStationArea then\n" +
+            "\t\tif runtime then runtime.scrapLabPackingStationProbe = nil end\n" +
+            "\t\treturn false, nil, nil\n" +
+            "\tend\n\n" +
+            "\tlocal tick = sm.game.getCurrentTick()\n" +
+            "\tlocal cached = runtime and runtime.scrapLabPackingStationProbe or nil\n" +
+            "\tlocal packingStation = cached and cached.packingStation or nil\n" +
+            "\tif not cached or tick >= cached.nextProbeTick\n" +
+            "\t\tor ( packingStation and not sm.exists( packingStation ) ) then\n" +
+            "\t\tpackingStation = nil\n" +
+            "\t\tlocal result = self:findPackingStation( StationRaycastDistance )\n" +
+            "\t\tif result then\n" +
+            "\t\t\tlocal areaTrigger = result:getAreaTrigger()\n" +
+            "\t\t\tlocal candidate = areaTrigger and areaTrigger:getHostInteractable()\n" +
+            "\t\t\tif candidate and sm.exists( candidate ) then\n" +
+            "\t\t\t\tlocal stationData = ScrapLabVacuumPackingStationData( candidate )\n" +
+            "\t\t\t\tlocal inputUuid = stationData and stationData.inputUuid\n" +
+            "\t\t\t\tif inputUuid then\n" +
+            "\t\t\t\t\tlocal projectileEntry = UuidToProjectile[tostring( inputUuid )]\n" +
+            "\t\t\t\t\tlocal projectileUuid = projectileEntry and projectileEntry.uuid or inputUuid\n" +
+            "\t\t\t\t\tlocal start = self.shape:getWorldPosition()\n" +
+            "\t\t\t\t\tlocal dir = ( result.pointWorld - start ):normalize()\n" +
+            "\t\t\t\t\tlocal radius = sm.projectile.getProjectileRadius( projectileUuid )\n" +
+            "\t\t\t\t\tlocal obstructed = sm.physics.spherecast( start + dir * radius,\n" +
+            "\t\t\t\t\t\tresult.pointWorld, radius, self.shape, nil, nil )\n" +
+            "\t\t\t\t\tif not obstructed and sm.vec3.dot( self.shape.at,\n" +
+            "\t\t\t\t\t\tcandidate:getShape().up ) > 0 then packingStation = candidate end\n" +
+            "\t\t\t\tend\n" +
+            "\t\t\tend\n" +
+            "\t\tend\n" +
+            "\t\tif runtime then\n" +
+            "\t\t\truntime.scrapLabPackingStationProbe = {\n" +
+            "\t\t\t\tpackingStation = packingStation,\n" +
+            "\t\t\t\tnextProbeTick = tick + ( packingStation\n" +
+            "\t\t\t\t\tand SCRAPLAB_VACUUM_PROBE_INTERVAL_TICKS\n" +
+            "\t\t\t\t\tor SCRAPLAB_VACUUM_NEGATIVE_PROBE_TICKS )\n" +
+            "\t\t\t}\n" +
+            "\t\tend\n" +
+            "\tend\n\n" +
+            "\tlocal stationData = ScrapLabVacuumPackingStationData( packingStation )\n" +
+            "\tif stationData and stationData.state == \"filling\" and stationData.inputUuid then\n" +
+            "\t\treturn true, stationData.inputUuid, stationData\n" +
+            "\tend\n" +
+            "\treturn false, nil, nil\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumCachedShapeCanSpend( shape, itemUuid, quantity )\n" +
+            "\tif not shape or not sm.exists( shape ) then return false end\n" +
+            "\tlocal ok, container = pcall( function() return GetPipeGraphObjectContainer( shape ) end )\n" +
+            "\treturn ok and container and sm.container.canSpend( container, itemUuid, quantity )\n" +
+            "end\n\n" +
+            "local function ScrapLabVacuumGetSpendContainer( self, itemUuid, quantity )\n" +
+            "\tlocal runtime = ScrapLabVacuumRuntime( self )\n" +
+            "\tif not runtime then\n" +
+            "\t\treturn ScrapLabPipeGraph.getContainerShapeToSpendFrom( self.shape, itemUuid, quantity )\n" +
+            "\tend\n" +
+            "\tlocal tick = sm.game.getCurrentTick()\n" +
+            "\tlocal topology = ScrapLabPipeGraph.getTopologyRevision()\n" +
+            "\tlocal itemKey = tostring( itemUuid )\n" +
+            "\tlocal cached = runtime.scrapLabSpendSelection\n" +
+            "\tif cached and cached.itemKey == itemKey and cached.quantity == quantity\n" +
+            "\t\tand cached.topology == topology and tick < cached.nextProbeTick then\n" +
+            "\t\tif cached.shape == nil then return nil end\n" +
+            "\t\tif ScrapLabVacuumCachedShapeCanSpend( cached.shape, itemUuid, quantity ) then\n" +
+            "\t\t\treturn cached.shape\n" +
+            "\t\tend\n" +
+            "\tend\n" +
+            "\tlocal shape = ScrapLabPipeGraph.getContainerShapeToSpendFrom( self.shape, itemUuid, quantity )\n" +
+            "\truntime.scrapLabSpendSelection = { itemKey = itemKey, quantity = quantity,\n" +
+            "\t\ttopology = topology, shape = shape,\n" +
+            "\t\tnextProbeTick = tick + SCRAPLAB_VACUUM_PROBE_INTERVAL_TICKS }\n" +
+            "\treturn shape\n" +
+            "end\n" + VacuumOptimizationEnd;
 
         private static readonly string ShapesIndexRelative = Path.Combine(
             "Survival", "Objects", "Database", "shapesets.json");
@@ -189,7 +448,7 @@ namespace RaidRescue
                             : PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
                         state.DefinitionUpdateAvailable
-                            ? "A verified Wireless Vacuum Pipe update is ready."
+                            ? "A verified Wireless Vacuum Pipe machine-performance update is ready."
                             : "Wireless Vacuum Pipe registrations, runtime, recipes, languages, and icon are intact.");
                     return result;
                 }
@@ -272,11 +531,11 @@ namespace RaidRescue
                     result.Installed = true;
                     result.NeedsUpdate = false;
                     result.Changes.Add(
-                        "Added readiness-aware remote-cell loading, bounded Craftbot resource refreshes, and topology-driven refreshes for retained machine container lists.");
+                        "Installed bounded Prospector empty-input and full-output retries while preserving live inventory checks.");
                     AdaptivePatchSupport.FillResult(result, build,
                         PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
-                        "Wireless Vacuum Pipe definition 12 Craftbot resource refresh update was installed and verified.");
+                        "Wireless Vacuum Pipe definition 17 Prospector retry update was installed and verified.");
                     SecretModBackupRetention.Prune(
                         backupRoot, ModKey, result.BackupPath, result);
                     return result;
@@ -437,6 +696,22 @@ namespace RaidRescue
                     AdaptivePatchSupport.Count(
                         consumerState.Document.NormalizedText,
                         GarageChestTopologyBlock) == 0)
+                {
+                    consumerState.Installed = true;
+                    consumerState.NeedsDefinitionUpdate = true;
+                }
+                if (consumer.Kind == "Prospector" &&
+                    IsLegacyProspectorInstalled(
+                        consumerState.Document.NormalizedText))
+                {
+                    consumerState.Installed = true;
+                    consumerState.NeedsDefinitionUpdate = true;
+                }
+                if (consumer.Kind == "Vacuum" &&
+                    (IsLegacyVacuumInstalled(
+                        consumerState.Document.NormalizedText) ||
+                     IsLegacyV15VacuumInstalled(
+                        consumerState.Document.NormalizedText)))
                 {
                     consumerState.Installed = true;
                     consumerState.NeedsDefinitionUpdate = true;
@@ -777,7 +1052,8 @@ namespace RaidRescue
                     "3411D6804F6D874C4B9BD8D8C80C4109BF3CECFB0F44F31EDF49C0DF4F3D8DC8",
                     "B5F9739A83F5A7B708690665343050A215C257CE8BB43E0C9F2D648724698269",
                     "863C038D5D3326A33AC8020482D6B8436550D7E0A8D634399A64C10B098A0908",
-                    "D37FC304693ACC73207D775CCDBCB3F7511739840BBEEAFC6F244E7045922C50"
+                    "D37FC304693ACC73207D775CCDBCB3F7511739840BBEEAFC6F244E7045922C50",
+                    "DDCCAC907DA88C56F70CFA273395E7CCFC85B300BD14C7D26347F3A842F6DB1E"
                 };
             else if (String.Equals(file, "ScrapLabPipeGraph.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -790,7 +1066,9 @@ namespace RaidRescue
                     "8C8641F1069968D0750ABCDCB0C56261616D44B11E2C1814C4664222BED2BD2A",
                     "50EAFF546ECC80DFC2DDF6D3E49770E0A88704DBEDF5F85617EC2D95740B96F5",
                     "847531571E5C7EE7B4DB6FBED507DA65C88091194817CB624A2738BC73969128",
-                    "2A39C08AF944066EEBDA11BD1701E31A0C3ADDD1D94E7447DDF4C3A1137482DC"
+                    "2A39C08AF944066EEBDA11BD1701E31A0C3ADDD1D94E7447DDF4C3A1137482DC",
+                    "200F172E937893A7EA3AB4FEB20BB6B57BF775F5F755B0C0F1591B58975036A8",
+                    "18E3E8A087507C0B01782A89BA8B095B6C2119CAF9C933B7E809D5BC348B768C"
                 };
             else if (String.Equals(file, "WirelessPipeTransfer.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -798,7 +1076,8 @@ namespace RaidRescue
                 {
                     "ED9507FEFFA91C280C5B6AAEC720EE773993B6E9E56A47F7CE274606AFC680BA",
                     "CC64EEFFFA602B4A6CC670A15ECF9DE99805C3AC394C4D46149FFEA00CE6B561",
-                    "DDE109885C46B246FC6037BDC96DB7C6FF825499E31B8D196C1CA0DF6C680DD4"
+                    "DDE109885C46B246FC6037BDC96DB7C6FF825499E31B8D196C1CA0DF6C680DD4",
+                    "3315FB9AB06474C7DF25E6246F47E36EF72C7798ABB2F6BAE97C99019125551A"
                 };
             else if (String.Equals(file, "WirelessVacuumPipe.lua",
                 StringComparison.OrdinalIgnoreCase))
@@ -806,7 +1085,8 @@ namespace RaidRescue
                 {
                     "25F6D11E19C3514FE2E06DA72FC5A60C45BE21471B49D35198F2E143EF8377D6",
                     "338FAB44E130D36A51D90EC5EC8079DA472C67A4C51900E92B36C3727FD67BED",
-                    "89F39FC8B9B093C87479D7B36330D7FE2DE64E603FD67B9DA1911567A7455FCB"
+                    "89F39FC8B9B093C87479D7B36330D7FE2DE64E603FD67B9DA1911567A7455FCB",
+                    "BACF6DC336C45D48C1D88975B6285E28E84B6EAFFE973B87D98851E71B4165A5"
                 };
             else if (String.Equals(file, "WirelessVacuumPipe.layout",
                 StringComparison.OrdinalIgnoreCase))
@@ -1264,6 +1544,23 @@ namespace RaidRescue
                 text = text.Replace(GarageChestTopologyAnchor,
                     GarageChestTopologyBlock);
             }
+            if (definition.Kind == "Prospector")
+            {
+                RequireCount(text, ProspectorInputRetryAnchor, 1,
+                    "Prospector input retry anchor changed");
+                RequireCount(text, ProspectorOutputRetryAnchor, 1,
+                    "Prospector output retry anchor changed");
+                RequireCount(text, ProspectorInputRetryBlock, 0,
+                    "Prospector input retry throttle already exists");
+                RequireCount(text, ProspectorOutputRetryBlock, 0,
+                    "Prospector output retry throttle already exists");
+                text = text.Replace(ProspectorInputRetryAnchor,
+                    ProspectorInputRetryBlock);
+                text = text.Replace(ProspectorOutputRetryAnchor,
+                    ProspectorOutputRetryBlock);
+            }
+            if (definition.Kind == "Vacuum")
+                text = PatchVacuumHotPath(text);
             text = LoaderBlock + "\n\n" + text;
             if (definition.Kind == "Crafter")
             {
@@ -1298,7 +1595,14 @@ namespace RaidRescue
         private static string UnpatchConsumer(
             ConsumerDefinition definition, string text)
         {
-            if (!IsConsumerInstalled(definition, text))
+            bool legacyProspector = definition.Kind == "Prospector" &&
+                IsLegacyProspectorInstalled(text);
+            bool legacyV15Vacuum = definition.Kind == "Vacuum" &&
+                IsLegacyV15VacuumInstalled(text);
+            bool legacyVacuum = definition.Kind == "Vacuum" &&
+                IsLegacyVacuumInstalled(text);
+            if (!IsConsumerInstalled(definition, text) &&
+                !legacyProspector && !legacyV15Vacuum && !legacyVacuum)
                 throw new InvalidDataException(
                     definition.Kind + " pipe wrapper is missing, duplicated, or edited.");
             if (definition.Kind == "Crafter")
@@ -1321,6 +1625,17 @@ namespace RaidRescue
                     text, GarageChestTopologyBlock) == 1)
                 text = text.Replace(GarageChestTopologyBlock,
                     GarageChestTopologyAnchor);
+            if (definition.Kind == "Prospector" && !legacyProspector)
+            {
+                text = text.Replace(ProspectorInputRetryBlock,
+                    ProspectorInputRetryAnchor);
+                text = text.Replace(ProspectorOutputRetryBlock,
+                    ProspectorOutputRetryAnchor);
+            }
+            if (definition.Kind == "Vacuum" && !legacyVacuum)
+                text = legacyV15Vacuum
+                    ? UnpatchLegacyV15VacuumHotPath(text)
+                    : UnpatchVacuumHotPath(text);
             text = RemoveUnique(text, LoaderBlock + "\n\n");
             foreach (KeyValuePair<string, int> method in definition.Methods)
                 text = text.Replace(WrapperCall(method.Key),
@@ -1338,7 +1653,8 @@ namespace RaidRescue
                 return false;
             foreach (KeyValuePair<string, int> method in definition.Methods)
                 if (AdaptivePatchSupport.Count(text,
-                        WrapperCall(method.Key)) != method.Value ||
+                        WrapperCall(method.Key)) !=
+                        InstalledMethodCount(definition, method) ||
                     AdaptivePatchSupport.Count(text,
                         NativeCall(method.Key)) != 0) return false;
             if (definition.Kind == "Crafter")
@@ -1370,6 +1686,213 @@ namespace RaidRescue
             if (definition.Kind == "PipeEffects" &&
                 AdaptivePatchSupport.Count(text, PipeEffectGuard) != 1)
                 return false;
+            if (definition.Kind == "Prospector" &&
+                (AdaptivePatchSupport.Count(
+                    text, ProspectorInputRetryBlock) != 1 ||
+                 AdaptivePatchSupport.Count(
+                    text, ProspectorOutputRetryBlock) != 1 ||
+                 AdaptivePatchSupport.Count(
+                    text, ProspectorInputRetryAnchor) != 0 ||
+                 AdaptivePatchSupport.Count(
+                    text, ProspectorOutputRetryAnchor) != 0)) return false;
+            if (definition.Kind == "Vacuum" &&
+                !IsVacuumHotPathInstalled(text)) return false;
+            return true;
+        }
+
+        private static int InstalledMethodCount(
+            ConsumerDefinition definition,
+            KeyValuePair<string, int> method)
+        {
+            if (definition.Kind == "Vacuum" &&
+                method.Key == "getInputContainers") return 1;
+            if (definition.Kind == "Vacuum" &&
+                method.Key == "getContainerShapeToSpendFrom") return 2;
+            return method.Value;
+        }
+
+        private static string PatchVacuumHotPath(string text)
+        {
+            string inputWrapper = WrapperCall("getInputContainers");
+            string outputWrapper = WrapperCall("getOutputContainers");
+            string spendWrapper = WrapperCall(
+                "getContainerShapeToSpendFrom");
+            RequireCount(text, VacuumOptimizationStart, 0,
+                "Vacuum hot-path block already exists");
+            RequireCount(text, inputWrapper + "( self.shape )", 8,
+                "Vacuum input-query hot path changed");
+            RequireCount(text, outputWrapper + "( self.shape )", 1,
+                "Vacuum output-query hot path changed");
+            RequireCount(text, spendWrapper + "( self.shape,", 2,
+                "Vacuum spend-query hot path changed");
+            RequireCount(text, VacuumNativeValidationCall, 2,
+                "Vacuum packing-station validation calls changed");
+            RequireCount(text, VacuumAreaAnchor, 1,
+                "Vacuum incoming-area hot path changed");
+
+            text = text.Replace(inputWrapper + "( self.shape )",
+                VacuumInputCall);
+            text = text.Replace(outputWrapper + "( self.shape )",
+                VacuumOutputCall);
+            text = text.Replace(spendWrapper + "( self.shape,",
+                VacuumSpendCall);
+            text = text.Replace(VacuumNativeValidationCall,
+                VacuumValidationCall);
+            text = text.Replace(VacuumAreaAnchor,
+                VacuumAreaOptimization);
+            const string serverCreate =
+                "function Vacuum.server_onCreate( self )";
+            RequireCount(text, serverCreate, 1,
+                "Vacuum optimization insertion anchor changed");
+            text = text.Replace(serverCreate,
+                VacuumOptimizationBlock + "\n\n" + serverCreate);
+            if (!IsVacuumHotPathInstalled(text))
+                throw new InvalidDataException(
+                    "Vacuum hot-path output failed verification.");
+            return text;
+        }
+
+        private static string UnpatchVacuumHotPath(string text)
+        {
+            if (!IsVacuumHotPathInstalled(text))
+                throw new InvalidDataException(
+                    "Vacuum hot-path block is missing, duplicated, or edited.");
+            string inputWrapper = WrapperCall("getInputContainers");
+            string outputWrapper = WrapperCall("getOutputContainers");
+            string spendWrapper = WrapperCall(
+                "getContainerShapeToSpendFrom");
+            text = RemoveUnique(text,
+                VacuumOptimizationBlock + "\n\n");
+            text = text.Replace(VacuumInputCall,
+                inputWrapper + "( self.shape )");
+            text = text.Replace(VacuumOutputCall,
+                outputWrapper + "( self.shape )");
+            text = text.Replace(VacuumSpendCall,
+                spendWrapper + "( self.shape,");
+            text = text.Replace(VacuumValidationCall,
+                VacuumNativeValidationCall);
+            text = text.Replace(VacuumAreaOptimization,
+                VacuumAreaAnchor);
+            RequireCount(text, inputWrapper + "( self.shape )", 8,
+                "Vacuum input-query restoration failed");
+            RequireCount(text, outputWrapper + "( self.shape )", 1,
+                "Vacuum output-query restoration failed");
+            RequireCount(text, spendWrapper + "( self.shape,", 2,
+                "Vacuum spend-query restoration failed");
+            return text;
+        }
+
+        private static bool IsVacuumHotPathInstalled(string text)
+        {
+            return AdaptivePatchSupport.Count(
+                    text, VacuumOptimizationBlock) == 1 &&
+                AdaptivePatchSupport.Count(text, VacuumInputCall) == 9 &&
+                AdaptivePatchSupport.Count(text, VacuumOutputCall) == 2 &&
+                AdaptivePatchSupport.Count(text, VacuumSpendCall) == 3 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumValidationCall) == 2 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumNativeValidationCall) == 0 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumAreaOptimization) == 1 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumAreaAnchor) == 0;
+        }
+
+        private static string UnpatchLegacyV15VacuumHotPath(string text)
+        {
+            if (!IsLegacyV15VacuumInstalled(text))
+                throw new InvalidDataException(
+                    "The definition-15 Vacuum hot-path block is missing, duplicated, or edited.");
+            string inputWrapper = WrapperCall("getInputContainers");
+            string spendWrapper = WrapperCall(
+                "getContainerShapeToSpendFrom");
+            text = RemoveUnique(text,
+                LegacyV15VacuumOptimizationBlock + "\n\n");
+            text = text.Replace(LegacyV15VacuumFixedUpdateBlock,
+                VacuumFixedUpdateAnchor);
+            text = text.Replace(LegacyV15VacuumInputCall,
+                inputWrapper + "( self.shape )");
+            text = text.Replace(VacuumSpendCall,
+                spendWrapper + "( self.shape,");
+            text = text.Replace(VacuumValidationCall,
+                VacuumNativeValidationCall);
+            text = text.Replace(VacuumAreaOptimization,
+                VacuumAreaAnchor);
+            RequireCount(text, inputWrapper + "( self.shape )", 8,
+                "Definition-15 Vacuum input-query restoration failed");
+            RequireCount(text, WrapperCall("getOutputContainers") +
+                "( self.shape )", 1,
+                "Definition-15 Vacuum output-query restoration failed");
+            RequireCount(text, spendWrapper + "( self.shape,", 2,
+                "Definition-15 Vacuum spend-query restoration failed");
+            return text;
+        }
+
+        private static bool IsLegacyV15VacuumInstalled(string text)
+        {
+            return AdaptivePatchSupport.Count(
+                    text, LegacyV15VacuumOptimizationBlock) == 1 &&
+                AdaptivePatchSupport.Count(
+                    text, LegacyV15VacuumFixedUpdateBlock) == 1 &&
+                AdaptivePatchSupport.Count(
+                    text, LegacyV15VacuumInputCall) == 9 &&
+                AdaptivePatchSupport.Count(text, VacuumSpendCall) == 3 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumValidationCall) == 2 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumNativeValidationCall) == 0 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumAreaOptimization) == 1 &&
+                AdaptivePatchSupport.Count(
+                    text, VacuumAreaAnchor) == 0;
+        }
+
+        private static bool IsLegacyProspectorInstalled(string text)
+        {
+            ConsumerDefinition prospector = null;
+            foreach (ConsumerDefinition consumer in Consumers)
+                if (consumer.Kind == "Prospector")
+                {
+                    prospector = consumer;
+                    break;
+                }
+            if (prospector == null || AdaptivePatchSupport.Count(
+                    text, LoaderBlock) != 1 ||
+                AdaptivePatchSupport.Count(
+                    text, ProspectorInputRetryBlock) != 0 ||
+                AdaptivePatchSupport.Count(
+                    text, ProspectorOutputRetryBlock) != 0 ||
+                AdaptivePatchSupport.Count(
+                    text, ProspectorInputRetryAnchor) != 1 ||
+                AdaptivePatchSupport.Count(
+                    text, ProspectorOutputRetryAnchor) != 1) return false;
+            foreach (KeyValuePair<string, int> method in prospector.Methods)
+                if (AdaptivePatchSupport.Count(text,
+                        WrapperCall(method.Key)) != method.Value ||
+                    AdaptivePatchSupport.Count(text,
+                        NativeCall(method.Key)) != 0) return false;
+            return true;
+        }
+
+        private static bool IsLegacyVacuumInstalled(string text)
+        {
+            ConsumerDefinition vacuum = null;
+            foreach (ConsumerDefinition consumer in Consumers)
+                if (consumer.Kind == "Vacuum")
+                {
+                    vacuum = consumer;
+                    break;
+                }
+            if (vacuum == null || AdaptivePatchSupport.Count(
+                    text, LoaderBlock) != 1 ||
+                AdaptivePatchSupport.Count(
+                    text, VacuumOptimizationStart) != 0) return false;
+            foreach (KeyValuePair<string, int> method in vacuum.Methods)
+                if (AdaptivePatchSupport.Count(text,
+                        WrapperCall(method.Key)) != method.Value ||
+                    AdaptivePatchSupport.Count(text,
+                        NativeCall(method.Key)) != 0) return false;
             return true;
         }
 

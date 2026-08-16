@@ -1,5 +1,349 @@
 # Wireless Vacuum Pipe Performance Investigation and Test Plan
 
+## Definition-17 bounded Prospector retries (implemented and verified)
+
+Two definition-16 runs completed **9 passed, 0 failed** with no ScrapLab
+traceback and exact route-call reductions. Every hot stage made 960 Vacuum
+input-route calls and 360 output-route calls instead of definition 15's 4,800
+and 1,800. Both runs had independently unstable host frame rate (7.73% and
+6.42% paired-baseline drift), so neither is accepted as a final FPS comparison.
+Their server attribution is nevertheless consistent: Vacuum work fell while
+two Prospectors repeatedly spent roughly 72–94 ms per sample searching the
+same 128-chest input network.
+
+Source inspection found that `CollectionTickDelay` already declares a
+0.4-second retry interval, but `lastCollectionTick` advances only after a
+successful pickup. Once that initial interval expires, an empty or nonmatching
+network is therefore rescanned every 40 Hz fixed update. Completed items have
+the equivalent problem when every output is full: `doneTick` is not advanced,
+so the same output route is searched every tick.
+
+Definition 17 enforces the delay that the vanilla code already declares:
+
+1. Record the input-attempt tick before searching the live ordered input
+   containers. A failed search retries after 16 ticks instead of on the next
+   tick; a successful native transaction retains the same timing.
+2. Record the completed-output attempt tick before searching live ordered
+   output containers. Full outputs retry after 16 ticks while completed items
+   remain stored and collectable.
+3. Do not cache inventory contents, slots, quantities, or transaction
+   authority. Every permitted attempt still queries live containers and uses
+   the original native transaction logic.
+4. Recognize the exact definition-16 Prospector integration and migrate only
+   its two protected retry sites through the normal atomic update path. Edited,
+   partial, or duplicated sites remain blocked.
+
+Acceptance requires definition-16 migration, exact removal, rollback and
+tamper regressions, portable builds, and a full `/slpipeperf auto` run. In the
+unchanged empty-input benchmark fixture, the expected Prospector input-route
+count falls from roughly 1,200 toward 75 per 15-second hot stage.
+
+### Definition-17 measurement
+
+The full definition-17 benchmark completed **9 passed, 0 failed**. Prospector
+input-route calls fell from 1,200 to 74–76 per hot stage, matching the expected
+16-tick cadence, and complete Prospector fixed-update time fell from 72–94 ms
+to 13–17 ms. Vacuum calls remained at the definition-16 target of 960 input and
+360 output queries. Inventory quantities and item-type signatures remained
+conserved, directional transfers committed successfully, and Wireless Pipe
+Manager invariants passed.
+
+The run's FPS result is intentionally rejected: baseline A measured 223.09 FPS
+and cleanup baseline B measured 174.73 FPS, a 24.31% drift. Log inspection
+showed that harness definition 4 destroyed 64 populated native chests directly,
+emitting hundreds of nonempty-container warnings immediately before baseline
+B. Shape-by-shape removal also allowed queued callbacks to reference scripts
+that had already been destroyed. Those are benchmark-cleanup artifacts, not a
+definition-17 routing failure.
+
+Harness definition 5 fixes the measurement procedure before any further
+production optimization:
+
+1. Transactionally remove every test item from each benchmark-owned container.
+2. Remove each imported disposable creation once with the native whole-creation
+   operation instead of destroying every shape separately.
+3. Preserve the exact cleanup receipt and fail safely if any container cannot
+   be emptied or any creation cannot be removed.
+4. Use the same safe cleanup path for interrupted-run recovery.
+
+The final definition-17 run under harness 5 completed **9 passed, 0 failed**
+with 4.71% paired-baseline drift, inside the five-percent acceptance limit.
+Baseline A measured 234.30 FPS, cleanup baseline B measured 245.59 FPS, and
+their paired mean was 239.94 FPS. Harness cleanup removed every test item
+transactionally before deleting each disposable creation; the log contained
+zero nonempty-container destruction warnings, zero cleanup failures, and zero
+ScrapLab Lua tracebacks.
+
+| Stage | FPS | Loss from paired baseline |
+| --- | ---: | ---: |
+| Local 32-chest inventory | 241.57 | -0.7% |
+| Same-world Link, 64 chests | 245.94 | +2.5% |
+| Same-world inventory index | 234.77 | -2.2% |
+| Raw cross-world cell | 199.94 | -16.7% |
+| Cross-world Link, 64 chests | 241.16 | +0.5% |
+| Cross-world inventory index | 187.59 | -21.8% |
+| Dense cross-world Send/Receive | 204.68 | -14.7% |
+
+The accepted trace confirms the definition-17 target: each hot stage made only
+74-76 Prospector input-route queries rather than 1,200. Complete Prospector
+fixed-update work was 18-21 ms per 15-second sample, down from definition 16's
+72-94 ms. Inventory indexing consumed 42-46 ms for aggregation, 6-10 ms for
+7,680 live reads, and 8-11 ms for terminal selection. Dense directional work
+consumed 52 ms in the manager and 48 ms in the transfer coordinator. Vacuum
+fixed updates remain the largest measured ScrapLab-aware consumer at 131-167
+ms per hot sample, but this is only about 0.9-1.1% of one CPU second per second
+and its route-query counts remain bounded at 960 input and 360 output queries.
+
+The remaining FPS loss begins when the benchmark loads and simulates the
+remote underground cell, even when no expensive inventory catalog is active.
+The engine also emits its existing `Vault.lua` and elevator script-reference
+errors while those remote cells load. No ScrapLab loop, unbounded cache,
+manager invariant failure, item loss, or cleanup leak appears in the accepted
+trace. Further reductions in cross-world FPS cannot safely come from stale
+inventory caches or weaker transaction checks; the next useful experiment
+must isolate native remote-cell contents and machine simulation from the
+Wireless Pipe route itself before changing production behavior again.
+
+## Definition-16 bounded Vacuum route snapshots (implemented)
+
+The post-definition-15 benchmark completed **9 passed, 0 failed** with only
+0.34% baseline drift. Against the exact definition-14 caller-attribution run:
+
+| Stage | Definition 14 | Definition 15 | Change |
+| --- | ---: | ---: | ---: |
+| Raw cross-world cell | 193.92 FPS | 206.87 FPS | +6.7% |
+| Cross-world inventory index | 181.27 FPS | 200.35 FPS | +10.5% |
+| Dense cross-world Send/Receive | 190.80 FPS | 209.44 FPS | +9.8% |
+
+Vacuum fixed-update time fell from 313 to 210 ms in the raw remote stage, 331
+to 202 ms during cross-world indexing, and 299 to 229 ms during directional
+transfer. Packing-station spend selections fell from 3,000 to 600 per sample.
+All inventory conservation, manager, transfer, cleanup, and Lua checks passed.
+
+The trace also exposed the next dominant allocation: eight loaded Vacuums made
+4,800 input-route calls per 15-second sample, one per Vacuum per fixed tick.
+Each graph cache hit still returns a defensive copy of the full 128-container
+route. The route membership is topology, not inventory content, so copying it
+every tick is unnecessary.
+
+Definition 16 therefore retains one input and one output shape-list snapshot per
+Vacuum for no more than five ticks (0.125 seconds):
+
+1. Input and output directions have independent snapshots so mode behavior and
+   native ordering remain unchanged.
+2. A Wireless Pipe Manager topology revision invalidates both snapshots on the
+   next access, before their five-tick deadline.
+3. Local physical changes remain bounded by the shorter five-tick consumer
+   lifetime, which is stricter than the graph cache's existing 20-tick body
+   validation interval.
+4. The snapshot stores only shape topology. Item counts, `canSpend`,
+   `canCollect`, exact-slot selection, and native container transactions remain
+   live; no cached data is allowed to authorize an item move.
+5. Both exact definition-14 and definition-15 Vacuum integrations migrate
+   atomically while retaining the original clean-file receipt backups. Edited,
+   partial, or duplicated blocks remain blocked.
+
+Acceptance requires install/update/remove round trips, exact definition-15 and
+definition-14 migration, rollback and tamper checks, script/UI regressions, a
+portable rebuild, then another full `/slpipeperf auto` run. The repeat should
+reduce Vacuum input calls from 4,800 toward 960 per hot stage and reduce output
+calls proportionally without changing conservation or readiness results.
+
+### Definition-16 measurements
+
+The first run completed **9 passed, 0 failed** with no ScrapLab traceback and
+proved the targeted behavior: every hot stage made 960 Vacuum input-route calls
+and 360 output-route calls, exactly one fifth of definition 15's 4,800 and
+1,800. In the raw cross-world stage, Vacuum fixed-update time fell from 210 to
+149 ms and mean FPS rose from 206.87 to 214.61.
+
+The run is not yet a valid final FPS comparison because its cleanup baseline
+fell from 241.13 to 223.18 FPS, producing 7.73% baseline drift. The harness
+marks any drift above 5% for repetition. Later inventory and directional stage
+FPS therefore cannot be separated reliably from changing host load, although
+their conservation, query-count, transfer, and cleanup assertions all passed.
+A second run also completed **9 passed, 0 failed** and repeated the exact
+960/360 input/output call totals. Its baseline improved from 215.46 to 229.76
+FPS during the run, producing 6.42% drift, so it likewise cannot provide a
+valid final FPS comparison. Server attribution remained usable: Vacuum work
+measured 197, 165, and 143 ms in the raw, indexed, and directional cross-world
+stages, while Prospector work remained 72–94 ms. That stable Prospector cost is
+the evidence used for definition 17 rather than drawing a conclusion from the
+unstable host FPS values.
+
+## Definition-15 Vacuum hot-path optimization (implemented)
+
+The caller-attribution run completed **9 passed, 0 failed** with 1.34%
+baseline drift. Its paired baseline was 241.89 FPS. The raw remote-cell and
+cross-world inventory stages measured 193.92 and 181.27 FPS respectively.
+Vacuum Pumps dominated the loaded-machine work: 4,800 fixed updates consumed
+about 299–331 ms per 15-second hot sample, compared with about 75 ms for
+Prospectors and 15–20 ms for Crafters.
+
+The trace also isolated 6,000 server-side input queries, 3,000 server-side
+packing-station spend selections, and an additional 3,000 client-side spend
+selections from Vacuum Pumps. Source inspection found repeated input topology
+resolution inside one update, duplicate server/client packing-station
+ray/sphere probes, and incoming area-trigger scans even when a pump was not
+powered.
+
+Definition 15 applies the following bounded consumer optimization:
+
+1. Resolve Vacuum input containers at most once per server fixed update and
+   reuse that exact ordered snapshot for all decisions made during the update.
+2. Cache validated packing-station geometry for five ticks (0.125 seconds),
+   while continuing to read the station's live filling state and requested
+   UUID every tick. Failed geometry probes retry after two ticks.
+3. Cache a selected spend shape for at most five ticks. Topology changes
+   invalidate it immediately, and live `canSpend` validation runs before every
+   reuse. An emptied source triggers a fresh ordered search in the same update.
+4. Skip incoming Vacuum area-trigger enumeration while the pump has no active
+   logic parent. Powered pumps retain the original harvestable, liquid,
+   projectile, transaction, cooldown, and feedback behavior.
+5. Preserve the definition-14 uninstall base and migrate its exact intact
+   Vacuum integration through the standard atomic definition-update path.
+
+Acceptance requires exact install/update/remove round trips, protected-snippet
+tamper rejection, one-click migration from a live definition-14 receipt, Lua
+hot-path regression checks, and a full post-update `/slpipeperf auto` run.
+
+## Definition-14 measured result and caller-attribution pass
+
+Two full definition-14/graph-v15 runs completed **9 passed, 0 failed**. The
+resolved-selection cache removed all 9,600 native graph traversals from each
+hot stage and produced roughly 10,800 resolved-cache hits. Input graph time
+fell from about 523 ms to 99–138 ms per 15-second sample, while output graph
+time fell from about 238 ms to 30–52 ms. Cross-world Link residency remained
+near the paired baseline, confirming that loaded cells and idle endpoints are
+not the remaining bottleneck.
+
+The expensive cross-world inventory stage nevertheless remained about 21.7%
+to 22.0% below its paired baseline. Its fixed call totals were 7,200 input
+queries, 3,600 output queries, 6,000 spend selections, and 2,400 collect
+selections per sample. That stable 12/6/10/4-per-tick pattern points to active
+machine consumers repeatedly examining the returned live containers after the
+now-cached graph lookup.
+
+Development harness definition 4 therefore adds a measurement-only caller
+attribution pass before any further production optimization:
+
+1. Wrap the fixed updates of Crafter, Vacuum, Flat Vacuum, Garage Chest, Ore
+   Crusher, Prospector, and Refinery while a benchmark sample is active.
+2. Attribute every graph input, output, spend, collect, and terminal call to
+   the active consumer class, while retaining the existing aggregate metrics.
+3. Measure each consumer's complete fixed-update duration so time spent
+   scanning returned live containers is visible even when it occurs outside
+   ScrapLab's graph functions.
+4. Re-run dynamic consumer discovery throughout the benchmark because Scrap
+   Mechanic may load interactable class tables after the harness itself.
+5. Record `consumerAttributionVersion` and the number of installed consumer
+   profilers in every stage result. The harness changes no routing, storage,
+   transaction, cache, or production behavior.
+
+One full `/slpipeperf auto` run with all seven profilers active is sufficient
+to select the next production optimization. Any missing profiler or an
+unattributed hot call must be resolved before changing the runtime again.
+
+## Definition-14 resolved-query optimization plan (implemented)
+
+The clean definition-13 benchmark completed **9 passed, 0 failed** with only
+0.36% baseline drift. Idle cross-world Link residency was effectively free,
+but the three stages that repeatedly resolved complete container lists lost
+23.5% to 27.0% of the paired baseline. Each 15-second stage made 9,600 native
+pipe-graph calls and roughly 17,400 virtual or negative-cache lookups. This
+isolates the next bottleneck to repeated container selection—not cell
+residency, endpoint rendering, item aggregation, or transfer transactions.
+
+Definition 14 implements the following bounded optimization:
+
+1. **Cache the final ordered selection per caller and direction.** Input and
+   output results use separate keys containing the caller's world and shape.
+   The cached list preserves Scrap Mechanic's native containers first and the
+   existing wireless extension order afterward. Results are copied before they
+   reach callers, so consumer code cannot mutate the cache.
+2. **Keep item authority live.** The cache contains Shape references only. It
+   never stores slot contents, item counts, filters, free capacity, revisions,
+   or transaction results. Every index and transfer still reads live
+   containers, and every write still uses native container transactions.
+3. **Invalidate on every relevant topology signal.** Native results mirror the
+   physical component's body tracker and revalidate at most 20 ticks after a
+   body changes. Wireless topology revision and remote-world readiness changes
+   immediately clear virtual, terminal, and resolved selections. Missing
+   shapes and invalid trackers also discard an entry before reuse.
+4. **Bound long-session memory.** Native, virtual, terminal, and resolved query
+   maps each cap at 2,048 entries, trim least-recently-used entries in one batch
+   to 1,792, and prune entries idle for 1,200 ticks. This avoids both unbounded
+   retention and a full sort on every insertion beyond the limit.
+5. **Reduce lease-renewal call traffic.** A hot cached graph result requests a
+   lease renewal no more than once every 20 ticks, and a terminal result no more
+   than once every 30 ticks. Those intervals remain well inside the existing
+   80- and 120-tick lease lifetimes.
+6. **Expose proof in benchmark diagnostics.** Runtime snapshots now report
+   native and resolved entry counts, resolved hits, native/resolved
+   invalidations, and cache trims. A successful repeat should replace most of
+   the 9,600 native calls with resolved hits while retaining all conservation,
+   readiness, manager, and cleanup assertions.
+7. **Migrate safely.** Wireless Vacuum Pipe definition 14 recognizes the exact
+   definition-13 graph hash and exposes the normal one-click **UPDATE** action.
+   The update replaces only verified owned runtime files, preserves the
+   original clean uninstall backup, verifies output hashes, and rolls back to
+   the complete definition-13 state on failure.
+
+Acceptance requires the existing automatic dense benchmark, cache-bound and
+invalidation regressions, definition-update migration checks, embedded UI and
+JavaScript validation, the complete project regression suite, and portable
+package builds. The in-game comparison remains authoritative for FPS; static
+tests prove the safety boundaries but do not substitute for the benchmark.
+
+## Definition-13 remediation plan (implemented)
+
+This follow-up targets the remaining long-session memory retention and the
+active Network Storage/Send-Receive costs that were visible after definition
+11 removed permanent matched-route simulation.
+
+1. **Bound shared inventory memory.** Use only Scrap Mechanic's global game
+   tick for shared cache age, prune on a periodic heartbeat even with no open
+   terminal, cap the cache at 4,096 records, and trim in batches so crossing
+   the cap cannot cause a full sort on every insertion.
+2. **Release closed-terminal state.** When the final viewer closes, discard the
+   terminal's server descriptors, records, aggregate, snapshot, scan queues,
+   route state, and client catalog/icon/widget tables. Deposit routing remains
+   safe because it obtains a fresh transaction-authoritative topology.
+3. **Make live catalog changes incremental.** Maintain aggregate totals by
+   subtracting the previous changed-container record and adding its replacement.
+   On the client, reuse cached item metadata and existing widgets when UUID
+   order is unchanged. Rebuild the grid only when filtering/sorting/membership
+   actually changes, preserving its scroll position.
+4. **Reduce directional-transfer amplification.** Move up to one bounded stack
+   (maximum 100 items) per atomic transaction, use destination capacity as the
+   final batch size, keep fairness cursors in runtime memory, checkpoint them
+   every 200 ticks, and remove retry/cursor state for inactive channels.
+5. **Make manager maintenance event/deadline driven.** Recompute cell-handle
+   ownership only after endpoint/lease/readiness changes or the next actual
+   lease, retry, release, or reconciliation deadline. Keep a 400-tick safety
+   maintenance ceiling and expose run counters to the benchmark.
+6. **Stop copying stable topology.** Extend physical validation to 20 ticks and
+   return borrowed read-only terminal descriptor/state views from the graph
+   cache. Network Storage must never normalize or mutate those shared entries.
+7. **Reduce idle endpoint client work.** Poll configuration twice per second,
+   consume visual activity every two ticks, create `PipeEffectPlayer` only for
+   a real transfer, and send glow changes only when their visible value moves.
+8. **Ship as safe definition updates.** Wireless Vacuum Pipe definition 13 and
+   Network Storage Chest definition 10 recognize every verified currently
+   released owned-file hash. Updates preserve the original clean uninstall
+   bases, remain atomic per mod, and expose the normal compact **UPDATE** action.
+
+Safety invariants remain unchanged: native container transactions are the only
+item authority; source and destination are freshly re-resolved before commit;
+cross-world cell limits remain enforced; cache entries never make a write
+decision; and save-sensitive UUID removal behavior is untouched.
+
+Qualification includes static hot-path regressions, owned-file legacy-hash
+migration tests, fake-game atomic install/update/removal tests, embedded UI and
+JavaScript checks, the existing 32-chest/1,152-stack benchmark contract, a full
+portable build, and a final in-game `/slpipeperf auto` comparison after the
+definition update is installed.
+
 **Status:** The definition-11 after-change qualification pass finished on
 2026-08-15. All nine benchmark stages and every conservation, manager, and
 cleanup invariant passed. The worst workload loss fell from 14.30% to 2.07%

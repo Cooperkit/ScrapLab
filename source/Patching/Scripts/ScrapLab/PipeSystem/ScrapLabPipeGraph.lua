@@ -1,18 +1,21 @@
--- SCRAPLAB WIRELESS PIPE GRAPH v13
--- Cached virtual Link traversal layered over the native pipe graph. Native
--- local results remain authoritative. Physical components persist until an
--- affected body changes and are shared by every consumer on that component.
+-- SCRAPLAB WIRELESS PIPE GRAPH v15
+-- Bounded native-plus-wireless container selection layered over the native
+-- pipe graph. Native ordering and live container transactions stay
+-- authoritative. Physical components persist only while their bodies and the
+-- wireless topology remain valid.
 
 ScrapLabPipeGraph = ScrapLabPipeGraph or {}
-ScrapLabPipeGraph.DEFINITION_VERSION = 13
+ScrapLabPipeGraph.DEFINITION_VERSION = 15
 
 local WIRELESS_PIPE_UUID = sm.uuid.new( "a34d9af0-4ba0-431d-b647-2d5435ecf138" )
 local MAX_PHYSICAL_SHAPES = 4096
 local MAX_WIRELESS_ENDPOINTS = 256
-local CACHE_INTERVAL_TICKS = 10
+local CACHE_INTERVAL_TICKS = 20
 local CACHE_PRUNE_INTERVAL_TICKS = 400
 local CACHE_MAX_IDLE_TICKS = 1200
 local GRAPH_LEASE_TICKS = 80
+local MAX_QUERY_CACHE_ENTRIES = 2048
+local QUERY_CACHE_TRIM_TARGET = 1792
 
 -- Shape:getPipeOffsets returns openings in the same order as the official
 -- shape-set definition. Preserve the engine's input/output boundary at every
@@ -59,11 +62,19 @@ local physicalCache = {
 	virtualQueries = {},
 	terminalQueries = {},
 	nativeQueries = {},
+	resolvedQueries = {},
+	virtualQueryCount = 0,
+	terminalQueryCount = 0,
+	nativeQueryCount = 0,
+	resolvedQueryCount = 0,
 	nextComponentId = 0
 }
 local performance = {
 	nativeCalls = 0,
 	nativeCacheHits = 0,
+	nativeQueryInvalidations = 0,
+	resolvedQueryHits = 0,
+	resolvedQueryInvalidations = 0,
 	fastPathReturns = 0,
 	physicalScans = 0,
 	physicalNodes = 0,
@@ -73,7 +84,8 @@ local performance = {
 	negativeVirtualCacheHits = 0,
 	terminalCacheHits = 0,
 	componentInvalidations = 0,
-	cachePrunes = 0
+	cachePrunes = 0,
+	queryCacheTrims = 0
 }
 
 local function shapeExists( shape )
@@ -121,6 +133,48 @@ local function currentTick()
 	return ok and tick or 0
 end
 
+local function clearQueryEntries( field, countField )
+	physicalCache[field] = {}
+	physicalCache[countField] = 0
+end
+
+local function removeQueryEntry( entries, countField, key )
+	if entries[key] == nil then return end
+	entries[key] = nil
+	physicalCache[countField] = math.max( 0, ( physicalCache[countField] or 0 ) - 1 )
+end
+
+local function trimQueryEntries( entries, countField )
+	local count = physicalCache[countField] or 0
+	if count <= MAX_QUERY_CACHE_ENTRIES then return end
+	local ordered = {}
+	for key, entry in pairs( entries ) do
+		ordered[#ordered + 1] = { key = key, tick = entry.lastAccessTick or entry.createdTick or 0 }
+	end
+	table.sort( ordered, function( a, b )
+		if a.tick ~= b.tick then return a.tick < b.tick end
+		return tostring( a.key ) < tostring( b.key )
+	end )
+	local removeCount = math.max( 0, count - QUERY_CACHE_TRIM_TARGET )
+	for index = 1, removeCount do
+		local value = ordered[index]
+		if value and entries[value.key] ~= nil then
+			entries[value.key] = nil
+			count = count - 1
+		end
+	end
+	physicalCache[countField] = math.max( 0, count )
+	performance.queryCacheTrims = performance.queryCacheTrims + 1
+end
+
+local function storeQueryEntry( entries, countField, key, entry )
+	if entries[key] == nil then
+		physicalCache[countField] = ( physicalCache[countField] or 0 ) + 1
+	end
+	entries[key] = entry
+	trimQueryEntries( entries, countField )
+end
+
 local function resetPhysicalEntries()
 	physicalCache.shapeKeys = {}
 	physicalCache.componentsByShape = {}
@@ -128,6 +182,11 @@ local function resetPhysicalEntries()
 	physicalCache.virtualQueries = {}
 	physicalCache.terminalQueries = {}
 	physicalCache.nativeQueries = {}
+	physicalCache.resolvedQueries = {}
+	physicalCache.virtualQueryCount = 0
+	physicalCache.terminalQueryCount = 0
+	physicalCache.nativeQueryCount = 0
+	physicalCache.resolvedQueryCount = 0
 	physicalCache.nextComponentId = 0
 end
 
@@ -140,8 +199,9 @@ local function ensureCacheState()
 		physicalCache.revision = revision
 		-- Wireless peers and handle readiness changed. Physical pipe bodies did
 		-- not necessarily change, so preserve their expensive component scans.
-		physicalCache.virtualQueries = {}
-		physicalCache.terminalQueries = {}
+		clearQueryEntries( "virtualQueries", "virtualQueryCount" )
+		clearQueryEntries( "terminalQueries", "terminalQueryCount" )
+		clearQueryEntries( "resolvedQueries", "resolvedQueryCount" )
 	end
 	if prunePhysicalEntries and tick - ( physicalCache.lastPruneTick or 0 ) >= CACHE_PRUNE_INTERVAL_TICKS then
 		prunePhysicalEntries( tick )
@@ -229,9 +289,12 @@ local function bodiesStillValid( bodies, createdTick, validationTick )
 end
 
 local function componentStillValid( component, tick )
-	if component.lastValidationTick and tick - component.lastValidationTick < CACHE_INTERVAL_TICKS then return true end
+	if component.lastValidationTick and tick - component.lastValidationTick < CACHE_INTERVAL_TICKS then
+		return component.lastValidationValid ~= false
+	end
 	component.lastValidationTick = tick
-	return bodiesStillValid( component.bodies, component.createdTick, tick )
+	component.lastValidationValid = bodiesStillValid( component.bodies, component.createdTick, tick )
+	return component.lastValidationValid
 end
 
 local function discardComponent( component )
@@ -251,6 +314,7 @@ local function buildPhysicalComponent( rootShape, tick )
 		id = physicalCache.nextComponentId,
 		createdTick = tick,
 		lastValidationTick = tick,
+		lastValidationValid = true,
 		lastAccessTick = tick,
 		shapes = {}, containers = {}, endpoints = {}, bodies = {}, members = {}
 	}
@@ -386,6 +450,12 @@ end
 
 local function renewTrackerLeases( tracker, purpose )
 	if not tracker or #tracker.leaseEndpointIds == 0 or not managerAvailable() then return end
+	local tick = currentTick()
+	local interval = purpose == "TERMINAL" and 30 or 20
+	tracker.leaseRenewedAt = tracker.leaseRenewedAt or {}
+	local previous = tracker.leaseRenewedAt[purpose or "GRAPH"]
+	if previous ~= nil and tick - previous < interval then return end
+	tracker.leaseRenewedAt[purpose or "GRAPH"] = tick
 	WirelessPipeManager.Sv_RequestEndpointLeases(
 		tracker.leaseEndpointIds, purpose == "TERMINAL" and 120 or GRAPH_LEASE_TICKS,
 		purpose or "GRAPH", purpose == "TERMINAL" and 2 or 3 )
@@ -461,9 +531,12 @@ local function getPhysicalContainerShapes( rootShape, tracker )
 end
 
 local function directEntryStillValid( entry, tick )
-	if entry.lastValidationTick and tick - entry.lastValidationTick < CACHE_INTERVAL_TICKS then return true end
+	if entry.lastValidationTick and tick - entry.lastValidationTick < CACHE_INTERVAL_TICKS then
+		return entry.lastValidationValid ~= false
+	end
 	entry.lastValidationTick = tick
-	return bodiesStillValid( entry.bodies, entry.createdTick, tick )
+	entry.lastValidationValid = bodiesStillValid( entry.bodies, entry.createdTick, tick )
+	return entry.lastValidationValid
 end
 
 local function getDirectContainerShapes( rootShape, tracker )
@@ -475,7 +548,7 @@ local function getDirectContainerShapes( rootShape, tracker )
 		performance.directCacheHits = performance.directCacheHits + 1
 	else
 		if entry then physicalCache.directByShape[key] = nil end
-		entry = { createdTick = tick, lastValidationTick = tick, lastAccessTick = tick,
+		entry = { createdTick = tick, lastValidationTick = tick, lastValidationValid = true, lastAccessTick = tick,
 			rootShape = rootShape, shapes = {}, bodies = {} }
 		local bodyKeys, seen = {}, {}
 		addBody( entry.bodies, bodyKeys, rootShape )
@@ -518,19 +591,17 @@ prunePhysicalEntries = function( tick )
 			physicalCache.directByShape[key] = nil
 		end
 	end
-	for key, entry in pairs( physicalCache.virtualQueries ) do
-		if tick - ( entry.lastAccessTick or tick ) > CACHE_MAX_IDLE_TICKS then
-			physicalCache.virtualQueries[key] = nil
+	local function pruneIdleQueries( entries, countField )
+		for key, entry in pairs( entries ) do
+			if tick - ( entry.lastAccessTick or entry.createdTick or tick ) > CACHE_MAX_IDLE_TICKS then
+				removeQueryEntry( entries, countField, key )
+			end
 		end
 	end
-	for key, entry in pairs( physicalCache.terminalQueries ) do
-		if tick - ( entry.lastAccessTick or tick ) > CACHE_MAX_IDLE_TICKS then
-			physicalCache.terminalQueries[key] = nil
-		end
-	end
-	for key, entry in pairs( physicalCache.nativeQueries ) do
-		if entry.tick ~= tick then physicalCache.nativeQueries[key] = nil end
-	end
+	pruneIdleQueries( physicalCache.virtualQueries, "virtualQueryCount" )
+	pruneIdleQueries( physicalCache.terminalQueries, "terminalQueryCount" )
+	pruneIdleQueries( physicalCache.nativeQueries, "nativeQueryCount" )
+	pruneIdleQueries( physicalCache.resolvedQueries, "resolvedQueryCount" )
 	-- Shape objects are ordinary table keys in the restricted runtime. Clear
 	-- the auxiliary map periodically; active objects are repopulated lazily.
 	physicalCache.shapeKeys = {}
@@ -624,7 +695,7 @@ local function getVirtualContainerShapes( startShape, requestedDirection )
 		appendUniqueShapes( result, cached.shapes )
 		return result, cached.tracker
 	elseif cached then
-		physicalCache.virtualQueries[key] = nil
+		removeQueryEntry( physicalCache.virtualQueries, "virtualQueryCount", key )
 	end
 
 	local tracker, result = newTracker(), {}
@@ -639,45 +710,138 @@ local function getVirtualContainerShapes( startShape, requestedDirection )
 			appendUniqueShapes( result, getDirectionalDestinationContainerShapes( entry, tracker ) )
 		end
 	end
-	physicalCache.virtualQueries[key] = { shapes = result, tracker = tracker, lastAccessTick = tick }
+	storeQueryEntry( physicalCache.virtualQueries, "virtualQueryCount", key,
+		{ shapes = result, tracker = tracker, createdTick = tick, lastAccessTick = tick } )
 	renewTrackerLeases( tracker, "GRAPH" )
 	local output = {}
 	appendUniqueShapes( output, result )
 	return output, tracker
 end
 
+local function copyShapeList( shapes )
+	local result = {}
+	appendUniqueShapes( result, shapes )
+	return result
+end
+
+local function nativeEntryStillValid( entry, tick )
+	if not entry or not shapeExists( entry.rootShape ) then return false end
+	if entry.lastValidationTick and tick - entry.lastValidationTick < CACHE_INTERVAL_TICKS then
+		return entry.lastValidationValid ~= false
+	end
+	entry.lastValidationTick = tick
+	if entry.tracker == nil or not trackerStillValid( entry.tracker, tick ) then
+		entry.lastValidationValid = false
+		return false
+	end
+	for _, shape in ipairs( entry.shapes or {} ) do
+		if not shapeExists( shape ) then
+			entry.lastValidationValid = false
+			return false
+		end
+	end
+	entry.lastValidationValid = true
+	return true
+end
+
 local function getNativeShapeList( nativeFunction, startShape, requestedDirection )
 	local tick = ensureCacheState()
 	local key = requestedDirection .. "|" .. shapeKey( startShape )
 	local cached = physicalCache.nativeQueries[key]
-	if cached and cached.tick == tick then
+	if cached and nativeEntryStillValid( cached, tick ) then
+		cached.lastAccessTick = tick
 		performance.nativeCacheHits = performance.nativeCacheHits + 1
-		local result = {}
-		appendUniqueShapes( result, cached.shapes )
-		return result
+		return copyShapeList( cached.shapes ), cached
+	elseif cached then
+		performance.nativeQueryInvalidations = performance.nativeQueryInvalidations + 1
+		removeQueryEntry( physicalCache.nativeQueries, "nativeQueryCount", key )
 	end
+
 	performance.nativeCalls = performance.nativeCalls + 1
 	local nativeShapes = nativeFunction( startShape )
-	local stored = {}
-	appendUniqueShapes( stored, nativeShapes )
-	physicalCache.nativeQueries[key] = { tick = tick, shapes = stored }
-	local result = {}
-	appendUniqueShapes( result, stored )
-	return result
+	local stored = copyShapeList( nativeShapes )
+	local tracker = newTracker()
+	local trackerOk = pcall( function()
+		getStartComponents( startShape, requestedDirection, tracker )
+	end )
+	if not trackerOk then tracker = nil end
+	local entry = {
+		rootShape = startShape,
+		shapes = stored,
+		tracker = tracker,
+		createdTick = tick,
+		lastValidationTick = tick,
+		lastValidationValid = tracker ~= nil,
+		lastAccessTick = tick
+	}
+	storeQueryEntry( physicalCache.nativeQueries, "nativeQueryCount", key, entry )
+	return copyShapeList( stored ), entry
+end
+
+local function resolvedEntryStillValid( entry, tick )
+	if not entry or not shapeExists( entry.rootShape ) then return false end
+	if entry.lastValidationTick and tick - entry.lastValidationTick < CACHE_INTERVAL_TICKS then
+		return entry.lastValidationValid ~= false
+	end
+	entry.lastValidationTick = tick
+	if not nativeEntryStillValid( entry.nativeEntry, tick ) or
+		( entry.virtualTracker ~= nil and not trackerStillValid( entry.virtualTracker, tick ) ) then
+		entry.lastValidationValid = false
+		return false
+	end
+	for _, shape in ipairs( entry.shapes or {} ) do
+		if not shapeExists( shape ) then
+			entry.lastValidationValid = false
+			return false
+		end
+	end
+	entry.lastValidationValid = true
+	return true
 end
 
 local function extendNativeShapeList( nativeFunction, startShape, requestedDirection )
-	local localResults = getNativeShapeList( nativeFunction, startShape, requestedDirection )
+	local tick = ensureCacheState()
+	local key = requestedDirection .. "|" .. shapeKey( startShape )
+	local cached = physicalCache.resolvedQueries[key]
+	if cached and resolvedEntryStillValid( cached, tick ) then
+		cached.lastAccessTick = tick
+		performance.resolvedQueryHits = performance.resolvedQueryHits + 1
+		if cached.virtualTracker == nil then
+			performance.fastPathReturns = performance.fastPathReturns + 1
+		else
+			renewTrackerLeases( cached.virtualTracker, "GRAPH" )
+		end
+		return copyShapeList( cached.shapes ), cached.virtualTracker
+	elseif cached then
+		performance.resolvedQueryInvalidations = performance.resolvedQueryInvalidations + 1
+		removeQueryEntry( physicalCache.resolvedQueries, "resolvedQueryCount", key )
+	end
+
+	local localResults, nativeEntry = getNativeShapeList( nativeFunction, startShape, requestedDirection )
+	local tracker = nil
 	if not managerAvailable() or not WirelessPipeManager.Sv_HasVirtualRoute( requestedDirection ) then
 		performance.fastPathReturns = performance.fastPathReturns + 1
-		return localResults, nil
-	end
-	local ok, extended, tracker = pcall( function()
-		local virtualShapes, queryTracker = getVirtualContainerShapes( startShape, requestedDirection )
+	else
+		local ok, virtualShapes, queryTracker = pcall( function()
+			local shapes, value = getVirtualContainerShapes( startShape, requestedDirection )
+			return shapes, value
+		end )
+		if not ok then return localResults, nil end
 		appendUniqueShapes( localResults, virtualShapes )
-		return localResults, queryTracker
-	end )
-	return ok and extended or localResults, ok and tracker or nil
+		tracker = queryTracker
+	end
+	local entry = {
+		rootShape = startShape,
+		shapes = localResults,
+		nativeEntry = nativeEntry,
+		virtualTracker = tracker,
+		createdTick = tick,
+		lastValidationTick = tick,
+		lastValidationValid = nativeEntry ~= nil and nativeEntry.lastValidationValid ~= false,
+		lastAccessTick = tick
+	}
+	storeQueryEntry( physicalCache.resolvedQueries, "resolvedQueryCount", key, entry )
+	return copyShapeList( localResults ), tracker
 end
 
 function ScrapLabPipeGraph.getInputContainers( shape )
@@ -868,40 +1032,30 @@ local function buildTerminalContainersUncached( startShape, requestedDirection )
 	return descriptors, state, tracker
 end
 
-local function copyArray( values )
-	local result = {}
-	for index, value in ipairs( values or {} ) do result[index] = value end
-	return result
-end
-
-local function copyTerminalState( state )
-	local result = {}
-	for key, value in pairs( state or {} ) do
-		result[key] = type( value ) == "table" and copyArray( value ) or value
-	end
-	return result
-end
-
-local function copyTerminalDescriptors( descriptors )
-	local result = {}
-	for index, descriptor in ipairs( descriptors or {} ) do
-		local copy = {}
-		for key, value in pairs( descriptor ) do copy[key] = value end
-		result[index] = copy
-	end
-	return result
-end
-
-
 local function terminalEntryStillValid( entry, tick )
-	if not entry or not trackerStillValid( entry.tracker, tick ) then return false end
+	if not entry then return false end
+	if entry.lastValidationTick and tick - entry.lastValidationTick < CACHE_INTERVAL_TICKS then
+		return entry.lastValidationValid ~= false
+	end
+	entry.lastValidationTick = tick
+	if not trackerStillValid( entry.tracker, tick ) then
+		entry.lastValidationValid = false
+		return false
+	end
 	for _, descriptor in ipairs( entry.descriptors or {} ) do
-		if not shapeExists( descriptor.shape ) then return false end
+		if not shapeExists( descriptor.shape ) then
+			entry.lastValidationValid = false
+			return false
+		end
 		local ok, exists = pcall( function()
 			return descriptor.container ~= nil and sm.exists( descriptor.container )
 		end )
-		if not ok or not exists then return false end
+		if not ok or not exists then
+			entry.lastValidationValid = false
+			return false
+		end
 	end
+	entry.lastValidationValid = true
 	return true
 end
 
@@ -913,19 +1067,24 @@ local function getTerminalContainers( shape, requestedDirection )
 		cached.lastAccessTick = tick
 		performance.terminalCacheHits = performance.terminalCacheHits + 1
 		renewTrackerLeases( cached.tracker, "TERMINAL" )
-		return copyTerminalDescriptors( cached.descriptors ), copyTerminalState( cached.state )
+		-- Borrowed read-only views avoid rebuilding the same descriptor graph for
+		-- every terminal poll. Callers must never mutate either table.
+		return cached.descriptors, cached.state
 	elseif cached then
-		physicalCache.terminalQueries[key] = nil
+		removeQueryEntry( physicalCache.terminalQueries, "terminalQueryCount", key )
 	end
 	local descriptors, state, tracker = buildTerminalContainersUncached( shape, requestedDirection )
-	physicalCache.terminalQueries[key] = {
+	storeQueryEntry( physicalCache.terminalQueries, "terminalQueryCount", key, {
 		descriptors = descriptors,
 		state = state,
 		tracker = tracker,
+		createdTick = tick,
+		lastValidationTick = tick,
+		lastValidationValid = true,
 		lastAccessTick = tick
-	}
+	} )
 	renewTrackerLeases( tracker, "TERMINAL" )
-	return copyTerminalDescriptors( descriptors ), copyTerminalState( state )
+	return descriptors, state
 end
 
 -- Storage terminals use these descriptor queries instead of duplicating pipe
@@ -1125,8 +1284,15 @@ end
 function ScrapLabPipeGraph.debugGetPerformanceSnapshot()
 	return {
 		cacheIntervalTicks = CACHE_INTERVAL_TICKS,
+		queryCacheLimit = MAX_QUERY_CACHE_ENTRIES,
+		queryCacheTrimTarget = QUERY_CACHE_TRIM_TARGET,
+		nativeQueryEntries = physicalCache.nativeQueryCount,
+		resolvedQueryEntries = physicalCache.resolvedQueryCount,
 		nativeCalls = performance.nativeCalls,
 		nativeCacheHits = performance.nativeCacheHits,
+		nativeQueryInvalidations = performance.nativeQueryInvalidations,
+		resolvedQueryHits = performance.resolvedQueryHits,
+		resolvedQueryInvalidations = performance.resolvedQueryInvalidations,
 		fastPathReturns = performance.fastPathReturns,
 		physicalScans = performance.physicalScans,
 		physicalNodes = performance.physicalNodes,
@@ -1136,7 +1302,8 @@ function ScrapLabPipeGraph.debugGetPerformanceSnapshot()
 		negativeVirtualCacheHits = performance.negativeVirtualCacheHits,
 		terminalCacheHits = performance.terminalCacheHits,
 		componentInvalidations = performance.componentInvalidations,
-		cachePrunes = performance.cachePrunes
+		cachePrunes = performance.cachePrunes,
+		queryCacheTrims = performance.queryCacheTrims
 	}
 end
 

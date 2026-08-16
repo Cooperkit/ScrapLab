@@ -1,4 +1,4 @@
--- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v11
+-- SCRAPLAB WIRELESS VACUUM PIPE MANAGER v12
 -- Persistent endpoint registry, Link topology, and the Phase 4 directional
 -- scheduler host. Inventory authority remains inside native transactions.
 
@@ -20,6 +20,7 @@ local RECONCILE_RETRY_TICKS = 400
 local MIN_DEMAND_LEASE_TICKS = 10
 local MAX_DEMAND_LEASE_TICKS = 400
 local DEFAULT_DEMAND_LEASE_TICKS = 80
+local MAX_HANDLE_MAINTENANCE_TICKS = 400
 
 local VALID_MODES = { LINK = true, SEND = true, RECEIVE = true }
 local MODE_ORDER = { "LINK", "SEND", "RECEIVE" }
@@ -121,6 +122,8 @@ function WirelessPipeManager.server_onCreate( self )
 	self.sv.handles = {}
 	self.sv.demandLeases = {}
 	self.sv.handleUpdateRequested = false
+	self.sv.nextHandleMaintenanceTick = 0
+	self.sv.handleMaintenanceRuns = 0
 	self.sv.endpointHandleState = {}
 	self.sv.reconcile = {}
 	self.sv.updateTicks = 0
@@ -161,6 +164,10 @@ function WirelessPipeManager.server_onCreate( self )
 end
 
 function WirelessPipeManager.server_onDestroy( self )
+	if self.sv then
+		WirelessPipeTransfer.Sv_FlushCursors( self )
+		pcall( function() self:sv_saveIfDirty( true ) end )
+	end
 	for _, entry in pairs( self.sv and self.sv.handles or {} ) do
 		if entry.handle then pcall( function() entry.handle:release() end ) end
 	end
@@ -169,7 +176,8 @@ end
 
 function WirelessPipeManager.server_onFixedUpdate( self )
 	WirelessPipeTransfer.Sv_ServerOnFixedUpdate( self )
-	if self.sv.handleUpdateRequested then
+	local tick = sm.game.getCurrentTick()
+	if self.sv.handleUpdateRequested or tick >= ( self.sv.nextHandleMaintenanceTick or 0 ) then
 		self.sv.handleUpdateRequested = false
 		self:sv_updateHandleOwnership()
 	end
@@ -178,7 +186,10 @@ function WirelessPipeManager.server_onFixedUpdate( self )
 	self.sv.updateTicks = 0
 	if self.sv.groupsDirty then self:sv_rebuildGroups() end
 	self:sv_updateReconciliation()
-	self:sv_updateHandleOwnership()
+	if self.sv.handleUpdateRequested then
+		self.sv.handleUpdateRequested = false
+		self:sv_updateHandleOwnership()
+	end
 	self:sv_saveIfDirty( false )
 end
 
@@ -274,6 +285,7 @@ function WirelessPipeManager.sv_registerEndpoint( self, data, shape, owner )
 	self.sv.recentlyUnloaded[endpointId] = nil
 	self.sv.reconcile[endpointId] = nil
 	WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
+	self.sv.handleUpdateRequested = true
 	self:sv_rebuildGroups()
 	return { ok = true, generation = generation, status = self:sv_getEndpointStatus( endpointId ) }
 end
@@ -301,6 +313,7 @@ function WirelessPipeManager.sv_refreshEndpoint( self, data, shape, owner, gener
 		if topologyChanged then
 			WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
 			self.sv.groupsDirty = true
+			self.sv.handleUpdateRequested = true
 			self:sv_rebuildGroups()
 		end
 	end
@@ -316,6 +329,7 @@ function WirelessPipeManager.sv_unloadEndpoint( self, endpointId, shape, generat
 		self.sv.recentlyUnloaded[endpointId] = { tick = sm.game.getCurrentTick() }
 		WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
 		self.sv.groupsDirty = true
+		self.sv.handleUpdateRequested = true
 		self:sv_bumpTopologyRevision()
 	end
 end
@@ -337,6 +351,7 @@ function WirelessPipeManager.sv_unregisterEndpoint( self, endpointId, shape, gen
 	WirelessPipeTransfer.Sv_OnEndpointTopologyChanged( self, endpointId )
 	self.sv.saveDirty = true
 	self.sv.groupsDirty = true
+	self.sv.handleUpdateRequested = true
 	self:sv_rebuildGroups()
 	return true
 end
@@ -532,6 +547,7 @@ end
 
 function WirelessPipeManager.sv_updateHandleOwnership( self )
 	local tick = sm.game.getCurrentTick()
+	self.sv.handleMaintenanceRuns = ( self.sv.handleMaintenanceRuns or 0 ) + 1
 	local desired = self:sv_buildDesiredCells()
 	local ordered = {}
 	for _, entry in pairs( desired ) do ordered[#ordered + 1] = entry end
@@ -613,6 +629,22 @@ function WirelessPipeManager.sv_updateHandleOwnership( self )
 		self.sv.lastHandleTopologySignature = signature
 		self:sv_bumpTopologyRevision()
 	end
+
+	local nextMaintenance = tick + MAX_HANDLE_MAINTENANCE_TICKS
+	for _, lease in pairs( self.sv.demandLeases ) do
+		if lease and lease.expiresAt then nextMaintenance = math.min( nextMaintenance, lease.expiresAt + 1 ) end
+	end
+	for _, current in pairs( self.sv.handles ) do
+		if current.releaseAt then nextMaintenance = math.min( nextMaintenance, current.releaseAt ) end
+		if not current.handle and current.nextAttemptTick then
+			nextMaintenance = math.min( nextMaintenance, current.nextAttemptTick )
+		end
+	end
+	for _, state in pairs( self.sv.reconcile ) do
+		if state.nextAttemptTick then nextMaintenance = math.min( nextMaintenance, state.nextAttemptTick ) end
+		if state.confirmDeadlineTick then nextMaintenance = math.min( nextMaintenance, state.confirmDeadlineTick ) end
+	end
+	self.sv.nextHandleMaintenanceTick = math.max( tick + 1, nextMaintenance )
 end
 
 function WirelessPipeManager.sv_tryAcquireHandle( self, entry )
@@ -661,6 +693,7 @@ function WirelessPipeManager.sv_onEndpointCellLoaded( self, world, x, y, params 
 	if not entry then return end
 	entry.ready = true
 	entry.readyTick = sm.game.getCurrentTick()
+	self.sv.handleUpdateRequested = true
 	self:sv_bumpTopologyRevision()
 	for endpointId in pairs( entry.endpointIds or {} ) do
 		local reconcile = self.sv.reconcile[endpointId]
@@ -673,15 +706,22 @@ end
 
 function WirelessPipeManager.sv_updateReconciliation( self )
 	local tick = sm.game.getCurrentTick()
+	for endpointId, recent in pairs( self.sv.recentlyUnloaded ) do
+		if not recent or tick - ( recent.tick or 0 ) > 400 then
+			self.sv.recentlyUnloaded[endpointId] = nil
+		end
+	end
 	for endpointId, state in pairs( self.sv.reconcile ) do
 		if self.sv.live[endpointId] then
 			self.sv.reconcile[endpointId] = nil
 		elseif state.state == "CELL_LOADED" and state.confirmDeadlineTick and tick >= state.confirmDeadlineTick then
 			self.sv.saved.endpoints[endpointId] = nil
 			self.sv.reconcile[endpointId] = nil
+			self.sv.recentlyUnloaded[endpointId] = nil
 			self.sv.endpointHandleState[endpointId] = nil
 			self.sv.saveDirty = true
 			self.sv.groupsDirty = true
+			self.sv.handleUpdateRequested = true
 			self:sv_bumpTopologyRevision()
 			sm.log.info( "[ScrapLab Wireless Pipe] removed stale endpoint record " .. endpointId )
 		elseif state.state == "LOAD_ERROR" and tick >= ( state.nextAttemptTick or 0 ) then
@@ -773,6 +813,8 @@ function WirelessPipeManager.sv_getDebugSnapshot( self )
 		limitedEndpoints = limited,
 		demandLeases = demandLeases,
 		reconciling = reconciling,
+		handleMaintenanceRuns = self.sv.handleMaintenanceRuns or 0,
+		nextHandleMaintenanceTick = self.sv.nextHandleMaintenanceTick or 0,
 		maxHandles = MAX_ACTIVE_ENDPOINT_CELLS
 	}
 	snapshot.directional = WirelessPipeTransfer.Sv_GetDebugSnapshot( self )
@@ -991,6 +1033,7 @@ function WirelessPipeManager.sv_debugInjectStaleRecord( self, world, position )
 	self.sv.reconcile[endpointId] = { state = "UNCONFIRMED", nextAttemptTick = sm.game.getCurrentTick() }
 	self.sv.saveDirty = true
 	self.sv.groupsDirty = true
+	self.sv.handleUpdateRequested = true
 	return endpointId
 end
 
