@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 2.11.1 - 2026-08-16
+
+- Raised Tree Saplings to definition 34. A native tree crown now has a 50%
+  chance to drop the matching sapling size when it first falls, up from 30%.
+  Verified older installations receive a one-file update that preserves their
+  original uninstall backups.
+
 ## 2.11.0 - 2026-08-16
 
 - Raised Tree Saplings to definition 33 with the final Tool Forge-generated

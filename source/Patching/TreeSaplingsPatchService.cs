@@ -11,7 +11,7 @@ namespace RaidRescue
     internal static class TreeSaplingsPatchService
     {
         private const string ModKey = "TreeSaplings";
-        private const string DefinitionVersion = "33";
+        private const string DefinitionVersion = "34";
         private const string LegacyV31HeldFpFbxHash = "746697F56E1D66CF6B6A1D144B36D22FEEBD8D1A9BCA0CBE761DC53F05C040B9";
         private const string LegacyV31HeldFpDaeHash = "DC1EA19FB1EA3DFE8FF04EBEC14EC4D56C0B5A26D5F5B34451A68F69A276BC3F";
         private const string LegacyV31HeldFpRendHash = "CD0CD32572380EA84C4BC869B28E90E41264345EB9D98E8D729AC6D830EF08BF";
@@ -174,7 +174,7 @@ namespace RaidRescue
                             state.AllKnownClean ? PatchCompatibilityState.KnownInstalled : PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
                         state.DefinitionUpdateAvailable
-                            ? "A verified Tree Saplings dual-view held-tool update is ready."
+                            ? "A verified Tree Saplings 50% crown-drop update is ready."
                             : "Tree Saplings items, growth scripts, trades, drops, languages, and icons are intact.");
                 }
                 else if (state.AllClean)
@@ -225,9 +225,9 @@ namespace RaidRescue
                     AtomicCustomPartPatchSupport.PrepareSharedAtlasState(gamePath, backupRoot, state.IconCatalog);
                     ApplyDefinitionUpdate(BuildDefinitionUpdatePlans(state), result, gamePath, backupRoot, build);
                     result.Success = true; result.Installed = true; result.NeedsUpdate = false;
-                    result.Changes.Add("Updated Tree Saplings with independent first-person and third-person held-tool profiles, then invalidated both compiled mesh caches.");
+                    result.Changes.Add("Updated Tree Saplings so native tree crowns have a 50% chance to drop the matching sapling size.");
                     AdaptivePatchSupport.FillResult(result, build, PatchCompatibilityState.AdaptiveInstalled,
-                        !state.AllKnownClean, true, "Tree Saplings definition 33 was installed and verified.");
+                        !state.AllKnownClean, true, "Tree Saplings definition 34 was installed and verified.");
                     SecretModBackupRetention.Prune(backupRoot, ModKey, result.BackupPath, result);
                     return result;
                 }
@@ -283,7 +283,8 @@ namespace RaidRescue
             s.Texts.Add(ReadText(gamePath, HarvestableIdsRelative, "survival_harvestable.lua", "372DBE3693F305E80A36D044EE4398F35ECD062CAFD603ADCE6287588B2F46E3", HarvestableUuids[0], PatchHarvestableIds, UnpatchHarvestableIds, false));
             TextState treeTrunk = ReadText(gamePath, TreeTrunkRelative, "TreeTrunk.lua", "1B8F388A568C30E77A5C5C16D3309CC8085CEC94AA3CE01D0C83305A772A6ED8", "-- SCRAPLAB MOD: Tree Sapling crown drop.", PatchTreeTrunk, UnpatchTreeTrunk, false);
             treeTrunk.LegacyInstalled = treeTrunk.Installed &&
-                AdaptivePatchSupport.Count(treeTrunk.Document.NormalizedText, "math.random() <= 0.15") == 1;
+                (AdaptivePatchSupport.Count(treeTrunk.Document.NormalizedText, "math.random() <= 0.30") == 1 ||
+                 AdaptivePatchSupport.Count(treeTrunk.Document.NormalizedText, "math.random() <= 0.15") == 1);
             s.Texts.Add(treeTrunk);
             s.Texts.Add(ReadText(gamePath, TradesRelative, "hideout.json", "69E355B255975BA9AD3F20DB7FD568F1A57AC21D92DF14618C4A558383015068", ItemUuids[0], PatchTrades, UnpatchTrades, false));
             s.Texts.Add(ReadText(gamePath, TraderRelative, "HideoutTrader.lua", "6C5EB46FB1E7C950E365E98413D5BA24F5642A90BD3B6D5186E884DEE2AEE7E6", "-- SCRAPLAB PART: Tree Saplings trades.", PatchTrader, UnpatchTrader, false));
@@ -429,12 +430,13 @@ namespace RaidRescue
         private static string PatchHarvestableIds(string t) { return InsertBeforeUnique(t, "\n-- Farmables", HarvestableBlock); }
         private static string UnpatchHarvestableIds(string t) { return RemoveUnique(t, HarvestableBlock); }
         private static string TreeHelperForChance(string chance) { return "\n-- SCRAPLAB MOD: Tree Sapling crown drop.\nlocal ScrapLabTreeSaplingDrops = { small = sm.uuid.new( \"" + ItemUuids[0] + "\" ), medium = sm.uuid.new( \"" + ItemUuids[1] + "\" ), large = sm.uuid.new( \"" + ItemUuids[2] + "\" ) }\n\nfunction TreeTrunk.sv_scrapLabMarkFallen( self )\n\tif self.sv.fallen then return end\n\tself.sv.fallen = true\n\tif self.sv.crown and self.data and ScrapLabTreeSaplingDrops[self.data.treeType] and math.random() <= " + chance + " then\n\t\tSpawnLoot( self.shape, { { uuid = ScrapLabTreeSaplingDrops[self.data.treeType], quantity = 1 } }, self.shape.worldPosition + sm.vec3.new( 0, 0, 0.5 ) )\n\tend\n\tself.network:setClientData( { fallen = self.sv.fallen } )\nend\n"; }
-        private static string TreeHelper { get { return TreeHelperForChance("0.30"); } }
-        private static string LegacyTreeHelper { get { return TreeHelperForChance("0.15"); } }
+        private static string TreeHelper { get { return TreeHelperForChance("0.50"); } }
+        private static string LegacyTreeHelper { get { return TreeHelperForChance("0.30"); } }
+        private static string LegacyV5TreeHelper { get { return TreeHelperForChance("0.15"); } }
         private const string FallenBlockTwo = "\t\tself.sv.fallen = true\n\t\tself.network:setClientData( { fallen = self.sv.fallen } )";
         private const string FallenBlockThree = "\t\t\tself.sv.fallen = true\n\t\t\tself.network:setClientData( { fallen = self.sv.fallen } )";
         private static string PatchTreeTrunk(string t) { t = InsertAfterUnique(t, "dofile( \"$SURVIVAL_DATA/Scripts/game/survival_constants.lua\" )", "\ndofile( \"$SURVIVAL_DATA/Scripts/game/survival_loot.lua\" )"); t = InsertBeforeUnique(t, "\nfunction TreeTrunk.server_onFixedUpdate", TreeHelper); RequireCount(t, FallenBlockTwo, 2); RequireCount(t, FallenBlockThree, 2); t = t.Replace(FallenBlockTwo, "\t\tself:sv_scrapLabMarkFallen()"); return t.Replace(FallenBlockThree, "\t\t\tself:sv_scrapLabMarkFallen()"); }
-        private static string UnpatchTreeTrunk(string t) { RequireCount(t, "\t\t\tself:sv_scrapLabMarkFallen()", 2); t = t.Replace("\t\t\tself:sv_scrapLabMarkFallen()", FallenBlockThree); RequireCount(t, "\t\tself:sv_scrapLabMarkFallen()", 2); t = t.Replace("\t\tself:sv_scrapLabMarkFallen()", FallenBlockTwo); int current = AdaptivePatchSupport.Count(t, TreeHelper); int legacy = AdaptivePatchSupport.Count(t, LegacyTreeHelper); if (current + legacy != 1) throw new InvalidDataException("The Tree Saplings crown-drop helper is missing, duplicated, or edited."); t = RemoveUnique(t, current == 1 ? TreeHelper : LegacyTreeHelper); return RemoveUnique(t, "\ndofile( \"$SURVIVAL_DATA/Scripts/game/survival_loot.lua\" )"); }
+        private static string UnpatchTreeTrunk(string t) { RequireCount(t, "\t\t\tself:sv_scrapLabMarkFallen()", 2); t = t.Replace("\t\t\tself:sv_scrapLabMarkFallen()", FallenBlockThree); RequireCount(t, "\t\tself:sv_scrapLabMarkFallen()", 2); t = t.Replace("\t\tself:sv_scrapLabMarkFallen()", FallenBlockTwo); int current = AdaptivePatchSupport.Count(t, TreeHelper); int legacy = AdaptivePatchSupport.Count(t, LegacyTreeHelper); int legacyV5 = AdaptivePatchSupport.Count(t, LegacyV5TreeHelper); if (current + legacy + legacyV5 != 1) throw new InvalidDataException("The Tree Saplings crown-drop helper is missing, duplicated, or edited."); t = RemoveUnique(t, current == 1 ? TreeHelper : legacy == 1 ? LegacyTreeHelper : LegacyV5TreeHelper); return RemoveUnique(t, "\ndofile( \"$SURVIVAL_DATA/Scripts/game/survival_loot.lua\" )"); }
         private static string TradeEntry(string uuid, int cost) { return "\t{\n\t\t\"itemId\": \"" + uuid + "\",\n\t\t\"quantity\": 5,\n\t\t\"craftTime\": 0,\n\t\t\"ingredientList\": [\n\t\t\t{\n\t\t\t\t\"quantity\": " + cost + ",\n\t\t\t\t\"itemId\": \"8d601982-4608-4d5e-bb9e-e4041486f7c7\"\n\t\t\t}\n\t\t]\n\t}"; }
         private static string TradeBlock { get { return TradeEntry(ItemUuids[0], 1) + ",\n" + TradeEntry(ItemUuids[1], 2) + ",\n" + TradeEntry(ItemUuids[2], 3); } }
         private static string PatchTrades(string t) { int end = t.LastIndexOf("\n]", StringComparison.Ordinal); if (end < 0) throw new InvalidDataException("The Hideout trade list ending changed."); return t.Substring(0, end) + ",\n" + TradeBlock + t.Substring(end); }

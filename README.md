@@ -47,7 +47,7 @@ creations, buildings, and unrelated world objects alone.
 ## Download
 
 1. Open the [latest ScrapLab release](https://github.com/Cooperkit/ScrapLab/releases/latest).
-2. Download `ScrapLab-2.11.0.zip` or the newest complete ZIP.
+2. Download `ScrapLab-2.11.1.zip` or the newest complete ZIP.
 3. Extract the ZIP into its own folder.
 4. Keep these three files together:
    - `ScrapLab.exe`
@@ -228,7 +228,7 @@ whether a mod is installed or installable. Recovery retention is bounded.
   uproots a pot. Their Tool Forge-generated held mesh uses a Clay-compatible
   skinned DAE, the complete vanilla Clay/Bucket first- and third-person
   animation family, and a size-specific green, yellow, or orange runtime tint.
-  Native crowns have a 30% chance to drop the matching size, and the Hideout
+  Native crowns have a 50% chance to drop the matching size, and the Hideout
   sells five for one, two, or three Caged Farmers. Remove all sapling items and
   planted pots before disabling; fully grown native trees remain safe. Existing
   Chemical Fertilizer Splash installs expose a one-click registry update so
@@ -355,7 +355,7 @@ The build uses the .NET Framework compiler included with Windows and produces:
 dist\ScrapLab.exe
 dist\ScrapLab.PatchHelper.exe
 dist\ScrapLab.Updater.exe
-release\ScrapLab-2.11.0.zip
+release\ScrapLab-2.11.1.zip
 ```
 
 No runtime dependency download is required. To Authenticode-sign a release,
