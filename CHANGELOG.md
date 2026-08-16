@@ -1,5 +1,237 @@
 # Changelog
 
+## Unreleased
+
+- Raised Tree Saplings to definition 33 with the final Tool Forge-generated
+  first-person and third-person held-tool assets. Verified definitions 27–32
+  migrate in place without removing sapling UUID registrations or replacing
+  the original uninstall backups.
+
+- Fixed the held sapling's scrambled-looking texture. The imported mesh is
+  `poleplant1` and its UV layout matches Scrap Mechanic's `poleplant` atlas,
+  but Tool Forge had forced the unrelated `leafplant` textures. Import,
+  preview, validation, and generated renderables now select the vanilla atlas
+  from the FBX model/material identity. A regression test prevents the two
+  plant atlases from being mixed again.
+
+- Added independent first-person and third-person attachment profiles to
+  ScrapLab Tool Forge. Each profile has its own position, rotation, and scale,
+  is previewed against the matching installed Scrap Mechanic rig, and is baked
+  into a separate verified FBX/DAE while sharing the same source mesh and
+  runtime colors.
+
+- Added safe definition migrations for the held-tool calibration iterations
+  in definitions 28–32. Each update recognizes the exact previously installed
+  FP/TP assets, replaces only changed generated files, verifies their hashes,
+  and clears only the targeted compiled mesh cache.
+
+- Fixed Tool Forge's vertical placement direction: visible Up in the editor is
+  now converted once to Scrap Mechanic's inverted held-tool Y basis while the
+  package is generated. Orbit/edit mode also displays the character body at
+  62% reference scale so it no longer overwhelms small tools; SCREEN mode
+  remains at exact game scale.
+
+- Raised Tree Saplings to definition 27 by rebuilding the current held-tool
+  project with that corrected vertical-axis conversion. Verified definition-26
+  installations migrate by replacing only the held FBX and DAE.
+
+- Raised Tree Saplings to definition 26 with the latest Tool Forge placement:
+  position `37.86, -233.91, -56.77 cm` and rotation
+  `95.22, 1.48, 7.27 degrees`. The verified update replaces only the held FBX
+  and DAE, then clears the targeted compiled-mesh cache before the next launch.
+
+- Fixed small held meshes becoming nearly impossible to inspect in Tool Forge.
+  Orbit-mode **Focus Tool** now frames the transformed mesh itself with a
+  bounds-aware camera distance and restores the 42-degree editor FOV after
+  leaving the first-person screen camera. This changes only the viewer camera;
+  generated scale and in-game geometry remain exact.
+
+- Raised Tree Saplings to definition 25 and fixed held-tool edits appearing
+  unchanged in game. Scrap Mechanic compiles DAEs into a separate
+  `Cache\Mesh` store, so verified sapling updates now remove only stale
+  `TreeSaplingHeld_*.mco` files in addition to resetting `core_data.cbo`.
+  Unrelated compiled meshes remain untouched and the latest position,
+  rotation, and scale rebuild automatically on the next launch.
+
+- Raised Tree Saplings to definition 24 with the first attachment placement
+  authored against Tool Forge's runtime-parity first-person screen view.
+
+- Rebuilt Tool Forge's live attachment preview around the exact normalized
+  runtime triangle stream. Preview movement now converts centimeters exactly
+  like Build Package, ignores Blender-only FBX pivots and scene transforms,
+  and offers a true first-person **SCREEN** view driven by the official Bucket
+  animation's `jnt_camera` alongside the orbiting edit camera.
+
+- Raised Tree Saplings to definition 23 with the newest Tool Forge attachment
+  transform while preserving the working Clay-bound runtime controller.
+
+- Raised Tree Saplings to definition 22 with the latest Tool Forge hand
+  placement. The update changes only the generated held geometry while keeping
+  the now-working Clay-bound DAE controller and runtime Lua path intact.
+
+- Restored the Tree Sapling held mesh to a Clay-compatible DAE controller bound
+  to `root_bucket_jnt`. Static object FBXs have no character attachment, while
+  the earlier DAE also applied normalization and a second 0.01 scale conversion.
+  The runtime controller now has vanilla Clay-scale geometry and the exact Tool
+  Forge transform baked into its positions and normals.
+
+- Fixed Tool Forge attachment transforms at the geometry level. Scrap Mechanic
+  discards arbitrary FBX model-node transforms for character tools, so builds
+  now bake normalized scale, rotation, and centimetre-based translation into
+  vertices and normals. The held renderable also follows the leaf plant's
+  native single-submesh material layout.
+
+- Raised Tree Saplings to definition 19 with the user's latest Tool Forge
+  attachment transform baked directly into the runtime FBX.
+
+- Raised Tree Saplings to definition 18. Tool Forge held tools now follow
+  Scrap Mechanic's native static-FBX pattern, bake position, rotation, and
+  normalized scale directly into the runtime FBX, and install renderables
+  before querying Clay/Bucket animations. This removes the unreliable custom
+  skin-controller transform layer that caused huge or immovable held models.
+
+- Replaced Tree Saplings' unnecessary generated skin-controller runtime with
+  Scrap Mechanic's proven static-FBX character-tool pattern used by the Seed
+  and Garden Shovel. Build Package now writes automatic size normalization,
+  position, and rotation into the runtime FBX itself. Renderables are installed
+  before AnimationUtil queries Bucket clips, preventing the observed FP
+  animation errors and auto-tool world-mesh fallback.
+- Raised Tree Saplings to definition 17 with the build-normalized held sapling
+  (`0.01x` source-mesh correction) and the latest placement: `Y 68 cm`,
+  `X -90 degrees`, and scale `1`. Definition-16 assets update in place.
+- Fixed inconsistent Tool Forge character-tool sizes with build-only adaptive
+  normalization. Oversized meshes shrink and undersized meshes grow in powers
+  of ten, while the source-size viewer and user-authored hand offset stay
+  unchanged.
+- Raised Tree Saplings to definition 16 with the first placement calibrated
+  against Tool Forge's complete player-and-tool attachment rig: `Y 36.8 cm`,
+  `Z 38.35 cm`, `X -175 degrees`, and scale `1`. Verified definition-15 FBX
+  and DAE assets update together without removing sapling registrations.
+- Fixed Tool Forge preview parity for character tools. The live attachment rig
+  now includes Scrap Mechanic's separate `root_bucket_jnt` tool skeleton and
+  pairs its first-/third-person animation clips with the player animation rig.
+  The previous preview attached directly to `jnt_right_weapon`, omitting the
+  transform Scrap Mechanic applies in game and making scale/orientation tuning
+  misleading.
+- Raised Tree Saplings to definition 15 with the latest Tool Forge placement:
+  `Y 59 cm`, `X -90 degrees`, and scale `1`. Verified definition-14 FBX and
+  DAE assets update together without removing sapling registrations.
+- Raised Tree Saplings to definition 14. Tool Forge now bakes editable hand
+  transforms into validated vertex positions and unit normals while keeping the
+  vanilla Clay skin bind immutable, preventing stretched or missing polygons.
+  Verified definition-13 installations update in place.
+- Raised Tree Saplings to definition 13 with the latest user-approved Tool
+  Forge hand position and rotation. Definition-12 assets update in place.
+- Raised Tree Saplings to definition 12 with the latest hand placement from the
+  corrected Tool Forge centimeter preview. Definition-11 assets migrate in
+  place, preserving sapling registrations and the original uninstall backup.
+- Raised Tree Saplings to definition 11. The held sapling now uses Tool Forge's
+  deterministic Z-up-to-Y-up correction and centimeter-accurate attachment
+  transform. Verified definition-10 FBX and DAE assets update together without
+  removing sapling UUID registrations or replacing the original uninstall
+  backups.
+- Fixed ScrapLab Tool Forge's live attachment rig and generator to share a
+  single centimeter transform contract without double-applying the DAE's
+  `0.01` game conversion. Added a
+  deterministic **Auto Upright** correction for Z-up or X-up sapling meshes,
+  making gizmo movement visible and keeping previewed transforms consistent
+  with built packages.
+- Raised Tree Saplings to definition 10. The held mesh now uses the exact
+  vanilla Clay bind pose as a permanent hand-space base transform. Tool Forge
+  stores only local adjustments beneath that base, and **Clay Align** resets to
+  a true identity adjustment instead of estimating position from animated
+  world-space bounds. This removes the floor-height offset and keeps the
+  sapling anchored through every Bucket animation. Definition-8 and
+  definition-9 installations update the DAE in place.
+- Raised Tree Saplings to definition 9. Tool Forge now applies the required
+  0.01 FBX-to-character-tool unit conversion when generating the skinned DAE,
+  matching the vanilla Clay mesh scale while preserving the configured local
+  hand offset. Verified definition-8 installations receive a one-file atomic
+  mesh update and keep their original uninstall backups.
+- Raised Tree Saplings to definition 8. The held potted-vine mesh is now
+  exported as a minimal Clay-compatible skinned DAE: every vertex is weighted
+  to `root_bucket_jnt` beneath `jnt_right_weapon`, so Scrap Mechanic can attach
+  it in first and third person without custom animation clips. Tool Forge also
+  keeps transform editing in local attachment space and rejects generated DAEs
+  that lack the controller, weights, or joint hierarchy. Intact definition-7
+  installations receive the DAE and updated renderable atomically while
+  preserving their original uninstall backups.
+- Raised Tree Saplings to definition 7. The Tool Forge-generated potted-vine
+  mesh now replaces the borrowed Soil Bag in first and third person, uses the
+  complete vanilla Clay/Bucket animation family, and receives the Small,
+  Medium, or Large runtime tint. Existing intact Tree Saplings installations
+  expose one atomic update that preserves their original uninstall backups.
+  The updater also validates every newly added held-tool asset as a complete
+  set, so a missing file cannot conceal a separately modified file.
+- Raised Tree Saplings to definition 6. Native tree crowns now have a 30%
+  chance to drop their matching sapling size, up from 15%. Existing intact
+  crown-drop hooks migrate in place through the normal verified update action.
+- Raised Tree Saplings to definition 5. Fertilized pots now grow their
+  remaining progress at 2.5x speed. A dedicated intermediate-size pot
+  collision replaces the oversized native plant hitbox, while preserving a
+  reliable interaction target as the visible pot grows. Preview and commit now
+  share one mixed-size clearance function, recheck the aim on the click frame,
+  and briefly retry a failed server physics snapshot before rejecting it; this
+  removes false **planting spot is no longer clear** messages without consuming
+  an item or allowing real obstructions. Verified definition-1 through
+  definition-4 installs receive the normal atomic update, including the new
+  owned collision asset.
+- Raised Tree Saplings to definition 4. Planted pots now use the narrow,
+  full-height native plant collision, making the interaction target follow the
+  fully grown visual without widening it enough to interfere with the new
+  0.75/1/1.25 m planting radii. Mature clearance checks still reject roofs,
+  builds, terrain, machines, characters, and unrelated harvestables, but
+  deliberately ignore sibling saplings and all native tree variants so a
+  closely planted grove cannot deadlock at **READY TO GROW** as its first trees
+  mature. Blocked maturity is now retained across ordinary progress syncs, so
+  **MATURE — NEEDS CLEAR SPACE** remains accurate until the obstruction is
+  removed. Verified older installations expose the normal atomic update.
+- Raised Tree Saplings to definition 3. Server rejection callbacks now report
+  blocked planting spots correctly instead of claiming the sapling data failed
+  to load; the invisible hosts use a smaller native collision so valid close
+  placements are not rejected by the engine. Mature trees now use Scrap
+  Mechanic's native Y-up-to-Z-up rotation and grow standing upright. The
+  visible potted vine also scales smoothly from 45% to full size using existing
+  server-backed growth progress, with bounded client updates and no additional
+  server polling. Verified definition-1/2 installations expose one safe update.
+- Fixed false **PARTIAL PATCH — REPAIR REQUIRED** states after installing a
+  later ScrapLab custom-part mod. Shared Hideout, localization, recipe, and
+  registration files now verify each mod's exact protected block independently
+  of sibling-block ordering, while edited, missing, or duplicated blocks remain
+  blocked. Raid Detector, Network Storage Chest, Wireless Vacuum Pipe, and Tree
+  Saplings can now compose and remove in any installation order.
+- Fixed Tree Saplings being refunded with a false **planting spot is no longer
+  clear** message. The planted harvestables now use a supported invisible host
+  renderable, and an actual asset-load failure reports its real cause. Tree
+  Saplings definition 2 also reduces the placement-spacing radii from 2/3/4 m
+  to 0.5/0.75/1 m while preserving the full mature-tree clearance envelopes.
+  Verified definition-1 installations expose a safe one-click update.
+- Added the save-sensitive **Tree Saplings** gameplay mod. Three stackable
+  sapling sizes use guarded terrain placement, spacing and clearance checks,
+  persistent active-session growth, handheld/chemical fertilizing, safe
+  uprooting, random native-tree conversion, repeatable Hideout trades, and one
+  matching 15% drop roll when a native crown first falls. All registrations,
+  owned files, 11 languages, and three shared-atlas icons install and remove as
+  one verified atomic transaction; fully grown native trees remain safe.
+- Added Tree Saplings to the Patch Catalog, Help/safety flow, active count,
+  one-approval **All Mods** batch, and save-sensitive bulk-removal warning.
+- Raised Chemical Fertilizer Splash to definition 3 with a reusable ScrapLab
+  fertilizable-harvestable registry. Verified definition-2 installations remain
+  active and expose a one-click update that preserves their original uninstall
+  backups while enabling chemical splash fertilizing for Tree Saplings.
+
+- Added the guarded `/spawntree [random|small|medium|large]` Developer Command
+  prototype. It reuses Scrap Mechanic's 12 native tree harvestables, selects
+  the UUID on the server, verifies terrain in the requesting player's current
+  world, and performs no background work. Verified module-v8 installations
+  receive a normal one-click update to module v9.
+- Fixed Network Storage Chest withdrawal counts remaining stale until the UI
+  was reopened. Definition 11 now applies the server-confirmed transfer to the
+  requesting catalog immediately, updates existing quantity widgets in place,
+  preserves scroll position, and still keeps the existing targeted background
+  rescan as authoritative verification. The fix adds no polling, whole-network
+  scan, or full-grid redraw to successful withdrawals.
+
 ## 2.10.0 - 2026-08-15
 
 - Added Wireless Vacuum Pipe definition 17 after repeated definition-16

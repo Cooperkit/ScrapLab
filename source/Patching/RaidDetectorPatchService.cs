@@ -58,6 +58,8 @@ namespace RaidRescue
             "5DA34EF427C912BDF64BD1993834A78DBD86F11DFF16FD63B61F3FA9C1ECDDDB";
         private const string IconPngHash =
             "4288CAA081C8674E8D69640C717802C3883E1AA53181C6A9ABA86BBCFE7D9146";
+        private const string CurrentIconPngHash =
+            "C33A5A5DE6E7B11B7F9319BA928383E5DDF02E78C35BBCF25CA789AEF627A4D5";
 
         private static readonly string[,] Languages = new string[,]
         {
@@ -456,12 +458,14 @@ namespace RaidRescue
                 ScrapLabIconAtlasCoordinator.LoadReceipt(
                     AdaptivePatchSupport.GetSharedStatePath(
                         "ScrapLab-Icon-Pack.json"));
-            state.AtlasKnown = String.Equals(
+            state.AtlasKnown = (String.Equals(
                 state.AtlasHash, IconPngHash,
-                StringComparison.OrdinalIgnoreCase) ||
+                    StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(state.AtlasHash, CurrentIconPngHash,
+                    StringComparison.OrdinalIgnoreCase) ||
                 ScrapLabIconAtlasCoordinator.IsTrustedReceipt(
                     state.SharedAtlasReceipt, state.AtlasHash,
-                    state.IconCatalog);
+                    state.IconCatalog));
             if (state.SharedAtlasReceipt != null &&
                 String.Equals(state.SharedAtlasReceipt.IconXmlHash,
                     iconXml.Document.OriginalHash,
@@ -535,6 +539,10 @@ namespace RaidRescue
                 Document = document,
                 Known = String.Equals(document.OriginalHash, knownHash,
                     StringComparison.OrdinalIgnoreCase) ||
+                    TreeSaplingsPatchService.IsTrustedOutput(
+                        relative, document.OriginalHash) ||
+                    TreeSaplingsPatchService.HasIntactSharedPatch(
+                        relative, document.NormalizedText) ||
                     (trusted != null && trusted(document.NormalizedText))
             };
             if (atlasXml)
@@ -552,8 +560,13 @@ namespace RaidRescue
             {
                 state.CleanText = unpatch(document.NormalizedText);
                 state.PatchedText = patch(state.CleanText);
-                state.Installed = String.Equals(state.PatchedText,
-                    document.NormalizedText, StringComparison.Ordinal);
+                // Shared append-only files can gain later verified ScrapLab
+                // blocks after this one. Exact unpatching proves our block is
+                // intact; re-patching proves the protected insertion anchor is
+                // still compatible. Sibling block order is not part of this
+                // mod's integrity contract.
+                state.Installed = AdaptivePatchSupport.Count(
+                    state.CleanText, marker) == 0;
             }
             return state;
         }
@@ -579,6 +592,10 @@ namespace RaidRescue
                 Document = document,
                 Known = String.Equals(document.OriginalHash, knownHash,
                     StringComparison.OrdinalIgnoreCase) ||
+                    TreeSaplingsPatchService.IsTrustedOutput(
+                        relative, document.OriginalHash) ||
+                    TreeSaplingsPatchService.HasIntactSharedPatch(
+                        relative, text) ||
                     BetterPlasmaDrillsPatchService.HasIntactLanguagePatch(text)
             };
 

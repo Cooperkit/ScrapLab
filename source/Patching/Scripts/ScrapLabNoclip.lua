@@ -1,5 +1,5 @@
--- SCRAPLAB DEVELOPER COMMANDS NOCLIP MODULE v8
--- Damped flight with capsule-swept collision bypass.
+-- SCRAPLAB DEVELOPER COMMANDS MODULE v9
+-- Damped flight plus guarded world-building command prototypes.
 
 local ScrapLabNoclipUp = sm.vec3.new( 0, 0, 1 )
 local ScrapLabNoclipNormalSpeed = 20
@@ -11,6 +11,37 @@ local ScrapLabNoclipTargetResponse = 7.5
 local ScrapLabNoclipPhysicsResponse = 12.0
 local ScrapLabNoclipMaximumDeltaVelocity = 2.5
 local ScrapLabNoclipGravity = GRAVITY or 10.0
+local ScrapLabTreePlacementRange = 100
+
+-- These are the twelve tree harvestables used by the game's own Creative
+-- /place command. Size is a final-tree category, not a growth stage.
+local ScrapLabTreeGroups = {
+	small = {
+		sm.uuid.new( "c4ea19d3-2469-4059-9f13-3ddb4f7e0b79" ),
+		sm.uuid.new( "711c3e72-7ba1-4424-ae70-c13d23afe818" ),
+		sm.uuid.new( "a7aa52af-4276-4b2d-af44-36bc41864e04" )
+	},
+	medium = {
+		sm.uuid.new( "91ec04ea-9bf7-4a9d-bb7f-3d0125ff78c7" ),
+		sm.uuid.new( "4d482999-98b7-4023-a149-d47be709b8f7" ),
+		sm.uuid.new( "3db0a60d-8668-4c8a-8dd2-f5ceb294977e" ),
+		sm.uuid.new( "73f968f0-d3a3-4334-86a8-a90203a3a56d" ),
+		sm.uuid.new( "86324c5b-e97a-41f6-aa2c-7c6462f1f2e7" ),
+		sm.uuid.new( "27aa53ea-1e09-4251-a284-437f93850409" )
+	},
+	large = {
+		sm.uuid.new( "8411caba-63db-4b93-ad67-7ae8e350d360" ),
+		sm.uuid.new( "1cb503a4-9306-412f-9e13-371bc634af60" ),
+		sm.uuid.new( "fa864e51-67db-4ac9-823b-cfbdf523375d" )
+	}
+}
+
+local ScrapLabAllTrees = {}
+for _, size in ipairs( { "small", "medium", "large" } ) do
+	for _, uuid in ipairs( ScrapLabTreeGroups[size] ) do
+		ScrapLabAllTrees[#ScrapLabAllTrees + 1] = { uuid = uuid, size = size }
+	end
+end
 
 g_scrapLabNoclipActivePlayers = g_scrapLabNoclipActivePlayers or {}
 g_scrapLabNoclipEntries = g_scrapLabNoclipEntries or {}
@@ -160,6 +191,7 @@ function SurvivalGame.bindChatCommands( self )
 	ScrapLabOriginalBindChatCommands( self )
 	if sm.isHost or g_survivalDev then
 		sm.game.bindChatCommand( "/fly", {}, "cl_onChatCommand", "Toggle collision-free flight and personal damage protection" )
+		sm.game.bindChatCommand( "/spawntree", { { "string", "size", true, { "random", "small", "medium", "large" } } }, "cl_onChatCommand", "Spawn a random tree on aimed terrain: random, small, medium, or large" )
 	end
 end
 
@@ -168,8 +200,77 @@ function SurvivalGame.cl_onChatCommand( self, params )
 	if params[1] == "/fly" then
 		self.network:sendToServer( "sv_scrapLabToggleNoclip" )
 		return
+	elseif params[1] == "/spawntree" then
+		local size = string.lower( params[2] or "random" )
+		if size == "mid" then size = "medium" end
+		if size ~= "random" and ScrapLabTreeGroups[size] == nil then
+			sm.gui.chatMessage( "TREE SPAWN: Use /spawntree random, small, medium, or large" )
+			return
+		end
+
+		local rayCastValid, rayCastResult = sm.localPlayer.getRaycast( ScrapLabTreePlacementRange )
+		if not rayCastValid or rayCastResult.type ~= "terrainSurface" then
+			sm.gui.chatMessage( "TREE SPAWN: Aim at terrain within 100 meters" )
+			return
+		end
+		self.network:sendToServer( "sv_scrapLabSpawnTree", {
+			size = size,
+			position = rayCastResult.pointWorld
+		} )
+		return
 	end
 	ScrapLabOriginalClientChatCommand( self, params )
+end
+
+function SurvivalGame.sv_scrapLabSpawnTree( self, params, player )
+	local character = player and player:getCharacter()
+	if not character or not sm.exists( character ) or not params or not params.position then return end
+
+	local size = type( params.size ) == "string" and string.lower( params.size ) or "random"
+	if size == "mid" then size = "medium" end
+	local candidates = ScrapLabTreeGroups[size]
+	local selectedSize = size
+	local selectedUuid = nil
+	if size == "random" then
+		local selected = ScrapLabAllTrees[math.random( 1, #ScrapLabAllTrees )]
+		selectedUuid = selected.uuid
+		selectedSize = selected.size
+	elseif candidates then
+		selectedUuid = candidates[math.random( 1, #candidates )]
+	end
+	if not selectedUuid then return end
+
+	-- The client only supplies the terrain hit. Keep it close to the requesting
+	-- character, choose the UUID here, and always spawn in that character's
+	-- current world so a forged request cannot target another world or asset.
+	local delta = params.position - character:getWorldPosition()
+	local maximumDistance = ScrapLabTreePlacementRange + 2
+	if delta:length2() > maximumDistance * maximumDistance then
+		self.network:sendToClient( player, "client_showMessage", "TREE SPAWN: Target is out of range" )
+		return
+	end
+	local world = character:getWorld()
+	local vertical = sm.vec3.new( 0, 0, 2 )
+	local terrainHit, terrainResult = sm.physics.raycast(
+		params.position + vertical,
+		params.position - vertical,
+		nil,
+		sm.physics.filter.terrainSurface,
+		world )
+	if not terrainHit or terrainResult.type ~= "terrainSurface" then
+		self.network:sendToClient( player, "client_showMessage", "TREE SPAWN: Target is not valid terrain" )
+		return
+	end
+
+	local yzRotation = sm.vec3.getRotation( sm.vec3.new( 0, 1, 0 ), sm.vec3.new( 0, 0, 1 ) )
+	local yawRotation = sm.quat.fromEuler( sm.vec3.new( 0, math.random( 0, 359 ), 0 ) )
+	self:sv_spawnHarvestable( {
+		uuid = selectedUuid,
+		world = world,
+		position = terrainResult.pointWorld,
+		quat = yzRotation * yawRotation
+	} )
+	self.network:sendToClient( player, "client_showMessage", "TREE SPAWN: Random " .. selectedSize .. " tree placed" )
 end
 
 function SurvivalGame.sv_scrapLabStopNoclip( self, player, notifyClient )

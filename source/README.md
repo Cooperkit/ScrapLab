@@ -15,6 +15,7 @@ source root back into a flat collection.
 | `Companions/PatchHelper/` | Restricted elevated game-patch executable. |
 | `Companions/Updater/` | Fixed self-update executable. |
 | `Assets/` | Windows manifest and application icon. |
+| `ToolForge/` | Separate generate-only character-tool editor, preview, validators, and package generator. |
 
 ## Adding files
 
@@ -41,3 +42,6 @@ first group with that name.
 
 Do not place generated binaries here. Build outputs belong in `dist/`, and
 packaged portable releases belong in `release/`.
+
+Tool Forge has its own `build-tool-forge.ps1` so its WebView2 and Three.js
+preview files never enter the normal ScrapLab release bundle.

@@ -99,6 +99,7 @@ $patchSources = @(
     "Patching\ScrapLabCraftbotRecipeOrder.cs",
     "Patching\WirelessVacuumPipePatchService.cs",
     "Patching\NetworkStorageChestPatchService.cs",
+    "Patching\TreeSaplingsPatchService.cs",
     "Patching\GameplayModsBatchCoordinator.cs",
     "Patching\AdaptivePatchSupport.cs"
 ) | ForEach-Object { Get-SourcePath $_ }
@@ -124,6 +125,26 @@ $networkStorageChestGui = Get-SourcePath "Patching\Parts\NetworkStorageChest\Net
 $networkStorageChestItemGui = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChestItem.gui"
 $networkStorageChestShape = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChest.shapeset"
 $networkStorageChestLocalization = Get-SourcePath "Patching\Parts\NetworkStorageChest\NetworkStorageChest.localization.json"
+$treeSaplingTool = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingTool.lua"
+$treeSaplingHeldMesh = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeld.fbx"
+$treeSaplingHeldSkinnedMesh = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeld.dae"
+$treeSaplingHeldRenderable = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeld.rend"
+$treeSaplingHeldFpMesh = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeldFp.fbx"
+$treeSaplingHeldFpSkinnedMesh = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeldFp.dae"
+$treeSaplingHeldFpRenderable = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeldFp.rend"
+$treeSaplingHeldTpMesh = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeldTp.fbx"
+$treeSaplingHeldTpSkinnedMesh = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeldTp.dae"
+$treeSaplingHeldTpRenderable = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHeldTp.rend"
+$treeSaplingHeldVisual = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingVisual.generated.lua"
+$treeSaplingHarvestable = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingHarvestable.lua"
+$treeSaplingShape = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplings.shapeset"
+$treeSaplingTools = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplings.tools.json"
+$treeSaplingHarvestables = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplings.harvestableset"
+$treeSaplingPotCollision = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplingPotCollision.obj"
+$treeSaplingLocalization = Get-SourcePath "Patching\Parts\TreeSaplings\TreeSaplings.localization.json"
+$treeSaplingSmallIcon = Get-SourcePath "Patching\Parts\TreeSaplings\SmallTreeSaplingIcon.png"
+$treeSaplingMediumIcon = Get-SourcePath "Patching\Parts\TreeSaplings\MediumTreeSaplingIcon.png"
+$treeSaplingLargeIcon = Get-SourcePath "Patching\Parts\TreeSaplings\LargeTreeSaplingIcon.png"
 
 & $compiler `
     /nologo `
@@ -153,6 +174,26 @@ $networkStorageChestLocalization = Get-SourcePath "Patching\Parts\NetworkStorage
     "/resource:$networkStorageChestItemGui,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChestItem.gui" `
     "/resource:$networkStorageChestShape,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChest.shapeset" `
     "/resource:$networkStorageChestLocalization,RaidRescue.Parts.NetworkStorageChest.NetworkStorageChest.localization.json" `
+    "/resource:$treeSaplingHeldMesh,RaidRescue.Parts.TreeSaplings.TreeSaplingHeld.fbx" `
+    "/resource:$treeSaplingHeldSkinnedMesh,RaidRescue.Parts.TreeSaplings.TreeSaplingHeld.dae" `
+    "/resource:$treeSaplingHeldRenderable,RaidRescue.Parts.TreeSaplings.TreeSaplingHeld.rend" `
+    "/resource:$treeSaplingHeldFpMesh,RaidRescue.Parts.TreeSaplings.TreeSaplingHeldFp.fbx" `
+    "/resource:$treeSaplingHeldFpSkinnedMesh,RaidRescue.Parts.TreeSaplings.TreeSaplingHeldFp.dae" `
+    "/resource:$treeSaplingHeldFpRenderable,RaidRescue.Parts.TreeSaplings.TreeSaplingHeldFp.rend" `
+    "/resource:$treeSaplingHeldTpMesh,RaidRescue.Parts.TreeSaplings.TreeSaplingHeldTp.fbx" `
+    "/resource:$treeSaplingHeldTpSkinnedMesh,RaidRescue.Parts.TreeSaplings.TreeSaplingHeldTp.dae" `
+    "/resource:$treeSaplingHeldTpRenderable,RaidRescue.Parts.TreeSaplings.TreeSaplingHeldTp.rend" `
+    "/resource:$treeSaplingHeldVisual,RaidRescue.Parts.TreeSaplings.TreeSaplingVisual.generated.lua" `
+    "/resource:$treeSaplingTool,RaidRescue.Parts.TreeSaplings.TreeSaplingTool.lua" `
+    "/resource:$treeSaplingHarvestable,RaidRescue.Parts.TreeSaplings.TreeSaplingHarvestable.lua" `
+    "/resource:$treeSaplingShape,RaidRescue.Parts.TreeSaplings.TreeSaplings.shapeset" `
+    "/resource:$treeSaplingTools,RaidRescue.Parts.TreeSaplings.TreeSaplings.tools.json" `
+    "/resource:$treeSaplingHarvestables,RaidRescue.Parts.TreeSaplings.TreeSaplings.harvestableset" `
+    "/resource:$treeSaplingPotCollision,RaidRescue.Parts.TreeSaplings.TreeSaplingPotCollision.obj" `
+    "/resource:$treeSaplingLocalization,RaidRescue.Parts.TreeSaplings.TreeSaplings.localization.json" `
+    "/resource:$treeSaplingSmallIcon,RaidRescue.Parts.TreeSaplings.SmallTreeSaplingIcon.png" `
+    "/resource:$treeSaplingMediumIcon,RaidRescue.Parts.TreeSaplings.MediumTreeSaplingIcon.png" `
+    "/resource:$treeSaplingLargeIcon,RaidRescue.Parts.TreeSaplings.LargeTreeSaplingIcon.png" `
     "/out:$output\ScrapLab.PatchHelper.exe" `
     /reference:System.Windows.Forms.dll `
     /reference:System.Drawing.dll `

@@ -1408,12 +1408,13 @@ function NetworkStorageChest.sv_createSession( self, player )
 	return token
 end
 
-function NetworkStorageChest.sv_sendWithdrawalResult( self, player, status, moved, detail )
+function NetworkStorageChest.sv_sendWithdrawalResult( self, player, status, moved, detail, itemUuid )
 	if not player then return end
 	self.network:sendToClient( player, "cl_n_withdrawResult", {
 		status = status,
 		moved = moved or 0,
 		detail = detail,
+		uuid = itemUuid and tostring( itemUuid ) or nil,
 		topologyGeneration = self.sv.topologyGeneration,
 		contentGeneration = self.sv.contentGeneration
 	} )
@@ -1646,7 +1647,7 @@ function NetworkStorageChest.sv_completeWithdrawalJob( self, job, status, moved,
 	self.sv.pendingWithdrawals[job.playerKey] = nil
 	if status == "SUCCESS" then self.sv.withdrawalStats.successes = self.sv.withdrawalStats.successes + 1
 	else self.sv.withdrawalStats.failures = self.sv.withdrawalStats.failures + 1 end
-	self:sv_sendWithdrawalResult( job.player, status, moved, detail )
+	self:sv_sendWithdrawalResult( job.player, status, moved, detail, job.itemUuid )
 	self:sv_publishDiagnostics( self.sv.indexing and
 		( self.sv.scanBlocking and "INDEXING" or "REFRESHING" ) or "READY", 0, 0, 0 )
 end
@@ -1981,6 +1982,7 @@ function NetworkStorageChest.client_onCreate( self )
 		sessionOpen = false,
 		sessionToken = nil,
 		withdrawBusy = false,
+		withdrawRequest = nil,
 		withdrawStatus = nil,
 		inventoryDepositBusy = false,
 		inventoryDepositStatus = nil,
@@ -2125,6 +2127,7 @@ function NetworkStorageChest.cl_openGui( self )
 	self.cl.selected = nil
 	self.cl.sessionToken = nil
 	self.cl.withdrawBusy = false
+	self.cl.withdrawRequest = nil
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
 	self.cl.inventoryDepositStatusUntil = 0
@@ -2177,6 +2180,7 @@ function NetworkStorageChest.cl_destroyGui( self )
 	self.cl.guiDirty = false
 	self.cl.sessionToken = nil
 	self.cl.withdrawBusy = false
+	self.cl.withdrawRequest = nil
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
 	self.cl.inventoryDepositStatusUntil = 0
@@ -2199,6 +2203,7 @@ function NetworkStorageChest.cl_onGuiClosed( self )
 	self.cl.guiDirty = false
 	self.cl.sessionToken = nil
 	self.cl.withdrawBusy = false
+	self.cl.withdrawRequest = nil
 	self.cl.inventoryDepositBusy = false
 	self.cl.inventoryDepositStatus = nil
 	self.cl.inventoryDepositStatusUntil = 0
@@ -2212,6 +2217,7 @@ function NetworkStorageChest.cl_n_sessionState( self, data )
 	self.cl.sessionToken = data.token
 	if data.smartRouting ~= nil then self.cl.serverState.smartRouting = data.smartRouting == true end
 	self.cl.withdrawBusy = false
+	self.cl.withdrawRequest = nil
 	self.cl.routingBusy = false
 	self:cl_refreshStatus()
 	if self.cl.guiData then self.cl.guiDirty = true end
@@ -2798,6 +2804,7 @@ function NetworkStorageChest.cl_requestWithdrawal( self, action )
 	local state = self.cl.catalogState or {}
 	if not selected or state.status ~= "READY" then return end
 	self.cl.withdrawBusy = true
+	self.cl.withdrawRequest = { uuid = selected.uuid, action = action }
 	self.cl.withdrawStatus = localizedText( "verifying" )
 	self:cl_refreshStatus()
 	self.cl.guiDirty = true
@@ -2808,6 +2815,44 @@ function NetworkStorageChest.cl_requestWithdrawal( self, action )
 		topologyGeneration = state.topologyGeneration,
 		contentGeneration = state.contentGeneration
 	} )
+end
+
+function NetworkStorageChest.cl_applyCommittedWithdrawal( self, uuidString, moved, serverGeneration )
+	if not self.cl or not uuidString or moved <= 0 then return false end
+	local currentGeneration = tonumber( self.cl.catalogState and self.cl.catalogState.contentGeneration ) or 0
+	-- A newer authoritative snapshot already contains this transaction. Applying
+	-- the result again would double-subtract when network messages cross in flight.
+	if currentGeneration > ( tonumber( serverGeneration ) or currentGeneration ) then return false end
+
+	local index, entry
+	for candidateIndex, candidate in ipairs( self.cl.catalog or {} ) do
+		if candidate.uuid == uuidString then index, entry = candidateIndex, candidate; break end
+	end
+	if not entry then return false end
+
+	local previousQuantity = math.max( 0, tonumber( entry.quantity ) or 0 )
+	local nextQuantity = math.max( 0, previousQuantity - moved )
+	entry.quantity = nextQuantity
+	if self.cl.catalogState then
+		self.cl.catalogState.totalQuantity = math.max( 0,
+			( tonumber( self.cl.catalogState.totalQuantity ) or 0 ) - math.min( moved, previousQuantity ) )
+	end
+	if nextQuantity <= 0 then
+		table.remove( self.cl.catalog, index )
+		if self.cl.catalogState then
+			self.cl.catalogState.uniqueItems = math.max( 0,
+				( tonumber( self.cl.catalogState.uniqueItems ) or 0 ) - 1 )
+			self.cl.catalogState.totalStacks = math.max( 0,
+				( tonumber( self.cl.catalogState.totalStacks ) or 0 ) - ( tonumber( entry.stacks ) or 0 ) )
+		end
+		if self.cl.selected == index then self.cl.selected = nil
+		elseif self.cl.selected and self.cl.selected > index then self.cl.selected = self.cl.selected - 1 end
+	end
+
+	-- Update existing quantity widgets in place. A zero quantity or count-based
+	-- sort may require a layout rebuild, but the existing helper preserves scroll.
+	if self.cl.guiData and self.cl.scrollView then self:cl_refreshCatalogWidgets( false ) end
+	return true
 end
 
 function NetworkStorageChest.cl_n_withdrawProgress( self, data )
@@ -2824,6 +2869,12 @@ function NetworkStorageChest.cl_n_withdrawResult( self, data )
 	if not self.cl or type( data ) ~= "table" then return end
 	self.cl.withdrawBusy = false
 	local moved = tonumber( data.moved ) or 0
+	local request = self.cl.withdrawRequest
+	local committedUuid = data.uuid or ( request and request.uuid )
+	if data.status == "SUCCESS" then
+		self:cl_applyCommittedWithdrawal( committedUuid, moved, data.contentGeneration )
+	end
+	self.cl.withdrawRequest = nil
 	local messages = {
 		SUCCESS = localizedText( "success", moved, moved == 1 and "" or "S" ),
 		INVENTORY_FULL = localizedText( "inventoryFull" ),

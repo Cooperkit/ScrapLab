@@ -982,8 +982,8 @@ button{font:inherit}
         </div>
       </div>
       <div class=""secret-mods-list"" id=""secretModsList"">
-        <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-category=""commands"" data-search=""developer dev commands cheats unlimited god noclip fly flight collision spawn time raid host chat utility"">
-          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock Survival developer tools plus /fly collision-free flight, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""developerCommandsRow"" data-category=""commands"" data-search=""developer dev commands cheats unlimited god noclip fly flight spawntree tree collision spawn time raid host chat utility"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">COMMAND TOOLS &middot; WORLD-ALTERING</span><strong>DEVELOPER COMMANDS</strong><span>Unlock Survival developer tools plus /fly and guarded native-tree placement, with configurable player access.</span><em id=""developerCommandsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""developerCommandsReason""></span></div>
           <div class=""secret-mod-actions"">
             <button type=""button"" class=""secret-mod-options"" id=""developerCommandsUpdate"" aria-label=""Update Developer Commands"" onclick=""updateDeveloperCommandsMod()"" style=""display:none"">UPDATE</button>
             <button type=""button"" class=""secret-mod-options"" id=""developerCommandsOptions"" aria-label=""Open Developer Commands options"" onclick=""openDeveloperCommandOptions()"" disabled=""disabled"">OPTIONS</button>
@@ -1025,6 +1025,10 @@ button{font:inherit}
               <span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span>
             </button>
           </div>
+        </div>
+        <div class=""secret-mod-row secret-mod-card locked"" id=""treeSaplingsRow"" data-category=""farming survival"" data-search=""tree saplings reforestation small medium large plant grow fertilizer hideout trader farming save sensitive"">
+          <div class=""secret-mod-copy""><span class=""secret-mod-tag"">FARMING &middot; REFORESTATION &middot; SAVE-SENSITIVE</span><strong>TREE SAPLINGS</strong><span>Plant, fertilize, uproot, and grow Small, Medium, or Large native trees.</span><em id=""treeSaplingsState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""treeSaplingsReason""></span></div>
+          <div class=""secret-mod-actions""><button type=""button"" class=""secret-mod-options"" id=""treeSaplingsUpdate"" aria-label=""Update Tree Saplings"" onclick=""updateTreeSaplingsMod()"" style=""display:none"">UPDATE</button><button type=""button"" class=""secret-switch"" id=""treeSaplingsSwitch"" role=""switch"" aria-checked=""false"" aria-label=""Toggle Tree Saplings"" onclick=""toggleTreeSaplingsMod()"" disabled=""disabled""><span class=""secret-switch-track""></span><span class=""secret-switch-knob""></span></button></div>
         </div>
         <div class=""secret-mod-row secret-mod-card locked"" id=""wirelessVacuumPipeRow"" data-category=""logistics automation machinery"" data-search=""wireless vacuum pipe logistics automation link send receive cross world overworld underground paint color channel craftbot save sensitive"">
           <div class=""secret-mod-copy""><span class=""secret-mod-tag"">LOGISTICS &middot; PIPE AUTOMATION &middot; SAVE-SENSITIVE</span><strong>WIRELESS VACUUM PIPE</strong><span>Link painted networks or route machines and storage from Send to Receive, including pumps and cross-world systems.</span><em id=""wirelessVacuumPipeState"">NOT INSTALLED</em><span class=""secret-compat-reason"" id=""wirelessVacuumPipeReason""></span></div>
@@ -1139,6 +1143,12 @@ button{font:inherit}
   </div>
 </div>
 
+<div class=""hotfix-modal cannon-danger-modal"" id=""treeSaplingsDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""treeSaplingsDangerTitle"" onclick=""treeSaplingsDangerBackdropClick(event)"">
+  <div class=""hotfix-dialog""><div class=""hotfix-stripe""></div><div class=""hotfix-head""><div class=""hotfix-alert""><span>!</span></div><div class=""hotfix-title""><strong id=""treeSaplingsDangerTitle"">SAVE PART COMPATIBILITY DANGER</strong><span>TREE SAPLINGS REMOVAL</span></div></div>
+    <div class=""hotfix-body""><p class=""hotfix-intro"">Removing this mod unregisters all three sapling items and planted pots. Fully grown native trees remain safe.</p><ul class=""hotfix-checks""><li>Remove every Small, Medium, and Large Sapling from inventories, hotbars, chests, lifts, dropped loot, and saved creations.</li><li>Uproot every planted potted sapling.</li><li>Save every affected world and close Scrap Mechanic completely.</li></ul><div class=""cannon-danger-ack""><label><input type=""checkbox"" id=""treeSaplingsDangerAck"" onchange=""updateTreeSaplingsDangerConfirm()"" /><span class=""cannon-danger-box""></span><span>I removed every sapling item and planted pot.</span></label></div></div>
+    <div class=""hotfix-foot""><div class=""hotfix-foot-note"">Fully grown native trees do not need removal.</div><div class=""hotfix-buttons""><button type=""button"" class=""btn"" onclick=""closeTreeSaplingsDangerConfirm()"">CANCEL</button><button type=""button"" class=""btn hotfix-confirm"" id=""treeSaplingsDangerConfirmButton"" onclick=""confirmTreeSaplingsDangerChange()"" disabled=""disabled""><span>!</span>I REMOVED EVERY SAPLING ITEM AND PLANTED POT - DISABLE</button></div></div></div>
+</div>
+
 <div class=""hotfix-modal cannon-danger-modal"" id=""networkStorageChestDangerModal"" role=""dialog"" aria-modal=""true"" aria-labelledby=""networkStorageChestDangerTitle"" onclick=""networkStorageChestDangerBackdropClick(event)"">
   <div class=""hotfix-dialog"">
     <div class=""hotfix-hazard""></div>
@@ -1214,7 +1224,7 @@ button{font:inherit}
         </button>
       </div>
       <ul class=""hotfix-checks"">
-        <li>Includes /unlimited, /god, /fly, /spawn, time controls, item commands, and raid utilities.</li>
+        <li>Includes /unlimited, /god, /fly, /spawntree, /spawn, time controls, item commands, and raid utilities.</li>
         <li>/fly follows your view direction, passes through collisions, and protects only the flying player from damage.</li>
         <li>/kick and /ban remain restricted to the host in both access modes.</li>
         <li>Installing or changing access edits no save data; commands players run can permanently change the world.</li>
@@ -1408,6 +1418,12 @@ button{font:inherit}
       </div>
 
       <div class=""help-section"">
+        <div class=""help-section-title"">SUPER SECRET MODS &mdash; TREE SAPLINGS</div>
+        <div class=""help-grid""><div class=""help-item""><b>THREE TREE SIZES</b><p>Small, Medium, and Large pots grow for 5, 7, and 10 active minutes. Each selects one matching native tree when planted.</p></div><div class=""help-item""><b>SAFE TERRAIN PLACEMENT</b><p>Plant only on Soil Bag-compatible terrain. Slope, neighboring trees and pots, buildings, terrain assets, roofs, and required growing space are checked before an item is consumed.</p></div><div class=""help-item""><b>FERTILIZE OR UPROOT</b><p>One fertilizer runs remaining growth at 2.5&times; speed. Look at a pot for its state and press E to return it to your inventory; a full inventory leaves it planted.</p></div><div class=""help-item""><b>MATURE BUT BLOCKED</b><p>A mature pot waits safely when a roof, creation, character, unit, or terrain obstruction occupies its tree envelope, then grows after the space clears.</p></div><div class=""help-item""><b>DROPS &amp; TRADES</b><p>A native crown has one 30% matching-sapling roll when it first falls. The Hideout sells five Small, Medium, or Large saplings for one, two, or three Caged Farmers.</p></div><div class=""help-item""><b>SAFE REMOVAL</b><p>Remove all sapling items and every planted pot before disabling. Fully grown native trees no longer depend on ScrapLab and remain safe.</p></div></div>
+        <div class=""help-danger""><b>CUSTOM ITEM AND HARVESTABLE UUIDS.</b> Do not disable Tree Saplings while sapling items or planted pots still exist in a save.</div>
+      </div>
+
+      <div class=""help-section"">
         <div class=""help-section-title"">SUPER SECRET MODS &mdash; WIRELESS VACUUM PIPE</div>
         <div class=""help-grid"">
           <div class=""help-item""><b>HOW TO GET IT</b><p>The default-unlocked Craftbot recipe sits beside the ordinary Vacuum Pipe and produces two Wireless Vacuum Pipes in 30 seconds from two Vacuum Pipes, two Component Kits, and four Circuit Boards.</p></div>
@@ -1471,6 +1487,7 @@ button{font:inherit}
         <div class=""help-grid"">
           <div class=""help-item""><b>HOW TO USE</b><p>Open <strong>Options</strong>, choose an access mode, and install with Scrap Mechanic closed. In a hosted Survival world, open chat and enter a command such as <strong>/unlimited</strong>. Use <strong>/limited</strong> to return to normal inventory rules.</p></div>
           <div class=""help-item""><b>FLIGHT COMMAND</b><p>Enter <strong>/fly</strong>, then use WASD and look where you want to fly. Forward and backward follow your view, including straight up or down. Hold Shift for high-speed flight, and enter <strong>/fly</strong> again to exit.</p></div>
+          <div class=""help-item""><b>TREE-SPAWN PROTOTYPE</b><p>Aim at terrain within 100 meters and enter <strong>/spawntree random</strong>, <strong>small</strong>, <strong>medium</strong>, or <strong>large</strong>. ScrapLab chooses one of the game's native tree variants on the server and places it in your current world.</p></div>
           <div class=""help-item""><b>NATIVE CONTROLS</b><p>Noclip reads movement through ScrapLab's hidden input tool and never replaces Scrap Mechanic's camera. Mouse sensitivity and inverted-look preferences stay under the game's control.</p></div>
           <div class=""help-item""><b>SMOOTH, STABLE FLIGHT</b><p>The world-bound player controller uses smooth velocity control instead of constant teleporting. Falling and ragdolling are suppressed while noclip is active; short position steps occur only when crossing solid geometry.</p></div>
           <div class=""help-item""><b>SAFE EXIT</b><p>Noclip refuses to turn off while your exit position overlaps solid terrain, harvestables, or creations. Move into open space and try again so your character cannot be trapped inside geometry.</p></div>
@@ -1761,6 +1778,11 @@ var secretNetworkStorageChestNeedsUpdate=false;
 var secretNetworkStorageChestCompatibility='';
 var secretNetworkStorageChestCanApply=true;
 var secretNetworkStorageChestReason='';
+var secretTreeSaplingsInstalled=false;
+var secretTreeSaplingsNeedsUpdate=false;
+var secretTreeSaplingsCompatibility='';
+var secretTreeSaplingsCanApply=true;
+var secretTreeSaplingsReason='';
 var secretDeveloperCommandsInstalled=false;
 var secretDeveloperCommandsNeedsUpdate=false;
 var secretDeveloperCommandsError='';
@@ -1789,6 +1811,7 @@ var pendingGamePatchOperation=null;
 var secretWirelessVacuumPipeDangerAction='';
 var secretRaidDetectorDangerAction='';
 var secretNetworkStorageChestDangerAction='';
+var secretTreeSaplingsDangerAction='';
 var secretPlasmaDangerAction='';
 var secretDependencyAction='';
 var secretCannonDangerAction='';
@@ -1882,7 +1905,7 @@ function loadAppUpdateState(){
 function escPlain(value){return value===null||typeof value==='undefined'?'':String(value);}
 function updateUiBlocked(){
  if(operationBusy||tutorialActive||updateInstallBusy)return true;
- var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','networkStorageChestDangerModal','wirelessVacuumPipeDangerModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','gameplayBatchInstallModal','gameplayBatchDangerModal','gameplayBatchResultModal','secretModsLayer'];
+ var ids=['updateModal','onboardModal','helpModal','hotfixModal','itemClearModal','itemSummaryModal','dependencyModal','developerCommandModal','treeSaplingsDangerModal','networkStorageChestDangerModal','wirelessVacuumPipeDangerModal','raidDetectorDangerModal','plasmaDangerModal','cannonDangerModal','gameplayBatchInstallModal','gameplayBatchDangerModal','gameplayBatchResultModal','secretModsLayer'];
  for(var i=0;i<ids.length;i++){
   var node=document.getElementById(ids[i]);
   if(node&&String(node.className).indexOf('show')>=0)return true;
@@ -2105,6 +2128,10 @@ function captureSecretCompatibility(kind,data){
    secretNetworkStorageChestCompatibility=state;
    secretNetworkStorageChestCanApply=canApply;
    secretNetworkStorageChestReason=reason;
+  }else if(kind==='treeSaplings'){
+   secretTreeSaplingsCompatibility=state;
+   secretTreeSaplingsCanApply=canApply;
+   secretTreeSaplingsReason=reason;
   }else if(kind==='commands'){
   secretDeveloperCommandsCompatibility=state;
   secretDeveloperCommandsCanApply=canApply;
@@ -2284,6 +2311,23 @@ function loadSecretModsState(){
    showSecretModFeedback(secretNetworkStorageChestReason,'bad');
   }
   try{
+   var treeSaplingsData=parseResult(window.external.GetTreeSaplingsModStatus());
+   if(treeSaplingsData.Success){
+    secretTreeSaplingsInstalled=!!treeSaplingsData.Installed;
+    secretTreeSaplingsNeedsUpdate=!!treeSaplingsData.NeedsUpdate;
+    captureSecretCompatibility('treeSaplings',treeSaplingsData);
+    installedSecretMod=installedSecretMod||secretTreeSaplingsInstalled;
+   }else{
+    secretTreeSaplingsCanApply=false;
+    secretTreeSaplingsReason=treeSaplingsData.Error||'Could not read the Tree Saplings state.';
+    showSecretModFeedback(secretTreeSaplingsReason,'bad');
+   }
+  }catch(e){
+   secretTreeSaplingsCanApply=false;
+   secretTreeSaplingsReason='Could not read the Tree Saplings state.';
+   showSecretModFeedback(secretTreeSaplingsReason,'bad');
+  }
+  try{
    var commandData=parseResult(window.external.GetDeveloperCommandsModStatus());
   if(commandData.Success){
    secretDeveloperCommandsInstalled=!!commandData.Installed;
@@ -2453,8 +2497,21 @@ function renderSecretModsState(){
     networkStorage.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;
     if(networkStorageUpdate){networkStorageUpdate.style.display=secretNetworkStorageChestNeedsUpdate?'block':'none';networkStorageUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretNetworkStorageChestCanApply;}
    networkStorageRow.className='secret-mod-row secret-mod-card'+(secretNetworkStorageChestInstalled?' enabled':'')+((!secretModsEnabled||!secretNetworkStorageChestCanApply)?' locked':'');
-    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'PERFORMANCE UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
+    networkStorageState.innerText=secretModBusy&&secretModBusyTarget==='networkStorage'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretNetworkStorageChestNeedsUpdate?'LIVE COUNT UPDATE AVAILABLE':compatibilityStateLabel(secretNetworkStorageChestInstalled,secretNetworkStorageChestCompatibility,'NOT INSTALLED')));
    renderCompatibilityReason('networkStorageChestReason',secretNetworkStorageChestInstalled,secretNetworkStorageChestCanApply,secretNetworkStorageChestReason);
+  }
+  var treeSaplings=document.getElementById('treeSaplingsSwitch');
+  var treeSaplingsUpdate=document.getElementById('treeSaplingsUpdate');
+  var treeSaplingsRow=document.getElementById('treeSaplingsRow');
+  var treeSaplingsState=document.getElementById('treeSaplingsState');
+  if(treeSaplings&&treeSaplingsRow&&treeSaplingsState){
+   treeSaplings.className=secretTreeSaplingsInstalled?'secret-switch on':'secret-switch';
+   treeSaplings.setAttribute('aria-checked',secretTreeSaplingsInstalled?'true':'false');
+   treeSaplings.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretTreeSaplingsCanApply;
+   if(treeSaplingsUpdate){treeSaplingsUpdate.style.display=secretTreeSaplingsNeedsUpdate?'block':'none';treeSaplingsUpdate.disabled=operationBusy||!secretModsEnabled||secretModBusy||!!gameRunning||!secretTreeSaplingsCanApply;}
+   treeSaplingsRow.className='secret-mod-row secret-mod-card'+(secretTreeSaplingsInstalled?' enabled':'')+((!secretModsEnabled||!secretTreeSaplingsCanApply)?' locked':'');
+   treeSaplingsState.innerText=secretModBusy&&secretModBusyTarget==='treeSaplings'?'APPLYING...':(gameRunning?'GAME RUNNING - CLOSE IT FIRST':(secretTreeSaplingsNeedsUpdate?'UPDATE AVAILABLE':compatibilityStateLabel(secretTreeSaplingsInstalled,secretTreeSaplingsCompatibility,'NOT INSTALLED')));
+   renderCompatibilityReason('treeSaplingsReason',secretTreeSaplingsInstalled,secretTreeSaplingsCanApply,secretTreeSaplingsReason);
   }
   var revival=document.getElementById('revivalBuffSwitch');
  var revivalRow=document.getElementById('revivalBuffRow');
@@ -2510,9 +2567,9 @@ function renderSecretModsState(){
  var count=document.getElementById('secretModCount');
  var headCount=document.getElementById('secretModHeadCount');
   if(count){
-   var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretWirelessVacuumPipeInstalled?1:0)+(secretNetworkStorageChestInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
-   count.innerText=active+' ACTIVE \u00b7 12 AVAILABLE';
-   if(headCount)headCount.innerText=active+' ACTIVE / 12 AVAILABLE';
+   var active=(secretResourceLocatorInstalled?1:0)+(secretFullSpeedCarryingInstalled?1:0)+(secretBetterEnginesInstalled?1:0)+(secretBetterFreezerBeehiveInstalled?1:0)+(secretBetterPlasmaDrillsInstalled?1:0)+(secretRaidDetectorInstalled?1:0)+(secretTreeSaplingsInstalled?1:0)+(secretWirelessVacuumPipeInstalled?1:0)+(secretNetworkStorageChestInstalled?1:0)+(secretRevivalBuffInstalled?1:0)+(secretDeveloperCommandsInstalled?1:0)+(secretChemicalFertilizerInstalled?1:0)+(secretDualFluidCannonInstalled?1:0);
+   count.innerText=active+' ACTIVE \u00b7 13 AVAILABLE';
+   if(headCount)headCount.innerText=active+' ACTIVE / 13 AVAILABLE';
   }
   renderAllGameplayModsControl();
   filterSecretMods();
@@ -2528,6 +2585,7 @@ function renderSecretModsState(){
    {key:'chemical-fertilizer',name:'Chemical Fertilizer Splash',installed:secretChemicalFertilizerInstalled,update:secretChemicalFertilizerNeedsUpdate,can:secretChemicalFertilizerCanApply,reason:secretChemicalFertilizerReason},
    {key:'dual-fluid-cannon',name:'Dual-Fluid Water Cannon',installed:secretDualFluidCannonInstalled,update:secretDualFluidCannonNeedsUpdate,can:secretDualFluidCannonCanApply&&!secretDualFluidCannonError,reason:secretDualFluidCannonReason||secretDualFluidCannonError},
    {key:'raid-detector',name:'Raid Detector',installed:secretRaidDetectorInstalled,update:secretRaidDetectorNeedsUpdate,can:secretRaidDetectorCanApply,reason:secretRaidDetectorReason},
+   {key:'tree-saplings',name:'Tree Saplings',installed:secretTreeSaplingsInstalled,update:secretTreeSaplingsNeedsUpdate,can:secretTreeSaplingsCanApply,reason:secretTreeSaplingsReason},
    {key:'wireless-vacuum-pipe',name:'Wireless Vacuum Pipe',installed:secretWirelessVacuumPipeInstalled,update:secretWirelessVacuumPipeNeedsUpdate,can:secretWirelessVacuumPipeCanApply,reason:secretWirelessVacuumPipeReason},
    {key:'network-storage-chest',name:'Network Storage Chest',installed:secretNetworkStorageChestInstalled,update:secretNetworkStorageChestNeedsUpdate,can:secretNetworkStorageChestCanApply,reason:secretNetworkStorageChestReason}
   ];
@@ -2601,8 +2659,9 @@ function renderSecretModsState(){
   if(secretGameplayBatchAutoArmed){secretModsEnabled=true;try{window.external.SetSecretModsEnabled(true);}catch(ignore){}}
   runGameplayModsBatch(true);
  }
- function installedSaveSensitiveGameplayMods(){
-  var risks=[];
+function installedSaveSensitiveGameplayMods(){
+ var risks=[];
+  if(secretTreeSaplingsInstalled)risks.push('Tree Saplings - remove every sapling item and planted pot; grown native trees are safe.');
   if(secretNetworkStorageChestInstalled)risks.push('Network Storage Chest - remove every custom chest part.');
   if(secretWirelessVacuumPipeInstalled)risks.push('Wireless Vacuum Pipe - remove every custom wireless pipe part.');
   if(secretRaidDetectorInstalled)risks.push('Raid Detector - remove every detector part.');
@@ -2721,6 +2780,7 @@ function secretModsBackdropClick(e){
 }
 function toggleSecretModsEnabled(){
  if(operationBusy||secretModBusy)return;
+ if(secretModsEnabled&&secretTreeSaplingsInstalled){openTreeSaplingsDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretNetworkStorageChestInstalled){openNetworkStorageChestDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretWirelessVacuumPipeInstalled){openWirelessVacuumPipeDangerConfirm('masterOff');return;}
  if(secretModsEnabled&&secretRaidDetectorInstalled){openRaidDetectorDangerConfirm('masterOff');return;}
@@ -2801,6 +2861,16 @@ function updateNetworkStorageChestMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy||!secretNetworkStorageChestNeedsUpdate)return;
  setNetworkStorageChestMod(true);
 }
+function toggleTreeSaplingsMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy)return;
+ if(secretTreeSaplingsNeedsUpdate){setTreeSaplingsMod(true);return;}
+ if(secretTreeSaplingsInstalled){openTreeSaplingsDangerConfirm('treeSaplingsOnly');return;}
+ setTreeSaplingsMod(true);
+}
+function updateTreeSaplingsMod(){
+ if(operationBusy||!secretModsEnabled||secretModBusy||!secretTreeSaplingsNeedsUpdate)return;
+ setTreeSaplingsMod(true);
+}
 function updateResourceLocatorMod(){
  if(operationBusy||!secretModsEnabled||secretModBusy||!secretResourceLocatorNeedsUpdate)return;
  setResourceLocatorMod(true);
@@ -2864,6 +2934,7 @@ function applyGameplayModLocalState(key,installed){
  else if(key==='raid-detector'){secretRaidDetectorInstalled=installed;secretRaidDetectorNeedsUpdate=false;}
  else if(key==='wireless-vacuum-pipe'){secretWirelessVacuumPipeInstalled=installed;secretWirelessVacuumPipeNeedsUpdate=false;}
  else if(key==='network-storage-chest'){secretNetworkStorageChestInstalled=installed;secretNetworkStorageChestNeedsUpdate=false;}
+ else if(key==='tree-saplings'){secretTreeSaplingsInstalled=installed;secretTreeSaplingsNeedsUpdate=false;}
  else if(key==='chemical-fertilizer'){secretChemicalFertilizerInstalled=installed;secretChemicalFertilizerNeedsUpdate=false;if(!installed){secretDualFluidCannonInstalled=false;secretDualFluidCannonNeedsUpdate=false;resetGameplayCompatibility('dual-fluid-cannon');}}
  else if(key==='dual-fluid-cannon'){secretDualFluidCannonInstalled=installed;secretDualFluidCannonNeedsUpdate=false;if(installed){secretChemicalFertilizerInstalled=true;secretChemicalFertilizerNeedsUpdate=false;resetGameplayCompatibility('chemical-fertilizer');}}
  else if(key==='developer-commands'){secretDeveloperCommandsInstalled=installed;secretDeveloperCommandsNeedsUpdate=false;}
@@ -2879,6 +2950,7 @@ function resetGameplayCompatibility(key){
  else if(key==='raid-detector'){secretRaidDetectorCompatibility='';secretRaidDetectorCanApply=true;secretRaidDetectorReason='';}
  else if(key==='wireless-vacuum-pipe'){secretWirelessVacuumPipeCompatibility='';secretWirelessVacuumPipeCanApply=true;secretWirelessVacuumPipeReason='';}
  else if(key==='network-storage-chest'){secretNetworkStorageChestCompatibility='';secretNetworkStorageChestCanApply=true;secretNetworkStorageChestReason='';}
+ else if(key==='tree-saplings'){secretTreeSaplingsCompatibility='';secretTreeSaplingsCanApply=true;secretTreeSaplingsReason='';}
  else if(key==='chemical-fertilizer'){secretChemicalFertilizerCompatibility='';secretChemicalFertilizerCanApply=true;secretChemicalFertilizerReason='';}
  else if(key==='dual-fluid-cannon'){secretDualFluidCannonCompatibility='';secretDualFluidCannonCanApply=true;secretDualFluidCannonReason='';secretDualFluidCannonError='';}
  else if(key==='developer-commands'){secretDeveloperCommandsCompatibility='';secretDeveloperCommandsCanApply=true;secretDeveloperCommandsReason='';secretDeveloperCommandsError='';}
@@ -2894,9 +2966,16 @@ function applyGameplayBatchState(data){
 function setNetworkStorageChestMod(enabled){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Network Storage Chest.','bad');return false;}
  var wasNetworkStorageUpdate=enabled&&secretNetworkStorageChestInstalled&&secretNetworkStorageChestNeedsUpdate;
- return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'INSTALLING STORAGE PERFORMANCE UPDATE...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
+ return runSingleGameModPatch('network-storage-chest',enabled,'','networkStorage',wasNetworkStorageUpdate?'INSTALLING LIVE COUNT UPDATE...':enabled?'BUILDING NETWORK STORAGE TERMINAL...':'REMOVING NETWORK STORAGE CHEST REGISTRATIONS...','Network Storage Chest could not be changed.',function(data){
   secretNetworkStorageChestInstalled=!!data.Installed;
-  showSecretModFeedback(wasNetworkStorageUpdate?'WITHDRAWALS UPDATED - busy machines no longer cause false whole-chest conflicts, and real slot conflicts retry safely.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+  showSecretModFeedback(wasNetworkStorageUpdate?'LIVE COUNTS UPDATED - confirmed withdrawals now change the open catalog immediately without extra scans or full-grid redraws.':secretNetworkStorageChestInstalled?'NETWORK STORAGE CHEST INSTALLED - local catalog, selectable routing, and optional wireless access are ready.':'NETWORK STORAGE CHEST REMOVED - registrations, recipe, runtime, languages, and icon were restored.','good');
+ });
+}
+function setTreeSaplingsMod(enabled){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before changing Tree Saplings.','bad');return false;}
+ return runSingleGameModPatch('tree-saplings',enabled,'','treeSaplings',enabled?'PLANTING TREE SAPLINGS PATCH...':'REMOVING TREE SAPLINGS REGISTRATIONS...','Tree Saplings could not be changed.',function(data){
+  secretTreeSaplingsInstalled=!!data.Installed;
+  showSecretModFeedback(secretTreeSaplingsInstalled?'TREE SAPLINGS INSTALLED - three sizes, growth, fertilizer, native-tree drops, and Hideout trades are ready.':'TREE SAPLINGS REMOVED - sapling registrations and owned files were restored; grown native trees remain safe.','good');
  });
 }
 function setWirelessVacuumPipeMod(enabled){
@@ -3001,7 +3080,7 @@ function setDeveloperCommandsMod(enabled,mode,completed){
   secretDeveloperCommandsInstalled=!!data.Installed;
   secretDeveloperCommandsMode=data.Mode==='everyone'?'everyone':selectedMode;
   secretDeveloperCommandsError='';
-  showSecretModFeedback(secretDeveloperCommandsInstalled?(secretDeveloperCommandsMode==='everyone'?'DEVELOPER COMMANDS READY FOR EVERY PLAYER - all joined players receive the command list and /fly flight.':'DEVELOPER COMMANDS READY FOR HOST ONLY - open chat and enter /fly or a built-in command such as /unlimited.'):'DEVELOPER COMMANDS REMOVED - the verified original SurvivalGame script was restored.','good');
+  showSecretModFeedback(secretDeveloperCommandsInstalled?(secretDeveloperCommandsMode==='everyone'?'DEVELOPER COMMANDS READY FOR EVERY PLAYER - all joined players receive /fly, /spawntree, and the command list.':'DEVELOPER COMMANDS READY FOR HOST ONLY - try /fly, /spawntree random, or /unlimited in chat.'):'DEVELOPER COMMANDS REMOVED - the verified original SurvivalGame script was restored.','good');
  },completed);
 }
 function openDeveloperCommandOptions(){
@@ -3126,6 +3205,27 @@ function confirmDependencyChange(){
  closeDependencyConfirm();
  if(action==='installBoth')setDualFluidCannonMod(true);
  else if(action==='removeBoth')openCannonDangerConfirm('removeBoth');
+}
+function openTreeSaplingsDangerConfirm(action){
+ if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Tree Saplings.','bad');return;}
+ secretTreeSaplingsDangerAction=action;
+ var ack=document.getElementById('treeSaplingsDangerAck');ack.checked=false;
+ document.getElementById('treeSaplingsDangerConfirmButton').disabled=true;
+ document.getElementById('treeSaplingsDangerModal').className='hotfix-modal cannon-danger-modal show';
+}
+function updateTreeSaplingsDangerConfirm(){document.getElementById('treeSaplingsDangerConfirmButton').disabled=!document.getElementById('treeSaplingsDangerAck').checked;}
+function closeTreeSaplingsDangerConfirm(){document.getElementById('treeSaplingsDangerModal').className='hotfix-modal cannon-danger-modal';document.getElementById('treeSaplingsDangerAck').checked=false;secretTreeSaplingsDangerAction='';}
+function treeSaplingsDangerBackdropClick(e){e=e||window.event;if((e.target||e.srcElement)===document.getElementById('treeSaplingsDangerModal'))closeTreeSaplingsDangerConfirm();}
+function confirmTreeSaplingsDangerChange(){
+ if(!document.getElementById('treeSaplingsDangerAck').checked)return;
+ var action=secretTreeSaplingsDangerAction;closeTreeSaplingsDangerConfirm();
+ if(action==='masterOff'&&secretNetworkStorageChestInstalled)openNetworkStorageChestDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretWirelessVacuumPipeInstalled)openWirelessVacuumPipeDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretRaidDetectorInstalled)openRaidDetectorDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretBetterPlasmaDrillsInstalled)openPlasmaDangerConfirm('masterOff');
+ else if(action==='masterOff'&&secretDualFluidCannonInstalled)openCannonDangerConfirm('masterOff');
+ else if(action==='masterOff')disableAllSecretModsConfirmed();
+ else setTreeSaplingsMod(false);
 }
 function openNetworkStorageChestDangerConfirm(action){
  if(gameRunning){showSecretModFeedback('Close Scrap Mechanic completely before removing Network Storage Chest.','bad');return;}
@@ -3764,6 +3864,7 @@ function boot(){
   if(key===27&&document.getElementById('itemClearModal').className.indexOf('show')>=0){closeItemClearConfirm();return false;}
   if(key===27&&document.getElementById('helpModal').className.indexOf('show')>=0){closeHelp();return false;}
   if(key===27&&document.getElementById('onboardModal').className.indexOf('show')>=0){declineTutorial();return false;}
+    if(key===27&&document.getElementById('treeSaplingsDangerModal').className.indexOf('show')>=0){closeTreeSaplingsDangerConfirm();return false;}
     if(key===27&&document.getElementById('networkStorageChestDangerModal').className.indexOf('show')>=0){closeNetworkStorageChestDangerConfirm();return false;}
     if(key===27&&document.getElementById('wirelessVacuumPipeDangerModal').className.indexOf('show')>=0){closeWirelessVacuumPipeDangerConfirm();return false;}
     if(key===27&&document.getElementById('raidDetectorDangerModal').className.indexOf('show')>=0){closeRaidDetectorDangerConfirm();return false;}

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ScrapLab Tool Forge</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three.module.min.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="titlebar" id="titlebar">
+      <div class="brand-mark" aria-hidden="true"><span>TF</span></div>
+      <div class="title-copy">
+        <strong>SCRAPLAB TOOL FORGE</strong>
+        <small>CHARACTER TOOL BUILDER</small>
+      </div>
+      <div class="project-state"><i id="projectLamp"></i><span id="projectState">NO PROJECT</span></div>
+      <div class="window-actions">
+        <button type="button" data-window="minimize" aria-label="Minimize">&#8722;</button>
+        <button type="button" data-window="maximize" aria-label="Maximize">&#9633;</button>
+        <button type="button" class="close" data-window="close" aria-label="Close">&#215;</button>
+      </div>
+    </header>
+
+    <nav class="command-strip">
+      <div class="command-group">
+        <button class="command" id="newProject"><b>+</b><span>NEW</span></button>
+        <button class="command" id="openProject"><b>&#9655;</b><span>OPEN</span></button>
+        <button class="command" id="saveProject" disabled><b>&#9632;</b><span>SAVE</span></button>
+      </div>
+      <div class="command-group center">
+        <button class="command cyan" id="validateProject" disabled><b>&#10003;</b><span>VALIDATE</span></button>
+        <button class="command build" id="buildProject" disabled><b>&#9881;</b><span>BUILD PACKAGE</span></button>
+        <button class="command" id="revealBuild" disabled><b>&#8599;</b><span>OPEN BUILD</span></button>
+      </div>
+      <div class="busy-readout" id="busyReadout"><span></span><em>READY</em></div>
+    </nav>
+
+    <main class="workspace">
+      <aside class="inspector custom-scroll">
+        <section class="panel welcome" id="welcomePanel">
+          <div class="panel-cap"><span>01</span><div><small>PROJECT BAY</small><strong>START A TOOL</strong></div></div>
+          <p>Import the modified leaf-plant FBX or open an existing <code>.scraptool.json</code> project.</p>
+          <button class="primary-wide" id="welcomeNew">IMPORT SAPLING FBX</button>
+        </section>
+
+        <div id="projectControls" class="hidden">
+          <section class="panel">
+            <div class="section-title"><i></i><span>PROJECT</span><small>CHECKSUM LOCKED</small></div>
+            <label class="field-label" for="projectName">PROJECT NAME</label>
+            <input id="projectName" class="text-field" maxlength="60">
+            <div class="path-row"><div><small>SOURCE FBX</small><span id="sourcePath">—</span></div></div>
+            <div class="path-row"><div><small>SCRAP MECHANIC</small><span id="gamePath">NOT FOUND</span></div><button id="pickGame">SET</button></div>
+            <div class="path-row"><div><small>INTEGRATION SOURCE</small><span id="integrationPath">NOT SELECTED</span></div><button id="pickIntegration">SET</button></div>
+            <div class="path-row"><div><small>OUTPUT BASE</small><span id="outputPath">NOT SELECTED</span></div><button id="pickOutput">SET</button></div>
+          </section>
+
+          <section class="panel">
+            <div class="section-title"><i></i><span>MESH TARGET</span><small>ASCII OR BINARY FBX 7.X</small></div>
+            <label class="field-label" for="modelName">MODEL</label>
+            <input id="modelName" class="text-field code-field">
+            <label class="field-label" for="materialName">MATERIAL</label>
+            <input id="materialName" class="text-field code-field">
+            <div class="locked-note"><b>VANILLA TEXTURES</b><span>Leaf-plant DIF / ASG / NOR are referenced from the installed game.</span></div>
+          </section>
+
+          <section class="panel transform-panel">
+            <div class="section-title"><i></i><span>ATTACHMENT TRANSFORM</span><small id="transformProfile">FIRST PERSON · CM</small></div>
+            <div class="profile-note">FP and TP use separate exported alignment profiles.</div>
+            <div class="mode-buttons" role="group" aria-label="Transform mode">
+              <button class="active" data-transform-mode="translate">MOVE</button>
+              <button data-transform-mode="rotate">ROTATE</button>
+              <button data-transform-mode="scale">SCALE</button>
+            </div>
+            <div class="axis-grid">
+              <label><span class="x">X</span><input type="number" step="0.1" id="posX"></label>
+              <label><span class="y">Y</span><input type="number" step="0.1" id="posY"></label>
+              <label><span class="z">Z</span><input type="number" step="0.1" id="posZ"></label>
+            </div>
+            <div class="axis-grid">
+              <label><span class="x">RX</span><input type="number" step="1" id="rotX"></label>
+              <label><span class="y">RY</span><input type="number" step="1" id="rotY"></label>
+              <label><span class="z">RZ</span><input type="number" step="1" id="rotZ"></label>
+            </div>
+            <label class="wide-number"><span>SCALE</span><input type="number" min="0.001" max="100" step="0.01" id="uniformScale"></label>
+            <div class="snap-grid">
+              <label><span>MOVE SNAP</span><input type="number" min="0.01" step="0.1" id="moveSnap"></label>
+              <label><span>ANGLE SNAP</span><input type="number" min="0.1" step="1" id="angleSnap"></label>
+              <label><span>SCALE SNAP</span><input type="number" min="0.001" step="0.01" id="scaleSnap"></label>
+            </div>
+            <div class="small-actions">
+              <button id="undoTransform">UNDO</button><button id="redoTransform">REDO</button>
+              <button id="uprightPreset">AUTO UPRIGHT</button><button id="resetTransform">RESET</button>
+            </div>
+            <div class="small-actions profile-copy">
+              <button id="copyFpToTp">COPY FP → TP</button><button id="copyTpToFp">COPY TP → FP</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-title"><i></i><span>SAPLING VARIANTS</span><small>RUNTIME TINT</small></div>
+            <div class="variant-switches" id="variantSwitches"></div>
+          </section>
+        </div>
+      </aside>
+
+      <section class="preview-bay">
+        <div class="preview-head">
+          <div><small>LIVE ATTACHMENT RIG</small><strong id="previewTitle">WAITING FOR PROJECT</strong></div>
+          <div class="view-switch" role="group" aria-label="View mode">
+            <button class="active" data-view="fp">FIRST PERSON</button>
+            <button data-view="tp">THIRD PERSON</button>
+          </div>
+        </div>
+        <div class="viewport" id="viewport">
+          <canvas id="previewCanvas"></canvas>
+          <div class="viewport-grid"></div>
+          <div class="preview-empty" id="previewEmpty">
+            <span class="diamond">TF</span>
+            <strong>NO MESH LOADED</strong>
+            <small>Import a Tree Sapling FBX to start positioning it.</small>
+          </div>
+          <div class="viewport-error hidden" id="viewportError"></div>
+          <div class="viewport-badges">
+            <span id="rigBadge">RIG: OFFLINE</span><span id="jointBadge">JOINT: —</span><span id="fpsBadge">0 FPS</span>
+          </div>
+          <div class="viewport-tools">
+            <button id="toggleGrid" class="active" title="Grid">GRID</button>
+            <button id="toggleAxes" class="active" title="Axes">AXES</button>
+            <button id="toggleBox" title="Bounds">BOX</button>
+            <button id="toggleWire" title="Wireframe">WIRE</button>
+            <button id="toggleClay" title="Clay reference">CLAY</button>
+            <button id="toggleScreen" class="active" title="Use Scrap Mechanic's first-person camera joint">SCREEN</button>
+            <button id="focusModel" title="Frame the held mesh without changing its exported scale">FOCUS TOOL</button>
+          </div>
+        </div>
+        <div class="animation-deck">
+          <div class="animation-copy"><small>CLAY / BUCKET ANIMATION</small><strong id="animationName">NONE</strong></div>
+          <select id="animationSelect" disabled><option>NO ANIMATIONS</option></select>
+          <button id="playPause" disabled>&#9654;</button>
+          <button id="restartAnimation" disabled>&#8634;</button>
+          <input type="range" id="animationTimeline" min="0" max="1" step="0.001" value="0" disabled>
+          <span id="animationTime">0.00 / 0.00</span>
+        </div>
+        <div class="validation-drawer" id="validationDrawer">
+          <button class="drawer-handle" id="drawerToggle"><span>VALIDATION &amp; BUILD REPORT</span><b id="validationCount">NOT RUN</b></button>
+          <div class="drawer-body custom-scroll" id="validationBody"><p>Validate the project to inspect the FBX, game assets, UUID protection, and generated integration source.</p></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast"><i></i><div><strong></strong><span></span></div></div>
+  </div>
+  <script src="app.js"></script>
+  <script type="module" src="preview.js"></script>
+</body>
+</html>

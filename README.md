@@ -199,17 +199,18 @@ Patch Bay armed, and stops before later removals if any mod cannot be restored.
 
 | Mod | Effect |
 | --- | --- |
-| **Developer Commands** | Enables `/fly`, `/unlimited`, and other dev commands with configurable access. |
+| **Developer Commands** | Enables `/fly`, `/spawntree`, `/unlimited`, and other dev commands with configurable access. |
 | **Resource Locator Dots** | Shows Connect Tool dots on refinable resource cores. |
 | **Full-Speed Carrying** | Restores normal movement and sprinting while carrying. |
 | **Better Engines** | Boosts engine power and top-tier fuel efficiency. |
 | **Better Freezer & Beehive** | Adds freezer water input, larger storage, and 4x production. |
 | **Better Plasma Drills** | Adds levels 4–5 with stronger, faster, longer-range drilling. |
 | **Raid Detector** | Adds a trader-bought 256-meter raid logic sensor. |
+| **Tree Saplings** | Adds plantable Small, Medium, and Large native-tree saplings. |
 | **Wireless Vacuum Pipe** | Links same-color pipe systems, including across worlds. |
 | **Network Storage Chest** | Browses network storage and routes deposits in Smart or Nearest mode. |
 | **Revival Buff Recovery** | Restores food buffs after a Revival Baguette revive. |
-| **Chemical Fertilizer Splash** | Makes chemical projectiles fertilize crops and grow beds. |
+| **Chemical Fertilizer Splash** | Makes chemical projectiles fertilize crops, grow beds, and registered ScrapLab plants. |
 | **Dual-Fluid Water Cannon** | Fires connected water and chemical together on a logic pulse. |
 
 Every workshop action checks compatibility, creates verified backups, and
@@ -222,6 +223,16 @@ whether a mod is installed or installable. Recovery retention is bounded.
 - **Raid Detector** — UUID `a638a8aa-6f4f-41c2-9e31-702687066092`. Costs four
   Caged Farmers at the Hideout Trader and outputs logic while a scheduled or
   active raid is within 256 meters.
+- **Tree Saplings** — three 20-stack items grow into random native trees in
+  5/7/10 minutes. Fertilizer runs remaining growth at 2.5× speed; E safely
+  uproots a pot. Their Tool Forge-generated held mesh uses a Clay-compatible
+  skinned DAE, the complete vanilla Clay/Bucket first- and third-person
+  animation family, and a size-specific green, yellow, or orange runtime tint.
+  Native crowns have a 30% chance to drop the matching size, and the Hideout
+  sells five for one, two, or three Caged Farmers. Remove all sapling items and
+  planted pots before disabling; fully grown native trees remain safe. Existing
+  Chemical Fertilizer Splash installs expose a one-click registry update so
+  chemical impacts can fertilize saplings without treating them as watered crops.
 - **Wireless Vacuum Pipe** — UUID `a34d9af0-4ba0-431d-b647-2d5435ecf138`.
   Craft two from two Vacuum Pipes, two Component Kits, and four Circuit Boards.
   Matching colors use **Link** mode to join pipe systems, or route **Send** networks
@@ -260,9 +271,8 @@ whether a mod is installed or installable. Recovery retention is bounded.
   retry safely under the original click without duplicating or losing items.
 
 ScrapLab's Craftbot recipes are grouped immediately after the ordinary Vacuum
-Pipe recipe instead of being appended to the bottom. Raid Detector remains a
-Hideout trade and advanced Plasma Drills remain upgrade-only, so neither has a
-Craftbot recipe to move.
+Pipe recipe instead of being appended to the bottom. Raid Detector and Tree
+Saplings remain Hideout trades, and advanced Plasma Drills remain upgrade-only.
 
 All custom icons share the verified **ScrapLab Icon Pack**.
 
@@ -280,8 +290,9 @@ All custom icons share the verified **ScrapLab Icon Pack**.
 - **Better Plasma Drills** adds levels 4 and 5 for 25 and 50 Component Kits,
   with greater speed, range, radius, battery capacity, and unit damage.
 - **Developer Commands** includes `/fly`; flight and damage protection apply
-  only to the player who enabled it. Use Every Player access only with people
-  you trust.
+  only to the player who enabled it. The prototype
+  `/spawntree [random|small|medium|large]` places one native tree on the aimed
+  terrain. Use Every Player access only with people you trust.
 
 > **Advanced drill warning:** remove or downgrade every level-4/5 drill before
 > disabling the mod or verifying game files.
@@ -357,6 +368,26 @@ dropped-item safety, adaptive patch transactions, companion boundaries, Raid
 Detector atlas pixel isolation and byte-exact restoration, update validation,
 product migration, performance aggregation and ranking, operation
 cancellation, World Explorer paging, and privacy-safe export.
+
+### ScrapLab Tool Forge
+
+The repository also contains a separate, generate-only character-tool builder.
+Its first template imports a Blender binary or ASCII leaf-plant FBX 7.x,
+previews it on Scrap
+Mechanic's installed Clay/Bucket rigs, and stages a reviewable Tree Saplings
+held-tool package without editing ScrapLab or the game. The editable FBX stays
+in the package, while the game-facing output is a deterministic skinned DAE
+with the same `jnt_right_weapon` / `root_bucket_jnt` attachment contract used
+by the vanilla Clay tool.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-tool-forge.ps1
+```
+
+This produces `dist\ToolForge\ScrapLab.ToolForge.exe` and the standalone
+`release\ScrapLab-Tool-Forge-1.0.0.zip`. See
+[`docs/SCRAPLAB-TOOL-FORGE.md`](docs/SCRAPLAB-TOOL-FORGE.md) for its safety
+boundary, project format, CLI, and integration workflow.
 
 ## Privacy
 

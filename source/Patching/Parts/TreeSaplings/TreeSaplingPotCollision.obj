@@ -1,0 +1,18 @@
+# ScrapLab Tree Sapling planted-pot interaction collision
+# Narrow 1.2 x 2.8 x 1.2 model-unit tapered prism.
+o TreeSaplingPotCollision
+v -0.600000 0.000000 -0.600000
+v  0.600000 0.000000 -0.600000
+v  0.600000 0.000000  0.600000
+v -0.600000 0.000000  0.600000
+v -0.500000 2.800000 -0.500000
+v  0.500000 2.800000 -0.500000
+v  0.500000 2.800000  0.500000
+v -0.500000 2.800000  0.500000
+s off
+f 1 4 3 2
+f 5 6 7 8
+f 1 2 6 5
+f 2 3 7 6
+f 3 4 8 7
+f 4 1 5 8

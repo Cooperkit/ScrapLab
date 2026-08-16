@@ -1,0 +1,35 @@
+{
+	"toolList" :
+	[
+		{
+			"autoTool" : true,
+			"previewRenderable" : "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
+			"previewRotation" : [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
+			"script" : {
+				"class" : "TreeSaplingSmallTool",
+				"file" : "$SURVIVAL_DATA/Scripts/ScrapLab/Parts/TreeSaplings/TreeSaplingTool.lua"
+			},
+			"uuid" : "6bf64453-2ec9-4d4b-a007-140ccf528cae"
+		},
+		{
+			"autoTool" : true,
+			"previewRenderable" : "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
+			"previewRotation" : [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
+			"script" : {
+				"class" : "TreeSaplingMediumTool",
+				"file" : "$SURVIVAL_DATA/Scripts/ScrapLab/Parts/TreeSaplings/TreeSaplingTool.lua"
+			},
+			"uuid" : "1af920ea-287b-45f9-865b-c99111c65772"
+		},
+		{
+			"autoTool" : true,
+			"previewRenderable" : "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
+			"previewRotation" : [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
+			"script" : {
+				"class" : "TreeSaplingLargeTool",
+				"file" : "$SURVIVAL_DATA/Scripts/ScrapLab/Parts/TreeSaplings/TreeSaplingTool.lua"
+			},
+			"uuid" : "96d39491-1209-40a9-b97c-3eed67861076"
+		}
+	]
+}

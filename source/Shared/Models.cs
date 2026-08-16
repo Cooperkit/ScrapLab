@@ -177,6 +177,11 @@ namespace RaidRescue
         public List<GamePatchBatchItem> BatchItems { get; set; }
 
         internal Dictionary<string, bool> ActivationChanges;
+        // Source meshes are compiled into Cache\Mesh independently of
+        // core_data.cbo. Patch services that replace a mesh queue only their
+        // owned cache basename here so the next launch cannot reuse stale
+        // geometry.
+        internal HashSet<string> MeshCachePrefixes;
     }
 
     public sealed class GamePatchBatchItem

@@ -337,6 +337,8 @@ namespace RaidRescue
             "5DA34EF427C912BDF64BD1993834A78DBD86F11DFF16FD63B61F3FA9C1ECDDDB";
         private const string IconPngHash =
             "4288CAA081C8674E8D69640C717802C3883E1AA53181C6A9ABA86BBCFE7D9146";
+        private const string CurrentIconPngHash =
+            "C33A5A5DE6E7B11B7F9319BA928383E5DDF02E78C35BBCF25CA789AEF627A4D5";
 
         private static readonly string[,] Languages = new string[,]
         {
@@ -765,6 +767,8 @@ namespace RaidRescue
                         "ScrapLab-Icon-Pack.json"));
             state.AtlasKnown = String.Equals(state.AtlasHash,
                 IconPngHash, StringComparison.OrdinalIgnoreCase) ||
+                String.Equals(state.AtlasHash, CurrentIconPngHash,
+                    StringComparison.OrdinalIgnoreCase) ||
                 ScrapLabIconAtlasCoordinator.IsTrustedReceipt(
                     state.AtlasReceipt, state.AtlasHash,
                     state.IconCatalog);
@@ -907,7 +911,9 @@ namespace RaidRescue
                 Known = String.Equals(document.OriginalHash, knownHash,
                     StringComparison.OrdinalIgnoreCase) ||
                     IsTrustedExistingOutput(relative,
-                        document.OriginalHash)
+                        document.OriginalHash) ||
+                    TreeSaplingsPatchService.HasIntactSharedPatch(
+                        relative, document.NormalizedText)
             };
             if (atlasXml)
             {
@@ -924,8 +930,8 @@ namespace RaidRescue
             {
                 state.CleanText = unpatch(document.NormalizedText);
                 state.PatchedText = patch(state.CleanText);
-                state.Installed = String.Equals(state.PatchedText,
-                    document.NormalizedText, StringComparison.Ordinal);
+                state.Installed = AdaptivePatchSupport.Count(
+                    state.CleanText, marker) == 0;
             }
             return state;
         }
@@ -952,7 +958,8 @@ namespace RaidRescue
                 Document = document,
                 Known = String.Equals(document.OriginalHash, knownHash,
                     StringComparison.OrdinalIgnoreCase) ||
-                    IsTrustedExistingOutput(relative, document.OriginalHash)
+                    IsTrustedExistingOutput(relative, document.OriginalHash) ||
+                    TreeSaplingsPatchService.HasIntactSharedPatch(relative, text)
             };
 
             if (markerCount == 0)
@@ -2209,7 +2216,7 @@ namespace RaidRescue
                 "BetterEngines", "ResourceLocator",
                 "ChemicalFertilizerSplash", "DualFluidCannon",
                 "DeveloperCommands", "RevivalBuffRecovery",
-                "NetworkStorageChest"
+                "NetworkStorageChest", "TreeSaplings"
             };
             foreach (string modKey in modKeys)
             {

@@ -1,0 +1,89 @@
+{
+	"harvestableList" :
+	[
+		{
+			"col" : "$SURVIVAL_DATA/Harvestables/Collision/ScrapLab/TreeSaplings/TreeSaplingPotCollision.obj",
+			"collides" : { "body" : false, "character" : false, "melee" : true, "projectile" : true },
+			"color" : "7eed56",
+			"disableClutter" : true,
+			"mass" : 10000.0,
+			"material" : "Default",
+			"name" : "hvs_scraplab_tree_sapling_small",
+			"removable" : false,
+			"renderable" : "$SURVIVAL_DATA/Terrain/Renderable/Invisible/env_invisible01.rend",
+			"script" : {
+				"class" : "TreeSaplingHarvestable",
+				"data" : {
+					"size" : "small", "itemUuid" : "790d34b8-f006-47e4-9ebc-49a84a68ed16",
+					"color" : "7eed56", "scale" : 0.85, "growthTicks" : 12000,
+					"clearanceRadius" : 2.0, "clearanceHeight" : 14.0,
+					"treeVariants" : [
+						"c4ea19d3-2469-4059-9f13-3ddb4f7e0b79",
+						"711c3e72-7ba1-4424-ae70-c13d23afe818",
+						"a7aa52af-4276-4b2d-af44-36bc41864e04"
+					]
+				},
+				"file" : "$SURVIVAL_DATA/Scripts/ScrapLab/Parts/TreeSaplings/TreeSaplingHarvestable.lua"
+			},
+			"type" : "farm",
+			"uuid" : "26427da8-4848-4f18-9786-2f75db6fd772"
+		},
+		{
+			"col" : "$SURVIVAL_DATA/Harvestables/Collision/ScrapLab/TreeSaplings/TreeSaplingPotCollision.obj",
+			"collides" : { "body" : false, "character" : false, "melee" : true, "projectile" : true },
+			"color" : "e2db13",
+			"disableClutter" : true,
+			"mass" : 10000.0,
+			"material" : "Default",
+			"name" : "hvs_scraplab_tree_sapling_medium",
+			"removable" : false,
+			"renderable" : "$SURVIVAL_DATA/Terrain/Renderable/Invisible/env_invisible01.rend",
+			"script" : {
+				"class" : "TreeSaplingHarvestable",
+				"data" : {
+					"size" : "medium", "itemUuid" : "33511c78-354b-4a60-af6b-778c427c47d5",
+					"color" : "e2db13", "scale" : 1.0, "growthTicks" : 16800,
+					"clearanceRadius" : 3.0, "clearanceHeight" : 20.0,
+					"treeVariants" : [
+						"91ec04ea-9bf7-4a9d-bb7f-3d0125ff78c7",
+						"4d482999-98b7-4023-a149-d47be709b8f7",
+						"3db0a60d-8668-4c8a-8dd2-f5ceb294977e",
+						"73f968f0-d3a3-4334-86a8-a90203a3a56d",
+						"86324c5b-e97a-41f6-aa2c-7c6462f1f2e7",
+						"27aa53ea-1e09-4251-a284-437f93850409"
+					]
+				},
+				"file" : "$SURVIVAL_DATA/Scripts/ScrapLab/Parts/TreeSaplings/TreeSaplingHarvestable.lua"
+			},
+			"type" : "farm",
+			"uuid" : "99a01345-f1e6-404e-b669-7e6d805bae3a"
+		},
+		{
+			"col" : "$SURVIVAL_DATA/Harvestables/Collision/ScrapLab/TreeSaplings/TreeSaplingPotCollision.obj",
+			"collides" : { "body" : false, "character" : false, "melee" : true, "projectile" : true },
+			"color" : "df7f00",
+			"disableClutter" : true,
+			"mass" : 10000.0,
+			"material" : "Default",
+			"name" : "hvs_scraplab_tree_sapling_large",
+			"removable" : false,
+			"renderable" : "$SURVIVAL_DATA/Terrain/Renderable/Invisible/env_invisible01.rend",
+			"script" : {
+				"class" : "TreeSaplingHarvestable",
+				"data" : {
+					"size" : "large", "itemUuid" : "c9413781-5a0e-4025-a2cb-bc2090803e50",
+					"color" : "df7f00", "scale" : 1.15, "growthTicks" : 24000,
+					"clearanceRadius" : 4.0, "clearanceHeight" : 24.0,
+					"treeVariants" : [
+						"8411caba-63db-4b93-ad67-7ae8e350d360",
+						"1cb503a4-9306-412f-9e13-371bc634af60",
+						"fa864e51-67db-4ac9-823b-cfbdf523375d"
+					]
+				},
+				"file" : "$SURVIVAL_DATA/Scripts/ScrapLab/Parts/TreeSaplings/TreeSaplingHarvestable.lua"
+			},
+			"type" : "farm",
+			"uuid" : "e5e3d28f-bdff-4862-92b9-7fc9ce688643"
+		}
+	]
+}

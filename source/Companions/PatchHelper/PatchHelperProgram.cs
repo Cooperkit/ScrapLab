@@ -149,6 +149,8 @@ namespace RaidRescue
                 case PatchHelperProtocol.NetworkStorageChest:
                     return NetworkStorageChestPatchService.SetEnabled(
                         request.Enabled);
+                case PatchHelperProtocol.TreeSaplings:
+                    return TreeSaplingsPatchService.SetEnabled(request.Enabled);
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return DualFluidCannonPatchCoordinator.SetChemicalEnabled(
                         request.Enabled);
@@ -188,6 +190,8 @@ namespace RaidRescue
                     return WirelessVacuumPipePatchService.GetStatus();
                 case PatchHelperProtocol.NetworkStorageChest:
                     return NetworkStorageChestPatchService.GetStatus();
+                case PatchHelperProtocol.TreeSaplings:
+                    return TreeSaplingsPatchService.GetStatus();
                 case PatchHelperProtocol.ChemicalFertilizer:
                     return ChemicalFertilizerPatchService.GetStatus();
                 case PatchHelperProtocol.DualFluidCannon:

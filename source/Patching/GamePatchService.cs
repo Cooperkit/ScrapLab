@@ -149,6 +149,27 @@ namespace RaidRescue
     {
         private static readonly string CoreDataRelativePath =
             Path.Combine("Cache", "Bundle", "core_data.cbo");
+        private static readonly string MeshCacheRelativePath =
+            Path.Combine("Cache", "Mesh");
+
+        internal static void QueueMeshCachePrefix(
+            GamePatchResult result, string prefix)
+        {
+            if (result == null || String.IsNullOrWhiteSpace(prefix) ||
+                prefix.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+                prefix.IndexOf(Path.DirectorySeparatorChar) >= 0 ||
+                prefix.IndexOf(Path.AltDirectorySeparatorChar) >= 0)
+            {
+                throw new ArgumentException(
+                    "The mesh-cache prefix is invalid.", "prefix");
+            }
+            if (result.MeshCachePrefixes == null)
+            {
+                result.MeshCachePrefixes = new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase);
+            }
+            result.MeshCachePrefixes.Add(prefix);
+        }
 
         public static GamePatchResult DeleteAfterChanges(
             string gamePath, GamePatchResult result)
@@ -210,11 +231,21 @@ namespace RaidRescue
                         throw new IOException("Windows did not delete core_data.cbo.");
                 }
 
+                int meshCachesDeleted = DeleteQueuedMeshCaches(
+                    root, result.MeshCachePrefixes);
+
                 if (result.Changes == null)
                     result.Changes = new List<string>();
                 result.Changes.Add(
                     "Reset Scrap Mechanic's generated script cache. " +
                     "It will rebuild automatically on the next normal game launch.");
+                if (meshCachesDeleted > 0)
+                {
+                    result.Changes.Add(
+                        "Removed " + meshCachesDeleted +
+                        " stale compiled held-tool mesh cache" +
+                        (meshCachesDeleted == 1 ? "." : "s."));
+                }
                 AdaptivePatchSupport.CommitBuildActivations(
                     result, gamePath);
                 return result;
@@ -239,6 +270,60 @@ namespace RaidRescue
                 }
                 return result;
             }
+        }
+
+        private static int DeleteQueuedMeshCaches(
+            string gameRoot, HashSet<string> prefixes)
+        {
+            if (prefixes == null || prefixes.Count == 0)
+                return 0;
+
+            string meshDirectory = Path.GetFullPath(
+                Path.Combine(gameRoot, MeshCacheRelativePath));
+            if (!meshDirectory.StartsWith(
+                gameRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "The Scrap Mechanic mesh-cache path failed validation.");
+            }
+            if (!Directory.Exists(meshDirectory))
+                return 0;
+            DirectoryInfo directory = new DirectoryInfo(meshDirectory);
+            if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                throw new InvalidOperationException(
+                    "The Scrap Mechanic mesh cache is a reparse point and was not changed.");
+            }
+
+            int deleted = 0;
+            foreach (string prefix in prefixes)
+            {
+                foreach (string path in Directory.GetFiles(
+                    meshDirectory, prefix + "_*.mco",
+                    SearchOption.TopDirectoryOnly))
+                {
+                    string fullPath = Path.GetFullPath(path);
+                    if (!fullPath.StartsWith(
+                        meshDirectory + Path.DirectorySeparatorChar,
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(
+                            "A compiled mesh-cache path failed validation.");
+                    }
+                    FileInfo file = new FileInfo(fullPath);
+                    if ((file.Attributes & FileAttributes.ReparsePoint) != 0)
+                    {
+                        throw new InvalidOperationException(
+                            "A compiled mesh cache is a reparse point and was not deleted.");
+                    }
+                    File.Delete(fullPath);
+                    if (File.Exists(fullPath))
+                        throw new IOException(
+                            "Windows did not delete a compiled mesh cache.");
+                    deleted++;
+                }
+            }
+            return deleted;
         }
     }
 
@@ -2255,7 +2340,7 @@ namespace RaidRescue
 
         // Generated from the exact transformations below.
         private const string BaseWorldChemicalPatched =
-            "D07FCF069C5EA900B6C485E5E51F39EAD142BA3617924C4D56F2B1B503051FB7";
+            "4C9D9219C745640566516B147CA360C0DB7023C48E0AC55337DCE3C21EA32152";
         private const string SoilChemicalPatched =
             "9D186714DC4D1F667F80E1CA1A21F1CB748CCCF8DFFFC5B096C033EC836C3198";
         private const string GrowingOriginalChemicalPatched =
@@ -2277,6 +2362,7 @@ namespace RaidRescue
             public string CurrentHash;
             public bool Clean;
             public bool Installed;
+            public bool NeedsUpdate;
             public string PatchedText;
             public string CleanText;
             public byte[] OutputBytes;
@@ -2513,8 +2599,8 @@ namespace RaidRescue
                     AdaptivePatchSupport.GetSteamBuild(
                         gamePath, gameVersion);
                 if (clean != states.Count ||
-                    !AdaptivePatchSupport.CanAdaptCleanFiles(
-                        build, paths, out reason))
+                    !CanApplyAdaptiveChemicalClean(
+                        build, states, out reason))
                 {
                     throw new InvalidOperationException(
                         "Chemical Fertilizer Splash dependency preflight failed: " +
@@ -2807,6 +2893,21 @@ namespace RaidRescue
             result.Success = true;
             if (installed == states.Count)
             {
+                bool needsUpdate = false;
+                foreach (AdaptiveChemicalState state in states)
+                    needsUpdate |= state.NeedsUpdate;
+                if (needsUpdate)
+                {
+                    result.Installed = true;
+                    result.NeedsUpdate = true;
+                    result.AlreadyPatched = false;
+                    AdaptivePatchSupport.FillResult(
+                        result, build,
+                        PatchCompatibilityState.DefinitionUpdate,
+                        true, true,
+                        "Chemical Fertilizer Splash is installed, but its reusable fertilizable-harvestable registry update is available.");
+                    return result;
+                }
                 if (AdaptivePatchSupport.RequiresBuildRefresh(
                     "ChemicalFertilizerSplash", build))
                 {
@@ -2828,8 +2929,8 @@ namespace RaidRescue
                 AdaptivePatchSupport.DiscardReceiptIfSuperseded(
                     "ChemicalFertilizerSplash", gamePath);
                 string reason = "";
-                bool canApply = AdaptivePatchSupport.CanAdaptCleanFiles(
-                    build, paths, out reason);
+                bool canApply = CanApplyAdaptiveChemicalClean(
+                    build, states, out reason);
                 result.Installed = false;
                 AdaptivePatchSupport.FillResult(
                     result, build,
@@ -2907,6 +3008,13 @@ namespace RaidRescue
             SteamBuildInfo build = AdaptivePatchSupport.GetSteamBuild(
                 gamePath, result.GameVersion);
 
+            bool definitionUpdate = false;
+            foreach (AdaptiveChemicalState state in states)
+                definitionUpdate |= state.NeedsUpdate;
+            if (enabled && installed == states.Count && definitionUpdate)
+                return ApplyChemicalDefinitionUpdate(
+                    gamePath, backupRoot, result, build, states);
+
             if (enabled)
             {
                 if (installed == states.Count &&
@@ -2920,8 +3028,8 @@ namespace RaidRescue
                 }
                 string reason = "";
                 if (clean != states.Count ||
-                    !AdaptivePatchSupport.CanAdaptCleanFiles(
-                        build, paths, out reason))
+                    !CanApplyAdaptiveChemicalClean(
+                        build, states, out reason))
                 {
                     throw new InvalidOperationException(
                         "Chemical Fertilizer Splash cannot be applied: " +
@@ -2991,7 +3099,7 @@ namespace RaidRescue
             AdaptivePatchSupport.WriteBackupManifest(
                 backupPath, "Chemical Fertilizer Splash",
                 enabled ? "Install" : "Remove",
-                gamePath, build, "2", manifestFiles);
+                gamePath, build, "3", manifestFiles);
 
             AdaptivePatchReceipt receipt =
                 AdaptivePatchSupport.LoadReceipt(
@@ -3091,7 +3199,7 @@ namespace RaidRescue
                     new AdaptivePatchReceipt
                     {
                         ModKey = "ChemicalFertilizerSplash",
-                        DefinitionVersion = "2",
+                        DefinitionVersion = "3",
                         SteamBuildId = build.BuildId,
                         GameVersion = result.GameVersion,
                         CreatedUtc = DateTime.UtcNow.ToString("O"),
@@ -3176,6 +3284,7 @@ namespace RaidRescue
                     try
                     {
                         clean = target.Unpatch(document.NormalizedText);
+                        patched = target.Patch(clean);
                         installedState = true;
                     }
                     catch (InvalidDataException) { }
@@ -3200,11 +3309,190 @@ namespace RaidRescue
                     CurrentHash = document.OriginalHash,
                     Clean = cleanState,
                     Installed = installedState,
+                    NeedsUpdate = installedState &&
+                        !String.Equals(patched, document.NormalizedText,
+                            StringComparison.Ordinal),
                     PatchedText = patched,
                     CleanText = clean
                 });
             }
             return states;
+        }
+
+        private static GamePatchResult ApplyChemicalDefinitionUpdate(
+            string gamePath, string backupRoot, GamePatchResult result,
+            SteamBuildInfo build, IList<AdaptiveChemicalState> states)
+        {
+            string stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss-fff");
+            string backupPath = Path.Combine(backupRoot,
+                "Update-ChemicalFertilizerSplash-" + stamp);
+            Directory.CreateDirectory(backupPath);
+            result.BackupPath = backupPath;
+            List<AdaptiveChemicalState> changed = new List<AdaptiveChemicalState>();
+            List<AdaptivePatchReceiptFile> manifest = new List<AdaptivePatchReceiptFile>();
+            foreach (AdaptiveChemicalState state in states)
+            {
+                if (!state.Installed || state.CleanText == null ||
+                    state.PatchedText == null)
+                    throw new InvalidOperationException(
+                        state.Target.DisplayName +
+                        " is not an intact Chemical Fertilizer installation.");
+                if (!state.NeedsUpdate) continue;
+                state.OutputBytes = state.Document.Render(state.PatchedText);
+                state.OutputHash = AdaptivePatchSupport.Sha256(state.OutputBytes);
+                state.BackupFile = Path.Combine(backupPath,
+                    state.Target.RelativePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(state.BackupFile));
+                File.WriteAllBytes(state.BackupFile, state.Document.OriginalBytes);
+                if (!HashEquals(AdaptivePatchSupport.Sha256(state.BackupFile),
+                    state.CurrentHash))
+                    throw new IOException(state.Target.DisplayName +
+                        " definition-update backup failed checksum verification.");
+                manifest.Add(new AdaptivePatchReceiptFile
+                {
+                    RelativePath = state.Target.RelativePath,
+                    SourceHash = state.CurrentHash,
+                    OutputHash = state.OutputHash,
+                    Newline = state.Document.Newline == "\r\n" ? "CRLF" : "LF",
+                    HasBom = state.Document.HasBom
+                });
+            }
+            if (manifest.Count == 0)
+                throw new InvalidOperationException(
+                    "No verified Chemical Fertilizer definition target needs updating.");
+            AdaptivePatchSupport.WriteBackupManifest(backupPath,
+                "Chemical Fertilizer Splash", "Fertilizable Registry Definition Update",
+                gamePath, build, "3", manifest);
+
+            try
+            {
+                foreach (AdaptiveChemicalState state in states)
+                {
+                    if (!state.NeedsUpdate) continue;
+                    AdaptivePatchSupport.ReplaceFile(state.Path,
+                        state.OutputBytes, "chemical-definition-update");
+                    changed.Add(state);
+                    if (!HashEquals(AdaptivePatchSupport.Sha256(state.Path),
+                        state.OutputHash))
+                        throw new IOException(state.Target.DisplayName +
+                            " failed definition-update verification.");
+                }
+
+                AdaptivePatchReceipt prior = AdaptivePatchSupport.LoadReceipt(
+                    "ChemicalFertilizerSplash");
+                AdaptivePatchReceipt updated = new AdaptivePatchReceipt
+                {
+                    ModKey = "ChemicalFertilizerSplash",
+                    DefinitionVersion = "3",
+                    SteamBuildId = build.BuildId,
+                    GameVersion = result.GameVersion,
+                    CreatedUtc = prior == null || String.IsNullOrEmpty(prior.CreatedUtc)
+                        ? DateTime.UtcNow.ToString("O") : prior.CreatedUtc,
+                    Files = new List<AdaptivePatchReceiptFile>()
+                };
+                foreach (AdaptiveChemicalState state in states)
+                {
+                    AdaptivePatchReceiptFile oldFile =
+                        AdaptivePatchSupport.FindReceiptFile(prior,
+                            state.Target.RelativePath);
+                    string sourceHash;
+                    string activeBase;
+                    if (oldFile != null &&
+                        !String.IsNullOrEmpty(oldFile.BackupPath) &&
+                        File.Exists(oldFile.BackupPath) &&
+                        HashEquals(AdaptivePatchSupport.Sha256(oldFile.BackupPath),
+                            oldFile.SourceHash))
+                    {
+                        sourceHash = oldFile.SourceHash;
+                        activeBase = oldFile.BackupPath;
+                    }
+                    else
+                    {
+                        byte[] cleanBytes = state.Document.Render(state.CleanText);
+                        sourceHash = AdaptivePatchSupport.Sha256(cleanBytes);
+                        string cleanFile = Path.Combine(backupPath, "CleanBases",
+                            state.Target.RelativePath);
+                        Directory.CreateDirectory(Path.GetDirectoryName(cleanFile));
+                        File.WriteAllBytes(cleanFile, cleanBytes);
+                        activeBase = AdaptivePatchSupport.CaptureBaseBackup(
+                            "ChemicalFertilizerSplash", state.Target.RelativePath,
+                            cleanFile, sourceHash);
+                    }
+                    updated.Files.Add(new AdaptivePatchReceiptFile
+                    {
+                        RelativePath = state.Target.RelativePath,
+                        SourceHash = sourceHash,
+                        OutputHash = state.NeedsUpdate
+                            ? state.OutputHash : state.CurrentHash,
+                        BackupPath = activeBase,
+                        Newline = state.Document.Newline == "\r\n" ? "CRLF" : "LF",
+                        HasBom = state.Document.HasBom
+                    });
+                }
+                AdaptivePatchSupport.SaveReceipt(
+                    "ChemicalFertilizerSplash", updated);
+            }
+            catch
+            {
+                for (int index = changed.Count - 1; index >= 0; index--)
+                    AdaptivePatchSupport.ReplaceFile(changed[index].Path,
+                        changed[index].Document.OriginalBytes,
+                        "chemical-definition-update-rollback");
+                foreach (AdaptiveChemicalState state in changed)
+                    if (!HashEquals(AdaptivePatchSupport.Sha256(state.Path),
+                        state.CurrentHash))
+                        throw new IOException(
+                            "Chemical Fertilizer definition-update rollback could not restore " +
+                            state.Target.DisplayName + ".");
+                throw;
+            }
+
+            result.Success = true;
+            result.Installed = true;
+            result.NeedsUpdate = false;
+            result.FilesPatched = changed.Count;
+            AdaptivePatchSupport.FillResult(result, build,
+                PatchCompatibilityState.AdaptiveInstalled, true, true,
+                "Chemical Fertilizer Splash now uses the reusable ScrapLab fertilizable-harvestable registry.");
+            result.Changes.Add(
+                "Updated Chemical Fertilizer Splash to register Tree Saplings without treating them as ordinary watered crops.");
+            AdaptivePatchSupport.QueueBuildActivation(result,
+                "ChemicalFertilizerSplash", true);
+            SecretModBackupRetention.Prune(backupRoot,
+                "ChemicalFertilizerSplash", backupPath, result);
+            return result;
+        }
+
+        private static bool CanApplyAdaptiveChemicalClean(
+            SteamBuildInfo build, IList<AdaptiveChemicalState> states,
+            out string reason)
+        {
+            List<string> unknown = new List<string>();
+            foreach (AdaptiveChemicalState state in states)
+            {
+                bool known = false;
+                foreach (ChemicalPatchVariant variant in state.Target.Variants)
+                {
+                    if (HashEquals(state.CurrentHash, variant.BaseHash))
+                    {
+                        known = true;
+                        break;
+                    }
+                }
+                if (!known && (TreeSaplingsPatchService.IsTrustedOutput(
+                    state.Target.RelativePath, state.CurrentHash) ||
+                    TreeSaplingsPatchService.HasIntactSharedPatch(
+                        state.Target.RelativePath,
+                        state.Document.NormalizedText))) known = true;
+                if (!known) unknown.Add(state.Path);
+            }
+            if (unknown.Count == 0)
+            {
+                reason = "Verified official or composable Tree Saplings base files.";
+                return true;
+            }
+            return AdaptivePatchSupport.CanAdaptCleanFiles(
+                build, unknown, out reason);
         }
 
         private static int GetAdaptiveChemicalMarkerCount(
@@ -3360,7 +3648,7 @@ namespace RaidRescue
             "\t\treturn\n" +
             "\tend\n" +
             "\tlocal targetType = type( target )\n" +
-            "\tif targetType == \"Harvestable\" and WaterSplashableSet[tostring( target.uuid )] then\n" +
+            "\tif targetType == \"Harvestable\" and ( WaterSplashableSet[tostring( target.uuid )] or ( ScrapLabChemicalFertilizableHarvestables and ScrapLabChemicalFertilizableHarvestables[tostring( target.uuid )] ) ) then\n" +
             "\t\tsm.event.sendToHarvestable( target, \"sv_e_raidRescueChemicalFertilize\" )\n" +
             "\telseif targetType == \"Shape\" and RaidRescueGrowbedSet[tostring( target.uuid )] and target.interactable then\n" +
             "\t\tsm.event.sendToInteractable( target.interactable, \"sv_e_raidRescueChemicalFertilize\" )\n" +
@@ -3416,6 +3704,23 @@ namespace RaidRescue
                 "\telseif projectileUuid == projectile_pesticide then\n" +
                 "\t\tlocal forward = sm.vec3.new( 0, 1, 0 )",
                 "chemical and pesticide impact dispatch");
+
+            // Definition 2 only targeted vanilla WaterSplashableSet entries.
+            // Normalize that verified legacy helper before removing the current
+            // definition so old installations can migrate without being
+            // mistaken for a partial or manually edited patch.
+            const string legacyHarvestableCondition =
+                "\tif targetType == \"Harvestable\" and WaterSplashableSet[tostring( target.uuid )] then";
+            const string currentHarvestableCondition =
+                "\tif targetType == \"Harvestable\" and ( WaterSplashableSet[tostring( target.uuid )] or ( ScrapLabChemicalFertilizableHarvestables and ScrapLabChemicalFertilizableHarvestables[tostring( target.uuid )] ) ) then";
+            if (AdaptivePatchSupport.Count(
+                text, legacyHarvestableCondition) == 1)
+            {
+                text = ReplaceUnique(
+                    text, legacyHarvestableCondition,
+                    currentHarvestableCondition,
+                    "legacy chemical fertilizable-harvestable condition");
+            }
             return ReplaceUnique(
                 text,
                 "}\n\n" +
@@ -5571,11 +5876,17 @@ namespace RaidRescue
                     string assetReason;
                     if (!NoclipAssetSupport.IsInstalled(gamePath, out assetReason))
                     {
+                        string olderReason;
+                        bool verifiedOlder =
+                            NoclipAssetSupport.HasVerifiedOlderInstallation(
+                                gamePath, out olderReason);
                         string applyReason;
                         bool canApply = NoclipAssetSupport.CanApply(
                             gamePath, out applyReason);
                         result.Success = true;
-                        result.Installed = false;
+                        result.Installed = verifiedOlder;
+                        result.AlreadyPatched = verifiedOlder;
+                        result.NeedsUpdate = verifiedOlder;
                         result.Mode = HashEquals(
                             hash, SurvivalGameEveryoneCommandsWithNoclip)
                             ? EveryoneMode : HostOnlyMode;
@@ -5583,11 +5894,15 @@ namespace RaidRescue
                             result,
                             AdaptivePatchSupport.GetSteamBuild(
                                 gamePath, result.GameVersion),
-                            canApply
+                            verifiedOlder
+                                ? PatchCompatibilityState.KnownInstalled
+                                : canApply
                                 ? PatchCompatibilityState.CompatibleUpdate
                                 : PatchCompatibilityState.PartialConflict,
                             true, canApply,
-                            canApply ? assetReason : applyReason);
+                            verifiedOlder
+                                ? olderReason
+                                : (canApply ? assetReason : applyReason));
                         return result;
                     }
                 }
@@ -6043,20 +6358,30 @@ namespace RaidRescue
                 string assetReason;
                 if (!NoclipAssetSupport.IsInstalled(gamePath, out assetReason))
                 {
+                    string olderReason;
+                    bool verifiedOlder =
+                        NoclipAssetSupport.HasVerifiedOlderInstallation(
+                            gamePath, out olderReason);
                     string applyReason;
                     bool canApply = NoclipAssetSupport.CanApply(
                         gamePath, out applyReason);
                     result.Success = true;
-                    result.Installed = false;
+                    result.Installed = verifiedOlder;
+                    result.AlreadyPatched = verifiedOlder;
+                    result.NeedsUpdate = verifiedOlder;
                     result.Mode = everyoneGate == 1
                         ? EveryoneMode : HostOnlyMode;
                     AdaptivePatchSupport.FillResult(
                         result, build,
-                        canApply
+                        verifiedOlder
+                            ? PatchCompatibilityState.AdaptiveInstalled
+                            : canApply
                             ? PatchCompatibilityState.CompatibleUpdate
                             : PatchCompatibilityState.PartialConflict,
                         true, canApply,
-                        canApply ? assetReason : applyReason);
+                        verifiedOlder
+                            ? olderReason
+                            : (canApply ? assetReason : applyReason));
                     return result;
                 }
             }
@@ -6433,7 +6758,7 @@ namespace RaidRescue
                     new AdaptivePatchReceipt
                     {
                         ModKey = "DeveloperCommands",
-                        DefinitionVersion = "6",
+                        DefinitionVersion = "7",
                         SteamBuildId = build.BuildId,
                         GameVersion = result.GameVersion,
                         CreatedUtc = existing == null

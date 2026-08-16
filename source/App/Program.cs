@@ -1023,6 +1023,18 @@ namespace RaidRescue
                 PatchHelperProtocol.NetworkStorageChest, enabled, ""));
         }
 
+        public string GetTreeSaplingsModStatus()
+        {
+            return Serialize(PatchHelperClient.GetStatus(
+                PatchHelperProtocol.TreeSaplings));
+        }
+
+        public string SetTreeSaplingsMod(bool enabled)
+        {
+            return Serialize(PatchHelperClient.Execute(
+                PatchHelperProtocol.TreeSaplings, enabled, ""));
+        }
+
         public string GetChemicalFertilizerModStatus()
         {
             return Serialize(PatchHelperClient.GetStatus(

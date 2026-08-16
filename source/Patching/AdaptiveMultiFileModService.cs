@@ -847,7 +847,13 @@ namespace RaidRescue
                     state.Definition.KnownCleanHash) &&
                     (state.Definition.TrustedCleanVariant == null ||
                      !state.Definition.TrustedCleanVariant(
-                        state.Document.NormalizedText)))
+                        state.Document.NormalizedText)) &&
+                    !TreeSaplingsPatchService.IsTrustedOutput(
+                        state.Definition.RelativePath,
+                        state.CurrentHash) &&
+                    !TreeSaplingsPatchService.HasIntactSharedPatch(
+                        state.Definition.RelativePath,
+                        state.Document.NormalizedText))
                 {
                     paths.Add(state.Path);
                 }

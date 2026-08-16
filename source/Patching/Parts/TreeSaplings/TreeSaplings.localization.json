@@ -1,0 +1,57 @@
+{
+  "Brazilian": [
+    {"title":"Muda de Árvore Pequena","description":"Plante em terreno aberto. Cresce em uma árvore pequena em 5 minutos; fertilizante dobra a velocidade."},
+    {"title":"Muda de Árvore Média","description":"Plante em terreno aberto. Cresce em uma árvore média em 7 minutos; fertilizante dobra a velocidade."},
+    {"title":"Muda de Árvore Grande","description":"Plante em terreno aberto. Cresce em uma árvore grande em 10 minutos; fertilizante dobra a velocidade."}
+  ],
+  "Chinese": [
+    {"title":"小型树苗","description":"种在开阔地面上。5分钟后长成小树；施肥可使生长速度翻倍。"},
+    {"title":"中型树苗","description":"种在开阔地面上。7分钟后长成中型树；施肥可使生长速度翻倍。"},
+    {"title":"大型树苗","description":"种在开阔地面上。10分钟后长成大树；施肥可使生长速度翻倍。"}
+  ],
+  "English": [
+    {"title":"Small Tree Sapling","description":"Plant on open terrain. Grows into a small tree in 5 minutes; fertilizer doubles its growth speed."},
+    {"title":"Medium Tree Sapling","description":"Plant on open terrain. Grows into a medium tree in 7 minutes; fertilizer doubles its growth speed."},
+    {"title":"Large Tree Sapling","description":"Plant on open terrain. Grows into a large tree in 10 minutes; fertilizer doubles its growth speed."}
+  ],
+  "French": [
+    {"title":"Petit jeune arbre","description":"Plantez-le en terrain dégagé. Devient un petit arbre en 5 minutes ; l'engrais double sa vitesse."},
+    {"title":"Jeune arbre moyen","description":"Plantez-le en terrain dégagé. Devient un arbre moyen en 7 minutes ; l'engrais double sa vitesse."},
+    {"title":"Grand jeune arbre","description":"Plantez-le en terrain dégagé. Devient un grand arbre en 10 minutes ; l'engrais double sa vitesse."}
+  ],
+  "German": [
+    {"title":"Kleiner Baumsetzling","description":"Auf freiem Gelände pflanzen. Wächst in 5 Minuten; Dünger verdoppelt das Wachstumstempo."},
+    {"title":"Mittlerer Baumsetzling","description":"Auf freiem Gelände pflanzen. Wächst in 7 Minuten; Dünger verdoppelt das Wachstumstempo."},
+    {"title":"Großer Baumsetzling","description":"Auf freiem Gelände pflanzen. Wächst in 10 Minuten; Dünger verdoppelt das Wachstumstempo."}
+  ],
+  "Italian": [
+    {"title":"Alberello piccolo","description":"Piantalo su terreno libero. Cresce in 5 minuti; il fertilizzante raddoppia la velocità."},
+    {"title":"Alberello medio","description":"Piantalo su terreno libero. Cresce in 7 minuti; il fertilizzante raddoppia la velocità."},
+    {"title":"Alberello grande","description":"Piantalo su terreno libero. Cresce in 10 minuti; il fertilizzante raddoppia la velocità."}
+  ],
+  "Japanese": [
+    {"title":"小型の苗木","description":"開けた地面に植えます。5分で小型の木に成長し、肥料で成長速度が2倍になります。"},
+    {"title":"中型の苗木","description":"開けた地面に植えます。7分で中型の木に成長し、肥料で成長速度が2倍になります。"},
+    {"title":"大型の苗木","description":"開けた地面に植えます。10分で大型の木に成長し、肥料で成長速度が2倍になります。"}
+  ],
+  "Korean": [
+    {"title":"작은 나무 묘목","description":"탁 트인 지형에 심으세요. 5분 후 작은 나무로 자라며 비료는 성장 속도를 두 배로 높입니다."},
+    {"title":"중간 나무 묘목","description":"탁 트인 지형에 심으세요. 7분 후 중간 나무로 자라며 비료는 성장 속도를 두 배로 높입니다."},
+    {"title":"큰 나무 묘목","description":"탁 트인 지형에 심으세요. 10분 후 큰 나무로 자라며 비료는 성장 속도를 두 배로 높입니다."}
+  ],
+  "Polish": [
+    {"title":"Mała sadzonka drzewa","description":"Posadź na otwartym terenie. Rośnie 5 minut; nawóz podwaja szybkość wzrostu."},
+    {"title":"Średnia sadzonka drzewa","description":"Posadź na otwartym terenie. Rośnie 7 minut; nawóz podwaja szybkość wzrostu."},
+    {"title":"Duża sadzonka drzewa","description":"Posadź na otwartym terenie. Rośnie 10 minut; nawóz podwaja szybkość wzrostu."}
+  ],
+  "Russian": [
+    {"title":"Маленький саженец","description":"Посадите на открытой местности. Вырастает за 5 минут; удобрение удваивает скорость роста."},
+    {"title":"Средний саженец","description":"Посадите на открытой местности. Вырастает за 7 минут; удобрение удваивает скорость роста."},
+    {"title":"Большой саженец","description":"Посадите на открытой местности. Вырастает за 10 минут; удобрение удваивает скорость роста."}
+  ],
+  "Spanish": [
+    {"title":"Brote de árbol pequeño","description":"Plántalo en terreno abierto. Crece en 5 minutos; el fertilizante duplica la velocidad."},
+    {"title":"Brote de árbol mediano","description":"Plántalo en terreno abierto. Crece en 7 minutos; el fertilizante duplica la velocidad."},
+    {"title":"Brote de árbol grande","description":"Plántalo en terreno abierto. Crece en 10 minutos; el fertilizante duplica la velocidad."}
+  ]
+}

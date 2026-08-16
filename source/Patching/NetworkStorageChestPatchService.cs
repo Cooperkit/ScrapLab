@@ -11,7 +11,7 @@ namespace RaidRescue
     internal static class NetworkStorageChestPatchService
     {
         private const string ModKey = "NetworkStorageChest";
-        private const string DefinitionVersion = "10";
+        private const string DefinitionVersion = "11";
         private const string LegacyV1RuntimeHash = "453BB866D4B4D564C79BFF9F4A2997131BF9826496608DBEA7709BE2730FC596";
         private const string LegacyV1IndexHash = "F036925AFA22A028CFED0A82E89A691442FC77DEB851D0876F3DD92ED535D4EC";
         private const string LegacyV2RuntimeHash = "B42F99CA53E5D36188F8BFC352DCB0F560A649BD6783E31DAE38BC22ECC3FB49";
@@ -33,6 +33,7 @@ namespace RaidRescue
         private const string LegacyV8LocalizationHash = "B26B15812FDE24CB983F4509FDC2898D9CD248474F3FA9DFD2FC979D75A3DDCB";
         private const string LegacyV9RuntimeHash = "ED1B1D0C8B03C98A32129784680229DD09E5192668EBB8AEEE49C4E2F99DD31B";
         private const string LegacyV9IndexHash = "B8FC29D4E85319FE64D9E706A9ACB5F4BACE9CD37EAC684539DFDD85007B91E8";
+        private const string LegacyV10RuntimeHash = "CC84F11BCE9756B6F18D668DDC99A4B82D71882BB2CD09AF1CF35DBABE57B707";
         internal const string PartUuid = "bc7576a7-f226-459a-883c-e8460e955d63";
         internal const string VerifiedSteamBuildId = "24529696";
         internal const string VerifiedGameVersion = "1.0.5.876";
@@ -128,7 +129,7 @@ namespace RaidRescue
                         state.AllKnownClean ? PatchCompatibilityState.KnownInstalled : PatchCompatibilityState.AdaptiveInstalled,
                         !state.AllKnownClean, true,
                         state.DefinitionUpdateAvailable
-                            ? "A verified Network Storage performance update is ready."
+                            ? "A verified Network Storage live-count update is ready."
                             : "The Network Storage Chest part, recipe, runtime, localization, and icon are intact.");
                     return result;
                 }
@@ -180,9 +181,9 @@ namespace RaidRescue
                     result.Success = true;
                     result.Installed = true;
                     result.NeedsUpdate = false;
-                    result.Changes.Add("Installed bounded global inventory caching, incremental server aggregation, incremental catalog rendering, and closed-terminal memory cleanup.");
+                    result.Changes.Add("Installed transaction-confirmed live catalog counts without adding background scans or full-grid redraws.");
                     AdaptivePatchSupport.FillResult(result, build, PatchCompatibilityState.AdaptiveInstalled,
-                        !state.AllKnownClean, true, "Network Storage Chest definition 10 performance update was installed and verified.");
+                        !state.AllKnownClean, true, "Network Storage Chest definition 11 live-count update was installed and verified.");
                     SecretModBackupRetention.Prune(backupRoot, ModKey, result.BackupPath, result);
                     return result;
                 }
@@ -283,7 +284,8 @@ namespace RaidRescue
             }
             catch { state.AtlasClean = false; }
             state.AtlasReceipt = ScrapLabIconAtlasCoordinator.LoadReceipt(AdaptivePatchSupport.GetSharedStatePath("ScrapLab-Icon-Pack.json"));
-            state.AtlasKnown = String.Equals(state.AtlasHash, "4288CAA081C8674E8D69640C717802C3883E1AA53181C6A9ABA86BBCFE7D9146", StringComparison.OrdinalIgnoreCase)
+            state.AtlasKnown = (String.Equals(state.AtlasHash, "4288CAA081C8674E8D69640C717802C3883E1AA53181C6A9ABA86BBCFE7D9146", StringComparison.OrdinalIgnoreCase)
+                || String.Equals(state.AtlasHash, "C33A5A5DE6E7B11B7F9319BA928383E5DDF02E78C35BBCF25CA789AEF627A4D5", StringComparison.OrdinalIgnoreCase))
                 || ScrapLabIconAtlasCoordinator.IsTrustedReceipt(state.AtlasReceipt, state.AtlasHash, state.IconCatalog);
             if (state.AtlasReceipt != null && String.Equals(state.AtlasReceipt.IconXmlHash, iconXml.Document.OriginalHash, StringComparison.OrdinalIgnoreCase)) iconXml.Known = true;
 
@@ -331,14 +333,17 @@ namespace RaidRescue
             AdaptivePatchSupport.RequireAdaptiveFormat(document, display);
             int count = AdaptivePatchSupport.Count(document.NormalizedText, marker);
             TextState state = new TextState { RelativePath = relative, DisplayName = display, KnownHash = knownHash, Path = path, Document = document, IsIconXml = iconXml,
-                Known = String.Equals(document.OriginalHash, knownHash, StringComparison.OrdinalIgnoreCase) || IsTrustedExistingOutput(relative, document.OriginalHash) };
+                Known = String.Equals(document.OriginalHash, knownHash, StringComparison.OrdinalIgnoreCase) || IsTrustedExistingOutput(relative, document.OriginalHash) || TreeSaplingsPatchService.HasIntactSharedPatch(relative, document.NormalizedText) };
             if (iconXml) { state.Clean = count == 0; state.Installed = count == 1; return state; }
             if (count == 0) { state.PatchedText = patch(document.NormalizedText); state.Clean = true; }
             else if (count == 1)
             {
                 state.CleanText = unpatch(document.NormalizedText);
                 state.PatchedText = patch(state.CleanText);
-                state.Installed = String.Equals(state.PatchedText, document.NormalizedText, StringComparison.Ordinal);
+                // Verify this exact protected block independently of later
+                // ScrapLab blocks appended to the same shared file.
+                state.Installed = AdaptivePatchSupport.Count(
+                    state.CleanText, marker) == 0;
             }
             return state;
         }
@@ -450,7 +455,8 @@ namespace RaidRescue
                     String.Equals(hash, LegacyV6RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV7RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV8RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(hash, LegacyV9RuntimeHash, StringComparison.OrdinalIgnoreCase);
+                    String.Equals(hash, LegacyV9RuntimeHash, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(hash, LegacyV10RuntimeHash, StringComparison.OrdinalIgnoreCase);
             if (String.Equals(file, "NetworkInventoryIndex.lua", StringComparison.OrdinalIgnoreCase))
                 return String.Equals(hash, LegacyV1IndexHash, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(hash, LegacyV9IndexHash, StringComparison.OrdinalIgnoreCase);
@@ -522,7 +528,7 @@ namespace RaidRescue
                 });
             }
             AdaptivePatchSupport.WriteBackupManifest(backupPath, "Network Storage Chest",
-                "Runtime Performance Definition Update", gamePath, build, DefinitionVersion, manifest);
+                "Runtime Live-Count Definition Update", gamePath, build, DefinitionVersion, manifest);
 
             List<AtomicCustomPartFilePlan> changed = new List<AtomicCustomPartFilePlan>();
             try
@@ -629,7 +635,7 @@ namespace RaidRescue
         private static byte[] GetResource(string name) { using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name)) { if (stream == null) throw new InvalidOperationException("The embedded Network Storage Chest asset is missing: " + name); using (MemoryStream output = new MemoryStream()) { stream.CopyTo(output); return output.ToArray(); } } }
         private static bool IsTrustedExistingOutput(string relative, string hash)
         {
-            string[] keys = { "RaidDetector", "WirelessVacuumPipe", "BetterPlasmaDrills", "FullSpeedCarrying", "BetterFreezerBeehive", "BetterEngines", "ResourceLocator", "ChemicalFertilizerSplash", "DualFluidCannon", "DeveloperCommands", "RevivalBuffRecovery" };
+            string[] keys = { "RaidDetector", "WirelessVacuumPipe", "TreeSaplings", "BetterPlasmaDrills", "FullSpeedCarrying", "BetterFreezerBeehive", "BetterEngines", "ResourceLocator", "ChemicalFertilizerSplash", "DualFluidCannon", "DeveloperCommands", "RevivalBuffRecovery" };
             foreach (string key in keys) { AdaptivePatchReceiptFile file = AdaptivePatchSupport.FindReceiptFile(AdaptivePatchSupport.LoadReceipt(key), relative); if (file != null && String.Equals(file.OutputHash, hash, StringComparison.OrdinalIgnoreCase)) return true; }
             return false;
         }

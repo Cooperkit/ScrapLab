@@ -15,7 +15,7 @@ namespace RaidRescue
         internal const int CellSize = 96;
         internal const int CurrentBuildX = 3936;
         internal const int CurrentBuildY = 3936;
-        internal const string CatalogVersion = "3";
+        internal const string CatalogVersion = "4";
 
         internal sealed class IconAsset
         {
@@ -104,12 +104,31 @@ namespace RaidRescue
                     ResourceName =
                         "RaidRescue.Parts.NetworkStorageChest.NetworkStorageChestIcon.png",
                     LegacyResourceNames = new string[0]
+                },
+                new IconAsset
+                {
+                    ModKey = "TreeSaplings",
+                    Uuid = "790d34b8-f006-47e4-9ebc-49a84a68ed16",
+                    ResourceName = "RaidRescue.Parts.TreeSaplings.SmallTreeSaplingIcon.png",
+                    LegacyResourceNames = new string[0]
+                },
+                new IconAsset
+                {
+                    ModKey = "TreeSaplings",
+                    Uuid = "33511c78-354b-4a60-af6b-778c427c47d5",
+                    ResourceName = "RaidRescue.Parts.TreeSaplings.MediumTreeSaplingIcon.png",
+                    LegacyResourceNames = new string[0]
+                },
+                new IconAsset
+                {
+                    ModKey = "TreeSaplings",
+                    Uuid = "c9413781-5a0e-4025-a2cb-bc2090803e50",
+                    ResourceName = "RaidRescue.Parts.TreeSaplings.LargeTreeSaplingIcon.png",
+                    LegacyResourceNames = new string[0]
                 }
             };
 
             Assembly assembly = Assembly.GetExecutingAssembly();
-            HashSet<string> modKeys = new HashSet<string>(
-                StringComparer.Ordinal);
             HashSet<string> uuids = new HashSet<string>(
                 StringComparer.OrdinalIgnoreCase);
             HashSet<string> hashes = new HashSet<string>(
@@ -119,7 +138,7 @@ namespace RaidRescue
                 if (String.IsNullOrEmpty(asset.ModKey) ||
                     String.IsNullOrEmpty(asset.Uuid) ||
                     String.IsNullOrEmpty(asset.ResourceName) ||
-                    !modKeys.Add(asset.ModKey) || !uuids.Add(asset.Uuid))
+                    !uuids.Add(asset.Uuid))
                 {
                     throw new InvalidDataException(
                         "The embedded ScrapLab icon catalog contains a duplicate or incomplete entry.");

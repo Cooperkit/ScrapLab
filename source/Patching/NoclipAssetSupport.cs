@@ -25,6 +25,8 @@ namespace RaidRescue
             "AA1E06A6FF92A1AC773230C5CB094318F4C33DC7D19059467A5B0DCBCF27B9AC";
         private const string LegacyV7ModuleHash =
             "D51C93B16B77A4F927B97FA0A65BD86976EA15438E9564E4AE984CCBC66E9C13";
+        private const string LegacyV8ModuleHash =
+            "62C62AF79249BCC58E87C731BD6CB3FC4151EA88ED3E597E082F7D9600C4C16B";
         private const string LegacyInputToolHash =
             "92B9D5559244E5DF68A690EFC7B6D5BA0BC3266410BA253ABA1BDBD3979D9795";
         private const string CleanTail =
@@ -115,6 +117,27 @@ namespace RaidRescue
             }
         }
 
+        internal static bool HasVerifiedOlderInstallation(
+            string gamePath, out string reason)
+        {
+            try
+            {
+                AssetState state = ReadState(gamePath);
+                bool older = state.ToolsInstalled &&
+                    state.ModuleOwned && !state.ModuleExact &&
+                    state.InputToolOwned;
+                reason = older
+                    ? "Developer Commands are active with a verified older module; the tree-spawn command update is ready."
+                    : "Developer Commands do not have a complete verified older asset set.";
+                return older;
+            }
+            catch (Exception exception)
+            {
+                reason = exception.Message;
+                return false;
+            }
+        }
+
         internal static NoclipAssetTransaction Prepare(
             string gamePath, string backupRoot, bool enabled)
         {
@@ -180,7 +203,8 @@ namespace RaidRescue
                         (HashEquals(moduleBytes, LegacyV4ModuleHash) ||
                          HashEquals(moduleBytes, LegacyV5ModuleHash) ||
                          HashEquals(moduleBytes, LegacyV6ModuleHash) ||
-                         HashEquals(moduleBytes, LegacyV7ModuleHash))),
+                         HashEquals(moduleBytes, LegacyV7ModuleHash) ||
+                         HashEquals(moduleBytes, LegacyV8ModuleHash))),
                 InputToolPath = inputPath,
                 InputToolExists = inputExists,
                 InputToolBytes = inputBytes,

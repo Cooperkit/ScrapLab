@@ -1,0 +1,18 @@
+{
+  "lodList" : [
+    {
+      "maxViewDistance" : 1000.0,
+      "mesh" : "$SURVIVAL_DATA/Character/Char_Tools/ScrapLab/TreeSaplings/TreeSaplingHeld.dae",
+      "subMeshMap" : {
+        "poleplant" : {
+          "material" : "DifAsgNorAlpha",
+          "textureList" : [
+            "$GAME_DATA/Objects/Textures/plants/obj_plants_leafplant_dif.tga",
+            "$GAME_DATA/Objects/Textures/plants/obj_plants_leafplant_asg.tga",
+            "$GAME_DATA/Objects/Textures/plants/obj_plants_leafplant_nor.tga"
+          ]
+        }
+      }
+    }
+  ]
+}
