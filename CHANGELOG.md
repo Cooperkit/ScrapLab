@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.11.0 - 2026-08-16
+
 - Raised Tree Saplings to definition 33 with the final Tool Forge-generated
   first-person and third-person held-tool assets. Verified definitions 27–32
   migrate in place without removing sapling UUID registrations or replacing
